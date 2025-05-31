@@ -8,7 +8,7 @@ import com.ccp.especifications.mensageria.receiver.CcpTopic;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 import com.vis.utils.VisFrequencyOptions;
-import com.vis.utils.VisAsyncUtils;
+import com.vis.utils.VisUtils;
 
 public class VisBusinessPositionResumesReceivingByFrequency  implements CcpTopic{
 
@@ -18,11 +18,11 @@ public class VisBusinessPositionResumesReceivingByFrequency  implements CcpTopic
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation schedullingPlan) {
 
-		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisAsyncUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.valueOf(x.getAsString(VisEntityPosition.Fields.frequency.name())), VisEntityPosition.Fields.timestamp.name());
+		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.valueOf(x.getAsString(VisEntityPosition.Fields.frequency.name())), VisEntityPosition.Fields.timestamp.name());
 
-		Function<String, CcpJsonRepresentation> getLastUpdatedPositions = frequency -> VisAsyncUtils.getAllPositionsGroupedByRecruiters(VisFrequencyOptions.valueOf(frequency));
+		Function<String, CcpJsonRepresentation> getLastUpdatedPositions = frequency -> VisUtils.getAllPositionsGroupedByRecruiters(VisFrequencyOptions.valueOf(frequency));
 
-		VisAsyncUtils.sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(schedullingPlan, getLastUpdatedResumes, getLastUpdatedPositions);
+		VisUtils.sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(schedullingPlan, getLastUpdatedResumes, getLastUpdatedPositions);
 	
 		return schedullingPlan;
 	}

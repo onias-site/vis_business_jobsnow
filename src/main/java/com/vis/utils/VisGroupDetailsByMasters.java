@@ -59,7 +59,7 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 			for (String master : masters) {
 				List<CcpJsonRepresentation> records = mastersInThisGrouping.getAsJsonList(master);
 				CcpJsonRepresentation primaryKeySupplier = CcpOtherConstants.EMPTY_JSON.put(this.masterFieldName, master);
-				List<CcpBulkItem> recordsInPages = VisAsyncUtils.getRecordsInPages(records, primaryKeySupplier, entityGroupToSaveRecords);
+				List<CcpBulkItem> recordsInPages = VisUtils.getRecordsInPages(records, primaryKeySupplier, entityGroupToSaveRecords);
 				result.addAll(recordsInPages);
 			}
 		}

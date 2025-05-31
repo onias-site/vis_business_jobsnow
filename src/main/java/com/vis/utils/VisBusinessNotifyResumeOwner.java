@@ -12,7 +12,7 @@ public class VisBusinessNotifyResumeOwner implements Function<CcpJsonRepresentat
 	public final CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpJsonRepresentation put = json
 				.renameField("originalEmail", JnEntityEmailMessageSent.Fields.email.name())
-				.put(JnEntityEmailMessageSent.Fields.subjectType.name(), this.getClass().getSimpleName());
+				.put(JnEntityEmailMessageSent.Fields.subjectType.name(), this.getClass().getName());
 				
 			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language.name());
 			
@@ -20,7 +20,7 @@ public class VisBusinessNotifyResumeOwner implements Function<CcpJsonRepresentat
 			sender
 			.addDefaultProcessForEmailSending()
 			.soWithAllAddedProcessAnd()
-			.withTheTemplateEntity(this.getClass().getSimpleName())
+			.withTheTemplateEntity(this.getClass().getName())
 			.andWithTheEntityToBlockMessageResend(JnEntityEmailMessageSent.ENTITY)
 			.andWithTheMessageValuesFromJson(put)
 			.andWithTheSupportLanguage(language)

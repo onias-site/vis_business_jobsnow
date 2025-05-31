@@ -4,7 +4,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.mensageria.JnTopic;
 import com.vis.entities.VisEntityGroupResumeViewsByRecruiter;
 import com.vis.entities.VisEntityResumeFreeView;
-import com.vis.utils.VisAsyncUtils;
+import com.vis.utils.VisUtils;
 
 public class VisBusinessGroupResumeViewsByRecruiter implements JnTopic{
 
@@ -13,7 +13,7 @@ public class VisBusinessGroupResumeViewsByRecruiter implements JnTopic{
 	public static final VisBusinessGroupResumeViewsByRecruiter INSTANCE = new VisBusinessGroupResumeViewsByRecruiter();
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation groupDetailsByMasters = VisAsyncUtils.groupDetailsByMasters(
+		CcpJsonRepresentation groupDetailsByMasters = VisUtils.groupDetailsByMasters(
 				json, 
 				VisEntityResumeFreeView.ENTITY, 
 				VisEntityGroupResumeViewsByRecruiter.ENTITY, 

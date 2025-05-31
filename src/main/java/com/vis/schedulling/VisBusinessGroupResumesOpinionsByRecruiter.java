@@ -4,7 +4,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.mensageria.receiver.CcpTopic;
 import com.vis.entities.VisEntityGroupResumesPerceptionsByRecruiter;
 import com.vis.entities.VisEntityResumePerception;
-import com.vis.utils.VisAsyncUtils;
+import com.vis.utils.VisUtils;
 
 public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpTopic{
 
@@ -13,7 +13,7 @@ public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpTopic{
 	public static final VisBusinessGroupResumesOpinionsByRecruiter INSTANCE = new VisBusinessGroupResumesOpinionsByRecruiter();
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation groupDetailsByMasters = VisAsyncUtils.groupDetailsByMasters(
+		CcpJsonRepresentation groupDetailsByMasters = VisUtils.groupDetailsByMasters(
 				json, 
 				VisEntityResumePerception.ENTITY, 
 				VisEntityGroupResumesPerceptionsByRecruiter.ENTITY, 

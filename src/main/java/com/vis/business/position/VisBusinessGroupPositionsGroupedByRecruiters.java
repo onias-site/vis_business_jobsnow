@@ -2,7 +2,7 @@ package com.vis.business.position;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.mensageria.receiver.CcpTopic;
-import com.vis.utils.VisAsyncUtils;
+import com.vis.utils.VisUtils;
 
 public class VisBusinessGroupPositionsGroupedByRecruiters implements CcpTopic{
 
@@ -12,7 +12,7 @@ public class VisBusinessGroupPositionsGroupedByRecruiters implements CcpTopic{
 	
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation groupPositionsGroupedByRecruiters = VisAsyncUtils.groupPositionsGroupedByRecruiters(json);
+		CcpJsonRepresentation groupPositionsGroupedByRecruiters = VisUtils.groupPositionsGroupedByRecruiters(json);
 		return groupPositionsGroupedByRecruiters;
 	}
 

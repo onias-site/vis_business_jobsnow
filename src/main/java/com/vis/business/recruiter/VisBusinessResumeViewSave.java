@@ -14,11 +14,11 @@ import com.vis.entities.VisEntityResumeFreeView;
 import com.vis.entities.VisEntityResumeLastView;
 import com.vis.entities.VisEntityResumePerception;
 
-public class VisAsyncBusinessResumeViewSave implements CcpTopic{
+public class VisBusinessResumeViewSave implements CcpTopic{
 
-	private VisAsyncBusinessResumeViewSave() {}
+	private VisBusinessResumeViewSave() {}
 	
-	public static final VisAsyncBusinessResumeViewSave INSTANCE = new VisAsyncBusinessResumeViewSave();
+	public static final VisBusinessResumeViewSave INSTANCE = new VisBusinessResumeViewSave();
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		

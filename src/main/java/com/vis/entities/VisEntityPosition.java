@@ -20,16 +20,16 @@ import com.vis.business.position.VisBusinessDuplicateFieldEmailToFieldMasters;
 import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
 import com.vis.business.resume.VisBusinessExtractSkillsFromResumeText;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
-import com.vis.utils.VisAsyncBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
+import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
 
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntityTwin(twinEntityName = "inactive_position")
 @CcpEntitySpecifications(
 		classWithFieldsValidationsRules = CcpIgnoreFieldsValidation.class,
 		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
-		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {VisAsyncBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
+		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		delete = @CcpEntityOperationSpecification(afterOperation = {}),
-	    save = @CcpEntityOperationSpecification(afterOperation = {VisAsyncBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}),
+	    save = @CcpEntityOperationSpecification(afterOperation = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}),
 		cacheableEntity = true
 )
 
