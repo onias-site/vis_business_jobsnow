@@ -16,8 +16,7 @@ import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
-import com.vis.business.resume.VisBusinessExtractSkillsFromResumeText;
-import com.vis.business.resume.VisBusinessExtractTextFromResume;
+import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.business.resume.VisBusinessSaveResumeInBucket;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
@@ -36,8 +35,8 @@ public class VisEntityResume implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
 	//DOUBT DÁ PRA MANTER A ORDEM?
 	public static enum Fields implements CcpEntityField{
-		clt(false, VisBusinessExtractTextFromResume.INSTANCE), // VEM DO FRONT
-		btc(false, VisBusinessExtractSkillsFromResumeText.INSTANCE), // VEM DO FRONT
+		clt(false), // VEM DO FRONT
+		btc(false), // VEM DO FRONT
 		companiesNotAllowed(false), // VEM DO FRONT 
 		date(false),// AUTOMATICO
 		ddd(false), // VEM DO FRONT
@@ -48,7 +47,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		experience(false), // VEM DO FRONT
 		lastJob(false), // VEM DO FRONT
 		pj(false), // VEM DO FRONT
-		skill(false), // CALCULADO
+		skill(false, VisBusinessExtractSkillsFromText.INSTANCE), // CALCULADO
 		timestamp(false),//AUTOMATICO
 		;
 		private final boolean primaryKey;

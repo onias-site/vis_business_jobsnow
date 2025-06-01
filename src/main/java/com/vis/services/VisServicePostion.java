@@ -93,6 +93,7 @@ public class VisServicePostion {
 
 	public CcpJsonRepresentation getResumeContent(CcpJsonRepresentation json) {
 
+		String context = new Object(){}.getClass().getEnclosingMethod().getName();
 		CcpJsonRepresentation findById =  new CcpGetEntityId(json)
 		.toBeginProcedureAnd()
 			.loadThisIdFromEntity(VisEntityPosition.ENTITY).and()
@@ -107,13 +108,14 @@ public class VisServicePostion {
 			.ifThisIdIsPresentInEntity(VisEntityResume.ENTITY.getTwinEntity()).returnStatus(VisProcessStatusResumeView.inactiveResume).and()
 			.ifThisIdIsNotPresentInEntity(VisEntityResume.ENTITY).returnStatus(VisProcessStatusResumeView.resumeNotFound).and()
 			.ifThisIdIsPresentInEntity(VisEntityResume.ENTITY).executeAction(VisBusinessGetResumeContent.INSTANCE).andFinallyReturningTheseFields()
-		.endThisProcedureRetrievingTheResultingData(new Object(){}.getClass().getEnclosingMethod().getName(), VisBusinessResumeSaveViewFailed.INSTANCE, JnDeleteKeysFromCache.INSTANCE);
+		.endThisProcedureRetrievingTheResultingData(context, VisBusinessResumeSaveViewFailed.INSTANCE, JnDeleteKeysFromCache.INSTANCE);
 		
 		return findById;
 	}
 
 	public CcpJsonRepresentation suggestNewSkills(CcpJsonRepresentation json) {
 		
+		String context = new Object(){}.getClass().getEnclosingMethod().getName();
 		CcpJsonRepresentation findById =  new CcpGetEntityId(json)
 		.toBeginProcedureAnd()
 			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).returnStatus(VisProcessStatusSuggestNewSkill.alreadyExists).and()
@@ -124,7 +126,7 @@ public class VisServicePostion {
 			//.and()
 			//.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(new JnMensageriaSender(VisAsyncBusiness.skillsSuggest))
 			.andFinallyReturningTheseFields()
-		.endThisProcedureRetrievingTheResultingData(new Object(){}.getClass().getEnclosingMethod().getName(), CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE);
+		.endThisProcedureRetrievingTheResultingData(context, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE);
 		
 		return findById;
 	}

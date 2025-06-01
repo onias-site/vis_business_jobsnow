@@ -11,7 +11,7 @@ import com.vis.utils.VisUtils;
 public class VisBusinessSaveResumeInBucket implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpFileBucket dependency = CcpDependencyInjection.getDependency(CcpFileBucket.class);
+		CcpFileBucket bucket = CcpDependencyInjection.getDependency(CcpFileBucket.class);
 		
 		String[] fields = new String[] {"fileName", "resumeText", "originalEmail", "name", "observations", "resumeBase64"};
 	
@@ -21,7 +21,7 @@ public class VisBusinessSaveResumeInBucket implements Function<CcpJsonRepresenta
 		String tenant = VisUtils.getTenant();
 		String bucketName = "resumes/" + folderName;
 
-		dependency.save(tenant, bucketName, fileName, fileContent);
+		bucket.save(tenant, bucketName, fileName, fileContent);
 		
 		return json;
 	}

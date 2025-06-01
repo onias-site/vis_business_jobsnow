@@ -20,7 +20,7 @@ public class VisBusinessPositionResumesReceivingByFrequency  implements CcpTopic
 
 		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.valueOf(x.getAsString(VisEntityPosition.Fields.frequency.name())), VisEntityPosition.Fields.timestamp.name());
 
-		Function<String, CcpJsonRepresentation> getLastUpdatedPositions = frequency -> VisUtils.getAllPositionsGroupedByRecruiters(VisFrequencyOptions.valueOf(frequency));
+		Function<VisFrequencyOptions, CcpJsonRepresentation> getLastUpdatedPositions = frequency -> VisUtils.getAllPositionsGroupedByRecruiters(frequency);
 
 		VisUtils.sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(schedullingPlan, getLastUpdatedResumes, getLastUpdatedPositions);
 	

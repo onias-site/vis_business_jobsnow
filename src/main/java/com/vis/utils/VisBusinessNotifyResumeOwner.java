@@ -10,9 +10,10 @@ import com.jn.messages.JnSendMessage;
 public class VisBusinessNotifyResumeOwner implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 
 	public final CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+		String subjectType = this.getClass().getName();
 		CcpJsonRepresentation put = json
 				.renameField("originalEmail", JnEntityEmailMessageSent.Fields.email.name())
-				.put(JnEntityEmailMessageSent.Fields.subjectType.name(), this.getClass().getName());
+				.put(JnEntityEmailMessageSent.Fields.subjectType.name(), subjectType);
 				
 			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language.name());
 			

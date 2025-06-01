@@ -18,7 +18,7 @@ import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 import com.vis.business.position.VisBusinessDuplicateFieldEmailToFieldMasters;
 import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
-import com.vis.business.resume.VisBusinessExtractSkillsFromResumeText;
+import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
 import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
 
@@ -44,7 +44,7 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		contactChannel(false), 
 		date(false),
 		ddd(false), 
-		description(false, VisBusinessExtractSkillsFromResumeText.INSTANCE), 
+		description(false, VisBusinessExtractSkillsFromText.INSTANCE), 
 		desiredSkill(false), 
 		disponibility(false), 
 		email(true, VisJsonTransformerPutEmailHashAndDomainRecruiter.INSTANCE), 

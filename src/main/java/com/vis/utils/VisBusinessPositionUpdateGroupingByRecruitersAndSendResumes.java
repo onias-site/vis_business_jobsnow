@@ -26,7 +26,7 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 		
 		List<String> email = json.getAsStringList(VisEntityPosition.Fields.email.name());
 
-		Function<String, CcpJsonRepresentation> getSavingPosition = frequency -> CcpOtherConstants.EMPTY_JSON.put(email.get(0), json);
+		Function<VisFrequencyOptions, CcpJsonRepresentation> getSavingPosition = frequency -> CcpOtherConstants.EMPTY_JSON.put(email.get(0), json);
 
 		List<CcpJsonRepresentation> positionsWithFilteredAndSortedResumesAndTheirStatis = VisUtils.sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(json, getLastUpdatedResumes, getSavingPosition);
 		

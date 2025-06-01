@@ -4,9 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.vis.entities.VisEntityPosition;
 
 public class VisBusinessResumeSendToRecruiters implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
 	
@@ -16,13 +14,11 @@ public class VisBusinessResumeSendToRecruiters implements Function<CcpJsonRepres
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation resumeWithSkills) {
 		
-		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getSavingResume = x -> Arrays.asList(resumeWithSkills);
+		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> howToObtainResumes = x -> Arrays.asList(resumeWithSkills);
 		
-		Function<String, CcpJsonRepresentation> getLastUpdatedPositions = frequency -> VisUtils.getAllPositionsGroupedByRecruiters(VisFrequencyOptions.valueOf(frequency));
+		Function<VisFrequencyOptions, CcpJsonRepresentation> howToObtainPositionsGroupedByRecruiters = frequency -> VisUtils.getAllPositionsGroupedByRecruiters(frequency);
 		
-		VisUtils.sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(
-				CcpOtherConstants.EMPTY_JSON
-				.put(VisEntityPosition.Fields.frequency.name(), VisFrequencyOptions.minute), getSavingResume, getLastUpdatedPositions);
+		VisUtils.sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(VisFrequencyOptions.minute, howToObtainResumes, howToObtainPositionsGroupedByRecruiters);
 		
 		return resumeWithSkills;
 	}

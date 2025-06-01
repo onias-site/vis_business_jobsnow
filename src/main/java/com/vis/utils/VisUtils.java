@@ -75,26 +75,37 @@ public class VisUtils {
 		CcpJsonRepresentation resume = new CcpJsonRepresentation(resumeJson);
 		return resume;
 	}
+
+	
+	public static List<CcpJsonRepresentation> sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(VisFrequencyOptions frequency, Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> howToObtainResumes, Function<VisFrequencyOptions, CcpJsonRepresentation> howToObtainPositionsGroupedByRecruiters) {
+	
+		CcpJsonRepresentation schedullingPlan = CcpOtherConstants.EMPTY_JSON.put(VisEntityPosition.Fields.frequency.name(), frequency);
+		List<CcpJsonRepresentation> sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter = sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(schedullingPlan, howToObtainResumes, howToObtainPositionsGroupedByRecruiters);
+		return sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter;
+	}
 	
 	//FORGOT BOTAR EM FILA SEPARANDO AS VAGAS EM LOTE DE RECRUTADORES NAO REPETIDOS
 	//FORGOT UNION ALL COMEÇANDO PELOS AGRUPADORES POR CURRICULO E RECRUTADOR
 	//FORGOT PAGINAÇÃO DE BUCKET
 
-	public static List<CcpJsonRepresentation> sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(CcpJsonRepresentation schedullingPlan, Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getResumes, Function<String, CcpJsonRepresentation> getPositions) {
+	public static List<CcpJsonRepresentation> sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(CcpJsonRepresentation schedullingPlan, Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> howToObtainResumes, Function<VisFrequencyOptions, CcpJsonRepresentation> howToObtainPositionsGroupedByRecruiters) {
 		
 		String frequency = schedullingPlan.getAsString(VisEntityPosition.Fields.frequency.name());
 		
-		CcpJsonRepresentation allPositionsGroupedByRecruiters = getPositions.apply(frequency);
-
-		List<CcpJsonRepresentation> resumes = getResumes.apply(schedullingPlan);
-
 		VisFrequencyOptions valueOf = VisFrequencyOptions.valueOf(frequency);
+
+		CcpJsonRepresentation allPositionsGroupedByRecruiters = howToObtainPositionsGroupedByRecruiters.apply(valueOf);
+
+		List<CcpJsonRepresentation> resumes = howToObtainResumes.apply(schedullingPlan);
+
 
 		List<CcpJsonRepresentation> allPositionsWithFilteredResumesAndTheirStatis = VisUtils.getAllPositionsWithFilteredAndSortedResumesAndTheirStatis(allPositionsGroupedByRecruiters, resumes, valueOf);
 
 		List<CcpJsonRepresentation> allPositionsWithFilteredAndSortedResumesAndStatis = allPositionsWithFilteredResumesAndTheirStatis.stream().map(positionsWithFilteredResumes -> getStatisToThisPosition(positionsWithFilteredResumes)).collect(Collectors.toList());
 		
-		new JnFunctionMensageriaSender(VisBusinessPositionResumesSend.INSTANCE).send(allPositionsWithFilteredAndSortedResumesAndStatis);
+		JnFunctionMensageriaSender mensageria = new JnFunctionMensageriaSender(VisBusinessPositionResumesSend.INSTANCE);
+		
+		mensageria.send(allPositionsWithFilteredAndSortedResumesAndStatis);
 		
 		return allPositionsWithFilteredAndSortedResumesAndStatis;
 	}
@@ -201,6 +212,7 @@ public class VisUtils {
 		return result;
 	}
 
+	
 	public static CcpJsonRepresentation getAllPositionsGroupedByRecruiters(VisFrequencyOptions frequency) {
 
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
