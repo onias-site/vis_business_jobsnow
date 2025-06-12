@@ -11,8 +11,8 @@ public class VisBusinessExtractSkillsFromText implements Function<CcpJsonReprese
 	private VisBusinessExtractSkillsFromText() {}
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		// TODO Auto-generated method stub
-		return null;
+		// FIXME Auto-generated method stub
+		return json;
 	}
 
 }
