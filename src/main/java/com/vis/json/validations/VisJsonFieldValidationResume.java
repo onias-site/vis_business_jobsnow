@@ -13,7 +13,26 @@ import com.ccp.validation.enums.CcpObjectTextSizeValidations;
 import com.ccp.validation.enums.CcpSimpleArrayValidations;
 import com.ccp.validation.enums.CcpSimpleObjectValidations;
 import com.ccp.validation.enums.YearValidations;
+/**
+ * Ddd
+ * disabilities
+ * resumeBase64
+ * fileName
+ * 
+ * lastJob
+ * desiredJob
+ * experience
+ * observations
+ * 
+ * maxPj
+ * minPj
+ * maxClt
+ * minClt
+ * maxBtc
+ * minBtc
 
+ * email
+ */
 @CcpJsonFieldsValidation(
 
 		simpleObject = {
