@@ -5,11 +5,14 @@ import java.util.List;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-
+enum GetMoneyValuesFromJsonConstants{
+	moneyValue, moneyType
+	
+}
 public enum GetMoneyValuesFromJson  {
 	resume {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			boolean fieldIsNotPresent = json.containsAllFields(field) == false;
+			boolean fieldIsNotPresent = json.getDynamicVersion().containsAllFields(field) == false;
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
@@ -17,10 +20,11 @@ public enum GetMoneyValuesFromJson  {
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
 			
-			int valueGaveByCandidate = json.getAsDoubleNumber(field).intValue();
+			int valueGaveByCandidate = json.getDynamicVersion().getAsDoubleNumber(field).intValue();
 			
 			for(int k = valueGaveByCandidate; k <= 100000; k += 100) {
-				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put("moneyValue", k).put("moneyType", field);
+				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(GetMoneyValuesFromJsonConstants.moneyValue, k)
+						.put(GetMoneyValuesFromJsonConstants.moneyType, field);
 				response.add(put);
 			}
 			
@@ -28,7 +32,7 @@ public enum GetMoneyValuesFromJson  {
 		}
 	}, position {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			boolean fieldIsNotPresent = json.containsAllFields(field) == false;
+			boolean fieldIsNotPresent = json.getDynamicVersion().containsAllFields(field) == false;
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
@@ -36,10 +40,10 @@ public enum GetMoneyValuesFromJson  {
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
 			
-			int maxValueFromThisPosition = json.getAsDoubleNumber(field).intValue();
+			int maxValueFromThisPosition = json.getDynamicVersion().getAsDoubleNumber(field).intValue();
 			
 			for(int k = maxValueFromThisPosition; k >= 1000; k -= 100) {
-				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put("moneyValue", k).put("moneyType", field);
+				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(GetMoneyValuesFromJsonConstants.moneyValue, k).put(GetMoneyValuesFromJsonConstants.moneyType, field);
 				response.add(put);
 			}
 			
