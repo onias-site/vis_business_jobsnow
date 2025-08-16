@@ -10,7 +10,7 @@ import com.vis.entities.VisEntityPosition;
 public enum VisFunctionsGetPcdValuesFromJson implements Function<CcpJsonRepresentation, List<Boolean>> {
 	resume {
 		public List<Boolean> apply(CcpJsonRepresentation json) {
-			boolean pcdCandidate = json.getAsBoolean("pcd");
+			boolean pcdCandidate = json.getAsBoolean(VisEntityPosition.Fields.pcd);
 
 			if(pcdCandidate) {
 				// Candidatos PCD podem competir a vagas normais e a vagas PCD's.
@@ -21,7 +21,7 @@ public enum VisFunctionsGetPcdValuesFromJson implements Function<CcpJsonRepresen
 		}
 	}, position {
 		public List<Boolean> apply(CcpJsonRepresentation json) {
-			boolean pcd = json.getAsBoolean(VisEntityPosition.Fields.pcd.name());
+			boolean pcd = json.getAsBoolean(VisEntityPosition.Fields.pcd);
 
 			boolean pcdPosition = pcd;
 			// Vagas PCD podem filtrar apenas vagas PCD's.

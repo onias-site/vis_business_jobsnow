@@ -5,7 +5,8 @@ import java.util.List;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-enum GetMoneyValuesFromJsonConstants{
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+enum GetMoneyValuesFromJsonConstants  implements CcpJsonFieldName{
 	moneyValue, moneyType
 	
 }

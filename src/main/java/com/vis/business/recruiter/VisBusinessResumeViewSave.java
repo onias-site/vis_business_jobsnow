@@ -38,11 +38,11 @@ public class VisBusinessResumeViewSave implements CcpTopic{
 		CcpJsonRepresentation resume = VisEntityResume.ENTITY.getInnerJsonFromMainAndTwinEntities(json);
 		
 		CcpJsonRepresentation dataToSave = json
-				.put(VisEntityResumeLastView.Fields.resume.name(), resume)
+				.put(VisEntityResumeLastView.Fields.resume, resume)
 //				.put(VisEntityResumeLastView.Fields.opinion.name(), opinion)
-				.put(VisEntityResumeLastView.Fields.position.name(), position)
-				.put(VisEntityResumeLastView.Fields.inactivePosition.name(), inactivePosition)
-				.put(VisEntityResumeLastView.Fields.negativatedResume.name(), negativatedResume)
+				.put(VisEntityResumeLastView.Fields.position, position)
+				.put(VisEntityResumeLastView.Fields.inactivePosition, inactivePosition)
+				.put(VisEntityResumeLastView.Fields.negativatedResume, negativatedResume)
 				;
 		
 		CcpBulkItem itemResumeLastView = VisEntityResumeLastView.ENTITY.getMainBulkItem(dataToSave, CcpEntityBulkOperationType.create);

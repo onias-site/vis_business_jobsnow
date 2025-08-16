@@ -3,6 +3,7 @@ package com.vis.business.resume;
 import java.util.function.Function;
 
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.CcpEntityCrudOperationType;
 import com.ccp.exceptions.process.CcpErrorFlowDisturb;
 import com.jn.mensageria.JnFunctionMensageriaSender;
@@ -12,7 +13,10 @@ import com.vis.entities.VisEntityResumeLastView;
 import com.vis.entities.VisEntityResumeViewFailed;
 import com.vis.status.VisProcessStatusResumeView;
 import com.vis.utils.VisUtils;
-
+enum VisBusinessGetResumeContentConstants  implements CcpJsonFieldName{
+	status
+	
+}
 public class VisBusinessGetResumeContent implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 	
 	private VisBusinessGetResumeContent() {}
@@ -33,7 +37,7 @@ public class VisBusinessGetResumeContent implements Function<CcpJsonRepresentati
 		boolean insufficientFunds = VisUtils.isInsufficientFunds(1, fee, balance);
 		
 		if(insufficientFunds) {
-			CcpJsonRepresentation put = json.put("status", VisProcessStatusResumeView.insufficientFunds);
+			CcpJsonRepresentation put = json.put(VisBusinessGetResumeContentConstants.status, VisProcessStatusResumeView.insufficientFunds);
 			VisEntityResumeViewFailed.ENTITY.createOrUpdate(put);
 			throw new CcpErrorFlowDisturb(json, VisProcessStatusResumeView.insufficientFunds);
 		}

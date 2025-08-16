@@ -1,12 +1,16 @@
 package com.vis.utils;
 
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.mensageria.receiver.CcpTopic;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessage;
-
-public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic{
+enum VisSendEmailMessageAndRegisterEmailSentConstants implements CcpJsonFieldName{
+	originalEmail
+	
+}
+public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic  , CcpJsonFieldName{
 
 	
 	resumeSuccessSaving,
@@ -16,10 +20,10 @@ public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic{
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		CcpJsonRepresentation put = json
-				.renameField("originalEmail", JnEntityEmailMessageSent.Fields.email.name())
-				.put(JnEntityEmailMessageSent.Fields.subjectType.name(), this.name());
+				.renameField(VisSendEmailMessageAndRegisterEmailSentConstants.originalEmail, JnEntityEmailMessageSent.Fields.email)
+				.put(JnEntityEmailMessageSent.Fields.subjectType, this);
 				
-			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language.name());
+			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language);
 			
 			JnSendMessage sender = new JnSendMessage();
 			sender

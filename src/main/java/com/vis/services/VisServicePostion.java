@@ -3,6 +3,7 @@ package com.vis.services;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
@@ -29,6 +30,11 @@ import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
 import com.vis.status.VisProcessStatusSuggestNewSkill;
 import com.vis.status.VisProcessStatusResumeView;
+
+enum VisServicePostionConstants  implements CcpJsonFieldName{
+	activePosition
+	
+}
 
 public class VisServicePostion {
 	
@@ -61,12 +67,12 @@ public class VisServicePostion {
 		
 		if(activeResume) {
 			CcpJsonRepresentation requiredEntityRow = VisEntityPosition.ENTITY.getRequiredEntityRow(searchResults, json);
-			CcpJsonRepresentation put = requiredEntityRow.put("activePosition", true);
+			CcpJsonRepresentation put = requiredEntityRow.put(VisServicePostionConstants.activePosition, true);
 			return put;
 		}
 		
 		CcpJsonRepresentation requiredEntityRow = mirrorEntity.getRequiredEntityRow(searchResults, json);
-		CcpJsonRepresentation put = requiredEntityRow.put("activePosition", false);
+		CcpJsonRepresentation put = requiredEntityRow.put(VisServicePostionConstants.activePosition, false);
 		return put;
 	}
 

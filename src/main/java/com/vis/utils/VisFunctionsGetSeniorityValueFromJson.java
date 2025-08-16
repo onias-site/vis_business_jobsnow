@@ -10,7 +10,7 @@ import com.vis.entities.VisEntityResume;
 public enum VisFunctionsGetSeniorityValueFromJson implements Function<CcpJsonRepresentation, String> {
 	resume {
 		public String apply(CcpJsonRepresentation json) {
-			Integer experience = json.getAsIntegerNumber(VisEntityResume.Fields.experience.name());
+			Integer experience = json.getAsIntegerNumber(VisEntityResume.Fields.experience);
 			
 			CcpTimeDecorator ctd = new CcpTimeDecorator();
 			int currentYear = ctd.getYear();
@@ -31,7 +31,7 @@ public enum VisFunctionsGetSeniorityValueFromJson implements Function<CcpJsonRep
 		}
 	}, position {
 		public String apply(CcpJsonRepresentation json) {
-			String seniority = json.getAsString(VisEntityPosition.Fields.seniority.name());
+			String seniority = json.getAsString(VisEntityPosition.Fields.seniority);
 			return seniority;
 		}
 	};

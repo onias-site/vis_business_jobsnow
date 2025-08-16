@@ -13,6 +13,7 @@ import com.ccp.decorators.CcpCollectionDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpPropertiesDecorator;
 import com.ccp.decorators.CcpStringDecorator;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.bulk.CcpEntityBulkOperationType;
@@ -42,7 +43,7 @@ import com.vis.entities.VisEntityVirtualHashGrouper;
 import com.vis.exceptions.VisErrorBusinessMissingFeeToFrequency;
 import com.vis.exceptions.VisErrorBusinessRequiredSkillsMissingInResume;
 import com.vis.status.VisProcessStatusResumeView;
-enum VisUtilsConstants{
+enum VisUtilsConstants  implements CcpJsonFieldName{
 	tenant, resumes, statis, resumeOpinion, resumeLastView, requiredSkills, type, synonyms, parents, filterResumesAlreadySeen, owner, masters, index
 	
 }

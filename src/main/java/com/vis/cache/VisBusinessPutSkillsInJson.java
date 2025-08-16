@@ -28,14 +28,14 @@ public class VisBusinessPutSkillsInJson implements Function<CcpJsonRepresentatio
 		CcpCacheDecorator cache = new CcpCacheDecorator("skills");
 		List<CcpJsonRepresentation> resultAsList = cache.get(VisFunctionReadSkillsFromDataBase.INSTANCE, 86400);
 		
-		CcpTextDecorator text = json.getAsTextDecorator(this.fieldTextToRead).sanitize();
+		CcpTextDecorator text = json.getDynamicVersion().getAsTextDecorator(this.fieldTextToRead).sanitize();
 		List<CcpJsonRepresentation> allSkills = new ArrayList<>();
 		for (CcpJsonRepresentation skill : resultAsList) {
 		
 			Set<String> allSynonyms = 
-					skill.getAsJsonList(VisEntitySkill.Fields.synonym.name())
+					skill.getAsJsonList(VisEntitySkill.Fields.synonym)
 					.stream()
-					.map(synonym -> synonym.getAsString(VisEntityResume.Fields.skill.name()))
+					.map(synonym -> synonym.getAsString(VisEntityResume.Fields.skill))
 					.collect(Collectors.toSet());
 			
 			Set<String> wordsThatWasFoundDirectlyInThisText = allSynonyms
@@ -49,21 +49,21 @@ public class VisBusinessPutSkillsInJson implements Function<CcpJsonRepresentatio
 				continue;
 			}
 			
-			List<String> parents = skill.getAsStringList(VisEntitySkill.Fields.parent.name());
+			List<String> parents = skill.getAsStringList(VisEntitySkill.Fields.parent);
 			Set<String> wordsThatWasFoundAsSynonymInThisText = allSynonyms
 			.stream()
 			.filter(synonym -> wordsThatWasFoundDirectlyInThisText.contains(synonym) == false)
 			.collect(Collectors.toSet());
 			List<CcpJsonRepresentation> skills = wordsThatWasFoundDirectlyInThisText.stream().map(
 					word -> CcpOtherConstants.EMPTY_JSON
-										.put(VisEntitySkill.Fields.synonym.name(), wordsThatWasFoundAsSynonymInThisText)
-										.put(VisEntitySkill.Fields.parent.name(), parents)
-										.put(VisEntitySkill.Fields.skill.name(), word)
+										.put(VisEntitySkill.Fields.synonym, wordsThatWasFoundAsSynonymInThisText)
+										.put(VisEntitySkill.Fields.parent, parents)
+										.put(VisEntitySkill.Fields.skill, word)
 					).collect(Collectors.toList());
 			allSkills.addAll(skills);
 		}
 		
-		CcpJsonRepresentation jsonWithSkills = json.put(this.fieldToPut, allSkills);
+		CcpJsonRepresentation jsonWithSkills = json.getDynamicVersion().put(this.fieldToPut, allSkills);
 		return jsonWithSkills;
 	}
 

@@ -14,9 +14,9 @@ public class VisBusinessReadResumeContent implements Function<CcpJsonRepresentat
 	private VisBusinessReadResumeContent() {}
 	
 	public String apply(CcpJsonRepresentation json) {
-		String email = json.getAsString(VisEntityResume.Fields.email.name());
+		String email = json.getAsString(VisEntityResume.Fields.email);
 		String folder = "resumes/" + email;
-		String file = "" + json.getAsLongNumber(VisEntityResume.Fields.timestamp.name());
+		String file = "" + json.getAsLongNumber(VisEntityResume.Fields.timestamp);
 		String tenant = VisUtils.getTenant();
 		String execute = CcpFileBucketOperation.get.execute(tenant, folder, file);
 		return execute;

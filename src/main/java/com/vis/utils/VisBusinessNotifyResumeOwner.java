@@ -3,19 +3,23 @@ package com.vis.utils;
 import java.util.function.Function;
 
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessage;
-
+enum VisBusinessNotifyResumeOwnerConstants  implements CcpJsonFieldName{
+	originalEmail
+	
+}
 public class VisBusinessNotifyResumeOwner implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 
 	public final CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String subjectType = this.getClass().getName();
 		CcpJsonRepresentation put = json
-				.renameField("originalEmail", JnEntityEmailMessageSent.Fields.email.name())
-				.put(JnEntityEmailMessageSent.Fields.subjectType.name(), subjectType);
+				.renameField(VisBusinessNotifyResumeOwnerConstants.originalEmail, JnEntityEmailMessageSent.Fields.email)
+				.put(JnEntityEmailMessageSent.Fields.subjectType, subjectType);
 				
-			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language.name());
+			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language);
 			
 			JnSendMessage sender = new JnSendMessage();
 			sender

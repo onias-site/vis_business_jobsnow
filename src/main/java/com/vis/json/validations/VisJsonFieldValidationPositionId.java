@@ -1,9 +1,9 @@
 package com.vis.json.validations;
 
-import com.ccp.constantes.CcpStringConstants;
+import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.validation.annotations.CcpAllowedValues;
-import com.ccp.validation.annotations.CcpJsonFieldsValidation;
 import com.ccp.validation.annotations.CcpDay;
+import com.ccp.validation.annotations.CcpJsonFieldsValidation;
 import com.ccp.validation.annotations.CcpObjectNumbers;
 import com.ccp.validation.annotations.CcpObjectTextSize;
 import com.ccp.validation.annotations.CcpRegex;
@@ -18,7 +18,7 @@ import com.ccp.validation.enums.CcpSimpleObjectValidations;
 
 @CcpJsonFieldsValidation(
 		regex = {
-				@CcpRegex(value = CcpStringConstants.EMAIL_REGEX, fields = "email")
+				@CcpRegex(value = CcpEmailDecorator.EMAIL_REGEX, fields = "email")
 		},
 		simpleObject = {
 				@CcpSimpleObject(rule = CcpSimpleObjectValidations.requiredFields, fields = { "title", "description",

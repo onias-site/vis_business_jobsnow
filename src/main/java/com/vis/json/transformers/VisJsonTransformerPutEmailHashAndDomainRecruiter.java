@@ -5,10 +5,13 @@ import java.util.function.Function;
 import com.ccp.decorators.CcpHashDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpStringDecorator;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.utils.CcpHashAlgorithm;
 import com.vis.entities.VisEntityDeniedViewToCompany;
 import com.vis.entities.VisEntityResumePerception;
-
+enum VisJsonTransformerPutEmailHashAndDomainRecruiterConstants  implements CcpJsonFieldName{
+	originalRecruiter
+}
 public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
 
 	public final static VisJsonTransformerPutEmailHashAndDomainRecruiter INSTANCE = new VisJsonTransformerPutEmailHashAndDomainRecruiter();
@@ -17,7 +20,7 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements Functio
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		String recruiter = json.getAsString(VisEntityResumePerception.Fields.recruiter.name());
+		String recruiter = json.getAsString(VisEntityResumePerception.Fields.recruiter);
 		
 		String[] split = recruiter.split("@");
 		
@@ -28,9 +31,9 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements Functio
 		String hash = hash2.asString(CcpHashAlgorithm.SHA1);
 		//LATER NONPROFESSIONAL DOMAINS
 		CcpJsonRepresentation put = json
-				.put("originalRecruiter", recruiter)
-				.put(VisEntityResumePerception.Fields.recruiter.name(), hash)
-				.put(VisEntityDeniedViewToCompany.Fields.domain.name(), domain)
+				.put(VisJsonTransformerPutEmailHashAndDomainRecruiterConstants.originalRecruiter, recruiter)
+				.put(VisEntityResumePerception.Fields.recruiter, hash)
+				.put(VisEntityDeniedViewToCompany.Fields.domain, domain)
 				;
 		
 		return put;
