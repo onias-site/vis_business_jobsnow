@@ -6,10 +6,6 @@ import java.util.List;
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-enum GetMoneyValuesFromJsonConstants  implements CcpJsonFieldName{
-	moneyValue, moneyType
-	
-}
 public enum GetMoneyValuesFromJson  {
 	resume {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
@@ -24,8 +20,8 @@ public enum GetMoneyValuesFromJson  {
 			int valueGaveByCandidate = json.getDynamicVersion().getAsDoubleNumber(field).intValue();
 			
 			for(int k = valueGaveByCandidate; k <= 100000; k += 100) {
-				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(GetMoneyValuesFromJsonConstants.moneyValue, k)
-						.put(GetMoneyValuesFromJsonConstants.moneyType, field);
+				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k)
+						.put(JsonFieldNames.moneyType, field);
 				response.add(put);
 			}
 			
@@ -44,7 +40,7 @@ public enum GetMoneyValuesFromJson  {
 			int maxValueFromThisPosition = json.getDynamicVersion().getAsDoubleNumber(field).intValue();
 			
 			for(int k = maxValueFromThisPosition; k >= 1000; k -= 100) {
-				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(GetMoneyValuesFromJsonConstants.moneyValue, k).put(GetMoneyValuesFromJsonConstants.moneyType, field);
+				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k).put(JsonFieldNames.moneyType, field);
 				response.add(put);
 			}
 			
@@ -53,5 +49,8 @@ public enum GetMoneyValuesFromJson  {
 	};
 
 	public abstract List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field);
+	enum JsonFieldNames implements CcpJsonFieldName{
+		moneyValue, moneyType
+	}
 	
 }

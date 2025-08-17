@@ -31,12 +31,11 @@ import com.vis.entities.VisEntitySkillRejected;
 import com.vis.status.VisProcessStatusSuggestNewSkill;
 import com.vis.status.VisProcessStatusResumeView;
 
-enum VisServicePostionConstants  implements CcpJsonFieldName{
-	activePosition
-	
-}
 
 public class VisServicePostion {
+	enum JsonFieldNames implements CcpJsonFieldName{
+		activePosition
+	}
 	
 	private VisServicePostion() {}
 	
@@ -67,12 +66,12 @@ public class VisServicePostion {
 		
 		if(activeResume) {
 			CcpJsonRepresentation requiredEntityRow = VisEntityPosition.ENTITY.getRequiredEntityRow(searchResults, json);
-			CcpJsonRepresentation put = requiredEntityRow.put(VisServicePostionConstants.activePosition, true);
+			CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, true);
 			return put;
 		}
 		
 		CcpJsonRepresentation requiredEntityRow = mirrorEntity.getRequiredEntityRow(searchResults, json);
-		CcpJsonRepresentation put = requiredEntityRow.put(VisServicePostionConstants.activePosition, false);
+		CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, false);
 		return put;
 	}
 
@@ -128,7 +127,7 @@ public class VisServicePostion {
 			.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY.getTwinEntity()).returnStatus(VisProcessStatusSuggestNewSkill.approvedSkill).and()
 			.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY).returnStatus(VisProcessStatusSuggestNewSkill.rejectedSkill).and()
 			.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY).returnStatus(VisProcessStatusSuggestNewSkill.pendingSkill)
-			//TODO
+			//LATER
 			//.and()
 			//.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(new JnMensageriaSender(VisAsyncBusiness.skillsSuggest))
 			.andFinallyReturningTheseFields()

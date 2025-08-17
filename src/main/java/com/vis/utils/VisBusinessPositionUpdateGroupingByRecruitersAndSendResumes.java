@@ -10,11 +10,10 @@ import com.vis.entities.VisEntityGroupResumesByPosition;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeLastView;
-enum VisBusinessPositionUpdateGroupingByRecruitersAndSendResumesConstants  implements CcpJsonFieldName{
-	masters, resumes
-	
-}
 public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes implements  Function<CcpJsonRepresentation, CcpJsonRepresentation>{
+	enum JsonFieldNames implements CcpJsonFieldName{
+		masters, resumes
+	}
 
 	private VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes() {}
 	
@@ -22,7 +21,7 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 	//0
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		CcpJsonRepresentation duplicateValueFromKey = json.duplicateValueFromField(VisEntityPosition.Fields.email, VisBusinessPositionUpdateGroupingByRecruitersAndSendResumesConstants.masters);
+		CcpJsonRepresentation duplicateValueFromKey = json.duplicateValueFromField(VisEntityPosition.Fields.email, JsonFieldNames.masters);
 
 		VisUtils.groupPositionsGroupedByRecruiters(duplicateValueFromKey);
 		
@@ -36,7 +35,7 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 		
 		CcpJsonRepresentation positionWithFilteredAndSortedResumesAndTheirStatis = positionsWithFilteredAndSortedResumesAndTheirStatis.get(0);
 		
-		List<CcpJsonRepresentation> records = positionWithFilteredAndSortedResumesAndTheirStatis.getAsJsonList(VisBusinessPositionUpdateGroupingByRecruitersAndSendResumesConstants.resumes);
+		List<CcpJsonRepresentation> records = positionWithFilteredAndSortedResumesAndTheirStatis.getAsJsonList(JsonFieldNames.resumes);
 		
 		CcpJsonRepresentation position = positionWithFilteredAndSortedResumesAndTheirStatis.getInnerJson(VisEntityResumeLastView.Fields.position);
 

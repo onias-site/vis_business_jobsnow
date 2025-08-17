@@ -9,10 +9,10 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.utils.CcpHashAlgorithm;
 import com.vis.entities.VisEntityDeniedViewToCompany;
 import com.vis.entities.VisEntityResumePerception;
-enum VisJsonTransformerPutEmailHashAndDomainRecruiterConstants  implements CcpJsonFieldName{
-	originalRecruiter
-}
 public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
+	enum JsonFieldNames implements CcpJsonFieldName{
+		originalRecruiter
+	}
 
 	public final static VisJsonTransformerPutEmailHashAndDomainRecruiter INSTANCE = new VisJsonTransformerPutEmailHashAndDomainRecruiter();
 
@@ -31,7 +31,7 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements Functio
 		String hash = hash2.asString(CcpHashAlgorithm.SHA1);
 		//LATER NONPROFESSIONAL DOMAINS
 		CcpJsonRepresentation put = json
-				.put(VisJsonTransformerPutEmailHashAndDomainRecruiterConstants.originalRecruiter, recruiter)
+				.put(JsonFieldNames.originalRecruiter, recruiter)
 				.put(VisEntityResumePerception.Fields.recruiter, hash)
 				.put(VisEntityDeniedViewToCompany.Fields.domain, domain)
 				;

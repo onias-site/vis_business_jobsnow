@@ -8,12 +8,11 @@ import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.text.extractor.CcpTextExtractor;
 import com.vis.exceptions.VisErrorBusinessEmptyResumeText;
 
-enum VisBusinessExtractTextFromResumeConstants  implements CcpJsonFieldName{
-	resumeBase64, resumeText
-	
-}
 
 public class VisBusinessExtractTextFromResume implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
+	enum JsonFieldNames implements CcpJsonFieldName{
+		resumeBase64, resumeText
+	}
 
 	private VisBusinessExtractTextFromResume () {}
 	
@@ -22,7 +21,7 @@ public class VisBusinessExtractTextFromResume implements Function<CcpJsonReprese
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpTextExtractor textExtractor = CcpDependencyInjection.getDependency(CcpTextExtractor.class);
 
-		String resumeBase64 = json.getAsString(VisBusinessExtractTextFromResumeConstants.resumeBase64);
+		String resumeBase64 = json.getAsString(JsonFieldNames.resumeBase64);
 
 		String resumeText = textExtractor.extractText(resumeBase64);
 		
@@ -32,7 +31,7 @@ public class VisBusinessExtractTextFromResume implements Function<CcpJsonReprese
 			throw new VisErrorBusinessEmptyResumeText(json);
 		}
 		
-		CcpJsonRepresentation put = json.put(VisBusinessExtractTextFromResumeConstants.resumeText, resumeText);
+		CcpJsonRepresentation put = json.put(JsonFieldNames.resumeText, resumeText);
 		
 		return put;
 	}

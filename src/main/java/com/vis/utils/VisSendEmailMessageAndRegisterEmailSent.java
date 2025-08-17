@@ -6,21 +6,20 @@ import com.ccp.especifications.mensageria.receiver.CcpTopic;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessage;
-enum VisSendEmailMessageAndRegisterEmailSentConstants implements CcpJsonFieldName{
-	originalEmail
-	
-}
 public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic  , CcpJsonFieldName{
 
 	
 	resumeSuccessSaving,
 	resumeErrorSaving
 ;
+	enum JsonFieldNames implements CcpJsonFieldName{
+		originalEmail
+	}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		CcpJsonRepresentation put = json
-				.renameField(VisSendEmailMessageAndRegisterEmailSentConstants.originalEmail, JnEntityEmailMessageSent.Fields.email)
+				.renameField(JsonFieldNames.originalEmail, JnEntityEmailMessageSent.Fields.email)
 				.put(JnEntityEmailMessageSent.Fields.subjectType, this);
 				
 			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language);

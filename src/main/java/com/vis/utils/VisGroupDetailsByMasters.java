@@ -12,11 +12,10 @@ import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 
-enum VisGroupDetailsByMastersConstants  implements CcpJsonFieldName{
-	entity
-	
-}
 public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>{
+	enum JsonFieldNames implements CcpJsonFieldName{
+		entity
+	}
 	
 	private CcpJsonRepresentation groupedRecords = CcpOtherConstants.EMPTY_JSON;
 
@@ -39,7 +38,7 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 
 	public void accept(CcpJsonRepresentation record) {
 		String master = record.getDynamicVersion().getAsString(this.masterFieldName);
-		String entity = record.getAsString(VisGroupDetailsByMastersConstants.entity);
+		String entity = record.getAsString(JsonFieldNames.entity);
 		CcpJsonRepresentation entityGroup = this.groupedRecords.getDynamicVersion().getInnerJson(entity);
 		entityGroup = entityGroup.addToList(master, record);
 		this.groupedRecords = this.groupedRecords.getDynamicVersion().put(entity, entityGroup);

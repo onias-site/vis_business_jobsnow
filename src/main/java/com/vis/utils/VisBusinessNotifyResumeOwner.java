@@ -7,16 +7,15 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessage;
-enum VisBusinessNotifyResumeOwnerConstants  implements CcpJsonFieldName{
-	originalEmail
-	
-}
 public class VisBusinessNotifyResumeOwner implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
+	enum JsonFieldNames implements CcpJsonFieldName{
+		originalEmail
+	}
 
 	public final CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String subjectType = this.getClass().getName();
 		CcpJsonRepresentation put = json
-				.renameField(VisBusinessNotifyResumeOwnerConstants.originalEmail, JnEntityEmailMessageSent.Fields.email)
+				.renameField(JsonFieldNames.originalEmail, JnEntityEmailMessageSent.Fields.email)
 				.put(JnEntityEmailMessageSent.Fields.subjectType, subjectType);
 				
 			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language);
