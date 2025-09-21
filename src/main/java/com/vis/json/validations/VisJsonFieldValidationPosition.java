@@ -1,83 +1,116 @@
-//package com.vis.json.validations;
-//
-//import com.ccp.decorators.CcpEmailDecorator;
-//import com.ccp.validation.annotations.CcpAllowedValues;
-//import com.ccp.validation.annotations.CcpDay;
-//import com.ccp.validation.annotations.CcpJsonFieldsValidation;
-//import com.ccp.validation.annotations.CcpObjectNumbers;
-//import com.ccp.validation.annotations.CcpObjectTextSize;
-//import com.ccp.validation.annotations.CcpRegex;
-//import com.ccp.validation.annotations.CcpSimpleArray;
-//import com.ccp.validation.annotations.CcpSimpleObject;
-//import com.ccp.validation.enums.CcpAllowedValuesValidations;
-//import com.ccp.validation.enums.CcpDayValidations;
-//import com.ccp.validation.enums.CcpObjectNumberValidations;
-//import com.ccp.validation.enums.CcpObjectTextSizeValidations;
-//import com.ccp.validation.enums.CcpSimpleArrayValidations;
-//import com.ccp.validation.enums.CcpSimpleObjectValidations;
-//
-//@CcpJsonFieldsValidation(
-//		regex = {
-//				@CcpRegex(value = CcpEmailDecorator.EMAIL_REGEX, fields = "email")
-//		},
-//		simpleObject = {
-//				@CcpSimpleObject(rule = CcpSimpleObjectValidations.requiredFields, fields = { "title", "description",
-//						"contactChannel", "expireDate", "mandatorySkill", "desiredSkill", "ddd", "seniority",
-//						"disponibility", "pcd", "sortFields", "frequency", "channel", "showSalaryExpectation" }),
-//				@CcpSimpleObject(rule = CcpSimpleObjectValidations.requiredAtLeastOne, fields = { "maxClt", "maxPj" }),
-//				@CcpSimpleObject(rule = CcpSimpleObjectValidations.requiredAtLeastOne, fields = { "minClt", "minPj" }),
-//				@CcpSimpleObject(rule = CcpSimpleObjectValidations.nonRepeatedLists, fields = { "ddd", "channel" , 
-//						"desiredSkill", "mandatorySkill", "sortFields"}),
-//				@CcpSimpleObject(rule = CcpSimpleObjectValidations.integerFields, fields = { "disponibility" }),
-//				@CcpSimpleObject(rule = CcpSimpleObjectValidations.booleanFields, fields = { "pcd", "showSalaryExpectation" }),
-//		},
-//		allowedValues = { @CcpAllowedValues(rule = CcpAllowedValuesValidations.arrayWithAllowedNumbers, fields = {
-//				"ddd" }, allowedValues = { "10", "61", "62", "64", "65", "66", "67", "82", "71", "73", "74", "75",
-//						"77", "85", "88", "98", "99", "83", "81", "87", "86", "89", "84", "79", "68", "96", "92", "97",
-//						"91", "93", "94", "69", "95", "63", "27", "28", "31", "32", "33", "34", "35", "37", "38", "21",
-//						"22", "24", "11", "12", "13", "14", "15", "16", "17", "18", "19", "41", "42", "43", "44", "45",
-//						"46", "51", "53", "54	", "55", "47", "48", "49" }),
-//				@CcpAllowedValues(rule = CcpAllowedValuesValidations.objectWithAllowedTexts, fields = {
-//						"seniority" }, allowedValues = { "JR", "PL", "SR", "ES" }),
-//				@CcpAllowedValues(rule = CcpAllowedValuesValidations.arrayWithAllowedTexts, fields = {
-//						"sortFields" }, allowedValues = { "seniority", "pj", "clt", "btc", "disponibility",
-//								"desiredSkills"}),
-//				@CcpAllowedValues(rule = CcpAllowedValuesValidations.objectWithAllowedTexts, fields = {
-//						"frequency" }, allowedValues = { "minute", "hourly", "daily", "weekly", "monthly" }),
-//				@CcpAllowedValues(rule = CcpAllowedValuesValidations.arrayWithAllowedTexts, fields = {
-//						"channel" }, allowedValues = { "telegram", "whatsapp", "email", "sms" }),
-//		},
-//		simpleArray = {
-//
-//				@CcpSimpleArray(rule = CcpSimpleArrayValidations.notEmptyArray, fields = { "ddd", "mandatorySkill", "sortFields" }),
-//				@CcpSimpleArray(rule = CcpSimpleArrayValidations.jsonItems, fields = { "desiredSkill" }),
-//				@CcpSimpleArray(rule = CcpSimpleArrayValidations.integerItems, fields = { "ddd" }),
-//		},
-//		objectNumbers = {
-//				@CcpObjectNumbers(rule = CcpObjectNumberValidations.equalsOrGreaterThan, bound = 0, fields = {
-//						"disponibility" }),
-//				@CcpObjectNumbers(rule = CcpObjectNumberValidations.equalsOrLessThan, bound = 365, fields = {
-//						"disponibility" }),
-//				@CcpObjectNumbers(rule = CcpObjectNumberValidations.equalsOrGreaterThan, bound = 1000, fields = { "minBtc",
-//						"minClt", "minPj" }),
-//				@CcpObjectNumbers(rule = CcpObjectNumberValidations.equalsOrLessThan, bound = 100000, fields = { "maxBtc", "maxClt",
-//						"maxPj" }) },
-//		objectTextSize = {
-//				@CcpObjectTextSize(rule = CcpObjectTextSizeValidations.equalsOrGreaterThan, fields = { "title" }, bound = 3),
-//				@CcpObjectTextSize(rule = CcpObjectTextSizeValidations.equalsOrLessThan, fields = { "title" }, bound = 100),
-//				@CcpObjectTextSize(rule = CcpObjectTextSizeValidations.equalsOrGreaterThan, fields = {
-//						"description" }, bound = 200),
-//				@CcpObjectTextSize(rule = CcpObjectTextSizeValidations.equalsOrLessThan, fields = {
-//						"description" }, bound = 10000),
-//				@CcpObjectTextSize(rule = CcpObjectTextSizeValidations.equalsOrGreaterThan, fields = {
-//						"contactChannel" }, bound = 3),
-//				@CcpObjectTextSize(rule = CcpObjectTextSizeValidations.equalsOrLessThan, fields = {
-//						"contactChannel" }, bound = 100),
-//		},
-//		day = { @CcpDay(rule = CcpDayValidations.equalsOrGreaterThan, fields = { "expireDate" }, bound = 0),
-//				@CcpDay(rule = CcpDayValidations.equalsOrLessThan, fields = { "expireDate" }, bound = 365), }
-//
-//)
-//public class VisJsonFieldValidationPosition {
-//
-//}
+package com.vis.json.validations;
+
+import com.ccp.decorators.CcpEmailDecorator;
+import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeArray;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNested;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTime;
+import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
+import com.ccp.json.validations.global.annotations.CcpJsonValidatorGlobal;
+import com.ccp.json.validations.global.annotations.CcpJsonValidatorFieldList;
+
+@CcpJsonValidatorGlobal(requiresAtLeastOne = {
+		@CcpJsonValidatorFieldList({"maxClt", "maxPj" }),
+		@CcpJsonValidatorFieldList({"minClt", "minPj" })
+}, requiresAllOrNone = {
+		@CcpJsonValidatorFieldList({"maxClt", "minClt" }),
+		@CcpJsonValidatorFieldList({"minPj", "maxPj" })
+		
+})
+public class VisJsonFieldValidationPosition {
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(regexValidation = CcpEmailDecorator.EMAIL_REGEX, minLength = 7, maxLength = 100)
+	Object email;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(minLength = 3, maxLength = 100)
+	Object title;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(minLength = 10, maxLength = 10000)
+	Object description;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(minLength = 3, maxLength = 100)
+	Object contactChannel;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Time)
+	@CcpJsonFieldTypeTime(minValue = 0, maxValue = 30, intervalType = CcpEntityExpurgableOptions.daily)
+	Object expireDate;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeArray(nonRepeatedItems = true, minSize = 1)
+	Object mandatorySkill;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Json)
+	@CcpJsonFieldTypeNested
+	@CcpJsonFieldTypeArray
+	Object desiredSkill;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeArray(nonRepeatedItems = true, minSize = 1)
+	@CcpJsonFieldTypeNumber(allowedValues = { 10, 61, 62, 64, 65, 66, 67, 82, 71, 73, 74, 75,
+			77, 85, 88, 98, 99, 83, 81, 87, 86, 89, 84, 79, 68, 96, 92, 97,
+			91, 93, 94, 69, 95, 63, 27, 28, 31, 32, 33, 34, 35, 37, 38, 21,
+			22, 24, 11, 12, 13, 14, 15, 16, 17, 18, 19, 41, 42, 43, 44, 45,
+			46, 51, 53, 54	, 55, 47, 48, 49 })
+	Object ddd;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(allowedValues = { "JR", "PL", "SR", "ES" })
+	@CcpJsonFieldTypeArray(nonRepeatedItems = true)
+	Object seniority;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeTime(minValue = 0, maxValue = 365, intervalType = CcpEntityExpurgableOptions.daily)
+	Object disponibility;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Boolean)
+	Object pcd;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(allowedValues = { "seniority", "pj", "clt", "btc", "disponibility", "desiredSkills" })
+	@CcpJsonFieldTypeArray(nonRepeatedItems = true, minSize = 1)
+	Object sortFields;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(allowedValues = { "minute", "hourly", "daily", "weekly", "monthly" })
+	Object frequency;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(allowedValues = {  "telegram", "whatsapp", "email", "sms" })
+	@CcpJsonFieldTypeArray(nonRepeatedItems = true)
+	Object channel;
+
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Boolean)
+	Object showSalaryExpectation;
+	
+	@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeNumber(minValue = 1000)
+	Object minBtc;
+
+	@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeNumber(maxValue = 100000)
+	Object maxBtc;
+
+	@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeNumber(minValue = 1000)
+	Object minClt;
+
+	@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeNumber(maxValue = 100000)
+	Object maxClt;
+
+	@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeNumber(minValue = 1000)
+	Object minPj;
+
+	@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeNumber(maxValue = 100000)
+	Object maxPj;
+
+}
+
