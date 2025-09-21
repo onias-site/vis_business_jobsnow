@@ -37,8 +37,8 @@ public class VisJsonFieldValidationPosition {
 	@CcpJsonFieldTypeString(minLength = 3, maxLength = 100)
 	Object contactChannel;
 
-	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Time)
-	@CcpJsonFieldTypeTime(minValue = 0, maxValue = 30, intervalType = CcpEntityExpurgableOptions.daily)
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.TimeAfterCurrentDate)
+	@CcpJsonFieldTypeTime(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.yearly)
 	Object expireDate;
 
 	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
@@ -64,8 +64,8 @@ public class VisJsonFieldValidationPosition {
 	@CcpJsonFieldTypeArray(nonRepeatedItems = true)
 	Object seniority;
 
-	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
-	@CcpJsonFieldTypeTime(minValue = 0, maxValue = 365, intervalType = CcpEntityExpurgableOptions.daily)
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.TimeAfterCurrentDate)
+	@CcpJsonFieldTypeTime(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.monthly)
 	Object disponibility;
 
 	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Boolean)
