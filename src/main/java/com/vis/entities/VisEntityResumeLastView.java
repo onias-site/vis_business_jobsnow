@@ -9,13 +9,16 @@ import com.ccp.especifications.db.utils.CcpEntityField;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOperationSpecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpIgnoreFieldsValidation;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 
 @CcpEntitySpecifications(
-		classWithFieldsValidationsRules = CcpIgnoreFieldsValidation.class,
+		classWithFieldsValidationsRules = VisEntityResumeLastView.Fields.class,
 		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		delete = @CcpEntityOperationSpecification(afterOperation = {}),
@@ -27,8 +30,24 @@ public class VisEntityResumeLastView implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResumeLastView.class).entityInstance;
 
 	public static enum Fields implements CcpEntityField{
-		recruiter(true), email(true), date(false), timestamp(false), negativatedResume(false), 
-		inactivePosition(false), resume(false), position(false)
+		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		recruiter(true), 
+		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		email(true), 
+		date(false), 
+		timestamp(false), 
+		@CcpJsonFieldValidator(type = CcpJsonFieldType.Boolean)
+		negativatedResume(false), 
+		@CcpJsonFieldValidator(type = CcpJsonFieldType.Boolean)
+		inactivePosition(false), 
+		@CcpJsonFieldValidator(type = CcpJsonFieldType.NestedJson)
+		@CcpJsonFieldTypeNestedJson//DOUBT DEVE-SE COLOCAR VALIDACAO DO TIPO NATIVO DESTE JSON?
+		resume(false), 
+		@CcpJsonFieldValidator(type = CcpJsonFieldType.NestedJson)
+		@CcpJsonFieldTypeNestedJson//DOUBT DEVE-SE COLOCAR VALIDACAO DO TIPO NATIVO DESTE JSON?
+		position(false)
 		;
 		private final boolean primaryKey;
 

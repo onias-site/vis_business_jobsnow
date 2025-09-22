@@ -10,15 +10,18 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityDecor
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOperationSpecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpIgnoreFieldsValidation;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntitySpecifications(
-		classWithFieldsValidationsRules = CcpIgnoreFieldsValidation.class,
+		classWithFieldsValidationsRules = VisEntityScheduleSendingResumeFees.Fields.class,
 		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		delete = @CcpEntityOperationSpecification(afterOperation = {}),
@@ -30,7 +33,13 @@ public class VisEntityScheduleSendingResumeFees implements CcpEntityConfigurator
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityScheduleSendingResumeFees.class).entityInstance;
 
 	public static enum Fields implements CcpEntityField{
-		fee(false), service(true)
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+		@CcpJsonFieldTypeNumber(minValue = 0)
+		fee(false), 
+		
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		service(true)
 		;
 		private final boolean primaryKey;
 		private final Function<CcpJsonRepresentation, CcpJsonRepresentation> transformer;

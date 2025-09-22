@@ -9,13 +9,17 @@ import com.ccp.especifications.db.utils.CcpEntityField;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOperationSpecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpIgnoreFieldsValidation;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeArray;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 
 @CcpEntitySpecifications(
-		classWithFieldsValidationsRules = CcpIgnoreFieldsValidation.class,
+		classWithFieldsValidationsRules = VisEntitySkillRejected.Fields.class,
 		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		delete = @CcpEntityOperationSpecification(afterOperation = {}),
@@ -27,7 +31,21 @@ public class VisEntitySkillRejected implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillRejected.class).entityInstance;
 	
 	public static enum Fields implements CcpEntityField{
-		skill(true), synonym(false), prerequisite(false), ranking(false)
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		@CcpJsonFieldTypeArray
+		skill(true), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		@CcpJsonFieldTypeArray
+		synonym(false), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		@CcpJsonFieldTypeArray
+		prerequisite(false), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+		@CcpJsonFieldTypeNumber(minValue = 1, integerNumber = true)
+		ranking(false)
 		;
 		private final boolean primaryKey;
 

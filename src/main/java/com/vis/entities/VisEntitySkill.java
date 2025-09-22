@@ -14,13 +14,18 @@ import com.ccp.especifications.db.utils.CcpEntityField;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOperationSpecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpIgnoreFieldsValidation;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeArray;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 
 @CcpEntitySpecifications(
-		classWithFieldsValidationsRules = CcpIgnoreFieldsValidation.class,
+		classWithFieldsValidationsRules = VisEntitySkill.Fields.class,
 		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		delete = @CcpEntityOperationSpecification(afterOperation = {}),
@@ -32,8 +37,31 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkill.class).entityInstance;
 	
 	public static enum Fields implements CcpEntityField{
-		parent(false), positionsCount(false), prerequisite(false), ranking(false), 
-		similar(false), skill(true), synonym(false)
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		@CcpJsonFieldTypeArray
+		parent(false), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+		@CcpJsonFieldTypeNumber(minValue = 1, integerNumber = true)
+		positionsCount(false), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.NestedJson)
+		@CcpJsonFieldTypeNestedJson(validationClass = Word.class)
+		@CcpJsonFieldTypeArray
+		prerequisite(false), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+		@CcpJsonFieldTypeNumber(minValue = 1, integerNumber = true)
+		ranking(false), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.NestedJson)
+		@CcpJsonFieldTypeNestedJson(validationClass = Word.class)
+		@CcpJsonFieldTypeArray
+		similar(false), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		skill(true), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.NestedJson)
+		@CcpJsonFieldTypeNestedJson(validationClass = Synonym.class)
+		@CcpJsonFieldTypeArray
+		synonym(false)
 		;
 		private final boolean primaryKey;
 
@@ -62,4 +90,23 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		;
 		return collect;
 	}
+}
+
+class Word{
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+	Object word;
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Boolean)
+	Object gemini;
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeNumber(minValue = 1, integerNumber = true)
+	Object vagas;
+}
+class Synonym{
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+	Object type;
+	@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+	@CcpJsonFieldTypeNumber(minValue = 1, integerNumber = true)
+	Object positionsCount;
 }

@@ -1,6 +1,4 @@
 package com.vis.entities;
-import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
-
 import java.util.function.Function;
 
 import com.ccp.constantes.CcpOtherConstants;
@@ -12,14 +10,17 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOpera
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTwin;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpIgnoreFieldsValidation;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.entities.decorators.JnEntityVersionable;
+import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntityTwin(twinEntityName = "reallowed_view_to_company")
 @CcpEntitySpecifications(
-		classWithFieldsValidationsRules = CcpIgnoreFieldsValidation.class,
+		classWithFieldsValidationsRules = VisEntityDeniedViewToCompany.Fields.class,
 		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		delete = @CcpEntityOperationSpecification(afterOperation = {}),
@@ -31,7 +32,18 @@ public class VisEntityDeniedViewToCompany implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityDeniedViewToCompany.class).entityInstance;
 
 	public static enum Fields implements CcpEntityField{
-		domain(true), email(true),reasonType(false), reasonText(false)
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(maxLength = 50, minLength = 2)
+		domain(true), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 7, maxLength = 100)
+		email(true),
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(maxLength = 50, minLength = 2)
+		reasonType(false), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(maxLength = 50, minLength = 2)
+		reasonText(false)
 		;
 		private final boolean primaryKey;
 

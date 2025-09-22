@@ -10,16 +10,19 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityExpur
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOperationSpecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpIgnoreFieldsValidation;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.entities.decorators.JnEntityExpurgable;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 
 @CcpEntityExpurgable(expurgTime = CcpEntityExpurgableOptions.yearly, expurgableEntityFactory = JnEntityExpurgable.class)
 @CcpEntitySpecifications(
-		classWithFieldsValidationsRules = CcpIgnoreFieldsValidation.class,
+		classWithFieldsValidationsRules = VisEntityGroupResumesPerceptionsByRecruiter.Fields.class,
 		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
 		delete = @CcpEntityOperationSpecification(afterOperation = {}),
@@ -31,7 +34,18 @@ public class VisEntityGroupResumesPerceptionsByRecruiter implements CcpEntityCon
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityGroupResumesPerceptionsByRecruiter.class).entityInstance;
 	
 	public static enum Fields implements CcpEntityField{
-		detail(false), email(true), listSize(true), from(true)
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		email(true), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
+		@CcpJsonFieldTypeNumber(minValue = 0, integerNumber = true)
+		listSize(true), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		from(true), 
+		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		detail(false)
 		;
 		private final boolean primaryKey;
 
