@@ -15,10 +15,10 @@ import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
+import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
 
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntitySpecifications(
@@ -34,8 +34,7 @@ public class VisEntityBalance implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityBalance.class).entityInstance;
 	
 	public static enum Fields implements CcpEntityField{
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(minLength = 7, maxLength = 100)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
 		email(true), 
 		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
 		@CcpJsonFieldTypeNumber(minValue = 0)

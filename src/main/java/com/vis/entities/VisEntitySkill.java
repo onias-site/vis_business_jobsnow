@@ -23,6 +23,7 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
+import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
 
 @CcpEntitySpecifications(
 		classWithFieldsValidationsRules = VisEntitySkill.Fields.class,
@@ -48,20 +49,19 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeNestedJson(validationClass = Word.class)
 		@CcpJsonFieldTypeArray
 		prerequisite(false), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
-		@CcpJsonFieldTypeNumber(minValue = 1, integerNumber = true)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
 		ranking(false), 
 		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.NestedJson)
 		@CcpJsonFieldTypeNestedJson(validationClass = Word.class)
 		@CcpJsonFieldTypeArray
 		similar(false), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
 		skill(true), 
 		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.NestedJson)
 		@CcpJsonFieldTypeNestedJson(validationClass = Synonym.class)
 		@CcpJsonFieldTypeArray
-		synonym(false)
+		synonym(false),
+		
 		;
 		private final boolean primaryKey;
 

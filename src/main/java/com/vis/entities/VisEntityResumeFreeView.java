@@ -14,10 +14,10 @@ import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.entities.decorators.JnEntityExpurgable;
+import com.jn.json.fields.validation.JnJsonValidationsByFieldName;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
+import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
 
 @CcpEntityExpurgable(expurgTime = CcpEntityExpurgableOptions.monthly, expurgableEntityFactory = JnEntityExpurgable.class)
 @CcpEntitySpecifications(
@@ -34,13 +34,13 @@ public class VisEntityResumeFreeView implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResumeFreeView.class).entityInstance;
 
 	public static enum Fields implements CcpEntityField{
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
 		recruiter(true), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {JnJsonValidationsByFieldName.class})
 		email(true), 
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		date(false), 
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		timestamp(false)
 		;
 		private final boolean primaryKey;

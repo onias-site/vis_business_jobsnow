@@ -12,10 +12,9 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTrans
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
+import com.jn.json.fields.validation.JnJsonValidationsByFieldName;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
+import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
 
 @CcpEntitySpecifications(
 		classWithFieldsValidationsRules = VisEntityResumeViewFailed.Fields.class,
@@ -30,19 +29,18 @@ public class VisEntityResumeViewFailed implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResumeViewFailed.class).entityInstance;
 	
 	public static enum Fields implements CcpEntityField{
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
 		recruiter(true), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		email(true), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		status(true), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.NestedJson)
-		@CcpJsonFieldTypeNestedJson()//DOUBT QUAL JSON ERA ESSE MESMO?
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		json(false), 
-		timestamp(false),date(false),
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
+		timestamp(false),
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
+		date(false),
 		;
 		private final boolean primaryKey;
 

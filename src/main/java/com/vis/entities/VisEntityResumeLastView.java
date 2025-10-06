@@ -15,7 +15,9 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
+import com.jn.json.fields.validation.JnJsonValidationsByFieldName;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
+import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
 
 @CcpEntitySpecifications(
 		classWithFieldsValidationsRules = VisEntityResumeLastView.Fields.class,
@@ -33,10 +35,11 @@ public class VisEntityResumeLastView implements CcpEntityConfigurator {
 		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
 		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
 		recruiter(true), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
 		email(true), 
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		date(false), 
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		timestamp(false), 
 		@CcpJsonFieldValidator(type = CcpJsonFieldType.Boolean)
 		negativatedResume(false), 

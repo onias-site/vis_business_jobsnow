@@ -3,7 +3,6 @@ package com.vis.entities;
 import java.util.function.Function;
 
 import com.ccp.constantes.CcpOtherConstants;
-import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.db.utils.CcpEntityField;
@@ -13,21 +12,21 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpeci
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
-import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeArray;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTime;
 import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.ccp.json.validations.global.annotations.CcpJsonValidatorFieldList;
 import com.ccp.json.validations.global.annotations.CcpJsonValidatorGlobal;
 import com.jn.entities.decorators.JnEntityVersionable;
+import com.jn.json.fields.validation.JnJsonValidationsByFieldName;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.business.resume.VisBusinessSaveResumeInBucket;
+import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
@@ -57,14 +56,9 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		@CcpJsonFieldTypeArray
 		companiesNotAllowed(false), // VEM DO FRONT 
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		date(false),// AUTOMATICO
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Number)
-		@CcpJsonFieldTypeArray(minSize = 1)
-		@CcpJsonFieldTypeNumber(allowedValues = { 10, 61, 62, 64, 65, 66, 67, 82, 71, 73, 74, 75,
-				77, 85, 88, 98, 99, 83, 81, 87, 86, 89, 84, 79, 68, 96, 92, 97,
-				91, 93, 94, 69, 95, 63, 27, 28, 31, 32, 33, 34, 35, 37, 38, 21,
-				22, 24, 11, 12, 13, 14, 15, 16, 17, 18, 19, 41, 42, 43, 44, 45,
-				46, 51, 53, 54	, 55, 47, 48, 49 })
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
 		ddd(false), // VEM DO FRONT
 		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
@@ -73,11 +67,9 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeString(allowedValues = {})//TODO QUAIS?
 		@CcpJsonFieldTypeArray
 		disabilities(false), // VEM DO FRONT
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.TimeAfterCurrentDate)
-		@CcpJsonFieldTypeTime(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.monthly)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
 		disponibility(false), // VEM DO FRONT
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeString(regexValidation = CcpEmailDecorator.EMAIL_REGEX, minLength = 7, maxLength = 100)
+		@CcpJsonFieldValidator(required = true, validationsCatalog = {JnJsonValidationsByFieldName.class})
 		email(true),// VEM DO FRONT
 		@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
 		@CcpJsonFieldTypeNumber(maxValue = 70, minValue = 0)
@@ -91,6 +83,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldValidator(type = CcpJsonFieldType.NestedJson)
 		@CcpJsonFieldTypeNestedJson()//TODO QUAL VALIDACAO?
 		skill(false, VisBusinessExtractSkillsFromText.INSTANCE), // CALCULADO
+		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
 		timestamp(false),//AUTOMATICO
 		;
 		private final boolean primaryKey;
