@@ -32,7 +32,7 @@ public class VisSendRecentUsersToGroupings implements Consumer<List<CcpJsonRepre
 		
 		CcpJsonRepresentation message = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.masters, emails);
 		
-		new JnFunctionMensageriaSender(VisBusinessGroupResumesOpinionsByRecruiter.INSTANCE).send(message);
+		new JnFunctionMensageriaSender(VisBusinessGroupResumesOpinionsByRecruiter.INSTANCE).sendToMensageria(message);
 		VisBusinessGroupResumesOpinionsByResume.INSTANCE.sendToMensageria(message);
 		VisBusinessGroupResumeViewsByRecruiter.INSTANCE.sendToMensageria(message);
 		VisBusinessGroupResumeViewsByResume.INSTANCE.sendToMensageria(message);

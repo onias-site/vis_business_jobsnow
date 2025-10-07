@@ -7,6 +7,7 @@ import com.vis.entities.VisEntityResumePerception;
 import com.vis.utils.VisUtils;
 
 public class VisBusinessGroupResumesOpinionsByResume implements JnTopic{
+	//TODO JSON VALIDATIONS	
 
 	private VisBusinessGroupResumesOpinionsByResume() {}
 	

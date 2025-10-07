@@ -10,12 +10,12 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOpera
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
-import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntitySpecifications(
 		classWithFieldsValidationsRules = VisEntityVirtualHashGrouper.Fields.class,
@@ -30,18 +30,20 @@ public class VisEntityVirtualHashGrouper{
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityVirtualHashGrouper.class).entityInstance;
 
 	public static enum Fields implements CcpEntityField{
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		seniority(true), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		synonym(true),
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		disponibility(true), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		pcd(true), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
-		@CcpJsonFieldTypeNumber(minValue = 0)
+		@CcpJsonFieldTypeNumber(minValue = 1000)
 		moneyValue(true), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
 		@CcpJsonFieldTypeString(allowedValues = {"CLT", "BTC", "PJ"})
 		moneyType(true),
 		;

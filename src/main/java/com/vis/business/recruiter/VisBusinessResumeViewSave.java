@@ -15,6 +15,7 @@ import com.vis.entities.VisEntityResumeLastView;
 import com.vis.entities.VisEntityResumePerception;
 
 public class VisBusinessResumeViewSave implements CcpTopic{
+	//TODO JSON VALIDATIONS	
 
 	private VisBusinessResumeViewSave() {}
 	

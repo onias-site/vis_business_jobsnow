@@ -4,6 +4,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.mensageria.receiver.CcpTopic;
 
 public class VisBusinessPositionResumesSend implements CcpTopic{
+	//TODO JSON VALIDATIONS	
 
 	private VisBusinessPositionResumesSend() {}
 	

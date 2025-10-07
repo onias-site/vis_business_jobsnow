@@ -108,7 +108,7 @@ public class VisUtils {
 		
 		JnFunctionMensageriaSender mensageria = new JnFunctionMensageriaSender(VisBusinessPositionResumesSend.INSTANCE);
 		
-		mensageria.send(allPositionsWithFilteredAndSortedResumesAndStatis);
+		mensageria.sendToMensageria(allPositionsWithFilteredAndSortedResumesAndStatis);
 		
 		return allPositionsWithFilteredAndSortedResumesAndStatis;
 	}

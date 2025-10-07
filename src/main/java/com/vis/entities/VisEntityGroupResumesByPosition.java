@@ -13,10 +13,11 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTrans
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
 import com.jn.entities.decorators.JnEntityExpurgable;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
-import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntityExpurgable(expurgTime = CcpEntityExpurgableOptions.yearly, expurgableEntityFactory = JnEntityExpurgable.class)
 @CcpEntitySpecifications(
@@ -32,17 +33,23 @@ public class VisEntityGroupResumesByPosition implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityGroupResumesByPosition.class).entityInstance;
 	
 	public static enum Fields implements CcpEntityField{
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		email(true), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		listSize(true), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		from(true), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		detail(false),
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		title(true), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		seniority(true), 
 		;
 		private final boolean primaryKey;

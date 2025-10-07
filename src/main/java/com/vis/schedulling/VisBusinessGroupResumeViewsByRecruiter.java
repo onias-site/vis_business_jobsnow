@@ -7,6 +7,7 @@ import com.vis.entities.VisEntityResumeFreeView;
 import com.vis.utils.VisUtils;
 
 public class VisBusinessGroupResumeViewsByRecruiter implements JnTopic{
+	//TODO JSON VALIDATIONS	
 
 	private VisBusinessGroupResumeViewsByRecruiter() {}
 	

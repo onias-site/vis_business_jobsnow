@@ -12,10 +12,11 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpeci
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
-import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntitySpecifications(
@@ -31,10 +32,12 @@ public class VisEntityScheduleSendingResumeFees implements CcpEntityConfigurator
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityScheduleSendingResumeFees.class).entityInstance;
 
 	public static enum Fields implements CcpEntityField{
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		fee(false), 
 		
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		service(true)
 		;
 		private final boolean primaryKey;

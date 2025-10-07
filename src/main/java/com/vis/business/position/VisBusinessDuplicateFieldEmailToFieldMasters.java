@@ -5,6 +5,7 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.mensageria.receiver.CcpTopic;
 import com.vis.entities.VisEntityPosition;
 public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpTopic{
+	//TODO JSON VALIDATIONS	
 	enum JsonFieldNames implements CcpJsonFieldName{
 		masters
 	}

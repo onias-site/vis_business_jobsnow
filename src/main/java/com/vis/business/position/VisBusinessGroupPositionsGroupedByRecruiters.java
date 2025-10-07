@@ -5,6 +5,7 @@ import com.ccp.especifications.mensageria.receiver.CcpTopic;
 import com.vis.utils.VisUtils;
 
 public class VisBusinessGroupPositionsGroupedByRecruiters implements CcpTopic{
+	//TODO JSON VALIDATIONS	
 
 	public static final VisBusinessGroupPositionsGroupedByRecruiters INSTANCE = new VisBusinessGroupPositionsGroupedByRecruiters();
 	

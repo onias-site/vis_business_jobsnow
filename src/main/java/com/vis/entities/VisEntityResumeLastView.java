@@ -11,13 +11,14 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpeci
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
-import com.jn.json.fields.validation.JnJsonValidationsByFieldName;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
-import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntitySpecifications(
 		classWithFieldsValidationsRules = VisEntityResumeLastView.Fields.class,
@@ -32,24 +33,22 @@ public class VisEntityResumeLastView implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResumeLastView.class).entityInstance;
 
 	public static enum Fields implements CcpEntityField{
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.String)
 		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
 		recruiter(true), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		email(true), 
-		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
+		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
 		date(false), 
-		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
-		timestamp(false), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Boolean)
-		negativatedResume(false), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Boolean)
-		inactivePosition(false), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.NestedJson)
-		@CcpJsonFieldTypeNestedJson//DOUBT DEVE-SE COLOCAR VALIDACAO DO TIPO NATIVO DESTE JSON?
+		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
+		timestamp(false),
+		@CcpJsonFieldTypeBoolean
+		negativatedResume(false),
+		@CcpJsonFieldTypeBoolean
+		inactivePosition(false),
+		@CcpJsonFieldTypeNestedJson(validationClass = VisEntityResume.Fields.class)
 		resume(false), 
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.NestedJson)
-		@CcpJsonFieldTypeNestedJson//DOUBT DEVE-SE COLOCAR VALIDACAO DO TIPO NATIVO DESTE JSON?
+		@CcpJsonFieldTypeNestedJson(validationClass = VisEntityPosition.Fields.class)
 		position(false)
 		;
 		private final boolean primaryKey;

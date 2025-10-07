@@ -7,6 +7,7 @@ import com.vis.entities.VisEntityResumePerception;
 import com.vis.utils.VisUtils;
 
 public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpTopic{
+	//TODO JSON VALIDATIONS	
 
 	private VisBusinessGroupResumesOpinionsByRecruiter() {}
 	

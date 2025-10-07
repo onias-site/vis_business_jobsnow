@@ -35,8 +35,6 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements Functio
 				.put(VisEntityResumePerception.Fields.recruiter, hash)
 				.put(VisEntityDeniedViewToCompany.Fields.domain, domain)
 				;
-		
 		return put;
 	}
-
 }

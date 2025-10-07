@@ -6,9 +6,8 @@ import com.ccp.especifications.mensageria.receiver.CcpTopic;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessage;
-public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic  , CcpJsonFieldName{
-
-	
+public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic, CcpJsonFieldName{
+//TODO JSON VALIDATIONS	
 	resumeSuccessSaving,
 	resumeErrorSaving
 ;
@@ -38,9 +37,4 @@ public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic  , CcpJs
 		
 		return json;
 	}
-
-	public Class<?> validationClass() {
-		return this.getClass();
-	}
-
 }

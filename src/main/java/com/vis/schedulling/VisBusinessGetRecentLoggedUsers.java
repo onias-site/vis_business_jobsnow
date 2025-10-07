@@ -11,6 +11,7 @@ import com.vis.utils.VisFrequencyOptions;
 import com.vis.utils.VisSendRecentUsersToGroupings;
 
 public class VisBusinessGetRecentLoggedUsers implements CcpTopic{
+	//TODO JSON VALIDATIONS	
 
 	private VisBusinessGetRecentLoggedUsers() {}
 	

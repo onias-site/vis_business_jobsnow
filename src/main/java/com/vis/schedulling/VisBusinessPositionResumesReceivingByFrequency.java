@@ -11,6 +11,7 @@ import com.vis.utils.VisFrequencyOptions;
 import com.vis.utils.VisUtils;
 
 public class VisBusinessPositionResumesReceivingByFrequency  implements CcpTopic{
+	//TODO JSON VALIDATIONS	
 
 	private VisBusinessPositionResumesReceivingByFrequency() {}
 	

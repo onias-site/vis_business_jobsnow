@@ -14,22 +14,23 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidator;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeArray;
+import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTime;
-import com.ccp.json.validations.fields.enums.CcpJsonFieldType;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
 import com.ccp.json.validations.global.annotations.CcpJsonValidatorFieldList;
 import com.ccp.json.validations.global.annotations.CcpJsonValidatorGlobal;
 import com.jn.entities.decorators.JnEntityVersionable;
-import com.jn.json.fields.validation.JnJsonValidationsByFieldName;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 import com.vis.business.position.VisBusinessDuplicateFieldEmailToFieldMasters;
 import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
 import com.vis.business.resume.VisBusinessExtractSkillsFromText;
-import com.vis.json.fields.validation.VisJsonValidationsByFieldName;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
 import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
 
@@ -57,69 +58,66 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;
 
 	public static enum Fields implements CcpEntityField{
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValues = {  "telegram", "whatsapp", "email", "sms" })
-		@CcpJsonFieldTypeArray
+		@CcpJsonFieldValidatorArray
 		channel(false), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 100)
 		contactChannel(false), 
-		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
+		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
 		date(false),
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		ddd(false), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 10, maxLength = 10000)
 		description(false, VisBusinessExtractSkillsFromText.INSTANCE), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.NestedJson)
 		@CcpJsonFieldTypeNestedJson
-		@CcpJsonFieldTypeArray
+		@CcpJsonFieldValidatorArray
 		desiredSkill(false), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		disponibility(false), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {JnJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
 		email(true, VisJsonTransformerPutEmailHashAndDomainRecruiter.INSTANCE), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.TimeAfterCurrentDate)
-		@CcpJsonFieldTypeTime(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.yearly)
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonFieldTypeTimeBefore(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.yearly)
 		expireDate(false), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValues = { "minute", "hourly", "daily", "weekly", "monthly" })
 		frequency(false), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		pcd(false), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
-		@CcpJsonFieldTypeArray(minSize = 1)
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonFieldValidatorArray(minSize = 1)
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 30)
 		requiredSkill(false), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		seniority(true), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.String)
+		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValues = { "seniority", "pj", "clt", "btc", "disponibility", "desiredSkills" })
-		@CcpJsonFieldTypeArray(minSize = 1)
+		@CcpJsonFieldValidatorArray(minSize = 1)
 		sortFields(false), 
-		@CcpJsonFieldValidator(validationsCatalog = {JnJsonValidationsByFieldName.class})
+		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
 		timestamp(false), 
-		@CcpJsonFieldValidator(required = true, validationsCatalog = {VisJsonValidationsByFieldName.class})
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
 		title(true), 
-		@CcpJsonFieldValidator(required = true, type = CcpJsonFieldType.Boolean)
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonFieldTypeBoolean
 		showSalaryExpectation(false),
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
 		@CcpJsonFieldTypeNumber(minValue = 1000)
 		minBtc(false),
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
 		@CcpJsonFieldTypeNumber(maxValue = 100000)
 		maxBtc(false),
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
 		@CcpJsonFieldTypeNumber(minValue = 1000)
 		minClt(false),
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
 		@CcpJsonFieldTypeNumber(maxValue = 100000)
 		maxClt(false),
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
 		@CcpJsonFieldTypeNumber(minValue = 1000)
 		minPj(false),
-
-		@CcpJsonFieldValidator(type = CcpJsonFieldType.Number)
 		@CcpJsonFieldTypeNumber(maxValue = 100000)
 		maxPj(false),
 		;
