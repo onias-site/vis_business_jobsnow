@@ -2,7 +2,6 @@ package com.vis.json.fields.validation;
 
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberNatural;
@@ -11,7 +10,6 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefo
 
 public enum VisJsonCommonsFields{
 	
-	@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
 	@CcpJsonFieldTypeNumber(allowedValues = { 10, 61, 62, 64, 65, 66, 67, 82,
 			71, 73, 74, 75,77, 85, 88, 98, 99, 83, 81, 87, 86, 89, 84, 79, 68, 96, 
 			92, 97,	91, 93, 94, 69, 95, 63, 27, 28, 31, 32, 33, 34, 35, 37, 38, 21,
@@ -41,16 +39,13 @@ public enum VisJsonCommonsFields{
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 	service,
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-	@CcpJsonFieldValidatorArray
 	prerequisite, 
 	@CcpJsonFieldTypeNumberNatural(minValue = 1)
 	ranking,
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-	@CcpJsonFieldValidatorArray
 	synonym, 
 	@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
 	email, 
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-	@CcpJsonFieldValidatorArray
 	skill, 
 }

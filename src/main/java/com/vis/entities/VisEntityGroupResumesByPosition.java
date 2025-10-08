@@ -14,7 +14,7 @@ import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
-import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
+import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.jn.entities.decorators.JnEntityExpurgable;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -34,22 +34,22 @@ public class VisEntityGroupResumesByPosition implements CcpEntityConfigurator {
 	
 	public static enum Fields implements CcpEntityField{
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		email(true), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		listSize(true), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		from(true), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		detail(false),
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		title(true), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		seniority(true), 
 		;
 		private final boolean primaryKey;

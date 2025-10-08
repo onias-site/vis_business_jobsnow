@@ -15,7 +15,7 @@ import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
-import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
+import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberNatural;
@@ -54,10 +54,11 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		@CcpJsonFieldValidatorArray
 		companiesNotAllowed(false),  
-		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date(false),
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ddd(false), 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
@@ -66,10 +67,10 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorArray
 		disabilities(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		disponibility(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email(true),
 		@CcpJsonFieldTypeNumberNatural(maxValue = 70)
 		experience(false), 
@@ -79,7 +80,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		pj(false), 
 		@CcpJsonFieldTypeNestedJson(validationClass = Skill.class)
 		skill(false, VisBusinessExtractSkillsFromText.INSTANCE), 
-		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp(false),
 		;
 		private final boolean primaryKey;

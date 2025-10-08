@@ -13,7 +13,8 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
-import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
+import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
@@ -32,16 +33,18 @@ public class VisEntitySkillPending implements CcpEntityConfigurator {
 	
 	public static enum Fields implements CcpEntityField{
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		skill(true), 
+		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		synonym(false), 
+		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		prerequisite(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ranking(false)
 		;
 		private final boolean primaryKey;

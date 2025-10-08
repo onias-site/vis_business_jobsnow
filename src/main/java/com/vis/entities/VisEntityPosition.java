@@ -14,7 +14,7 @@ import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
-import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
+import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
@@ -65,10 +65,11 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 100)
 		contactChannel(false), 
-		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date(false),
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ddd(false), 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 10, maxLength = 10000)
@@ -77,10 +78,10 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorArray
 		desiredSkill(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		disponibility(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email(true, VisJsonTransformerPutEmailHashAndDomainRecruiter.INSTANCE), 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeTimeBefore(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.yearly)
@@ -88,22 +89,22 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValues = { "minute", "hourly", "daily", "weekly", "monthly" })
 		frequency(false), 
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		pcd(false), 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 30)
 		requiredSkill(false), 
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		seniority(true), 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValues = { "seniority", "pj", "clt", "btc", "disponibility", "desiredSkills" })
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		sortFields(false), 
-		@CcpJsonCommonsFields(JnJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		title(true), 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeBoolean

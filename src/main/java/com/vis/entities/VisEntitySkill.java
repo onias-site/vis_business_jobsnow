@@ -18,7 +18,7 @@ import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
-import com.ccp.json.validations.fields.annotations.CcpJsonCommonsFields;
+import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberNatural;
@@ -51,18 +51,18 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorArray
 		prerequisite(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ranking(false), 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNestedJson(validationClass = Word.class)
 		@CcpJsonFieldValidatorArray
 		similar(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCommonsFields(VisJsonCommonsFields.class)
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		skill(true), 
+		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNestedJson(validationClass = Synonym.class)
-		@CcpJsonFieldValidatorArray
 		synonym(false),
 		
 		;
