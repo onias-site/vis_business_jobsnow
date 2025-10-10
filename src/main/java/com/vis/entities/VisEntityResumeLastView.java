@@ -42,9 +42,9 @@ public class VisEntityResumeLastView implements CcpEntityConfigurator {
 		negativatedResume(false),
 		@CcpJsonFieldTypeBoolean
 		inactivePosition(false),
-		@CcpJsonFieldTypeNestedJson(validationClass = VisEntityResume.Fields.class)
+		@CcpJsonFieldTypeNestedJson(jsonValidation = VisEntityResume.Fields.class)
 		resume(false), 
-		@CcpJsonFieldTypeNestedJson(validationClass = VisEntityPosition.Fields.class)
+		@CcpJsonFieldTypeNestedJson(jsonValidation = VisEntityPosition.Fields.class)
 		position(false)
 		;
 		private final boolean primaryKey;

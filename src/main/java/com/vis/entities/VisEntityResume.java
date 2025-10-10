@@ -31,15 +31,13 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntityTwin(
 		twinEntityName = "inactive_resume"
-		,afterInactivateRecordWhenNotFound = {}, 
-		afterReactivateRecordWhenNotFound = {},
-		afterInactivateRecordWhenFound = {}, 
-		afterReactivateRecordWhenFound = {}
+		,afterInactivate = {}, 
+		 afterReactivate = {}
 		)
 @CcpEntitySpecifications(
+		afterSaveRecord = {VisBusinessSaveResumeInBucket.class, VisBusinessResumeSendToRecruiters.class},
 		jsonValidation = VisEntityResume.Fields.class,
 		cacheableEntity = true, 
-		afterSaveRecord = {VisBusinessSaveResumeInBucket.class, VisBusinessResumeSendToRecruiters.class},
 		afterDeleteRecord = {} 
 )
 @CcpJsonGlobalValidations(requiresAtLeastOne = {
@@ -80,7 +78,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		lastJob(false), 
 		@CcpJsonFieldTypeNumber(maxValue = 100000, minValue = 1000)
 		pj(false), 
-		@CcpJsonFieldTypeNestedJson(validationClass = Skill.class)
+		@CcpJsonFieldTypeNestedJson(jsonValidation = Skill.class)
 		skill(false, VisBusinessExtractSkillsFromText.INSTANCE), 
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp(false),
@@ -107,18 +105,18 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		}
 	}
 	
-	class Skill{
+	enum Skill{
 		
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
 		@CcpJsonFieldValidatorArray
-		Object parent;
+		parent,
 		
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
 		@CcpJsonFieldValidatorArray
-		Object synonym;
+		synonym,
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
-		Object skill;
+		skill;
 	}
 }
 

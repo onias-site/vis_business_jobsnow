@@ -4,13 +4,13 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.query.CcpDbQueryOptions;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.jn.entities.JnEntityDisposableRecord;
 import com.jn.entities.JnEntityLoginSessionValidation;
 import com.vis.utils.VisFrequencyOptions;
 import com.vis.utils.VisSendRecentUsersToGroupings;
 
-public class VisBusinessGetRecentLoggedUsers implements CcpTopic{
+public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 
 	private VisBusinessGetRecentLoggedUsers() {}

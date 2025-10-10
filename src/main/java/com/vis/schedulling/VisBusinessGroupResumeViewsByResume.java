@@ -1,12 +1,12 @@
 package com.vis.schedulling;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.jn.mensageria.JnTopic;
+import com.jn.mensageria.JnBusiness;
 import com.vis.entities.VisEntityGroupResumeViewsByResume;
 import com.vis.entities.VisEntityResumeFreeView;
 import com.vis.utils.VisUtils;
 
-public class VisBusinessGroupResumeViewsByResume implements JnTopic{
+public class VisBusinessGroupResumeViewsByResume implements JnBusiness{
 	//TODO JSON VALIDATIONS	
 
 	private VisBusinessGroupResumeViewsByResume() {}

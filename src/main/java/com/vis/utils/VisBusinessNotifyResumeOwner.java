@@ -6,7 +6,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
-import com.jn.messages.JnSendMessage;
+import com.jn.messages.JnSendMessageToUser;
 public class VisBusinessNotifyResumeOwner implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 	enum JsonFieldNames implements CcpJsonFieldName{
 		originalEmail
@@ -20,7 +20,7 @@ public class VisBusinessNotifyResumeOwner implements Function<CcpJsonRepresentat
 				
 			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language);
 			
-			JnSendMessage sender = new JnSendMessage();
+			JnSendMessageToUser sender = new JnSendMessageToUser();
 			sender
 			.addDefaultProcessForEmailSending()
 			.soWithAllAddedProcessAnd()

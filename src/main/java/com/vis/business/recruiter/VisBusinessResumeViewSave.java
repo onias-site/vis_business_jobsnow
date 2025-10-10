@@ -6,7 +6,7 @@ import java.util.List;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.bulk.CcpEntityBulkOperationType;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
@@ -14,7 +14,7 @@ import com.vis.entities.VisEntityResumeFreeView;
 import com.vis.entities.VisEntityResumeLastView;
 import com.vis.entities.VisEntityResumePerception;
 
-public class VisBusinessResumeViewSave implements CcpTopic{
+public class VisBusinessResumeViewSave implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 
 	private VisBusinessResumeViewSave() {}

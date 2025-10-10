@@ -2,11 +2,11 @@ package com.vis.utils;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
-import com.jn.messages.JnSendMessage;
-public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic, CcpJsonFieldName{
+import com.jn.messages.JnSendMessageToUser;
+public enum VisSendEmailMessageAndRegisterEmailSent implements CcpBusiness, CcpJsonFieldName{
 //TODO JSON VALIDATIONS	
 	resumeSuccessSaving,
 	resumeErrorSaving
@@ -23,7 +23,7 @@ public enum VisSendEmailMessageAndRegisterEmailSent implements CcpTopic, CcpJson
 				
 			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language);
 			
-			JnSendMessage sender = new JnSendMessage();
+			JnSendMessageToUser sender = new JnSendMessageToUser();
 			sender
 			.addDefaultProcessForEmailSending()
 			.soWithAllAddedProcessAnd()

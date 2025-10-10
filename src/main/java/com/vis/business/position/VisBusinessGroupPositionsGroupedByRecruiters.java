@@ -1,10 +1,10 @@
 package com.vis.business.position;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.vis.utils.VisUtils;
 
-public class VisBusinessGroupPositionsGroupedByRecruiters implements CcpTopic{
+public class VisBusinessGroupPositionsGroupedByRecruiters implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 
 	public static final VisBusinessGroupPositionsGroupedByRecruiters INSTANCE = new VisBusinessGroupPositionsGroupedByRecruiters();

@@ -6,12 +6,12 @@ import java.util.function.Function;
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.vis.entities.VisEntityGroupResumesByPosition;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeLastView;
-public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes implements CcpTopic{
+public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes implements CcpBusiness{
 	enum JsonFieldNames implements CcpJsonFieldName{
 		masters, resumes
 	}

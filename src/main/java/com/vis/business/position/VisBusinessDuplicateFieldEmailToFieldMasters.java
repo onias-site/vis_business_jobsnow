@@ -2,9 +2,9 @@ package com.vis.business.position;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.vis.entities.VisEntityPosition;
-public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpTopic{
+public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 	enum JsonFieldNames implements CcpJsonFieldName{
 		masters

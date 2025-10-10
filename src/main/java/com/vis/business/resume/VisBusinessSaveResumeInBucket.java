@@ -4,13 +4,13 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.file.bucket.CcpFileBucket;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.vis.entities.VisEntityResume;
 import com.vis.utils.VisUtils;
 
-public class VisBusinessSaveResumeInBucket implements CcpTopic {
+public class VisBusinessSaveResumeInBucket implements CcpBusiness {
 	
 	public static enum JsonFieldNames implements CcpJsonFieldName{
 		@CcpJsonFieldValidatorRequired

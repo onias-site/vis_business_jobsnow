@@ -36,10 +36,8 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 @CcpEntityTwin(
 		twinEntityName = "inactive_position"
 
-		,afterReactivateRecordWhenNotFound = {},
-		afterInactivateRecordWhenFound = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, 
-		afterReactivateRecordWhenFound = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, 
-		afterInactivateRecordWhenNotFound = {}
+		,afterReactivate = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
+		afterInactivate = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}
 		)
 @CcpEntitySpecifications(
 		afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},

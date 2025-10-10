@@ -18,11 +18,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntityTwin(
 		twinEntityName = "skill_approved"
-
-		,afterReactivateRecordWhenNotFound = {},
-		afterInactivateRecordWhenNotFound = {},
-		afterInactivateRecordWhenFound = {}, 
-		afterReactivateRecordWhenFound = {} 
+		,afterReactivate = {},
+		 afterInactivate = {}
 		)
 @CcpEntitySpecifications(
 		jsonValidation = VisEntitySkillPending.Fields.class,

@@ -21,10 +21,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityTwin(
 		twinEntityName = "reallowed_view_to_company"
 
-		,afterReactivateRecordWhenNotFound = {},
-		afterInactivateRecordWhenFound = {}, 
-		afterReactivateRecordWhenFound = {}, 
-		afterInactivateRecordWhenNotFound = {}
+		,afterReactivate = {},
+		 afterInactivate = {}
 		)
 @CcpEntitySpecifications(
 		jsonValidation = VisEntityDeniedViewToCompany.Fields.class,

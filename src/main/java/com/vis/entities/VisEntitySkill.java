@@ -43,14 +43,14 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
 		positionsCount(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeNestedJson(validationClass = Word.class)
+		@CcpJsonFieldTypeNestedJson(jsonValidation = Word.class)
 		@CcpJsonFieldValidatorArray
 		prerequisite(false), 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ranking(false), 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeNestedJson(validationClass = Word.class)
+		@CcpJsonFieldTypeNestedJson(jsonValidation = Word.class)
 		@CcpJsonFieldValidatorArray
 		similar(false), 
 		@CcpJsonFieldValidatorRequired
@@ -58,7 +58,7 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		skill(true), 
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeNestedJson(validationClass = Synonym.class)
+		@CcpJsonFieldTypeNestedJson(jsonValidation = Synonym.class)
 		synonym(false),
 		
 		;
@@ -91,17 +91,17 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	}
 }
 
-class Word{
+enum Word{
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-	Object word;
+	word,
 	@CcpJsonFieldTypeBoolean
-	Object gemini;
+	gemini,
 	@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
-	Object vagas;
+	vagas;
 }
-class Synonym{
+enum Synonym{
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-	Object type;
+	type,
 	@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
-	Object positionsCount;
+	positionsCount;
 }

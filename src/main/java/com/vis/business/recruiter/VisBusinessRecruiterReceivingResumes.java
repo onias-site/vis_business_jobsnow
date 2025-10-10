@@ -1,9 +1,9 @@
 package com.vis.business.recruiter;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 
-public class VisBusinessRecruiterReceivingResumes implements CcpTopic{
+public class VisBusinessRecruiterReceivingResumes implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 
 	private VisBusinessRecruiterReceivingResumes() {}
