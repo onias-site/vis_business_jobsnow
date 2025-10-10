@@ -4,7 +4,7 @@ import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberNatural;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
 
@@ -18,7 +18,7 @@ public enum VisJsonCommonsFields{
 	ddd, 
 	@CcpJsonFieldTypeString(maxLength = 50, minLength = 2)
 	domain, 
-	@CcpJsonFieldTypeNumberNatural
+	@CcpJsonFieldTypeNumberUnsigned
 	listSize, 
 	@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
 	from, 
@@ -40,7 +40,7 @@ public enum VisJsonCommonsFields{
 	service,
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 	prerequisite, 
-	@CcpJsonFieldTypeNumberNatural(minValue = 1)
+	@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
 	ranking,
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 	synonym, 

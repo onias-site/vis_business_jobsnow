@@ -7,21 +7,19 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.db.utils.CcpEntityField;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityDecorators;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOperationSpecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberNatural;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.global.annotations.CcpJsonValidatorFieldList;
-import com.ccp.json.validations.global.annotations.CcpJsonValidatorGlobal;
+import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
+import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
@@ -31,17 +29,21 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
-@CcpEntityTwin(twinEntityName = "inactive_resume")
+@CcpEntityTwin(
+		twinEntityName = "inactive_resume"
+		,afterInactivateRecordWhenNotFound = {}, 
+		afterReactivateRecordWhenNotFound = {},
+		afterInactivateRecordWhenFound = {}, 
+		afterReactivateRecordWhenFound = {}
+		)
 @CcpEntitySpecifications(
-		classWithFieldsValidationsRules = VisEntityResume.Fields.class,
-		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
-		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
-		delete = @CcpEntityOperationSpecification(afterOperation = {}),
-	    save = @CcpEntityOperationSpecification(afterOperation = {VisBusinessSaveResumeInBucket.class, VisBusinessResumeSendToRecruiters.class }),
-		cacheableEntity = true
+		jsonValidation = VisEntityResume.Fields.class,
+		cacheableEntity = true, 
+		afterSaveRecord = {VisBusinessSaveResumeInBucket.class, VisBusinessResumeSendToRecruiters.class},
+		afterDeleteRecord = {} 
 )
-@CcpJsonValidatorGlobal(requiresAtLeastOne = {
-		@CcpJsonValidatorFieldList({"pj", "clt" })
+@CcpJsonGlobalValidations(requiresAtLeastOne = {
+		@CcpJsonValidationFieldList({"pj", "clt" })
 })
 public class VisEntityResume implements CcpEntityConfigurator {
 	
@@ -72,7 +74,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email(true),
-		@CcpJsonFieldTypeNumberNatural(maxValue = 70)
+		@CcpJsonFieldTypeNumberUnsigned(maxValue = 70)
 		experience(false), 
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		lastJob(false), 

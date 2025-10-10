@@ -7,9 +7,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.db.utils.CcpEntityField;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityDecorators;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityOperationSpecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTransferOperationEspecification;
 import com.ccp.especifications.db.utils.decorators.configurations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
@@ -22,8 +20,8 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJs
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
-import com.ccp.json.validations.global.annotations.CcpJsonValidatorFieldList;
-import com.ccp.json.validations.global.annotations.CcpJsonValidatorGlobal;
+import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
+import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
@@ -35,22 +33,27 @@ import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruite
 import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
 
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
-@CcpEntityTwin(twinEntityName = "inactive_position")
+@CcpEntityTwin(
+		twinEntityName = "inactive_position"
+
+		,afterReactivateRecordWhenNotFound = {},
+		afterInactivateRecordWhenFound = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, 
+		afterReactivateRecordWhenFound = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, 
+		afterInactivateRecordWhenNotFound = {}
+		)
 @CcpEntitySpecifications(
-		classWithFieldsValidationsRules = VisEntityPosition.Fields.class,
-		inactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
-		reactivate = @CcpEntityTransferOperationEspecification(whenRecordToTransferIsFound = @CcpEntityOperationSpecification(afterOperation = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}), whenRecordToTransferIsNotFound = @CcpEntityOperationSpecification(afterOperation = {})),
-		delete = @CcpEntityOperationSpecification(afterOperation = {}),
-	    save = @CcpEntityOperationSpecification(afterOperation = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}),
-		cacheableEntity = true
+		afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
+		jsonValidation = VisEntityPosition.Fields.class,
+		cacheableEntity = true, 
+		afterDeleteRecord = {} 
 )
 
-@CcpJsonValidatorGlobal(requiresAtLeastOne = {
-		@CcpJsonValidatorFieldList({"maxClt", "maxPj" }),
-		@CcpJsonValidatorFieldList({"minClt", "minPj" })
+@CcpJsonGlobalValidations(requiresAtLeastOne = {
+		@CcpJsonValidationFieldList({"maxClt", "maxPj" }),
+		@CcpJsonValidationFieldList({"minClt", "minPj" })
 }, requiresAllOrNone = {
-		@CcpJsonValidatorFieldList({"maxClt", "minClt" }),
-		@CcpJsonValidatorFieldList({"minPj", "maxPj" })
+		@CcpJsonValidationFieldList({"maxClt", "minClt" }),
+		@CcpJsonValidationFieldList({"minPj", "maxPj" })
 })
 //FIXME MUDAR TABELA
 public class VisEntityPosition implements CcpEntityConfigurator {

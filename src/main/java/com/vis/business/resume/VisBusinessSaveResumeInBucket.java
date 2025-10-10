@@ -1,17 +1,29 @@
 package com.vis.business.resume;
 
-import java.util.function.Function;
-
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.file.bucket.CcpFileBucket;
+import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.vis.entities.VisEntityResume;
 import com.vis.utils.VisUtils;
 
-public class VisBusinessSaveResumeInBucket implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
-	enum JsonFieldNames implements CcpJsonFieldName{
-		fileName, resumeText, originalEmail, name, observations, resumeBase64
+public class VisBusinessSaveResumeInBucket implements CcpTopic {
+	
+	public static enum JsonFieldNames implements CcpJsonFieldName{
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonFieldTypeString(minLength = 5, maxLength = 100)
+		fileName, 
+		@CcpJsonFieldTypeString(minLength = 512, maxLength = 10_485_760)
+		resumeText, 
+		originalEmail, //TODO
+		@CcpJsonFieldTypeString(maxLength = 5000)
+		observations, 
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonFieldTypeString(minLength = 512, maxLength = 10_485_760)
+		resumeBase64,
 	}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
