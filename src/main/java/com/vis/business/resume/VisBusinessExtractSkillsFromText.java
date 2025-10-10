@@ -1,10 +1,9 @@
 package com.vis.business.resume;
 
-import java.util.function.Function;
-
 import com.ccp.decorators.CcpJsonRepresentation;
-
-public class VisBusinessExtractSkillsFromText implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
+//FIXME EXTRAIR SKILLS NO ENDPOINT DE SALVAMENTO DE CURRICULOS
+public class VisBusinessExtractSkillsFromText implements CcpBusiness {
 	
 	public final static VisBusinessExtractSkillsFromText INSTANCE = new VisBusinessExtractSkillsFromText();
 	

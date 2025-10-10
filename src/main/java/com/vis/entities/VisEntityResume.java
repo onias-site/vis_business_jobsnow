@@ -23,7 +23,6 @@ import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
-import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.business.resume.VisBusinessSaveResumeInBucket;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
@@ -79,7 +78,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeNumber(maxValue = 100000, minValue = 1000)
 		pj(false), 
 		@CcpJsonFieldTypeNestedJson(jsonValidation = Skill.class)
-		skill(false, VisBusinessExtractSkillsFromText.INSTANCE), 
+		skill(false), 
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp(false),
 		;

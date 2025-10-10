@@ -1,10 +1,9 @@
 package com.vis.business.resume;
 
-import java.util.function.Function;
-
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.CcpEntityCrudOperationType;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.vis.entities.VisEntityBalance;
@@ -13,7 +12,8 @@ import com.vis.entities.VisEntityResumeLastView;
 import com.vis.entities.VisEntityResumeViewFailed;
 import com.vis.status.VisProcessStatusResumeView;
 import com.vis.utils.VisUtils;
-public class VisBusinessGetResumeContent implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
+
+public class VisBusinessGetResumeContent implements CcpBusiness{
 	enum JsonFieldNames implements CcpJsonFieldName{
 		status
 	}

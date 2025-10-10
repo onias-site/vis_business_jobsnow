@@ -3,17 +3,17 @@ package com.vis.cache;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTextDecorator;
 import com.ccp.especifications.cache.CcpCacheDecorator;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntitySkill;
 
-public class VisBusinessPutSkillsInJson implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
+public class VisBusinessPutSkillsInJson implements CcpBusiness{
 
 	public final String fieldTextToRead;
 

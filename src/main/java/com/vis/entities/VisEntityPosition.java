@@ -35,7 +35,6 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntityTwin(
 		twinEntityName = "inactive_position"
-
 		,afterReactivate = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
 		afterInactivate = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}
 		)
@@ -45,7 +44,6 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 		cacheableEntity = true, 
 		afterDeleteRecord = {} 
 )
-
 @CcpJsonGlobalValidations(requiresAtLeastOne = {
 		@CcpJsonValidationFieldList({"maxClt", "maxPj" }),
 		@CcpJsonValidationFieldList({"minClt", "minPj" })
@@ -53,7 +51,6 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 		@CcpJsonValidationFieldList({"maxClt", "minClt" }),
 		@CcpJsonValidationFieldList({"minPj", "maxPj" })
 })
-//FIXME MUDAR TABELA
 public class VisEntityPosition implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;

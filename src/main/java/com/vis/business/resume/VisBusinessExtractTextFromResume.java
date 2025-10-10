@@ -1,19 +1,16 @@
 package com.vis.business.resume;
 
-import java.util.function.Function;
-
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.ccp.especifications.text.extractor.CcpTextExtractor;
 import com.vis.exceptions.VisErrorBusinessEmptyResumeText;
 
-
-public class VisBusinessExtractTextFromResume implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
+public class VisBusinessExtractTextFromResume implements CcpBusiness {
 	enum JsonFieldNames implements CcpJsonFieldName{
 		resumeBase64, resumeText
 	}
-
 	private VisBusinessExtractTextFromResume () {}
 	
 	public static final VisBusinessExtractTextFromResume INSTANCE = new VisBusinessExtractTextFromResume();

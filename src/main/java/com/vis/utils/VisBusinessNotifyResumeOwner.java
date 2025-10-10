@@ -1,13 +1,13 @@
 package com.vis.utils;
 
-import java.util.function.Function;
-
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessageToUser;
-public class VisBusinessNotifyResumeOwner implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
+
+public class VisBusinessNotifyResumeOwner implements CcpBusiness{
 	enum JsonFieldNames implements CcpJsonFieldName{
 		originalEmail
 	}

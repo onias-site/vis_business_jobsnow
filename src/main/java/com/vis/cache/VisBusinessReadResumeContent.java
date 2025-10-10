@@ -8,6 +8,7 @@ import com.vis.entities.VisEntityResume;
 import com.vis.utils.VisUtils;
 
 public class VisBusinessReadResumeContent implements Function<CcpJsonRepresentation, String>{
+	//TODO
 
 	public static final VisBusinessReadResumeContent INSTANCE = new VisBusinessReadResumeContent();
 	

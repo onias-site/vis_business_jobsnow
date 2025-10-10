@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 
-public class VisBusinessResumeSendToRecruiters implements Function<CcpJsonRepresentation, CcpJsonRepresentation> {
+public class VisBusinessResumeSendToRecruiters implements CcpBusiness {
 	
 	private VisBusinessResumeSendToRecruiters() {}
 	
