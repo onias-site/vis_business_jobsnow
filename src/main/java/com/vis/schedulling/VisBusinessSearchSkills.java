@@ -1,10 +1,9 @@
 package com.vis.schedulling;
 
-import java.util.function.Function;
-
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 
-public class VisBusinessSearchSkills implements  Function<CcpJsonRepresentation, CcpJsonRepresentation>{
+public class VisBusinessSearchSkills implements  CcpBusiness{
 
 	private VisBusinessSearchSkills() {}
 	
