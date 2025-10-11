@@ -1,17 +1,15 @@
 package com.vis.entities;
 
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.ccp.constantes.CcpOtherConstants;
-import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.bulk.CcpEntityBulkOperationType;
 import com.ccp.especifications.db.utils.CcpEntity;
-import com.ccp.especifications.db.utils.CcpEntityField;
-import com.ccp.especifications.db.utils.decorators.configurations.CcpEntitySpecifications;
+import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityFieldPrimaryKey;
+import com.ccp.especifications.db.utils.decorators.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
@@ -21,11 +19,12 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.jn.json.transformers.JnJsonTransformersDefaultEntityFields;
+import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntitySpecifications(
-		jsonValidation = VisEntitySkill.Fields.class,
+		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
+		entityValidation = VisEntitySkill.Fields.class,
 		cacheableEntity = true, 
 		afterSaveRecord = {},
 		afterDeleteRecord = {} 
@@ -34,53 +33,33 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkill.class).entityInstance;
 	
-	public static enum Fields implements CcpEntityField{
+	public static enum Fields implements CcpJsonFieldName{
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 		@CcpJsonFieldValidatorArray
-		parent(false), 
+		parent, 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
-		positionsCount(false), 
+		positionsCount, 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNestedJson(jsonValidation = Word.class)
 		@CcpJsonFieldValidatorArray
-		prerequisite(false), 
+		prerequisite, 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		ranking(false), 
+		ranking, 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNestedJson(jsonValidation = Word.class)
 		@CcpJsonFieldValidatorArray
-		similar(false), 
-		@CcpJsonFieldValidatorRequired
+		similar, 
+		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		skill(true), 
+		skill, 
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNestedJson(jsonValidation = Synonym.class)
-		synonym(false),
-		
+		synonym,
 		;
-		private final boolean primaryKey;
-
-		private final Function<CcpJsonRepresentation, CcpJsonRepresentation> transformer;
-		
-		private Fields(boolean primaryKey) {
-			this(primaryKey, CcpOtherConstants.DO_NOTHING);
-		}
-
-		private Fields(boolean primaryKey, Function<CcpJsonRepresentation, CcpJsonRepresentation> transformer) {
-			this.transformer = transformer;
-			this.primaryKey = primaryKey;
-		}
-		
-		public Function<CcpJsonRepresentation, CcpJsonRepresentation> getTransformer() {
-			return this.transformer == CcpOtherConstants.DO_NOTHING ? JnJsonTransformersDefaultEntityFields.getTransformer(this) : this.transformer;
-		}
-		public boolean isPrimaryKey() {
-			return this.primaryKey;
-		}
 	}
 	
 	public List<CcpBulkItem> getFirstRecordsToInsert() {

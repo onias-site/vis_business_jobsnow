@@ -23,7 +23,7 @@ import com.ccp.especifications.db.crud.CcpUnionAllExecutor;
 import com.ccp.especifications.db.query.CcpDbQueryOptions;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
 import com.ccp.especifications.db.utils.CcpEntity;
-import com.ccp.especifications.db.utils.CcpEntityField;
+
 import com.ccp.especifications.file.bucket.CcpFileBucketOperation;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.mensageria.JnFunctionMensageriaSender;
@@ -100,7 +100,6 @@ public class VisUtils {
 		CcpJsonRepresentation allPositionsGroupedByRecruiters = howToObtainPositionsGroupedByRecruiters.apply(valueOf);
 
 		List<CcpJsonRepresentation> resumes = howToObtainResumes.apply(schedullingPlan);
-
 
 		List<CcpJsonRepresentation> allPositionsWithFilteredResumesAndTheirStatis = VisUtils.getAllPositionsWithFilteredAndSortedResumesAndTheirStatis(allPositionsGroupedByRecruiters, resumes, valueOf);
 
@@ -563,8 +562,8 @@ public class VisUtils {
 			CcpJsonRepresentation json, 
 			CcpEntity entityToRead, 
 			CcpEntity entityWhereGroup, 
-			CcpEntityField masterField, 
-			CcpEntityField ascField) {
+			CcpJsonFieldName masterField, 
+			CcpJsonFieldName ascField) {
 		//1
 		List<String> masters = json.getAsStringList(JsonFieldNames.masters);
 		
