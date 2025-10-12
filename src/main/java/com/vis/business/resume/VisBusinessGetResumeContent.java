@@ -3,7 +3,7 @@ package com.vis.business.resume;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.CcpEntityCrudOperationType;
-import com.ccp.especifications.mensageria.receiver.CcpBusiness;
+import com.ccp.business.CcpBusiness;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.vis.entities.VisEntityBalance;

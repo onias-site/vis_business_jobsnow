@@ -54,6 +54,7 @@ public enum VisServiceResume implements JnService {
 		}
 	},
 	;
+}
 	enum JsonFieldNames implements CcpJsonFieldName{
 		activePosition
 	}
@@ -110,4 +111,4 @@ public enum VisServiceResume implements JnService {
 		resumeBase64
 	
 	}
-}
+

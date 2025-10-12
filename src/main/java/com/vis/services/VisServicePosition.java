@@ -16,7 +16,6 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.position.VisBusinessExtractSkillsFromPositionText;
 import com.vis.business.resume.VisBusinessGetResumeContent;
 import com.vis.business.resume.VisBusinessResumeSaveViewFailed;
-import com.vis.cache.VisBusinessPutSkillsInJson;
 import com.vis.entities.VisEntityBalance;
 import com.vis.entities.VisEntityDeniedViewToCompany;
 import com.vis.entities.VisEntityFees;

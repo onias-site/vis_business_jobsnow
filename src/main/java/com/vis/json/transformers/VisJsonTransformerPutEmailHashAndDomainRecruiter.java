@@ -4,7 +4,7 @@ import com.ccp.decorators.CcpHashDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
-import com.ccp.especifications.mensageria.receiver.CcpBusiness;
+import com.ccp.business.CcpBusiness;
 import com.ccp.utils.CcpHashAlgorithm;
 import com.vis.entities.VisEntityDeniedViewToCompany;
 import com.vis.entities.VisEntityResumePerception;

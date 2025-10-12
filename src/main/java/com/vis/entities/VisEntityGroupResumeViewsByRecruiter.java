@@ -19,9 +19,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntityGroupResumeViewsByRecruiter.Fields.class,
 		cacheableEntity = true, 
+		afterDeleteRecord = {},
 		beforeSaveRecord = {},
 		afterSaveRecord = {},
-		afterDeleteRecord = {} 
+		flow = {}
 )
 
 public class VisEntityGroupResumeViewsByRecruiter implements CcpEntityConfigurator {

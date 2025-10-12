@@ -2,7 +2,7 @@ package com.vis.business.resume;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.especifications.mensageria.receiver.CcpBusiness;
+import com.ccp.business.CcpBusiness;
 import com.vis.entities.VisEntityResumeViewFailed;
 
 public class VisBusinessResumeSaveViewFailed implements CcpBusiness {

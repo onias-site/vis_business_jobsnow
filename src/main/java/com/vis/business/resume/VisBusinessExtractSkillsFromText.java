@@ -1,7 +1,7 @@
 package com.vis.business.resume;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.mensageria.receiver.CcpBusiness;
+import com.ccp.business.CcpBusiness;
 import com.vis.cache.VisBusinessPutSkillsInJson;
 import com.vis.entities.VisEntityResume;
 public class VisBusinessExtractSkillsFromText implements CcpBusiness {

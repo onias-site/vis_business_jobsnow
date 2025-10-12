@@ -18,9 +18,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntityResumeLastView.Fields.class,
 		cacheableEntity = true, 
+		afterDeleteRecord = {},
 		beforeSaveRecord = {},
 		afterSaveRecord = {},
-		afterDeleteRecord = {} 
+		flow = {}
 )
 public class VisEntityResumeLastView implements CcpEntityConfigurator {
 	

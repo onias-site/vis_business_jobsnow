@@ -3,9 +3,9 @@ package com.vis.business.resume;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
-import com.ccp.especifications.mensageria.receiver.CcpBusiness;
+import com.ccp.business.CcpBusiness;
 import com.ccp.especifications.text.extractor.CcpTextExtractor;
-import com.vis.exceptions.VisErrorBusinessEmptyResumeText;
+import com.vis.exceptions.VisBusinessErrorEmptyResumeText;
 
 public class VisBusinessExtractTextFromResume implements CcpBusiness {
 	enum JsonFieldNames implements CcpJsonFieldName{
@@ -26,7 +26,7 @@ public class VisBusinessExtractTextFromResume implements CcpBusiness {
 		boolean emptyText = resumeText.trim().isEmpty();
 		
 		if(emptyText) {
-			throw new VisErrorBusinessEmptyResumeText(json);
+			throw new VisBusinessErrorEmptyResumeText(json);
 		}
 		
 		CcpJsonRepresentation put = json.put(JsonFieldNames.resumeText, resumeText);

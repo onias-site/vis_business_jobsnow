@@ -4,17 +4,19 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityDecorators;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityFieldPrimaryKey;
+import com.ccp.especifications.db.utils.decorators.annotations.CcpEntitySaveFlow;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
+import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.entities.decorators.JnEntityVersionable;
@@ -22,20 +24,25 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.business.resume.VisBusinessExtractTextFromResume;
+import com.vis.business.resume.VisBusinessNotifyResumeOwnerAboutEmptyResumeText;
 import com.vis.business.resume.VisBusinessNotifyResumeOwnerAboutSuccessOnSavingHisResume;
 import com.vis.business.resume.VisBusinessSaveResumeInBucket;
+import com.vis.exceptions.VisBusinessErrorEmptyResumeText;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntityTwin(
 		twinEntityName = "inactive_resume"
-		,afterRecordBeenTransportedFromMainToTwinEntity = {}, 
-		 afterRecordBeenTransportedFromTwinToMainEntity = {}
+		,afterRecordBeenTransportedFromMainToTwinEntity = {} 
+		,afterRecordBeenTransportedFromTwinToMainEntity = {}
 		)
 @CcpEntitySpecifications(
-		beforeSaveRecord = {VisBusinessExtractTextFromResume.class, VisBusinessExtractSkillsFromText.class},
+		flow = {
+				@CcpEntitySaveFlow(whenThrowing = VisBusinessErrorEmptyResumeText.class, thenExecute = VisBusinessNotifyResumeOwnerAboutEmptyResumeText.class)
+			   }, 
 		afterSaveRecord = {VisBusinessSaveResumeInBucket.class, VisBusinessResumeSendToRecruiters.class, VisBusinessNotifyResumeOwnerAboutSuccessOnSavingHisResume.class},
+		beforeSaveRecord = {VisBusinessExtractTextFromResume.class, VisBusinessExtractSkillsFromText.class},
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntityResume.Fields.class,
 		cacheableEntity = true, 
@@ -74,7 +81,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
-		@CcpJsonFieldTypeNumberUnsigned(maxValue = 70)
+		@CcpJsonFieldTypeTimeBefore(maxValue = 70, intervalType = CcpEntityExpurgableOptions.yearly)
 		experience, 
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		lastJob, 

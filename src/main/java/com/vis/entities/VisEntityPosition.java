@@ -43,7 +43,8 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 		beforeSaveRecord = {VisBusinessExtractSkillsFromPositionText.class},
 		entityValidation = VisEntityPosition.Fields.class,
 		cacheableEntity = true, 
-		afterDeleteRecord = {} 
+		afterDeleteRecord = {}, 
+		flow = {} 
 )
 @CcpJsonGlobalValidations(requiresAtLeastOne = {
 		@CcpJsonValidationFieldList({"maxClt", "maxPj" }),

@@ -1,7 +1,7 @@
 package com.vis.business.position;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.mensageria.receiver.CcpBusiness;
+import com.ccp.business.CcpBusiness;
 import com.vis.utils.VisUtils;
 
 public class VisBusinessGroupPositionsGroupedByRecruiters implements CcpBusiness{
