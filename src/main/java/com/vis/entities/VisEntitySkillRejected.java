@@ -16,6 +16,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntitySkillRejected.Fields.class,
 		cacheableEntity = true, 
+		beforeSaveRecord = {},
 		afterSaveRecord = {},
 		afterDeleteRecord = {} 
 )

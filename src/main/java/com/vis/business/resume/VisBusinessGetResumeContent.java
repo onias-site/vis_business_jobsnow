@@ -14,9 +14,7 @@ import com.vis.status.VisProcessStatusResumeView;
 import com.vis.utils.VisUtils;
 
 public class VisBusinessGetResumeContent implements CcpBusiness{
-	enum JsonFieldNames implements CcpJsonFieldName{
-		status
-	}
+	enum JsonFieldNames implements CcpJsonFieldName{status}
 	
 	private VisBusinessGetResumeContent() {}
 	

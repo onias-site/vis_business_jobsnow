@@ -1,5 +1,6 @@
 package com.vis.business.resume;
 
+import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
@@ -18,7 +19,9 @@ public class VisBusinessSaveResumeInBucket implements CcpBusiness {
 		fileName, 
 		@CcpJsonFieldTypeString(minLength = 512, maxLength = 10_485_760)
 		resumeText, 
-		originalEmail, //TODO
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonFieldTypeString(regexValidation = CcpEmailDecorator.EMAIL_REGEX, minLength = 7, maxLength = 100)
+		originalEmail,
 		@CcpJsonFieldTypeString(maxLength = 5000)
 		observations, 
 		@CcpJsonFieldValidatorRequired
@@ -27,9 +30,8 @@ public class VisBusinessSaveResumeInBucket implements CcpBusiness {
 	}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpFileBucket bucket = CcpDependencyInjection.getDependency(CcpFileBucket.class);
 		
-	
+		CcpFileBucket bucket = CcpDependencyInjection.getDependency(CcpFileBucket.class);
 		String fileContent = json.getJsonPiece(JsonFieldNames.values()).asUgglyJson();
 		String fileName = "" + json.getAsLongNumber(VisEntityResume.Fields.timestamp);
 		String folderName = json.getAsString(VisEntityResume.Fields.email);
@@ -39,6 +41,10 @@ public class VisBusinessSaveResumeInBucket implements CcpBusiness {
 		bucket.save(tenant, bucketName, fileName, fileContent);
 		
 		return json;
+	}
+	
+	public Class<?> getJsonValidationClass() {
+		return JsonFieldNames.class;
 	}
 
 }

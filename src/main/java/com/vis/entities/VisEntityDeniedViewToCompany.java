@@ -18,13 +18,14 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityTwin(
 		twinEntityName = "reallowed_view_to_company"
 
-		,afterReactivate = {},
-		 afterInactivate = {}
+		,afterRecordBeenTransportedFromTwinToMainEntity = {},
+		 afterRecordBeenTransportedFromMainToTwinEntity = {}
 		)
 @CcpEntitySpecifications(
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntityDeniedViewToCompany.Fields.class,
 		cacheableEntity = true, 
+		beforeSaveRecord = {},
 		afterSaveRecord = {},
 		afterDeleteRecord = {} 
 )

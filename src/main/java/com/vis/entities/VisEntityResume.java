@@ -4,7 +4,6 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityDecorators;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityFieldPrimaryKey;
-import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityFieldTransformer;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
@@ -21,6 +20,7 @@ import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.business.resume.VisBusinessExtractTextFromResume;
 import com.vis.business.resume.VisBusinessSaveResumeInBucket;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -29,12 +29,13 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntityTwin(
 		twinEntityName = "inactive_resume"
-		,afterInactivate = {}, 
-		 afterReactivate = {}
+		,afterRecordBeenTransportedFromMainToTwinEntity = {}, 
+		 afterRecordBeenTransportedFromTwinToMainEntity = {}
 		)
 @CcpEntitySpecifications(
-		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
+		beforeSaveRecord = {VisBusinessExtractTextFromResume.class, VisBusinessExtractSkillsFromText.class},
 		afterSaveRecord = {VisBusinessSaveResumeInBucket.class, VisBusinessResumeSendToRecruiters.class},
+		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntityResume.Fields.class,
 		cacheableEntity = true, 
 		afterDeleteRecord = {} 
@@ -47,9 +48,9 @@ public class VisEntityResume implements CcpEntityConfigurator {
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
 	
 	public static enum Fields implements CcpJsonFieldName{
-		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1000)
+		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1_000)
 		clt, 
-		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1000)
+		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1_000)
 		btc, 
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
@@ -76,10 +77,9 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		experience, 
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		lastJob, 
-		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1000)
+		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1_000)
 		pj, 
 		@CcpJsonFieldTypeNestedJson(jsonValidation = Skill.class)
-		@CcpEntityFieldTransformer(VisBusinessExtractTextFromResume.class)
 		skill, 
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp,

@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpTextDecorator;
 import com.ccp.especifications.cache.CcpCacheDecorator;
 import com.ccp.especifications.mensageria.receiver.CcpBusiness;
@@ -15,11 +16,11 @@ import com.vis.entities.VisEntitySkill;
 
 public class VisBusinessPutSkillsInJson implements CcpBusiness{
 
-	public final String fieldTextToRead;
+	public final CcpJsonFieldName fieldTextToRead;
 
-	public final String fieldToPut;
+	public final CcpJsonFieldName fieldToPut;
 	
-	public VisBusinessPutSkillsInJson(String fieldTextToRead, String fieldToPut) {
+	public VisBusinessPutSkillsInJson(CcpJsonFieldName fieldTextToRead, CcpJsonFieldName fieldToPut) {
 		this.fieldTextToRead = fieldTextToRead;
 		this.fieldToPut = fieldToPut;
 	}
@@ -28,7 +29,7 @@ public class VisBusinessPutSkillsInJson implements CcpBusiness{
 		CcpCacheDecorator cache = new CcpCacheDecorator("skills");
 		List<CcpJsonRepresentation> resultAsList = cache.get(VisFunctionReadSkillsFromDataBase.INSTANCE, 86400);
 		
-		CcpTextDecorator text = json.getDynamicVersion().getAsTextDecorator(this.fieldTextToRead).sanitize();
+		CcpTextDecorator text = json.getDynamicVersion().getAsTextDecorator(this.fieldTextToRead.name()).sanitize();
 		List<CcpJsonRepresentation> allSkills = new ArrayList<>();
 		for (CcpJsonRepresentation skill : resultAsList) {
 		
@@ -52,7 +53,7 @@ public class VisBusinessPutSkillsInJson implements CcpBusiness{
 			List<String> parents = skill.getAsStringList(VisEntitySkill.Fields.parent);
 			Set<String> wordsThatWasFoundAsSynonymInThisText = allSynonyms
 			.stream()
-			.filter(synonym -> wordsThatWasFoundDirectlyInThisText.contains(synonym) == false)
+			.filter(synonym -> false == wordsThatWasFoundDirectlyInThisText.contains(synonym))
 			.collect(Collectors.toSet());
 			List<CcpJsonRepresentation> skills = wordsThatWasFoundDirectlyInThisText.stream().map(
 					word -> CcpOtherConstants.EMPTY_JSON
@@ -63,7 +64,7 @@ public class VisBusinessPutSkillsInJson implements CcpBusiness{
 			allSkills.addAll(skills);
 		}
 		
-		CcpJsonRepresentation jsonWithSkills = json.getDynamicVersion().put(this.fieldToPut, allSkills);
+		CcpJsonRepresentation jsonWithSkills = json.put(this.fieldToPut, allSkills);
 		return jsonWithSkills;
 	}
 

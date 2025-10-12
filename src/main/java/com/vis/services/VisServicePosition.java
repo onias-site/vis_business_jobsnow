@@ -63,8 +63,8 @@ public enum VisServicePosition implements JnService {
 			CcpJsonRepresentation oneById = VisEntitySkill.ENTITY.getOneById(json);
 
 			VisBusinessPutSkillsInJson putSkillsInJson = new VisBusinessPutSkillsInJson(
-					VisEntityPosition.Fields.description.name(), 
-					VisEntityPosition.Fields.requiredSkill.name()
+					VisEntityPosition.Fields.description, 
+					VisEntityPosition.Fields.requiredSkill
 					);
 			
 			CcpJsonRepresentation jsonWithSkills = oneById.extractInformationFromJson(putSkillsInJson);

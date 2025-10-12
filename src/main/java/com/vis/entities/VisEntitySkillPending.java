@@ -15,13 +15,14 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntityTwin(
 		twinEntityName = "skill_approved"
-		,afterReactivate = {},
-		 afterInactivate = {}
+		,afterRecordBeenTransportedFromTwinToMainEntity = {},
+		 afterRecordBeenTransportedFromMainToTwinEntity = {}
 		)
 @CcpEntitySpecifications(
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntitySkillPending.Fields.class,
 		cacheableEntity = true, 
+		beforeSaveRecord = {},
 		afterSaveRecord = {},
 		afterDeleteRecord = {} 
 )

@@ -33,14 +33,15 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 @CcpEntityDecorators(decorators = JnEntityVersionable.class)
 @CcpEntityTwin(
 		twinEntityName = "inactive_position"
-		,afterReactivate = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
-		afterInactivate = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}
+		,afterRecordBeenTransportedFromTwinToMainEntity = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}
+		,afterRecordBeenTransportedFromMainToTwinEntity = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}
 		)
 @CcpEntitySpecifications(
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
 		entityValidation = VisEntityPosition.Fields.class,
 		cacheableEntity = true, 
+		beforeSaveRecord = {},
 		afterDeleteRecord = {} 
 )
 @CcpJsonGlobalValidations(requiresAtLeastOne = {
