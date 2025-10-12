@@ -24,6 +24,7 @@ import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.business.position.VisBusinessDuplicateFieldEmailToFieldMasters;
+import com.vis.business.position.VisBusinessExtractSkillsFromPositionText;
 import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
 import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -39,9 +40,9 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 @CcpEntitySpecifications(
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
+		beforeSaveRecord = {VisBusinessExtractSkillsFromPositionText.class},
 		entityValidation = VisEntityPosition.Fields.class,
 		cacheableEntity = true, 
-		beforeSaveRecord = {},
 		afterDeleteRecord = {} 
 )
 @CcpJsonGlobalValidations(requiresAtLeastOne = {

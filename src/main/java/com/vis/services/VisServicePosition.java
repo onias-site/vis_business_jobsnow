@@ -13,6 +13,7 @@ import com.ccp.especifications.mensageria.receiver.CcpBulkHandlers;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.position.VisBusinessExtractSkillsFromPositionText;
 import com.vis.business.resume.VisBusinessGetResumeContent;
 import com.vis.business.resume.VisBusinessResumeSaveViewFailed;
 import com.vis.cache.VisBusinessPutSkillsInJson;
@@ -62,12 +63,7 @@ public enum VisServicePosition implements JnService {
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation oneById = VisEntitySkill.ENTITY.getOneById(json);
 
-			VisBusinessPutSkillsInJson putSkillsInJson = new VisBusinessPutSkillsInJson(
-					VisEntityPosition.Fields.description, 
-					VisEntityPosition.Fields.requiredSkill
-					);
-			
-			CcpJsonRepresentation jsonWithSkills = oneById.extractInformationFromJson(putSkillsInJson);
+			CcpJsonRepresentation jsonWithSkills = VisBusinessExtractSkillsFromPositionText.INSTANCE.apply(oneById);
 			
 			return jsonWithSkills;
 		}

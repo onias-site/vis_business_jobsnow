@@ -16,6 +16,7 @@ public class VisBusinessExtractTextFromResume implements CcpBusiness {
 	public static final VisBusinessExtractTextFromResume INSTANCE = new VisBusinessExtractTextFromResume();
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+		
 		CcpTextExtractor textExtractor = CcpDependencyInjection.getDependency(CcpTextExtractor.class);
 
 		String resumeBase64 = json.getAsString(JsonFieldNames.resumeBase64);

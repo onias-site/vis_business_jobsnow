@@ -22,6 +22,7 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.business.resume.VisBusinessExtractTextFromResume;
+import com.vis.business.resume.VisBusinessNotifyResumeOwnerAboutSuccessOnSavingHisResume;
 import com.vis.business.resume.VisBusinessSaveResumeInBucket;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
@@ -34,7 +35,7 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 		)
 @CcpEntitySpecifications(
 		beforeSaveRecord = {VisBusinessExtractTextFromResume.class, VisBusinessExtractSkillsFromText.class},
-		afterSaveRecord = {VisBusinessSaveResumeInBucket.class, VisBusinessResumeSendToRecruiters.class},
+		afterSaveRecord = {VisBusinessSaveResumeInBucket.class, VisBusinessResumeSendToRecruiters.class, VisBusinessNotifyResumeOwnerAboutSuccessOnSavingHisResume.class},
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntityResume.Fields.class,
 		cacheableEntity = true, 
