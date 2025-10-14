@@ -15,7 +15,7 @@ import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
-@CcpEntityDecorators(decorators = JnEntityVersionable.class)
+@CcpEntityDecorators(JnEntityVersionable.class)
 @CcpEntitySpecifications(
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntityBalance.Fields.class,

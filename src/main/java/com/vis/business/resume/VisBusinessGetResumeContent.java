@@ -1,11 +1,9 @@
 package com.vis.business.resume;
 
+import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.especifications.db.utils.CcpEntityCrudOperationType;
-import com.ccp.business.CcpBusiness;
 import com.ccp.flow.CcpErrorFlowDisturb;
-import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.vis.entities.VisEntityBalance;
 import com.vis.entities.VisEntityFees;
 import com.vis.entities.VisEntityResumeLastView;
@@ -35,11 +33,11 @@ public class VisBusinessGetResumeContent implements CcpBusiness{
 		
 		if(insufficientFunds) {
 			CcpJsonRepresentation put = json.put(JsonFieldNames.status, VisProcessStatusResumeView.insufficientFunds);
-			VisEntityResumeViewFailed.ENTITY.createOrUpdate(put);
+			VisEntityResumeViewFailed.ENTITY.save(put);
 			throw new CcpErrorFlowDisturb(json, VisProcessStatusResumeView.insufficientFunds);
 		}
 		//ATTENTION EH ESTA ENTIDADE MESMO???
-		new JnFunctionMensageriaSender(VisEntityResumeLastView.ENTITY, CcpEntityCrudOperationType.save).apply(json);
+		VisEntityResumeLastView.ENTITY.save(json);
 		//LATER IMPLEMENTAR LOGICA PARA FORMAR NOME DO ARQUIVO DO CURRICULO EM CASO DE SER RECRUTADOR BAIXANDO POR VAGA OU NAO
 		CcpJsonRepresentation resume = VisUtils.getResumeFromBucket(json);
 		

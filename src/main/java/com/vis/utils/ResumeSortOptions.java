@@ -27,11 +27,11 @@ enum ResumeSortOptions {
 		
 		for (String key : keys) {
 			
-			if(o1.getDynamicVersion().containsAllFields(key) == false) {
+			if(false == o1.getDynamicVersion().containsAllFields(key)) {
 				continue;
 			}
 			
-			if(o2.getDynamicVersion().containsAllFields(key) == false) {
+			if(false == o2.getDynamicVersion().containsAllFields(key)) {
 				continue;
 			}
 			

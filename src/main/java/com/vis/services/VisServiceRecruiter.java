@@ -2,8 +2,6 @@ package com.vis.services;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.especifications.db.utils.CcpEntityCrudOperationType;
-import com.ccp.especifications.mensageria.receiver.CcpBulkHandlers;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
@@ -29,7 +27,7 @@ public enum VisServiceRecruiter implements JnService {
 	},
 	SaveOpinionAboutThisResume{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisEntityResumePerception.ENTITY, CcpEntityCrudOperationType.save).apply(json);
+			CcpJsonRepresentation result = VisEntityResumePerception.ENTITY.save(json);
 			
 			return result;
 		}
@@ -43,7 +41,7 @@ public enum VisServiceRecruiter implements JnService {
 	},
 	ChangeOpinionAboutThisResume{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisEntityResumePerception.ENTITY, CcpBulkHandlers.transferToReverseEntity).apply(json);
+			CcpJsonRepresentation result = VisEntityResumePerception.ENTITY.transferToReverseEntity(json);
 			
 			return result;
 		}

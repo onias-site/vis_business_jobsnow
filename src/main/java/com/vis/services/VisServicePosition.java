@@ -8,9 +8,6 @@ import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.CcpEntity;
-import com.ccp.especifications.db.utils.CcpEntityCrudOperationType;
-import com.ccp.especifications.mensageria.receiver.CcpBulkHandlers;
-import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.position.VisBusinessExtractSkillsFromPositionText;
@@ -33,7 +30,7 @@ import com.vis.status.VisProcessStatusSuggestNewSkill;
 public enum VisServicePosition implements JnService {
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisEntityPosition.ENTITY, CcpBulkHandlers.transferToReverseEntity).apply(json);
+			CcpJsonRepresentation result = VisEntityPosition.ENTITY.transferToReverseEntity(json);
 			
 			return result;
 		}
@@ -109,7 +106,7 @@ public enum VisServicePosition implements JnService {
 	},
 	Save{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisEntityPosition.ENTITY, CcpEntityCrudOperationType.save).apply(json);
+			CcpJsonRepresentation result = VisEntityPosition.ENTITY.save(json);
 			
 			return result;
 		}

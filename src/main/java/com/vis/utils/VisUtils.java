@@ -127,7 +127,7 @@ public class VisUtils {
 			int total = 0;
 			double sum = 0;
 			for (CcpJsonRepresentation resume : resumes) {
-				boolean fieldIsMissing = resume.getDynamicVersion().containsAllFields(field) == false;
+				boolean fieldIsMissing = false == resume.getDynamicVersion().containsAllFields(field);
 				if(fieldIsMissing) {
 					continue;
 				}
@@ -261,13 +261,13 @@ public class VisUtils {
 		
 		for (CcpJsonRepresentation searchParameters : allSearchParameters) {
 
-			boolean feeNotFound = VisEntityScheduleSendingResumeFees.ENTITY.isPresentInThisUnionAll(searchResults, searchParameters) == false;
+			boolean feeNotFound = false == VisEntityScheduleSendingResumeFees.ENTITY.isPresentInThisUnionAll(searchResults, searchParameters);
 
 			if(feeNotFound) {
 				throw new VisErrorBusinessMissingFeeToFrequency(frequency.name());
 			}
 			
-			boolean balanceNotFound = VisEntityBalance.ENTITY.isPresentInThisUnionAll(searchResults, searchParameters) == false;
+			boolean balanceNotFound = false == VisEntityBalance.ENTITY.isPresentInThisUnionAll(searchResults, searchParameters);
 
 			if(balanceNotFound) {
 				CcpBulkItem error = VisProcessStatusResumeView.missingBalance.toBulkItemCreate(searchParameters);	
@@ -301,7 +301,7 @@ public class VisUtils {
 			
 			
 			
-			boolean resumeNotFound = VisEntityResume.ENTITY.isPresentInThisUnionAll(searchResults, searchParameters) == false;
+			boolean resumeNotFound = false == VisEntityResume.ENTITY.isPresentInThisUnionAll(searchResults, searchParameters);
 			
 			if(resumeNotFound) {
 				CcpBulkItem error = VisProcessStatusResumeView.resumeNotFound.toBulkItemCreate(searchParameters);	
@@ -356,7 +356,7 @@ public class VisUtils {
 			
 			CcpCollectionDecorator dddsPosition = positionByThisRecruiter.getAsCollectionDecorator(VisEntityResume.Fields.ddd.name());
 			CcpCollectionDecorator dddsResume = resume.getAsCollectionDecorator(VisEntityResume.Fields.ddd.name());
-			boolean differentDdds = dddsResume.hasIntersect(dddsPosition.content) == false;
+			boolean differentDdds = false == dddsResume.hasIntersect(dddsPosition.content);
 			
 			if(differentDdds) {
 				continue;
@@ -365,7 +365,7 @@ public class VisUtils {
 			List<String> positionHashes = getHashes(positionByThisRecruiter);
 			List<String> resumeHashes = getHashes(resume);
 			
-			boolean resumeDoesNotMatch = resumeHashes.containsAll(positionHashes) == false;
+			boolean resumeDoesNotMatch = false == resumeHashes.containsAll(positionHashes);
 		
 			if(resumeDoesNotMatch) {
 				continue;
@@ -449,7 +449,7 @@ public class VisUtils {
 			.map(s -> s.getAsString(VisEntitySkill.Fields.skill))
 			.collect(Collectors.toList());
 			
-			boolean skillFoundByParentsInResume = parents.isEmpty() == false;
+			boolean skillFoundByParentsInResume = false == parents.isEmpty();
 			
 			if(skillFoundByParentsInResume) {
 				CcpJsonRepresentation skill = CcpOtherConstants.EMPTY_JSON
@@ -465,7 +465,7 @@ public class VisUtils {
 		}
 		
 		
-		boolean itIsMissingRequiredSkillInThisResume = requiredSkillsMissingInResume.isEmpty() == false;
+		boolean itIsMissingRequiredSkillInThisResume = false == requiredSkillsMissingInResume.isEmpty();
 		
 		if(itIsMissingRequiredSkillInThisResume) {
 			throw new VisErrorBusinessRequiredSkillsMissingInResume(requiredSkillsMissingInResume);
@@ -476,13 +476,13 @@ public class VisUtils {
 
 	private static boolean resumeAlreadySeen(CcpJsonRepresentation positionByThisRecruiter, CcpSelectUnionAll searchResults, CcpJsonRepresentation searchParameters) {
 	
-		boolean doNotFilterResumesAlreadySeen = positionByThisRecruiter.getAsBoolean(JsonFieldNames.filterResumesAlreadySeen) == false;
+		boolean doNotFilterResumesAlreadySeen = false == positionByThisRecruiter.getAsBoolean(JsonFieldNames.filterResumesAlreadySeen);
 		
 		if(doNotFilterResumesAlreadySeen) {
 			return false;
 		}
 		
-		boolean thisResumeWasNeverSeenBefore = VisEntityResumeLastView.ENTITY.isPresentInThisUnionAll(searchResults, searchParameters) == false;
+		boolean thisResumeWasNeverSeenBefore = false == VisEntityResumeLastView.ENTITY.isPresentInThisUnionAll(searchResults, searchParameters);
 		
 		if(thisResumeWasNeverSeenBefore) {
 			return false;

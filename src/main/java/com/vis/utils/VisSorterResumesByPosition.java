@@ -28,7 +28,7 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 		List<String> sortFields = new ArrayList<>(asStringList);
 		
 		String desiredSkillEnumName = ResumeSortOptions.desiredSkill.name();
-		boolean desiredSkillNotChoosed = sortFields.contains(desiredSkillEnumName) == false;
+		boolean desiredSkillNotChoosed = false == sortFields.contains(desiredSkillEnumName);
 		
 		if(desiredSkillNotChoosed ) {
 			sortFields.add(desiredSkillEnumName);

@@ -22,6 +22,7 @@ import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.mensageria.JnAsyncWriterEntity;
 import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.business.resume.VisBusinessExtractTextFromResume;
 import com.vis.business.resume.VisBusinessNotifyResumeOwnerAboutEmptyResumeText;
@@ -31,7 +32,7 @@ import com.vis.exceptions.VisBusinessErrorEmptyResumeText;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
-@CcpEntityDecorators(decorators = JnEntityVersionable.class)
+@CcpEntityDecorators({JnEntityVersionable.class, JnAsyncWriterEntity.class})
 @CcpEntityTwin(
 		twinEntityName = "inactive_resume"
 		,afterRecordBeenTransportedFromMainToTwinEntity = {} 
@@ -99,7 +100,6 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
 		@CcpJsonFieldValidatorArray
 		parent,
-		
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
 		@CcpJsonFieldValidatorArray
 		synonym,

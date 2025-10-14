@@ -23,6 +23,7 @@ import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.entities.decorators.JnEntityVersionable;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.mensageria.JnAsyncWriterEntity;
 import com.vis.business.position.VisBusinessDuplicateFieldEmailToFieldMasters;
 import com.vis.business.position.VisBusinessExtractSkillsFromPositionText;
 import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
@@ -31,7 +32,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
 import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
 
-@CcpEntityDecorators(decorators = JnEntityVersionable.class)
+@CcpEntityDecorators({JnEntityVersionable.class, JnAsyncWriterEntity.class})
+
 @CcpEntityTwin(
 		twinEntityName = "inactive_position"
 		,afterRecordBeenTransportedFromTwinToMainEntity = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}

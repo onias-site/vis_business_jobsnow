@@ -2,14 +2,11 @@ package com.vis.services;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.especifications.db.utils.CcpEntityCrudOperationType;
-import com.ccp.especifications.mensageria.receiver.CcpBulkHandlers;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.global.annotations.CcpJsonCopyGlobalValidationsFrom;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.resume.VisBusinessSaveResumeInBucket;
@@ -20,14 +17,14 @@ import com.vis.utils.VisUtils;
 public enum VisServiceResume implements JnService {
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisEntityResume.ENTITY, CcpBulkHandlers.transferToReverseEntity).apply(json);
+			CcpJsonRepresentation result = VisEntityResume.ENTITY.transferToReverseEntity(json);
 
 			return  result;
 		}
 	},
 	Delete{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation sessionValues) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisEntityResume.ENTITY, CcpEntityCrudOperationType.delete).apply(sessionValues);
+			CcpJsonRepresentation result = VisEntityResume.ENTITY.delete(sessionValues);
 
 			return result;
 		}
@@ -48,7 +45,7 @@ public enum VisServiceResume implements JnService {
 	},
 	Save{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation sessionValues) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisEntityResume.ENTITY, CcpEntityCrudOperationType.save).apply(sessionValues);
+			CcpJsonRepresentation result = VisEntityResume.ENTITY.save(sessionValues);
 
 			return result;
 		}

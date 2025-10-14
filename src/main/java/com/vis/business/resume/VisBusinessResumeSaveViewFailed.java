@@ -17,7 +17,7 @@ public class VisBusinessResumeSaveViewFailed implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String status = json.getValueFromPath("", JsonFieldNames.errorDetails, JsonFieldNames.status);
 		CcpJsonRepresentation put = json.put(JsonFieldNames.status, status);
-		VisEntityResumeViewFailed.ENTITY.createOrUpdate(put);
+		VisEntityResumeViewFailed.ENTITY.save(put);
 		return json;
 	}
 
