@@ -2,7 +2,7 @@ package com.vis.schedulling;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.dependency.injection.CcpDependencyInjection;
-import com.ccp.especifications.db.query.CcpDbQueryOptions;
+import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
 import com.ccp.business.CcpBusiness;
 import com.jn.entities.JnEntityDisposableRecord;
@@ -22,8 +22,8 @@ public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
 		
 		String entityName = JnEntityLoginSessionValidation.ENTITY.getEntityName();
-		CcpDbQueryOptions queryToSearchLastUpdated = 
-				CcpDbQueryOptions.INSTANCE
+		CcpQueryOptions queryToSearchLastUpdated = 
+				CcpQueryOptions.INSTANCE
 					.startQuery()
 						.startBool()
 							.startMust()

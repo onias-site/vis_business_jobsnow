@@ -1,10 +1,10 @@
 package com.vis.entities;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.especifications.db.utils.CcpEntity;
-import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityFieldPrimaryKey;
-import com.ccp.especifications.db.utils.decorators.annotations.CcpEntitySpecifications;
-import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
+import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;

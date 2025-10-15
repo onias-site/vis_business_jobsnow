@@ -2,7 +2,7 @@ package com.vis.status;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
-import com.ccp.especifications.db.bulk.CcpEntityBulkOperationType;
+import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.process.CcpProcessStatus;
 import com.vis.entities.VisEntityResumeViewFailed;
 
@@ -27,7 +27,7 @@ public enum VisProcessStatusResumeView implements CcpProcessStatus{
 	}
 
 	public CcpBulkItem toBulkItemCreate(CcpJsonRepresentation json) {
-		CcpBulkItem bulkItem = VisEntityResumeViewFailed.ENTITY.getMainBulkItem(json, CcpEntityBulkOperationType.create);
+		CcpBulkItem bulkItem = VisEntityResumeViewFailed.ENTITY.getMainBulkItem(json, CcpBulkEntityOperationType.create);
 		return bulkItem;
 	}
 }

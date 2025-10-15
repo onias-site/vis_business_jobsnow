@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
-import com.ccp.especifications.db.bulk.CcpEntityBulkOperationType;
+import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.business.CcpBusiness;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.vis.entities.VisEntityPosition;
@@ -46,8 +46,8 @@ public class VisBusinessResumeViewSave implements CcpBusiness{
 				.put(VisEntityResumeLastView.Fields.negativatedResume, negativatedResume)
 				;
 		
-		CcpBulkItem itemResumeLastView = VisEntityResumeLastView.ENTITY.getMainBulkItem(dataToSave, CcpEntityBulkOperationType.create);
-		CcpBulkItem itemResumeFreeView = VisEntityResumeFreeView.ENTITY.getMainBulkItem(dataToSave, CcpEntityBulkOperationType.create);
+		CcpBulkItem itemResumeLastView = VisEntityResumeLastView.ENTITY.getMainBulkItem(dataToSave, CcpBulkEntityOperationType.create);
+		CcpBulkItem itemResumeFreeView = VisEntityResumeFreeView.ENTITY.getMainBulkItem(dataToSave, CcpBulkEntityOperationType.create);
 		
 		bulkItems.add(itemResumeFreeView);
 		bulkItems.add(itemResumeLastView);

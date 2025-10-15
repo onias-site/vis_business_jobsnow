@@ -7,7 +7,7 @@ import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
-import com.ccp.especifications.db.utils.CcpEntity;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.position.VisBusinessExtractSkillsFromPositionText;

@@ -1,7 +1,7 @@
 package com.vis.json.fields.validation;
 
 import com.ccp.decorators.CcpEmailDecorator;
-import com.ccp.especifications.db.utils.decorators.engine.CcpEntityExpurgableOptions;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;

@@ -16,14 +16,13 @@ import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
-import com.ccp.especifications.db.bulk.CcpEntityBulkOperationType;
+import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.crud.CcpUnionAllExecutor;
-import com.ccp.especifications.db.query.CcpDbQueryOptions;
+import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
-import com.ccp.especifications.db.utils.CcpEntity;
-
+import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.file.bucket.CcpFileBucketOperation;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.mensageria.JnFunctionMensageriaSender;
@@ -197,8 +196,8 @@ public class VisUtils {
 		
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
 		
-		CcpDbQueryOptions queryToSearchLastUpdated = 
-				CcpDbQueryOptions.INSTANCE
+		CcpQueryOptions queryToSearchLastUpdated = 
+				CcpQueryOptions.INSTANCE
 					.startSimplifiedQuery()
 						.startRange()
 							.startFieldRange(filterFieldName)
@@ -219,8 +218,8 @@ public class VisUtils {
 
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
 
-		CcpDbQueryOptions queryToSearchLastUpdatedResumes = 
-				CcpDbQueryOptions.INSTANCE
+		CcpQueryOptions queryToSearchLastUpdatedResumes = 
+				CcpQueryOptions.INSTANCE
 					.startSimplifiedQuery()
 						.match(VisEntityPosition.Fields.frequency, frequency)
 					.endSimplifiedQueryAndBackToRequest()
@@ -567,7 +566,7 @@ public class VisUtils {
 		//1
 		List<String> masters = json.getAsStringList(JsonFieldNames.masters);
 		
-		CcpDbQueryOptions query = CcpDbQueryOptions.INSTANCE
+		CcpQueryOptions query = CcpQueryOptions.INSTANCE
 				.startQuery()
 					.startBool()
 						.startMust()
@@ -622,7 +621,7 @@ public class VisUtils {
 					.put(VisEntityGroupResumesByPosition.Fields.from, from)
 					.putAll(primaryKeySupplier)
 					;
-			CcpBulkItem bulkItem = entity.getMainBulkItem(put, CcpEntityBulkOperationType.create);
+			CcpBulkItem bulkItem = entity.getMainBulkItem(put, CcpBulkEntityOperationType.create);
 			allPagesTogether.add(bulkItem);
 		}
 		return allPagesTogether;

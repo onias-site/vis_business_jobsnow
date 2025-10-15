@@ -6,12 +6,12 @@ import java.util.stream.Collectors;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
-import com.ccp.especifications.db.bulk.CcpEntityBulkOperationType;
-import com.ccp.especifications.db.utils.CcpEntity;
-import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityFieldPrimaryKey;
-import com.ccp.especifications.db.utils.decorators.annotations.CcpEntitySpecifications;
-import com.ccp.especifications.db.utils.decorators.engine.CcpEntityConfigurator;
-import com.ccp.especifications.db.utils.decorators.engine.CcpEntityFactory;
+import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
+import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
@@ -66,7 +66,7 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
 		List<CcpBulkItem> collect = new CcpStringDecorator("C:\\eclipse-workspaces\\ccp\\jn\\jn-dependency-chooser-documentation-and-junit-testing\\documentation\\skills\\synonyms.json")
-		.file().asJsonList().stream().map(json -> ENTITY.getMainBulkItem(json, CcpEntityBulkOperationType.create)).collect(Collectors.toList());
+		.file().asJsonList().stream().map(json -> ENTITY.getMainBulkItem(json, CcpBulkEntityOperationType.create)).collect(Collectors.toList());
 		;
 		return collect;
 	}
