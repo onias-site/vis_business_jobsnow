@@ -2,7 +2,8 @@ package com.vis.entities;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.CcpEntity;
-import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityDecorators;
+import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityVersionable;
+import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntitySaveFlow;
 import com.ccp.especifications.db.utils.decorators.annotations.CcpEntitySpecifications;
@@ -19,7 +20,7 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
-import com.jn.entities.decorators.JnEntityVersionable;
+import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.mensageria.JnAsyncWriterEntity;
@@ -32,7 +33,8 @@ import com.vis.exceptions.VisBusinessErrorEmptyResumeText;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
-@CcpEntityDecorators({JnEntityVersionable.class, JnAsyncWriterEntity.class})
+@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
+@CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(
 		twinEntityName = "inactive_resume"
 		,afterRecordBeenTransportedFromMainToTwinEntity = {} 
