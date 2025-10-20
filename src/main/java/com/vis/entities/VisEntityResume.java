@@ -5,6 +5,7 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySaveFlow;
 import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
@@ -33,6 +34,7 @@ import com.vis.exceptions.VisBusinessErrorEmptyResumeText;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
+@CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(
@@ -48,10 +50,10 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 		beforeSaveRecord = {VisBusinessExtractTextFromResume.class, VisBusinessExtractSkillsFromText.class},
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntityResume.Fields.class,
-		cacheableEntity = true, 
 		afterDeleteRecord = {} 
 )
-@CcpJsonGlobalValidations(requiresAtLeastOne = {
+@CcpJsonGlobalValidations(
+		requiresAtLeastOne = {
 		@CcpJsonValidationFieldList({"pj", "clt" })
 })
 public class VisEntityResume implements CcpEntityConfigurator {

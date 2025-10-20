@@ -4,6 +4,7 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
@@ -32,6 +33,7 @@ import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
 import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
+@CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(
@@ -44,7 +46,6 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 		afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
 		beforeSaveRecord = {VisBusinessExtractSkillsFromPositionText.class},
 		entityValidation = VisEntityPosition.Fields.class,
-		cacheableEntity = true, 
 		afterDeleteRecord = {}, 
 		flow = {} 
 )
