@@ -40,7 +40,7 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 		String master = record.getDynamicVersion().getAsString(this.masterFieldName);
 		String entity = record.getAsString(JsonFieldNames.entity);
 		CcpJsonRepresentation entityGroup = this.groupedRecords.getDynamicVersion().getInnerJson(entity);
-		entityGroup = entityGroup.addToList(master, record);
+		entityGroup = entityGroup.getDynamicVersion().addToList(master, record);
 		this.groupedRecords = this.groupedRecords.getDynamicVersion().put(entity, entityGroup);
 	}
 	

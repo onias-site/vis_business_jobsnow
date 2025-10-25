@@ -398,7 +398,7 @@ public class VisUtils {
 					.put(JsonFieldNames.resumeOpinion, resumeOpinion).put(JsonFieldNames.resumeLastView, resumeLastView);
 
 			emailMessageValuesToSent = emailMessageValuesToSent
-					.addToList("resumes", resumeWithCommentAndVisualizationDetails)
+					.addToList(JsonFieldNames.resumes, resumeWithCommentAndVisualizationDetails)
 					.put(VisEntityResumeLastView.Fields.position, allPositionsGroupedByRecruiters)
 					.put(JsonFieldNames.requiredSkills, requiredSkills)
 					;
