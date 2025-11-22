@@ -14,6 +14,22 @@ import com.vis.entities.VisEntityResume;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisUtils;
 
+//FIXME CHAMAR LOGIN
+//FIXME BUG DE VOLTAR PRA ABA ANTERIOR
+//FIXME DESABILITAR ABAS
+//FIXME SOMENTE HOMEOFFICE
+//FIXME TODAS AS REGIOES METROPOLITANAS
+//FIXME MULTI CHECKBOX DA REGIAO METROPOLITANA
+//FIXME CHIPS DE EMPRESAS INDESEJADAS
+//FIXME VALIDAÇOES DAS ABAS  
+//FIXME PCD
+//FIXME DISPONIBILITY
+//FIXME CORRIGIR PRETENSOES
+//FIXME TRAZER DADOS
+//FIXME DOWNLOAD DE CURRICULO
+//FIXME DESABILITAR CURRICULO
+//FIXME EXCLUIR CURRICULO
+
 public enum VisServiceResume implements JnService {
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
@@ -71,41 +87,41 @@ public enum VisServiceResume implements JnService {
 	enum Save{
 		@CcpJsonFieldValidatorArray
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
-		companiesNotAllowed,
+		companiesNotAllowed,//ENCONTRADO
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
-		clt,
+		clt,//ENCONTRADO
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
-		btc,
+		btc,//ENCONTRADO
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		ddd,
+		ddd,//ENCONTRADO
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
-		desiredJob,
+		desiredJob,//ENCONTRADO
 		@CcpJsonFieldValidatorArray
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
-		disabilities,
+		disabilities,//ENCONTRADO
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		disponibility,
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		email,
+		email,//ENCONTRADO
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
-		experience,
+		experience,//ENCONTRADO
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
-		lastJob,
+		lastJob,//ENCONTRADO
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
-		pj,
+		pj,//ENCONTRADO
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisBusinessSaveResumeInBucket.JsonFieldNames.class)
-		fileName, 
+		fileName, //ENCONTRADO
 		@CcpJsonCopyFieldValidationsFrom(VisBusinessSaveResumeInBucket.JsonFieldNames.class)
-		observations, 
+		observations, //ENCONTRADO
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisBusinessSaveResumeInBucket.JsonFieldNames.class)
-		resumeBase64
+		resumeBase64 //ENCONTRADO
 	
 	}
 

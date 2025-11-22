@@ -19,7 +19,6 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(
 		twinEntityName = "reallowed_view_to_company"
-
 		,afterRecordBeenTransportedFromTwinToMainEntity = {},
 		 afterRecordBeenTransportedFromMainToTwinEntity = {}
 		)
