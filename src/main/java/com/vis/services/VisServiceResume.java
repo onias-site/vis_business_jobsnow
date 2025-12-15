@@ -13,7 +13,6 @@ import com.vis.business.resume.VisBusinessSaveResumeInBucket;
 import com.vis.entities.VisEntityResume;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisUtils;
-
 //FIXME CHIPS DE EMPRESAS INDESEJADAS
 //FIXME PCD
 //FIXME DISPONIBILITY
@@ -59,7 +58,7 @@ public enum VisServiceResume implements JnService {
 	Save{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation sessionValues) {
 			
-			CcpJsonRepresentation duplicateValueFromField = sessionValues.duplicateValueFromField(FieldsSave.email, FieldsSave.originalEmail);
+			CcpJsonRepresentation duplicateValueFromField = sessionValues.duplicateValueFromField(com.vis.services.Save.email, com.vis.services.Save.originalEmail);
 			
 			CcpJsonRepresentation result = VisEntityResume.ENTITY.save(duplicateValueFromField);
 
@@ -84,7 +83,7 @@ public enum VisServiceResume implements JnService {
 		
 	}
 	@CcpJsonCopyGlobalValidationsFrom(VisEntityResume.Fields.class)
-	enum FieldsSave implements CcpJsonFieldName{
+	enum Save implements CcpJsonFieldName{
 		@CcpJsonFieldValidatorArray
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
 		companiesNotAllowed,
