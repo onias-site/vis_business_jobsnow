@@ -164,7 +164,7 @@ public class VisUtils {
 			for (Integer disponibility : disponibilities) {// 5 (vaga) = [5, 4, 3, 2, 1, 0] || 6 (candidato) [6, 7, 8, 9
 				for (CcpJsonRepresentation moneyValue : moneyValues) {
 						CcpJsonRepresentation hash = CcpOtherConstants.EMPTY_JSON.put(VisEntityResume.Fields.disponibility, disponibility)
-								.put(VisEntityPosition.Fields.seniority, seniority).putAll(moneyValue)
+								.put(VisEntityPosition.Fields.seniority, seniority).mergeWithAnotherJson(moneyValue)
 								.put(VisEntityPosition.Fields.pcd, pcd);
 						//LATER ELIMINAR NECESSIDADE DE CRIAR ESSA TABELA, ALEM DE ELIMINAR O VIRTUALENTITY
 						String hashValue = VisEntityVirtualHashGrouper.ENTITY.calculateId(hash);
@@ -333,7 +333,7 @@ public class VisUtils {
 		
 		JnExecuteBulkOperation.INSTANCE.executeBulk(errors);
 		
-	 	CcpJsonRepresentation allPositionsWithFilteredResumesCopy = CcpOtherConstants.EMPTY_JSON.putAll(allPositionsWithFilteredResumes);
+	 	CcpJsonRepresentation allPositionsWithFilteredResumesCopy = CcpOtherConstants.EMPTY_JSON.mergeWithAnotherJson(allPositionsWithFilteredResumes);
 		
 		List<CcpJsonRepresentation> positionsWithSortedResumes = allPositionsWithFilteredResumes.fieldSet().stream().map(positionId -> getPositionWithSortedResumes(positionId, allPositionsWithFilteredResumesCopy) ).collect(Collectors.toList());
 		return positionsWithSortedResumes;
@@ -512,7 +512,7 @@ public class VisUtils {
 		CcpJsonRepresentation position = positionWithResumes.getInnerJson(VisEntityResumeLastView.Fields.position);
 		VisSorterResumesByPosition positionResumesSort = new VisSorterResumesByPosition(position);
 		resumes.sort(positionResumesSort);
-		CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.putAll(positionWithResumes).put(JsonFieldNames.resumes, resumes);
+		CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.mergeWithAnotherJson(positionWithResumes).put(JsonFieldNames.resumes, resumes);
 		return put;
 	}
 	
@@ -619,7 +619,7 @@ public class VisUtils {
 					.put(VisEntityGroupResumesByPosition.Fields.detail, page)
 					.put(VisEntityGroupResumesByPosition.Fields.listSize, listSize)
 					.put(VisEntityGroupResumesByPosition.Fields.from, from)
-					.putAll(primaryKeySupplier)
+					.mergeWithAnotherJson(primaryKeySupplier)
 					;
 			CcpBulkItem bulkItem = entity.getMainBulkItem(put, CcpBulkEntityOperationType.create);
 			allPagesTogether.add(bulkItem);
