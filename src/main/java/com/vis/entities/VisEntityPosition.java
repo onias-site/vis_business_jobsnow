@@ -27,9 +27,7 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.mensageria.JnAsyncWriterEntity;
 import com.vis.business.position.VisBusinessDuplicateFieldEmailToFieldMasters;
-import com.vis.business.position.VisBusinessExtractSkillsFromPositionText;
 import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
-import com.vis.business.resume.VisBusinessExtractSkillsFromText;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
 import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
@@ -44,7 +42,7 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 @CcpEntitySpecifications(
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
-		beforeSaveRecord = {VisBusinessExtractSkillsFromPositionText.class},
+		beforeSaveRecord = {},
 		entityValidation = VisEntityPosition.Fields.class,
 		afterDeleteRecord = {}, 
 		flow = {} 
@@ -76,7 +74,6 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		ddd, 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 10, maxLength = 10_000)
-		@CcpEntityFieldTransformer(VisBusinessExtractSkillsFromText.class)
 		description, 
 		@CcpJsonFieldTypeNestedJson
 		@CcpJsonFieldValidatorArray
@@ -94,7 +91,7 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValues = { "minute", "hourly", "daily", "weekly", "monthly" })
 		frequency, 
-		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		@CcpJsonFieldTypeBoolean
 		pcd, 
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldValidatorArray(minSize = 1)

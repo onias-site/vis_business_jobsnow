@@ -1,12 +1,10 @@
 package com.vis.json.fields.validation;
 
 import com.ccp.decorators.CcpEmailDecorator;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityExpurgableOptions;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
 
 public enum VisJsonCommonsFields{
 	
@@ -28,10 +26,10 @@ public enum VisJsonCommonsFields{
 	title, 
 	@CcpJsonFieldTypeString(allowedValues = {"JR", "PL", "SR", "ES"})
 	seniority, 
-	@CcpJsonFieldTypeTimeBefore(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.monthly)
+	@CcpJsonFieldTypeNumberUnsigned(maxValue = 30)
 	disponibility, 
-	@CcpJsonFieldTypeBoolean
-	pcd, 
+	@CcpJsonFieldTypeNumberUnsigned(maxValue = 12)
+	temporallyJobTime, 
 	@CcpJsonFieldTypeString(regexValidation = CcpEmailDecorator.EMAIL_REGEX, minLength = 7, maxLength = 100)
 	recruiter, 
 	@CcpJsonFieldTypeNumber(minValue = 0)
@@ -39,7 +37,7 @@ public enum VisJsonCommonsFields{
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 	service,
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-	prerequisite, 
+	prerequisite, //DOUBT OU SERIA "PARENT"?
 	@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
 	ranking,
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
@@ -48,4 +46,16 @@ public enum VisJsonCommonsFields{
 	email, 
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 	skill, 
+	
+	@CcpJsonFieldTypeNestedJson(jsonValidation = Language.class)
+	language
+	;
+	enum Language{
+		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
+		name,
+
+		@CcpJsonFieldTypeNumberUnsigned(allowedValues = {1, 2} )
+		level
+	}
+
 }

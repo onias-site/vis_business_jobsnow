@@ -9,7 +9,7 @@ import com.ccp.json.validations.global.annotations.CcpJsonCopyGlobalValidationsF
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
-import com.vis.business.resume.VisBusinessSaveResumeInBucket;
+import com.vis.business.resume.VisBusinessCalculateResumeHashes;
 import com.vis.entities.VisEntityResume;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.utils.VisUtils;
@@ -114,15 +114,15 @@ public enum VisServiceResume implements JnService {
 		@CcpJsonCopyFieldValidationsFrom(VisEntityResume.Fields.class)
 		pj,
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCopyFieldValidationsFrom(VisBusinessSaveResumeInBucket.JsonFieldNames.class)
+		@CcpJsonCopyFieldValidationsFrom(VisBusinessCalculateResumeHashes.JsonFieldNames.class)
 		fileName, 
-		@CcpJsonCopyFieldValidationsFrom(VisBusinessSaveResumeInBucket.JsonFieldNames.class)
+		@CcpJsonCopyFieldValidationsFrom(VisBusinessCalculateResumeHashes.JsonFieldNames.class)
 		observations, 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCopyFieldValidationsFrom(VisBusinessSaveResumeInBucket.JsonFieldNames.class)
+		@CcpJsonCopyFieldValidationsFrom(VisBusinessCalculateResumeHashes.JsonFieldNames.class)
 		resumeBase64,
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCopyFieldValidationsFrom(VisBusinessSaveResumeInBucket.JsonFieldNames.class)
+		@CcpJsonCopyFieldValidationsFrom(VisBusinessCalculateResumeHashes.JsonFieldNames.class)
 		originalEmail
 	
 	}

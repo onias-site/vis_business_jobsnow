@@ -414,17 +414,17 @@ public class VisUtils {
 
 		List<String> requiredSkillsFromPosition = positionByThisRecruiter.getAsStringList(VisEntityPosition.Fields.requiredSkill);
 		
-		List<CcpJsonRepresentation> skillsFromResume = resume.getAsJsonList(VisEntityResume.Fields.skill);
+		List<CcpJsonRepresentation> skillsFromResume = resume.getAsJsonList(VisEntityResume.Fields.includedSkill);
 		List<String> requiredSkillsMissingInResume = new ArrayList<String>();
 		List<CcpJsonRepresentation> response = new ArrayList<>();
 		for (String requiredSkillFromPosition : requiredSkillsFromPosition) {
 			
-			boolean skillDirectlyFoundInResume = skillsFromResume.stream().filter(s -> s.getAsString(VisEntityResume.Fields.skill).equals(requiredSkillFromPosition)).findFirst().isPresent();
+			boolean skillDirectlyFoundInResume = skillsFromResume.stream().filter(s -> s.getAsString(VisEntityResume.Fields.includedSkill).equals(requiredSkillFromPosition)).findFirst().isPresent();
 			
 			if(skillDirectlyFoundInResume) {
 				CcpJsonRepresentation skill = CcpOtherConstants.EMPTY_JSON
 					.put(JsonFieldNames.type, ResumeSkillFoundType.CONTAINED_IN_RESUME)
-					.put(VisEntityResume.Fields.skill, requiredSkillFromPosition);
+					.put(VisEntityResume.Fields.includedSkill, requiredSkillFromPosition);
 				response.add(skill);
 				continue;
 			}
@@ -434,10 +434,10 @@ public class VisUtils {
 			
 			if(skillFoundBySynonymInResume) {
 				CcpJsonRepresentation synonym = synonymFound.get();
-				String synonymName = synonym.getAsString(VisEntityResume.Fields.skill);
+				String synonymName = synonym.getAsString(VisEntityResume.Fields.includedSkill);
 				CcpJsonRepresentation skill = CcpOtherConstants.EMPTY_JSON
 						.put(JsonFieldNames.type, ResumeSkillFoundType.SYNONYM)
-						.put(VisEntityResume.Fields.skill, requiredSkillFromPosition)
+						.put(VisEntityResume.Fields.includedSkill, requiredSkillFromPosition)
 						.put(VisEntitySkill.Fields.synonym, synonymName)
 						;
 					response.add(skill);

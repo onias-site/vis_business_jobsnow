@@ -10,21 +10,10 @@ import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
-import com.vis.business.position.VisBusinessExtractSkillsFromPositionText;
-import com.vis.business.resume.VisBusinessGetResumeContent;
-import com.vis.business.resume.VisBusinessResumeSaveViewFailed;
-import com.vis.entities.VisEntityBalance;
-import com.vis.entities.VisEntityDeniedViewToCompany;
-import com.vis.entities.VisEntityFees;
 import com.vis.entities.VisEntityPosition;
-import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityResumeFreeView;
-import com.vis.entities.VisEntityResumeLastView;
-import com.vis.entities.VisEntityResumePerception;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
-import com.vis.status.VisProcessStatusResumeView;
 import com.vis.status.VisProcessStatusSuggestNewSkill;
 
 public enum VisServicePosition implements JnService {
@@ -57,33 +46,8 @@ public enum VisServicePosition implements JnService {
 	},
 	GetImportantSkillsFromText{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation oneById = VisEntitySkill.ENTITY.getOneById(json);
-
-			CcpJsonRepresentation jsonWithSkills = VisBusinessExtractSkillsFromPositionText.INSTANCE.apply(oneById);
 			
-			return jsonWithSkills;
-		}
-	},
-	GetResumeContent{
-		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			String context = new Object(){}.getClass().getEnclosingMethod().getName();
-			CcpJsonRepresentation findById =  new CcpGetEntityId(json)
-			.toBeginProcedureAnd()
-				.loadThisIdFromEntity(VisEntityPosition.ENTITY).and()
-				.loadThisIdFromEntity(VisEntityResumePerception.ENTITY).and()
-				.loadThisIdFromEntity(VisEntityResumeFreeView.ENTITY).and()
-				.loadThisIdFromEntity(VisEntityResumeLastView.ENTITY).and()
-				.loadThisIdFromEntity(VisEntityPosition.ENTITY.getTwinEntity()).and()
-				.loadThisIdFromEntity(VisEntityResumePerception.ENTITY.getTwinEntity()).and()
-				.ifThisIdIsNotPresentInEntity(VisEntityBalance.ENTITY).returnStatus(VisProcessStatusResumeView.missingBalance).and()
-				.ifThisIdIsNotPresentInEntity(VisEntityFees.ENTITY).returnStatus(VisProcessStatusResumeView.missingFee).and()
-				.ifThisIdIsPresentInEntity(VisEntityDeniedViewToCompany.ENTITY).returnStatus(VisProcessStatusResumeView.notAllowedRecruiter).and()
-				.ifThisIdIsPresentInEntity(VisEntityResume.ENTITY.getTwinEntity()).returnStatus(VisProcessStatusResumeView.inactiveResume).and()
-				.ifThisIdIsNotPresentInEntity(VisEntityResume.ENTITY).returnStatus(VisProcessStatusResumeView.resumeNotFound).and()
-				.ifThisIdIsPresentInEntity(VisEntityResume.ENTITY).executeAction(VisBusinessGetResumeContent.INSTANCE).andFinallyReturningTheseFields()
-			.endThisProcedureRetrievingTheResultingData(context, VisBusinessResumeSaveViewFailed.INSTANCE, JnDeleteKeysFromCache.INSTANCE);
-			
-			return findById;
+			return json;
 		}
 	},
 	GetResumeList{
