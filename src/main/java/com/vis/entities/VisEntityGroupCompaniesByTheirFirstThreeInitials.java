@@ -1,10 +1,21 @@
 
 package com.vis.entities;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.dependency.injection.CcpDependencyInjection;
+import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
+import com.ccp.especifications.db.query.CcpQueryExecutor;
+import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
@@ -35,7 +46,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(exactLength = 3)
 		firstThreeInitials, 
-		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
+		@CcpJsonFieldTypeString(minLength = 3, maxLength = 30)
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		@CcpJsonFieldValidatorRequired
 		companies,
@@ -47,9 +58,54 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		
 	}
 	
-	@Override
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		// TODO Auto-generated method stub
-		return CcpEntityConfigurator.super.getFirstRecordsToInsert();
+		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
+		CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
+		
+		Consumer<CcpJsonRepresentation> consumer = json -> {
+			String x = json.getDynamicVersion().getAsString("id");
+				String[] split = x.split("@");
+				if(split.length != 2) {
+					return;
+				}
+				
+				
+			String domain = split[1];
+			
+			String[] split1 = domain.split("\\.");			
+
+			String companyName = split1[0].toUpperCase().trim();
+			
+			if(companyName.length() < 3) {
+				return;
+			}
+			
+			String capitalizedCompanyName = new CcpStringDecorator(companyName).text().capitalize().content;
+			
+			String initials = companyName.substring(0, 3);
+			
+			LinkedHashSet<String> orDefault = groupedCompanies.getDynamicVersion().getOrDefault(initials, new LinkedHashSet<>());
+			orDefault.add(capitalizedCompanyName);
+			groupedCompanies = groupedCompanies.getDynamicVersion().put(initials, orDefault);
+		};
+		queryExecutor.consumeQueryResult(query, new String[] {"old_recruiters"}, "1s", 10000, consumer, "id");
+
+		List<CcpBulkItem> collect = groupedCompanies.fieldSet().stream().map(initials -> this.toBulkItem(initials)).collect(Collectors.toList());
+		
+		return collect;
 	}
+	
+	private CcpBulkItem toBulkItem(String initials) {
+		Set<String> companies = groupedCompanies.getDynamicVersion().getAsObject(initials);
+		
+		CcpJsonRepresentation json = CcpOtherConstants.EMPTY_JSON
+		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, initials)
+		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies, companies);
+		
+		String calculateId = ENTITY.calculateId(json);
+		CcpBulkItem item = new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, calculateId);
+		return item;
+	}
+	static CcpJsonRepresentation groupedCompanies = CcpOtherConstants.EMPTY_JSON;
+
 }

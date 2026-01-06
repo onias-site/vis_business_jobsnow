@@ -1,5 +1,6 @@
 package com.vis.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,10 +67,10 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	}
 	
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		List<CcpBulkItem> collect = new CcpStringDecorator("C:\\eclipse-workspaces\\ccp\\jn\\jn-dependency-chooser-documentation-and-junit-testing\\documentation\\skills\\synonyms.json")
-		.file().asJsonList().stream().map(json -> ENTITY.getMainBulkItem(json, CcpBulkEntityOperationType.create)).collect(Collectors.toList());
-		;
-		return collect;
+//		List<CcpBulkItem> collect = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json")
+//		.file().asJsonList().stream().map(json -> ENTITY.getMainBulkItem(json, CcpBulkEntityOperationType.create)).collect(Collectors.toList());
+//		;
+		return new ArrayList<>();
 	}
 }
 
