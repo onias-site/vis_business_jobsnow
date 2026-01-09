@@ -1,0 +1,134 @@
+package com.vis.services;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.jn.services.JnService;
+import com.vis.entities.VisEntityGroupPositionsBySkills;
+import com.vis.entities.VisEntityResume;
+import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByResumes;
+
+public enum VisServiceSkills implements JnService {
+	GetSkillsFromText{
+
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			String text = json.getAsString(com.vis.services.GetSkillsFromText.text).toUpperCase();
+			String[] phrases = text.split(CcpOtherConstants.DELIMITERS);
+
+			CcpJsonRepresentation group = CcpOtherConstants.EMPTY_JSON;
+			
+			List<CcpJsonRepresentation> excludedSkill = json.getAsJsonList(VisEntityResume.Fields.excludedSkill);
+			List<String> excluded = excludedSkill.stream().map(x -> x.getDynamicVersion().getAsString("word").toUpperCase()).collect(Collectors.toList());
+			
+			Map<String, CcpJsonRepresentation> response = new HashMap<>();
+			
+
+			for (String phrase : phrases) {
+				phrase = phrase.trim();
+				if(phrase.length() < 2) {
+					continue;
+				}
+				if(phrase.length() > 35) {
+					continue;
+				}
+				
+				String firstTwoInitials = phrase.substring(0, 2);
+				HashSet<String> orDefault = group.getDynamicVersion().getOrDefault(firstTwoInitials, new HashSet<String>());
+				orDefault.add(phrase);
+				group = group.getDynamicVersion().put(firstTwoInitials, orDefault);
+			}
+		
+			List<CcpJsonRepresentation> collect = group.fieldSet().stream().map(firstTwoInitials -> CcpOtherConstants.EMPTY_JSON.put(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials, firstTwoInitials))
+			.collect(Collectors.toList());
+			
+			CcpJsonRepresentation multipleByIds = VisEntityGroupPositionsBySkills.ENTITY.getMultipleByIds(collect);
+			
+			Set<String> ids = multipleByIds.fieldSet();
+			
+			for (String id : ids) {
+				CcpJsonRepresentation innerJson = multipleByIds.getDynamicVersion().getInnerJson(id);
+			
+				if(innerJson.isEmpty()) {
+					continue;
+				}
+				
+				List<CcpJsonRepresentation> skills = innerJson.getAsJsonList(VisEntityGroupPositionsBySkills.Fields.skill);
+				
+				String firstTwoInitials = innerJson.getAsString(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials);
+				
+				Set<String> phrasesInResume = group.getDynamicVersion().getAsObject(firstTwoInitials);
+				
+				List<CcpJsonRepresentation> matchedPhrases = skills.stream()
+						.filter(skill -> false == this.getPhraseInResume(phrasesInResume, skill, text).isEmpty())
+						.filter(skill -> false == excluded.contains(skill.getDynamicVersion().getAsString("word").toUpperCase()))
+						.map(skill -> skill.getDynamicVersion().put("phraseInResume", this.getPhraseInResume(phrasesInResume, skill, text)))
+						.collect(Collectors.toList()); 
+				
+				
+				for (CcpJsonRepresentation matchedPhrase : matchedPhrases) {
+					String skill = matchedPhrase.getDynamicVersion().getAsString("skill");
+					response.put(skill, matchedPhrase);
+				}
+			}
+			
+			Collection<CcpJsonRepresentation> skills = response.values();
+			
+			CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(VisEntityGroupPositionsBySkills.Fields.skill, skills);
+			
+			return  put;
+		}
+		private String sanitizeWord(String upperCase) {
+			if(upperCase.endsWith(CcpOtherConstants.DELIMITERS)) {
+				upperCase = upperCase.substring(0, upperCase.length() - 1);
+				return this.sanitizeWord(upperCase);
+			}
+			if(upperCase.endsWith("\\.")) {
+				upperCase = upperCase.substring(0, upperCase.length() - 1);
+				return this.sanitizeWord(upperCase);
+			}
+			return upperCase;
+		}
+		
+		private String getPhraseInResume(Set<String> phrasesInResume, CcpJsonRepresentation skill, String text) {
+			
+			for (String phraseInResume : phrasesInResume) {
+				{
+					
+					String upperCase = skill.getDynamicVersion().getAsString("word").toUpperCase();
+					upperCase = this.sanitizeWord(upperCase);
+
+					if(text.contains(upperCase)) {
+						return upperCase;
+					}
+					boolean contains = phraseInResume.equals(upperCase);
+					if(contains) {
+						return phraseInResume;
+					}
+				}
+			}
+			return "";
+		}
+	},
+	;
+}
+
+	enum GetSkillsFromText implements CcpJsonFieldName{
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonFieldTypeString(maxLength = 5_000_000)
+		text,
+		@CcpJsonFieldValidatorArray
+		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
+		excludedSkill,
+	}

@@ -23,7 +23,6 @@ import com.ccp.especifications.db.crud.CcpUnionAllExecutor;
 import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.file.bucket.CcpFileBucketOperation;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.vis.business.position.VisBusinessPositionResumesSend;
@@ -66,16 +65,6 @@ public class VisUtils {
 		boolean insuficientFunds = balanceValue <= totalCostToThisRecruiter;
 		
 		return insuficientFunds;
-	}
-	public static CcpJsonRepresentation getResumeFromBucket(CcpJsonRepresentation json) {
-		String email = json.getAsString(VisEntityResume.Fields.email);
-		String folder = "resumes/" + email;
-		String file = "" + json.getAsLongNumber(VisEntityResume.Fields.timestamp);
-		String tenant = VisUtils.getTenant();
-	
-		String resumeJson = CcpFileBucketOperation.get.execute(tenant, folder, file);
-		CcpJsonRepresentation resume = new CcpJsonRepresentation(resumeJson);
-		return resume;
 	}
 
 	

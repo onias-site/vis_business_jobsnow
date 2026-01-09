@@ -8,16 +8,14 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityC
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.entities.decorators.JnVersionableEntity;
@@ -26,6 +24,7 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.mensageria.JnAsyncWriterEntity;
 import com.vis.business.resume.VisBusinessCalculateResumeHashes;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByResumes;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 @CcpEntityCache(3600)
@@ -53,60 +52,80 @@ public class VisEntityResume implements CcpEntityConfigurator {
 	
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
 	
-	public static enum Fields implements CcpJsonFieldName{
-		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1_500)
-		clt, 
-		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1_000)
-		btc, 
-		@CcpJsonFieldValidatorArray
-		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-		notAllowedCompany,  
+	public static enum Fields implements CcpJsonFieldName {
+
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		btc,
+
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		clt,
+
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date,
+
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		disponibility,
+
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		ddd, 
+		ddd,
+
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
-		desiredJob, 
-		@CcpJsonFieldValidatorRequired
-		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		disponibility, 
+		desiredJob,
+
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
-		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeTimeBefore(maxValue = 70, intervalType = CcpEntityExpurgableOptions.yearly)
-		experience, 
-		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
-		lastJob, 
-		@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 2_500)
-		pj, 
-		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		timestamp,
-		@CcpJsonFieldTypeBoolean
-		pcd, 
+
+		@CcpJsonFieldValidatorArray
+		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
+		excludedSkill,
+
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		temporallyJobTime,
+		experience,
+
+		@CcpJsonFieldValidatorArray
+		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
+		includedSkill,
+
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
+		lastJob,
+
 		@CcpJsonFieldValidatorArray
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		language,
-		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-		@CcpJsonFieldValidatorArray
-		includedSkill,
-		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-		@CcpJsonFieldValidatorArray
-		excludedSkill,
-		@CcpJsonFieldTypeBoolean
-		negotiableClaim, 
+
+		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 5, maxLength = 100)
-		linkedinAddress, 
+		linkedinAddress,
+
 		@CcpJsonFieldTypeBoolean
-		travel, 
+		negotiableClaim,
+
+		@CcpJsonFieldValidatorArray
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		notAllowedCompany,
+
+		@CcpJsonFieldTypeBoolean
+		pcd,
+
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		pj,
+
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		timestamp,
+
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		temporallyJobTime,
+
+		@CcpJsonFieldTypeBoolean
+		travel,
 		;
-	}
-	
+	}	
 }
 

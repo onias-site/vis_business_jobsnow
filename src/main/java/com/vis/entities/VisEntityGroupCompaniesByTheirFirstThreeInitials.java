@@ -102,8 +102,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, initials)
 		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies, companies);
 		
-		String calculateId = ENTITY.calculateId(json);
-		CcpBulkItem item = new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, calculateId);
+		CcpBulkItem item = new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY);
 		return item;
 	}
 	static CcpJsonRepresentation groupedCompanies = CcpOtherConstants.EMPTY_JSON;
