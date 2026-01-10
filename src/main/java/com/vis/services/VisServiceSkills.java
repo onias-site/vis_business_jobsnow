@@ -1,5 +1,6 @@
 package com.vis.services;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,7 +74,6 @@ public enum VisServiceSkills implements JnService {
 				List<CcpJsonRepresentation> matchedPhrases = skills.stream()
 						.filter(skill -> false == this.getPhraseInResume(phrasesInResume, skill, text).isEmpty())
 						.filter(skill -> false == excluded.contains(skill.getDynamicVersion().getAsString("word").toUpperCase()))
-						.map(skill -> skill.getDynamicVersion().put("phraseInResume", this.getPhraseInResume(phrasesInResume, skill, text)))
 						.collect(Collectors.toList()); 
 				
 				
@@ -83,12 +83,71 @@ public enum VisServiceSkills implements JnService {
 				}
 			}
 			
-			Collection<CcpJsonRepresentation> skills = response.values();
+			List<CcpJsonRepresentation> values = new ArrayList<>(response.values());
+			
+			values.sort((a, b) -> a.getDynamicVersion().getAsString("word").length() -  b.getDynamicVersion().getAsString("word").length());
+			
+			Collection<CcpJsonRepresentation> skills = values.stream().filter(skill -> this.isElegibleSkill(values, skill)).collect(Collectors.toList()); 
 			
 			CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(VisEntityGroupPositionsBySkills.Fields.skill, skills);
 			
 			return  put;
 		}
+		
+		private boolean isPieceFromAnotherWord(Collection<CcpJsonRepresentation> skills, CcpJsonRepresentation skill) {
+			String 	word = skill.getDynamicVersion().getAsString("word");
+			
+			List<CcpJsonRepresentation> collect = skills.stream().filter(x -> x.getDynamicVersion().getAsString("word").length() > word.length()).collect(Collectors.toList());
+			
+			for (CcpJsonRepresentation sk : collect) {
+				boolean contains = sk.getDynamicVersion().getAsString("word").contains(word);
+				if(contains) {
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		
+		private boolean isElegibleSkill(Collection<CcpJsonRepresentation> skills, CcpJsonRepresentation skill) {
+			String word = skill.getDynamicVersion().getAsString("word");
+
+			if(word.length() > 4 && false == this.isPieceFromAnotherWord(skills, skill)) {
+				return true;
+			}
+			
+			String skillName = skill.getDynamicVersion().getAsString("skill");
+			
+			boolean isSomeoneParent = skills.stream().map(x -> x.getDynamicVersion().getAsStringList("parent"))
+					.anyMatch(x -> x.contains(skillName) || x.contains(word));
+			
+			if(isSomeoneParent) {
+				return true;
+			}
+
+			List<String> parent = skill.getDynamicVersion().getAsStringList("parent");
+			
+			for (CcpJsonRepresentation sk : skills) {
+				{
+					String asString = sk.getDynamicVersion().getAsString("skill");
+					boolean matches = parent.contains(asString);
+					if(matches) {
+						return true;
+					}
+				}
+				{
+					String asString = sk.getDynamicVersion().getAsString("word");
+					boolean matches = parent.contains(asString);
+					if(matches) {
+						return true;
+					}
+				}
+			}
+			
+			
+			return false;
+		}
+		
 		private String sanitizeWord(String upperCase) {
 			if(upperCase.endsWith(CcpOtherConstants.DELIMITERS)) {
 				upperCase = upperCase.substring(0, upperCase.length() - 1);
