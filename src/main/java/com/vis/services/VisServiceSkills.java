@@ -26,6 +26,9 @@ public enum VisServiceSkills implements JnService {
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			String text = json.getAsString(com.vis.services.GetSkillsFromText.text).toUpperCase();
+			if(text.trim().isEmpty()) {
+				return CcpOtherConstants.EMPTY_JSON;
+			}
 			String[] phrases = text.split(CcpOtherConstants.DELIMITERS);
 
 			CcpJsonRepresentation group = CcpOtherConstants.EMPTY_JSON;
@@ -167,17 +170,44 @@ public enum VisServiceSkills implements JnService {
 					
 					String upperCase = skill.getDynamicVersion().getAsString("word").toUpperCase();
 					upperCase = this.sanitizeWord(upperCase);
-
-					if(text.contains(upperCase)) {
-						return upperCase;
-					}
 					boolean contains = phraseInResume.equals(upperCase);
 					if(contains) {
 						return phraseInResume;
 					}
+					
+					int length = upperCase.split(CcpOtherConstants.DELIMITERS).length;
+					
+					if(length <= 1) {
+						continue;
+					}
+					
+					boolean containsAll = this.isWithinTheText(text, upperCase);	
+					if(containsAll) {
+						return upperCase;
+					}
 				}
 			}
 			return "";
+		}
+
+		private boolean isWithinTheText(String text, String upperCase) {
+
+			int indexOf = text.indexOf(upperCase);
+			if(indexOf < 0) {
+				return false;
+			}
+			
+			
+			char charAt = text.charAt(indexOf + 1);
+			
+			char[] charArray = CcpOtherConstants.DELIMITERS.toCharArray();
+			for (char c : charArray) {
+				if(c == charAt) {
+					return true;
+				}
+			}
+			
+			return false;
 		}
 	},
 	;
@@ -185,7 +215,7 @@ public enum VisServiceSkills implements JnService {
 
 	enum GetSkillsFromText implements CcpJsonFieldName{
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeString(maxLength = 5_000_000)
+		@CcpJsonFieldTypeString(maxLength = 5_000_000, allowsEmptyString = true)
 		text,
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
