@@ -34,6 +34,7 @@ public enum VisServiceSkills implements JnService {
 			CcpJsonRepresentation group = CcpOtherConstants.EMPTY_JSON;
 			
 			List<CcpJsonRepresentation> excludedSkill = json.getAsJsonList(VisEntityResume.Fields.excludedSkill);
+			
 			List<String> excluded = excludedSkill.stream().map(x -> x.getDynamicVersion().getAsString("word").toUpperCase()).collect(Collectors.toList());
 			
 			Map<String, CcpJsonRepresentation> response = new HashMap<>();
@@ -92,10 +93,45 @@ public enum VisServiceSkills implements JnService {
 			
 			Collection<CcpJsonRepresentation> skills = values.stream().filter(skill -> this.isElegibleSkill(values, skill)).collect(Collectors.toList()); 
 			
-			CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(VisEntityGroupPositionsBySkills.Fields.skill, skills);
+			var implicitSkills = this.getImplicitSkills(skills, excludedSkill);
+			CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON
+					.put(com.vis.services.GetSkillsFromText.implicitSkills, implicitSkills)
+					.put(VisEntityGroupPositionsBySkills.Fields.skill, skills)
+					;
 			
 			return  put;
 		}
+		
+		private List<CcpJsonRepresentation> getImplicitSkills(Collection<CcpJsonRepresentation> skills, List<CcpJsonRepresentation> excludedSkill) {
+
+			Set<String> set = new HashSet<>();
+			
+			for (CcpJsonRepresentation skill : skills) {
+				List<String> parent = skill.getDynamicVersion().getAsStringList("parent");
+				set.addAll(parent);
+			}
+			
+			var implicitSkills = set.stream().filter(parent -> new ArrayList<>(skills).stream().map(x -> x.getDynamicVersion())
+					.allMatch(skill -> false == skill.getAsString("skill").equals(parent)))
+					.filter(parent -> false == excludedSkill.stream().map(skill -> skill.getDynamicVersion()
+							.getAsString("skill")).collect(Collectors.toSet()).contains(parent)).collect(Collectors.toSet())
+					;
+			
+			List<CcpJsonRepresentation> response = new ArrayList<>();
+			for (String implicitSkill : implicitSkills) {
+				CcpJsonRepresentation json = CcpOtherConstants.EMPTY_JSON;
+				List<CcpJsonRepresentation> collect = skills.stream().map(x -> x.getDynamicVersion())
+				.filter(x -> x.getAsStringList("parent").contains(implicitSkill))
+				.map(x -> x.getJsonPiece("skill", "word")).collect(Collectors.toList())
+				;
+				CcpJsonRepresentation put = json.getDynamicVersion().put("skill", implicitSkill)
+				.getDynamicVersion().put("children", collect);
+				
+				response.add(put);
+			}
+			return response;
+		}
+		
 		
 		private boolean isPieceFromAnotherWord(Collection<CcpJsonRepresentation> skills, CcpJsonRepresentation skill) {
 			String 	word = skill.getDynamicVersion().getAsString("word");
@@ -220,4 +256,5 @@ public enum VisServiceSkills implements JnService {
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
 		excludedSkill,
+		implicitSkills
 	}
