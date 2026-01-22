@@ -1,5 +1,6 @@
 package com.vis.json.fields.validation;
 
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
@@ -7,7 +8,7 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJs
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
-public enum VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials {
+public enum VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials implements CcpJsonFieldName{
 
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 	date,

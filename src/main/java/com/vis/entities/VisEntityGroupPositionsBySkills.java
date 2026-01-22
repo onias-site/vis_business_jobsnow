@@ -85,6 +85,38 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 	}
 	
 	
+	public static int getWordStatus(String word) {
+		String upperCase = word.toUpperCase();
+		String firstTwoInitials = upperCase.substring(0,2);
+		CcpJsonRepresentation id = CcpOtherConstants.EMPTY_JSON.put(Fields.firstTwoInitials, firstTwoInitials);
+		CcpJsonRepresentation oneById = ENTITY.getOneByIdOrHandleItIfThisIdWasNotFound(id, json -> CcpOtherConstants.EMPTY_JSON);
+		
+		boolean notFound = oneById.isEmpty();
+		
+		if(notFound) {
+			return 1;
+		}
+
+		
+		
+		List<CcpJsonRepresentation> skills = oneById.getAsJsonList(Fields.skill);
+		for (CcpJsonRepresentation skill : skills) {
+			{
+				String wrd = skill.getAsString(VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials.word);
+				if(wrd.equals(upperCase)) {
+					return 0;
+				}
+			}
+			{
+				String wrd = skill.getAsString(VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials.skill);
+				if(wrd.equals(upperCase)) {
+					return 0;
+				}
+			}
+		}
+		
+		return 2;
+	} 
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
 		var synonyms = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json")
 		.file()
