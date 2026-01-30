@@ -125,7 +125,7 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		var wordsAndParents = new HashMap<String, Set<String>>();
 		var wordsAndSkills = new HashMap<String, String>();
 
-		for (var synonym : synonyms) {
+		for (CcpJsonRepresentation synonym : synonyms) {
 			
 			List<String> parents = synonym.getDynamicVersion().getAsStringList("parent");
 			
@@ -150,21 +150,21 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 			wordsAndSkills.put(skill, skill);
 			{
 				List<CcpJsonRepresentation> words = synonym.getDynamicVersion().getAsJsonList("synonym");
-				for (var word : words) {
+				for (CcpJsonRepresentation word : words) {
 					String upperCase = word.getDynamicVersion().getAsString("skill").toUpperCase();
 					wordsAndSkills.put(upperCase, skill);
 				}
 			}
 			{
 				List<CcpJsonRepresentation> words = synonym.getDynamicVersion().getAsJsonList("preRequisite");
-				for (var word : words) {
+				for (CcpJsonRepresentation word : words) {
 					String upperCase = word.getDynamicVersion().getAsString("word").toUpperCase();
 					wordsAndSkills.put(upperCase, skill);
 				}
 			}
 			{
 				List<CcpJsonRepresentation> words = synonym.getDynamicVersion().getAsJsonList("similar");
-				for (var word : words) {
+				for (CcpJsonRepresentation word : words) {
 					String upperCase = word.getDynamicVersion().getAsString("word").toUpperCase().replace("_", " ");
 					wordsAndSkills.put(upperCase, skill);
 				}

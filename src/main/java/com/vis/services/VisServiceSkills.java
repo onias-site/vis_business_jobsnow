@@ -39,6 +39,7 @@ enum Fields implements CcpJsonFieldName{
 	discardedSkills,
 	isPieceOfOtherWord, 
 	isPieceOfOtherSkill, 
+	skillAlreadyAdded, 
 }
 
 public enum VisServiceSkills implements JnService {
@@ -49,8 +50,8 @@ public enum VisServiceSkills implements JnService {
 			CcpCacheDecorator cache = new CcpCacheDecorator(id);
 			boolean presentInTheCache = cache.isPresentInTheCache();
 			return presentInTheCache;
-			
 		}
+		
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 			String text = json.getAsString(Fields.text).toUpperCase();
@@ -130,8 +131,8 @@ public enum VisServiceSkills implements JnService {
 				}
 				
 				
-				boolean isPieceOfOtherWord = word.length() < 7;
-				if(isPieceOfOtherWord) {
+				boolean isTooSmallWord = word.length() < 7;
+				if(isTooSmallWord) {
 					String replaceAll = word.replaceAll(CcpOtherConstants.DELIMITERS, "");
 					if(false == phrasesList.contains(replaceAll)) {
 						discardedSkills = discardedSkills
@@ -156,12 +157,18 @@ public enum VisServiceSkills implements JnService {
 				choosedSkills.add(putLabel);
 			}
 			
-			choosedSkills.sort((a, b) -> b.getAsString(Fields.label).length() -  a.getAsString(Fields.label).length());
+			choosedSkills.sort((a, b) -> a.getAsString(Fields.label).length() -  b.getAsString(Fields.label).length());
 			
 			Map<String, CcpJsonRepresentation> map = new LinkedHashMap<>();
 		
 			for (CcpJsonRepresentation skill : choosedSkills) {
 				String skillName = skill.getAsString(Fields.skill);
+				if(map.containsKey(skillName)){
+					discardedSkills = discardedSkills
+							.addToList(Fields.skillAlreadyAdded, skill.getJsonPiece(Fields.skill, Fields.word));
+					continue;
+
+				}
 				map.put(skillName, skill);
 			}
 			Collection<CcpJsonRepresentation> skills = map.values();

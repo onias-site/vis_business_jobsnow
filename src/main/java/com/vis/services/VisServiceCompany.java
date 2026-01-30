@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.services.JnService;
@@ -22,7 +23,7 @@ public enum VisServiceCompany implements JnService {
 			var threeInitials = search.substring(0, 3);
 			var querySearch = json.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, threeInitials);
 			CcpBusiness retrievesEmptyCompaniesList = query -> query.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies, Arrays.asList(search));
-			var searchResult = VisEntityGroupCompaniesByTheirFirstThreeInitials.ENTITY.getOneByIdOrHandleItIfThisIdWasNotFound(querySearch, retrievesEmptyCompaniesList);
+			CcpJsonRepresentation searchResult = VisEntityGroupCompaniesByTheirFirstThreeInitials.ENTITY.getOneByIdOrHandleItIfThisIdWasNotFound(querySearch, retrievesEmptyCompaniesList);
 			var jsonPiece = searchResult.getJsonPiece(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies);
 			
 			var typedJustThreeCharacters = search.equals(threeInitials);

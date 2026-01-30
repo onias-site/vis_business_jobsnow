@@ -6,6 +6,7 @@ import java.util.List;
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonRepresentation;
 public enum GetMoneyValuesFromJson  {
 	resume {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
