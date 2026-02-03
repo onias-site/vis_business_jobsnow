@@ -54,9 +54,6 @@ public enum VisJsonCommonsFields {
 	@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 2_500)
 	pj,
 
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 35)
-	prerequisite, // DOUBT OU SERIA "PARENT"?
-
 	@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
 	ranking,
 
@@ -83,6 +80,10 @@ public enum VisJsonCommonsFields {
 	
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 35)
 	word, 
+
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 35)
+	parent,
+
 
 	;
 

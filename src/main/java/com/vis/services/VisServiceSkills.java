@@ -8,21 +8,30 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.ccp.business.CcpBusiness;
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpDynamicJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.cache.CcpCacheDecorator;
+import com.ccp.especifications.db.crud.CcpGetEntityId;
+import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.ccp.process.CcpProcessStatus;
 import com.jn.services.JnService;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityGroupPositionsBySkills;
 import com.vis.entities.VisEntityResume;
+import com.vis.entities.VisEntitySkill;
+import com.vis.entities.VisEntitySkillPending;
+import com.vis.entities.VisEntitySkillRejected;
 import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByResumes;
 
 enum Fields implements CcpJsonFieldName{
@@ -37,12 +46,60 @@ enum Fields implements CcpJsonFieldName{
 	label,
 	parent, 
 	discardedSkills,
-	isPieceOfOtherWord, 
+	isPieceOfOtherWord,
+	associated,
 	isPieceOfOtherSkill, 
 	skillAlreadyAdded, 
 }
+enum RequestToCreateNewSkillStatus implements CcpProcessStatus{
+	alreadyAdded(409),
+	rejected(412),
+	approved(409),
+	pending(409),
+	analyzing(202)
 
+	
+	;
+	
+	public final int status;
+
+	private RequestToCreateNewSkillStatus(int status) {
+		this.status = status;
+	}
+	
+	public int asNumber() {
+		return this.status;
+	}
+	
+}
 public enum VisServiceSkills implements JnService {
+	
+	RequestToCreateNewSkill{
+
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpBusiness action = VisEntitySkillPending.ENTITY.getOperationCallback(CcpEntityOperationType.save);
+			new CcpGetEntityId(json)
+			.toBeginProcedureAnd()
+			.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY).returnStatus(RequestToCreateNewSkillStatus.rejected)
+			.and()
+			.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY).returnStatus(RequestToCreateNewSkillStatus.pending)
+			.and()
+			.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY.getTwinEntity()).returnStatus(RequestToCreateNewSkillStatus.approved)
+			.and()
+			.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(action)
+			.and()
+			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).returnStatus(RequestToCreateNewSkillStatus.alreadyAdded)
+			.andFinallyReturningTheseFields()
+			.endThisProcedure(this.name(), CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+			;
+			
+			CcpJsonRepresentation throwException = RequestToCreateNewSkillStatus.analyzing.throwException(json);
+			
+			return throwException;
+		}
+		
+	},
+	
 	GetSkillsFromText{
 
 		private boolean isInCache(CcpJsonRepresentation json) {
@@ -132,11 +189,21 @@ public enum VisServiceSkills implements JnService {
 				
 				
 				boolean isTooSmallWord = word.length() < 7;
+			
+				CcpJsonRepresentation jsonPiece = skill.getJsonPiece(Fields.skill, Fields.word);
+				
 				if(isTooSmallWord) {
 					String replaceAll = word.replaceAll(CcpOtherConstants.DELIMITERS, "");
-					if(false == phrasesList.contains(replaceAll)) {
-						discardedSkills = discardedSkills
-								.addToList(Fields.isPieceOfOtherWord, skill.getJsonPiece(Fields.skill, Fields.word))
+					boolean isNotAnIndepententWord = false == phrasesList.contains(replaceAll);
+					if(isNotAnIndepententWord) {
+						Optional<String> findFirst = phrasesList.stream().filter(phrase -> phrase.toUpperCase().contains(replaceAll.toUpperCase())).findFirst();
+						
+						if(false == findFirst.isPresent()) {
+							continue;
+						}
+						String associated = findFirst.get();
+						CcpJsonRepresentation put = jsonPiece.put(Fields.associated, associated);
+						discardedSkills = discardedSkills.addToList(Fields.isPieceOfOtherWord, put)
 								;
 						continue;
 					}
@@ -146,11 +213,13 @@ public enum VisServiceSkills implements JnService {
 					continue;
 				}
 				
-				boolean isPieceOfOtherSkill = allSkillsFoundInTheText.stream().filter(x -> x.getAsString(Fields.word).length() > word.length()).anyMatch(x -> x.getAsString(Fields.word).contains(word));
+				Optional<CcpJsonRepresentation> findFirst = allSkillsFoundInTheText.stream().filter(x -> x.getAsString(Fields.word).length() > word.length()).filter(x -> x.getAsString(Fields.word).contains(word)).findFirst();
+				boolean isPieceOfOtherSkill = findFirst.isPresent();
 				if(isPieceOfOtherSkill) {
-					discardedSkills = discardedSkills
-							.addToList(Fields.isPieceOfOtherSkill, skill.getJsonPiece(Fields.skill, Fields.word))
-							;
+					CcpJsonRepresentation jsn = findFirst.get();
+					String associated = jsn.getAsString(Fields.word);
+					CcpJsonRepresentation put = jsonPiece.put(Fields.associated, associated);
+					discardedSkills = discardedSkills.addToList(Fields.isPieceOfOtherSkill, put);
 					continue;
 				}
 				CcpJsonRepresentation putLabel = this.putLabel(skill);
@@ -163,14 +232,27 @@ public enum VisServiceSkills implements JnService {
 		
 			for (CcpJsonRepresentation skill : choosedSkills) {
 				String skillName = skill.getAsString(Fields.skill);
-				if(map.containsKey(skillName)){
-					discardedSkills = discardedSkills
-							.addToList(Fields.skillAlreadyAdded, skill.getJsonPiece(Fields.skill, Fields.word));
+				boolean alreadyAdded = map.containsKey(skillName);
+				
+				if(alreadyAdded){
+					CcpJsonRepresentation jsn = map.get(skillName);
+					String associated = jsn.getAsString(Fields.word);
+					CcpJsonRepresentation jsonPiece = skill.getJsonPiece(Fields.skill, Fields.word);
+					CcpJsonRepresentation put = jsonPiece.put(Fields.associated, associated);
+					discardedSkills = discardedSkills.addToList(Fields.skillAlreadyAdded, put);
 					continue;
-
 				}
-				map.put(skillName, skill);
+				
+				List<String> parent = skill.getAsStringList(Fields.parent)
+						.stream()
+						.map(x -> x.endsWith("123") ? x.substring(0, x.length() - 3) : x)
+						.collect(Collectors.toList());
+				
+				CcpJsonRepresentation put = skill.put(Fields.parent, parent);
+				
+				map.put(skillName, put);
 			}
+			
 			Collection<CcpJsonRepresentation> skills = map.values();
 			
 			CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON

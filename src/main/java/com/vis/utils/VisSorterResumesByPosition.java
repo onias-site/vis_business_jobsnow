@@ -6,7 +6,6 @@ import java.util.List;
 
 import com.ccp.decorators.CcpCollectionDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 
