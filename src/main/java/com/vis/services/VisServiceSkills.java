@@ -30,6 +30,7 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityGroupPositionsBySkills;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntitySkill;
+import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
 import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByResumes;
@@ -276,6 +277,13 @@ public enum VisServiceSkills implements JnService {
 			String label = word + " (" + skill + ")";
 			CcpJsonRepresentation put = dynamicVersion.put("label", label);
 			return put;
+		}
+	}, 
+	
+	FixSkillHierarchy{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation save = VisEntitySkillFixHierarchyPending.ENTITY.save(json);
+			return save;
 		}
 	},
 	;

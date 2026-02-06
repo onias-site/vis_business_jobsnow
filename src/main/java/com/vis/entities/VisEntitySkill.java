@@ -42,17 +42,17 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	
 	public static enum Fields implements CcpJsonFieldName{
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		@CcpEntityFieldPrimaryKey
-		skill, 
+		@CcpJsonFieldValidatorArray
+		parent,
 		
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ranking,
 
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		@CcpJsonFieldValidatorArray
-		parent,
-	
+		@CcpEntityFieldPrimaryKey
+		skill, 
+		
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorArray
 		synonym,
