@@ -60,11 +60,17 @@ public enum VisEmailTemplates implements CcpBusiness{
 		
 	}
 	
+	//FIXME FALTANDO TEMPLATE
 	public static class RejectedSkillHierarchy extends SendEmail{}
+	//FIXME FALTANDO TEMPLATE
 	public static class AprovedSkillHierarchy extends SendEmail{}
+	//FIXME FALTANDO TEMPLATE
 	public static class PedingSkillHierarchy extends SendEmail{}
+	//FIXME FALTANDO TEMPLATE
 	public static class RejectedSkill extends SendEmail{}
+	//FIXME FALTANDO TEMPLATE
 	public static class PendingSkill extends SendEmail{}
+	//FIXME FALTANDO TEMPLATE
 	public static class AprovedSkill extends SendEmail{}
 	
 	

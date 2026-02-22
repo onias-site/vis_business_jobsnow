@@ -59,17 +59,20 @@ public enum VisJsonCommonsFields {
 
 	@CcpJsonFieldTypeString(regexValidation = CcpEmailDecorator.EMAIL_REGEX, minLength = 7, maxLength = 100)
 	recruiter,
-
+	
+	@CcpJsonFieldTypeNumberUnsigned(allowedValues = {1,2,3,4})
+	resumeType,
+	
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 	service,
 
 	@CcpJsonFieldTypeString(allowedValues = {"JR", "PL", "SR", "ES"})
 	seniority,
 
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 35)
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 	skill,
 
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 35)
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 	synonym,
 
 	@CcpJsonFieldTypeNumberUnsigned(maxValue = 12)
@@ -78,10 +81,10 @@ public enum VisJsonCommonsFields {
 	@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
 	title,
 	
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 35)
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 	word, 
 
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 35)
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 	parent,
 
 

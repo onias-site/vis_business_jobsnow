@@ -11,7 +11,6 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfig
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.mensageria.JnAsyncWriterEntity;
@@ -21,8 +20,8 @@ import com.vis.business.templates.notify.support.VisTemplatesToNotifySupport;
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityDataTransfer(rules = {
-		@CcpEntityDataTransferRule(whenTransferingToEntity = VisEntitySkillFixHierarchyRejected.class, thenExecuteTheFollowingFlow = {VisEmailTemplates.RejectedSkillHierarchy.class}),
-		@CcpEntityDataTransferRule(whenTransferingToEntity = VisEntitySkillFixHierarchyApproved.class, thenExecuteTheFollowingFlow = {VisEmailTemplates.AprovedSkillHierarchy.class})
+		@CcpEntityDataTransferRule(whenTransferingDataToEntity = VisEntitySkillFixHierarchyRejected.class, thenExecuteTheFollowingFlow = {VisEmailTemplates.RejectedSkillHierarchy.class}),
+		@CcpEntityDataTransferRule(whenTransferingDataToEntity = VisEntitySkillFixHierarchyApproved.class, thenExecuteTheFollowingFlow = {VisEmailTemplates.AprovedSkillHierarchy.class})
 } )
 @CcpEntitySpecifications(
 		afterSaveRecord = {},
@@ -44,7 +43,7 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		@CcpJsonFieldValidatorRequired
 		email, 
 
-		@CcpJsonFieldTypeString(minLength = 10, maxLength = 500)
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		description,
 	

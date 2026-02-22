@@ -178,7 +178,7 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 				continue;
 			}
 
-			if(word.length() > 35) {
+			if(word.length() > 50) {
 				continue;
 			}
 			

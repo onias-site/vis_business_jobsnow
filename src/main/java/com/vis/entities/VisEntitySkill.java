@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
-import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
@@ -21,9 +20,6 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
@@ -63,9 +59,13 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		var synonyms = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json")
 		.file()
 		.asJsonList()
+		.stream()
+		.filter(x -> x.getAsString(VisEntityResume.Fields.skill).length() <= 50)
+		.collect(Collectors.toList())
 		;
 		List<String> lines = new CcpStringDecorator("C:\\logs\\skills\\countByWords.txt")
-				 .file().getLines();
+				 .file().getLines()
+				 ;
 		
 		List<CcpJsonRepresentation> collect = new ArrayList<>(synonyms.stream().map(json -> {
 			int resumesCount = this.getResumesCount(json, lines);
@@ -85,7 +85,18 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		
 		for (CcpJsonRepresentation json : collect) {
 			CcpJsonRepresentation jsonPiece = json.getJsonPiece(Fields.values());
+			if(ranking == 87) {
+				System.out.println();
+			}
 			CcpJsonRepresentation put = jsonPiece.put(Fields.ranking, ranking++);
+			var synonym = put.getAsJsonList(VisEntitySkill.Fields.synonym).stream()
+					.map(x -> x.getAsString(VisEntitySkill.Fields.skill))
+					.filter(x -> x.length() <= 50)
+					.collect(Collectors.toList());
+			
+			
+			put = put.put(VisEntitySkill.Fields.synonym, synonym);
+			
 			CcpBulkItem mainBulkItem = ENTITY.getMainBulkItem(put, CcpBulkEntityOperationType.create);
 			response.add(mainBulkItem);
 		}
@@ -118,17 +129,3 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	
 }
 
-enum Word{
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-	word,
-	@CcpJsonFieldTypeBoolean
-	gemini,
-	@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
-	vagas;
-}
-enum Synonym{
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
-	type,
-	@CcpJsonFieldTypeNumberUnsigned(minValue = 1)
-	positionsCount;
-}

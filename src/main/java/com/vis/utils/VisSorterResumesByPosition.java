@@ -51,7 +51,7 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 	}
 
 	private CcpJsonRepresentation putDesiredSkills(CcpJsonRepresentation o1, List<String> desiredSkills) {
-		CcpCollectionDecorator ccd1 = o1.getAsCollectionDecorator(VisEntityResume.Fields.includedSkill.name());
+		CcpCollectionDecorator ccd1 = o1.getAsCollectionDecorator(VisEntityResume.Fields.skill.name());
 		int size1 = ccd1.getIntersectList(desiredSkills).size();
 		CcpJsonRepresentation put = o1.put(VisEntityPosition.Fields.desiredSkill, -size1);
 		return put;

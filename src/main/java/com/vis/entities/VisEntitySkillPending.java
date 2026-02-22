@@ -24,18 +24,15 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityDataTransfer(rules = {
-		@CcpEntityDataTransferRule(whenTransferingToEntity = VisEntitySkillRejected.class, thenExecuteTheFollowingFlow = {VisEmailTemplates.RejectedSkill.class}),
-		@CcpEntityDataTransferRule(whenTransferingToEntity = VisEntitySkill.class, thenExecuteTheFollowingFlow = {VisBusinessApprovingSkill.class, VisEmailTemplates.AprovedSkill.class})
+		@CcpEntityDataTransferRule(whenTransferingDataToEntity = VisEntitySkillRejected.class, thenExecuteTheFollowingFlow = {VisEmailTemplates.RejectedSkill.class}),
+		@CcpEntityDataTransferRule(whenTransferingDataToEntity = VisEntitySkill.class, thenExecuteTheFollowingFlow = {VisBusinessApprovingSkill.class, VisEmailTemplates.AprovedSkill.class})
 } )
 @CcpEntitySpecifications(
 		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
 		entityValidation = VisEntitySkillPending.Fields.class,
 		afterDeleteRecord = {},
-		beforeSaveRecord = {VisTemplatesToNotifySupport.NewSkill.class, VisEmailTemplates.PedingSkillHierarchy.class, VisEmailTemplates.RejectedSkill.class},//FIXME ENVIO DA SKILL POR TELEGRAM
-		afterSaveRecord = {},//FIXME ALTERAR DADOS DA DATA QUANDO PASSAR PRA TWIN
-				//FIXME ENVIO DE EMAIL QUANDO REJEITAR SKILL
-				//FIXME ENVIO DE EMAIL QUANDO APROVAR SKILL
-				//FIXME TRANSFORMAR APPROVED EM SKILL
+		beforeSaveRecord = {VisTemplatesToNotifySupport.NewSkill.class, VisEmailTemplates.PedingSkillHierarchy.class},
+		afterSaveRecord = {},
 		flow = {}
 )
 public class VisEntitySkillPending implements CcpEntityConfigurator {

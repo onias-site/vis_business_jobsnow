@@ -8,7 +8,6 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfig
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
@@ -32,8 +31,12 @@ public class VisEntitySkillFixHierarchyRejected implements CcpEntityConfigurator
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		email, 
+		
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		@CcpJsonFieldValidatorRequired
+		explanation,
 
-		@CcpJsonFieldTypeString(minLength = 10, maxLength = 500)
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		description,
 	

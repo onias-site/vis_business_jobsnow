@@ -24,7 +24,7 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.mensageria.JnAsyncWriterEntity;
 import com.vis.business.resume.VisBusinessCalculateResumeHashes;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
-import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByResumes;
+import com.vis.json.fields.validation.VisJsonFieldsSkills;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 @CcpEntityCache(3600)
@@ -80,17 +80,13 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
 
-		@CcpJsonFieldValidatorArray
-		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
-		excludedSkill,
-
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		experience,
 
 		@CcpJsonFieldValidatorArray
-		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
-		includedSkill,
+		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkills.class)
+		skill,
 
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		lastJob,
@@ -116,6 +112,10 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		pj,
 
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		resumeType,
+		
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp,
 

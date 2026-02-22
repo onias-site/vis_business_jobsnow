@@ -28,7 +28,7 @@ public enum VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials implements CcpJson
 	@CcpJsonFieldValidatorRequired
 	word, 
 	
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 35)
+	@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 	@CcpJsonFieldValidatorArray
 	parent,
 

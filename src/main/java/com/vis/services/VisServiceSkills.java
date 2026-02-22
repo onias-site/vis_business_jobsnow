@@ -20,6 +20,7 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.cache.CcpCacheDecorator;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
+import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
@@ -28,19 +29,14 @@ import com.ccp.process.CcpProcessStatus;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityGroupPositionsBySkills;
-import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
-import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByResumes;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 enum Fields implements CcpJsonFieldName{
-	@CcpJsonFieldValidatorRequired
-	@CcpJsonFieldTypeString(maxLength = 5_000_000, allowsEmptyString = true)
 	text,
-	@CcpJsonFieldValidatorArray
-	@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
 	excludedSkill,
 	word,
 	skill,
@@ -170,7 +166,7 @@ public enum VisServiceSkills implements JnService {
 			}
 			
 			CcpJsonRepresentation discardedSkills = CcpOtherConstants.EMPTY_JSON;
-			List<CcpJsonRepresentation> excludedSkill = json.getAsJsonList(VisEntityResume.Fields.excludedSkill);
+			List<CcpJsonRepresentation> excludedSkill = json.getAsJsonList(com.vis.services.GetSkillsFromText.excludedSkill);
 			
 			List<String> excluded = excludedSkill.stream().map(x -> x.getAsString(Fields.word).toUpperCase()).collect(Collectors.toList());
 			
@@ -312,7 +308,19 @@ public enum VisServiceSkills implements JnService {
 		@CcpJsonFieldTypeString(maxLength = 5_000_000, allowsEmptyString = true)
 		text,
 		@CcpJsonFieldValidatorArray
-		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByResumes.class)
+		@CcpJsonFieldTypeNestedJson(jsonValidation = ExcludedSkillFields.class)
 		excludedSkill,
-		implicitSkills
+	}
+	
+	
+	enum ExcludedSkillFields implements CcpJsonFieldName{
+		
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		@CcpJsonFieldValidatorRequired
+		skill, 
+
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		@CcpJsonFieldValidatorRequired
+		word, 
+	
 	}

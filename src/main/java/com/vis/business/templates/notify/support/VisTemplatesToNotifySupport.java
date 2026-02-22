@@ -44,8 +44,9 @@ public enum VisTemplatesToNotifySupport implements CcpBusiness{
 		}
 		
 	}
-	
+	//FIXME FALTANDO TEMPLATE
 	public static class NewSkill extends SendEmail{}
+	//FIXME FALTANDO TEMPLATE
 	public static class NewSkillHierarchy extends SendEmail{}
 
 	

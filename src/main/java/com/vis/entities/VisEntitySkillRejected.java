@@ -38,6 +38,10 @@ public class VisEntitySkillRejected implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		email, 
 
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		@CcpJsonFieldValidatorRequired
+		explanation, 
+
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorArray
 		parent,
