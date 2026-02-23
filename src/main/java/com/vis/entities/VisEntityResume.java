@@ -96,7 +96,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		language,
 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeString(minLength = 5, maxLength = 100)
+		@CcpJsonFieldTypeString(regexValidation = "^https://(www\\.)?linkedin\\.com/in/[a-zA-Z0-9-_%]+/?$")
 		linkedinAddress,
 
 		@CcpJsonFieldTypeBoolean
