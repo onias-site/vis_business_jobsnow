@@ -11,7 +11,7 @@ public enum VisProcessStatusResumeView implements CcpProcessStatus{
 	insufficientFunds(402),
 	resumeNotFound(404),
 	notAllowedRecruiter(420),
-	missingFee(421), 
+	missingFee(427), 
 	missingBalance(423), 
 	negativatedResume(0), 
 	;
@@ -27,7 +27,7 @@ public enum VisProcessStatusResumeView implements CcpProcessStatus{
 	}
 
 	public CcpBulkItem toBulkItemCreate(CcpJsonRepresentation json) {
-		CcpBulkItem bulkItem = VisEntityResumeViewFailed.ENTITY.getMainBulkItem(json, CcpBulkEntityOperationType.create);
+		CcpBulkItem bulkItem = VisEntityResumeViewFailed.ENTITY.toBulkItem(json, CcpBulkEntityOperationType.create);
 		return bulkItem;
 	}
 }

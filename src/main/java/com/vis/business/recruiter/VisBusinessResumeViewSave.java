@@ -23,8 +23,6 @@ public class VisBusinessResumeViewSave implements CcpBusiness{
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		List<CcpBulkItem> bulkItems = new ArrayList<>();
-		
 		boolean resumeViewIsNotFree = VisEntityResumeFreeView.ENTITY.isPresentInThisJsonInMainEntity(json);
 		
 		if(resumeViewIsNotFree) {
@@ -46,11 +44,12 @@ public class VisBusinessResumeViewSave implements CcpBusiness{
 				.put(VisEntityResumeLastView.Fields.negativatedResume, negativatedResume)
 				;
 		
-		CcpBulkItem itemResumeLastView = VisEntityResumeLastView.ENTITY.getMainBulkItem(dataToSave, CcpBulkEntityOperationType.create);
-		CcpBulkItem itemResumeFreeView = VisEntityResumeFreeView.ENTITY.getMainBulkItem(dataToSave, CcpBulkEntityOperationType.create);
-		
-		bulkItems.add(itemResumeFreeView);
-		bulkItems.add(itemResumeLastView);
+		var itemResumeLastView = VisEntityResumeLastView.ENTITY.toBulkItems(dataToSave, CcpBulkEntityOperationType.create);
+		var itemResumeFreeView = VisEntityResumeFreeView.ENTITY.toBulkItems(dataToSave, CcpBulkEntityOperationType.create);
+		List<CcpBulkItem> bulkItems = new ArrayList<>();
+	
+		bulkItems.addAll(itemResumeFreeView);
+		bulkItems.addAll(itemResumeLastView);
 		
 		JnExecuteBulkOperation.INSTANCE.executeBulk(bulkItems);
 		return json;

@@ -97,8 +97,8 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 			
 			put = put.put(VisEntitySkill.Fields.synonym, synonym);
 			
-			CcpBulkItem mainBulkItem = ENTITY.getMainBulkItem(put, CcpBulkEntityOperationType.create);
-			response.add(mainBulkItem);
+			var items = ENTITY.toBulkItems(put, CcpBulkEntityOperationType.create);
+			response.addAll(items);
 		}
 		
 		return response;
