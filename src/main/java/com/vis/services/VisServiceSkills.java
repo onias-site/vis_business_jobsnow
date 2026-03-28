@@ -87,7 +87,7 @@ public enum VisServiceSkills implements JnService {
 			.and()
 			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).returnStatus(RequestToCreateNewSkillStatus.alreadyAdded)
 			.andFinallyReturningTheseFields()
-			.endThisProcedure(this.name(), CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+			.endThisProcedure(this.name(), CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
 			;
 			
 			CcpJsonRepresentation throwException = RequestToCreateNewSkillStatus.analyzing.throwException(json);

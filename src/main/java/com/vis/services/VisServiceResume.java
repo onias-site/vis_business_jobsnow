@@ -23,7 +23,7 @@ public enum VisServiceResume implements JnService {
 	},
 	GetData{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation changeStatus = VisEntityResume.ENTITY.getData(json, JnDeleteKeysFromCache.INSTANCE);
+			CcpJsonRepresentation changeStatus = VisEntityResume.ENTITY.getOneByIdAnywhere(json, JnDeleteKeysFromCache.INSTANCE);
 			
 			return changeStatus;
 		}

@@ -13,14 +13,14 @@ import com.vis.entities.VisEntityResumePerception;
 public enum VisServiceRecruiter implements JnService {
 	GetAlreadySeenResumes{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityGroupResumesPerceptionsByRecruiter.ENTITY.getData(json, JnDeleteKeysFromCache.INSTANCE);
+			CcpJsonRepresentation result = VisEntityGroupResumesPerceptionsByRecruiter.ENTITY.getOneByIdAnywhere(json, JnDeleteKeysFromCache.INSTANCE);
 			
 			return result;
 		}
 	},
 	GetPositionsFromThisRecruiter{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityGroupPositionsByRecruiter.ENTITY.getData(json, JnDeleteKeysFromCache.INSTANCE);
+			CcpJsonRepresentation result = VisEntityGroupPositionsByRecruiter.ENTITY.getOneByIdAnywhere(json, JnDeleteKeysFromCache.INSTANCE);
 			
 			return result;
 		}
