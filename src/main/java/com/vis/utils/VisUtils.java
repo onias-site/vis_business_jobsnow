@@ -610,7 +610,7 @@ public class VisUtils {
 					.put(VisEntityGroupResumesByPosition.Fields.from, from)
 					.mergeWithAnotherJson(primaryKeySupplier)
 					;
-			var bulkItem = entity.toBulkItems(put, CcpBulkEntityOperationType.create);
+			var bulkItem = entity.getBulkItemsList(put, CcpBulkEntityOperationType.create);
 			allPagesTogether.addAll(bulkItem);
 		}
 		return allPagesTogether;

@@ -44,8 +44,8 @@ public class VisBusinessResumeViewSave implements CcpBusiness{
 				.put(VisEntityResumeLastView.Fields.negativatedResume, negativatedResume)
 				;
 		
-		var itemResumeLastView = VisEntityResumeLastView.ENTITY.toBulkItems(dataToSave, CcpBulkEntityOperationType.create);
-		var itemResumeFreeView = VisEntityResumeFreeView.ENTITY.toBulkItems(dataToSave, CcpBulkEntityOperationType.create);
+		var itemResumeLastView = VisEntityResumeLastView.ENTITY.getBulkItemsList(dataToSave, CcpBulkEntityOperationType.create);
+		var itemResumeFreeView = VisEntityResumeFreeView.ENTITY.getBulkItemsList(dataToSave, CcpBulkEntityOperationType.create);
 		List<CcpBulkItem> bulkItems = new ArrayList<>();
 	
 		bulkItems.addAll(itemResumeFreeView);
