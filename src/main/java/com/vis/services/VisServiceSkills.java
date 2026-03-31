@@ -74,7 +74,7 @@ public enum VisServiceSkills implements JnService {
 	RequestToCreateNewSkill{
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpBusiness action = VisEntitySkillPending.ENTITY.getOperationCallback(CcpEntityOperationType.save);
+			CcpBusiness action = VisEntitySkillPending.ENTITY.getEntityDetails().getOperationCallback(CcpEntityOperationType.save);
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
 			.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY).returnStatus(RequestToCreateNewSkillStatus.rejected)
@@ -135,8 +135,9 @@ public enum VisServiceSkills implements JnService {
 				idsToSearch.add(put);
 			}
 			
-			CcpJsonRepresentation multipleByIds = VisEntityGroupPositionsBySkills.ENTITY.getMultipleByIds(idsToSearch);
+//	FIXME		CcpJsonRepresentation multipleByIds = VisEntityGroupPositionsBySkills.ENTITY.getMultipleByIds(idsToSearch);
 			
+			CcpJsonRepresentation multipleByIds = CcpOtherConstants.EMPTY_JSON;
 			
 			List<CcpJsonRepresentation> allSkillsFoundInTheText = new ArrayList<>();
 			

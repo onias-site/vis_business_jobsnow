@@ -11,9 +11,9 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfig
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.jn.mensageria.JnAsyncWriterEntity;
 import com.vis.business.templates.email.VisEmailTemplates;
 import com.vis.business.templates.notify.support.VisTemplatesToNotifySupport;
 

@@ -3,13 +3,12 @@ package com.vis.services;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.jn.services.JnService;
-import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityResume;
 
 public enum VisServiceResume implements JnService {
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityResume.ENTITY.transferToReverseEntity(json);
+			CcpJsonRepresentation result = VisEntityResume.ENTITY.delete(json);
 
 			return  result;
 		}
@@ -23,7 +22,7 @@ public enum VisServiceResume implements JnService {
 	},
 	GetData{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation changeStatus = VisEntityResume.ENTITY.getOneByIdAnywhere(json, JnDeleteKeysFromCache.INSTANCE);
+			CcpJsonRepresentation changeStatus = VisEntityResume.ENTITY.getOneByIdAnyWhere(json);
 			
 			return changeStatus;
 		}

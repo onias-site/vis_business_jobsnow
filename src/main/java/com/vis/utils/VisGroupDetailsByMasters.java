@@ -27,8 +27,8 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 		CcpEntity mirrorEntityGrouper = entityGrouper.getTwinEntity();
 		CcpEntity mirrorEntity = entity.getTwinEntity();
 
-		String mirrorEntityName = mirrorEntity.getEntityName();
-		String entityName = entity.getEntityName();
+		String mirrorEntityName = mirrorEntity.getEntityDetails().entityName;
+		String entityName = entity.getEntityDetails().entityName;
 		
 		this.mappers = CcpOtherConstants.EMPTY_JSON
 					.getDynamicVersion().put(entityName, entityGrouper)

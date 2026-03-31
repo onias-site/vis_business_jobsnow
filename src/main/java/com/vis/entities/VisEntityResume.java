@@ -18,10 +18,10 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJs
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
+import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.jn.mensageria.JnAsyncWriterEntity;
 import com.vis.business.resume.VisBusinessCalculateResumeHashes;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;

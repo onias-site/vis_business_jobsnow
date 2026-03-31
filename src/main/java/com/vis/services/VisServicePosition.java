@@ -19,7 +19,7 @@ import com.vis.status.VisProcessStatusSuggestNewSkill;
 public enum VisServicePosition implements JnService {
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityPosition.ENTITY.transferToReverseEntity(json);
+			CcpJsonRepresentation result = VisEntityPosition.ENTITY.delete(json);
 			
 			return result;
 		}

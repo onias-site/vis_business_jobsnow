@@ -2,8 +2,8 @@ package com.vis.entities;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.annotations.CcpEntityDataTransferRule;
 import com.ccp.especifications.db.utils.entity.annotations.CcpEntityDataTransfer;
+import com.ccp.especifications.db.utils.entity.annotations.CcpEntityDataTransferRule;
 import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
@@ -13,9 +13,9 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.jn.mensageria.JnAsyncWriterEntity;
 import com.vis.business.resume.skills.VisBusinessApprovingSkill;
 import com.vis.business.templates.email.VisEmailTemplates;
 import com.vis.business.templates.notify.support.VisTemplatesToNotifySupport;

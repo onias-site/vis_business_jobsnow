@@ -21,7 +21,7 @@ public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 		
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
 		
-		String entityName = JnEntityLoginSessionValidation.ENTITY.getEntityName();
+		String entityName = JnEntityLoginSessionValidation.ENTITY.getEntityDetails().entityName;
 		CcpQueryOptions queryToSearchLastUpdated = 
 				CcpQueryOptions.INSTANCE
 					.startQuery()

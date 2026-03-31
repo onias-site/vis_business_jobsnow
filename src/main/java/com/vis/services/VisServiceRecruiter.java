@@ -4,7 +4,6 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.services.JnService;
-import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.recruiter.VisBusinessRecruiterReceivingResumes;
 import com.vis.entities.VisEntityGroupPositionsByRecruiter;
 import com.vis.entities.VisEntityGroupResumesPerceptionsByRecruiter;
@@ -13,14 +12,14 @@ import com.vis.entities.VisEntityResumePerception;
 public enum VisServiceRecruiter implements JnService {
 	GetAlreadySeenResumes{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityGroupResumesPerceptionsByRecruiter.ENTITY.getOneByIdAnywhere(json, JnDeleteKeysFromCache.INSTANCE);
+			CcpJsonRepresentation result = VisEntityGroupResumesPerceptionsByRecruiter.ENTITY.getOneByIdAnyWhere(json);
 			
 			return result;
 		}
 	},
 	GetPositionsFromThisRecruiter{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityGroupPositionsByRecruiter.ENTITY.getOneByIdAnywhere(json, JnDeleteKeysFromCache.INSTANCE);
+			CcpJsonRepresentation result = VisEntityGroupPositionsByRecruiter.ENTITY.getOneByIdAnyWhere(json);
 			
 			return result;
 		}
@@ -41,7 +40,7 @@ public enum VisServiceRecruiter implements JnService {
 	},
 	ChangeOpinionAboutThisResume{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityResumePerception.ENTITY.transferToReverseEntity(json);
+			CcpJsonRepresentation result = VisEntityResumePerception.ENTITY.delete(json);
 			
 			return result;
 		}

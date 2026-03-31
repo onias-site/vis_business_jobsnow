@@ -23,18 +23,18 @@ public class VisBusinessResumeViewSave implements CcpBusiness{
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		boolean resumeViewIsNotFree = VisEntityResumeFreeView.ENTITY.isPresentInThisJsonInMainEntity(json);
+		boolean resumeViewIsNotFree = VisEntityResumeFreeView.ENTITY.exists(json);
 		
 		if(resumeViewIsNotFree) {
 			//LATER IMPLEMENTAR PARTE FINANCEIRA
 		}
 
-		boolean negativatedResume = VisEntityResumePerception.ENTITY.getTwinEntity().isPresentInThisJsonInMainEntity(json);
-		boolean inactivePosition = VisEntityPosition.ENTITY.getTwinEntity().isPresentInThisJsonInMainEntity(json);
+		boolean negativatedResume = VisEntityResumePerception.ENTITY.getTwinEntity().exists(json);
+		boolean inactivePosition = VisEntityPosition.ENTITY.getTwinEntity().exists(json);
 	
 //		CcpJsonRepresentation opinion = VisEntityResumePerception.INSTANCE.getInnerJsonFromMainAndMirrorEntities(json);
-		CcpJsonRepresentation position = VisEntityPosition.ENTITY.getInnerJsonFromMainAndTwinEntities(json);
-		CcpJsonRepresentation resume = VisEntityResume.ENTITY.getInnerJsonFromMainAndTwinEntities(json);
+		CcpJsonRepresentation position = VisEntityPosition.ENTITY.getOneById(json);
+		CcpJsonRepresentation resume = VisEntityResume.ENTITY.getOneById(json);
 		
 		CcpJsonRepresentation dataToSave = json
 				.put(VisEntityResumeLastView.Fields.resume, resume)
@@ -44,8 +44,8 @@ public class VisBusinessResumeViewSave implements CcpBusiness{
 				.put(VisEntityResumeLastView.Fields.negativatedResume, negativatedResume)
 				;
 		
-		var itemResumeLastView = VisEntityResumeLastView.ENTITY.getBulkItemsList(dataToSave, CcpBulkEntityOperationType.create);
-		var itemResumeFreeView = VisEntityResumeFreeView.ENTITY.getBulkItemsList(dataToSave, CcpBulkEntityOperationType.create);
+		var itemResumeLastView = VisEntityResumeLastView.ENTITY.getEntityDetails().getBulkItemsList(dataToSave, CcpBulkEntityOperationType.create);
+		var itemResumeFreeView = VisEntityResumeFreeView.ENTITY.getEntityDetails().getBulkItemsList(dataToSave, CcpBulkEntityOperationType.create);
 		List<CcpBulkItem> bulkItems = new ArrayList<>();
 	
 		bulkItems.addAll(itemResumeFreeView);
