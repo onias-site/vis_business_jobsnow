@@ -2,9 +2,10 @@ package com.vis.entities;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
@@ -22,7 +23,6 @@ import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.vis.business.resume.VisBusinessCalculateResumeHashes;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
@@ -35,15 +35,9 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 		,afterRecordBeenTransportedFromMainToTwinEntity = {} 
 		,afterRecordBeenTransportedFromTwinToMainEntity = {VisBusinessResumeSendToRecruiters.class}
 		)
-@CcpEntitySpecifications(
-		flow = {
-			   }, 
-		afterSaveRecord = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class},
-		beforeSaveRecord = {},
-		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
-		entityValidation = VisEntityResume.Fields.class,
-		afterDeleteRecord = {} 
-)
+//afterSaveRecord = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class},
+@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
 @CcpJsonGlobalValidations(
 		requiresAtLeastOne = {
 		@CcpJsonValidationFieldList({"pj", "clt" })

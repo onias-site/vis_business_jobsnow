@@ -2,9 +2,10 @@ package com.vis.entities;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
@@ -39,14 +40,9 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 		,afterRecordBeenTransportedFromTwinToMainEntity = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}
 		,afterRecordBeenTransportedFromMainToTwinEntity = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}
 		)
-@CcpEntitySpecifications(
-		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
-		afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
-		beforeSaveRecord = {},
-		entityValidation = VisEntityPosition.Fields.class,
-		afterDeleteRecord = {}, 
-		flow = {} 
-)
+//FIXME afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
+@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
 @CcpJsonGlobalValidations(requiresAtLeastOne = {
 		@CcpJsonValidationFieldList({"maxClt", "maxPj" }),
 		@CcpJsonValidationFieldList({"minClt", "minPj" })

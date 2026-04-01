@@ -374,7 +374,6 @@ public class VisUtils {
 			if(resumeAlreadySeen) {
 				continue;
 			}
-			
 			String positionId = VisEntityPosition.ENTITY.calculateId(positionByThisRecruiter);
 			
 			CcpJsonRepresentation emailMessageValuesToSent = allPositionsWithFilteredResumes.getDynamicVersion().getInnerJson(positionId);
@@ -610,7 +609,7 @@ public class VisUtils {
 					.put(VisEntityGroupResumesByPosition.Fields.from, from)
 					.mergeWithAnotherJson(primaryKeySupplier)
 					;
-			var bulkItem = entity.getEntityDetails().getBulkItemsList(put, CcpBulkEntityOperationType.create);
+			var bulkItem = entity.toBulkItems(put, CcpBulkEntityOperationType.create);
 			allPagesTogether.addAll(bulkItem);
 		}
 		return allPagesTogether;

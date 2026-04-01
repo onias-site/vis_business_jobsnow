@@ -4,9 +4,10 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.annotations.CcpEntityDataTransfer;
 import com.ccp.especifications.db.utils.entity.annotations.CcpEntityDataTransferRule;
-import com.ccp.especifications.db.utils.entity.annotations.CcpEntitySpecifications;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -18,7 +19,6 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.business.resume.skills.VisBusinessApprovingSkill;
 import com.vis.business.templates.email.VisEmailTemplates;
-import com.vis.business.templates.notify.support.VisTemplatesToNotifySupport;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntityCache(3600)
@@ -27,14 +27,9 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 		@CcpEntityDataTransferRule(whenTransferingDataToEntity = VisEntitySkillRejected.class, thenExecuteTheFollowingFlow = {VisEmailTemplates.RejectedSkill.class}),
 		@CcpEntityDataTransferRule(whenTransferingDataToEntity = VisEntitySkill.class, thenExecuteTheFollowingFlow = {VisBusinessApprovingSkill.class, VisEmailTemplates.AprovedSkill.class})
 } )
-@CcpEntitySpecifications(
-		entityFieldsTransformers = JnJsonTransformersFieldsEntityDefault.class,
-		entityValidation = VisEntitySkillPending.Fields.class,
-		afterDeleteRecord = {},
-		beforeSaveRecord = {VisTemplatesToNotifySupport.NewSkill.class, VisEmailTemplates.PedingSkillHierarchy.class},
-		afterSaveRecord = {},
-		flow = {}
-)
+//FIXME beforeSaveRecord = {VisTemplatesToNotifySupport.NewSkill.class, VisEmailTemplates.PedingSkillHierarchy.class},
+@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
 public class VisEntitySkillPending implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillPending.class).entityInstance;
