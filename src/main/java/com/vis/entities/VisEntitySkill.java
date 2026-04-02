@@ -26,7 +26,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkill.Fields.class)
 public class VisEntitySkill implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkill.class).entityInstance;

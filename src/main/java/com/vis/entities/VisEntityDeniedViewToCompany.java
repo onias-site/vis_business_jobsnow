@@ -12,19 +12,21 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(
-		twinEntityName = "reallowed_view_to_company"
-		,afterRecordBeenTransportedFromTwinToMainEntity = {},
-		 afterRecordBeenTransportedFromMainToTwinEntity = {}
+		twinEntityName = "reallowed_view_to_company",
+		bulkExecutorClass = JnExecuteBulkOperation.class,
+		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityDeniedViewToCompany.Fields.class)
 public class VisEntityDeniedViewToCompany implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityDeniedViewToCompany.class).entityInstance;

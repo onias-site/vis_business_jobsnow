@@ -21,7 +21,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResumePerception.Fields.class)
 
 public class VisEntityResumePerception implements CcpEntityConfigurator {
 

@@ -33,7 +33,7 @@ import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByTheirTwoFirstI
 
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupPositionsBySkills.Fields.class)
 public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityGroupPositionsBySkills.class).entityInstance;
@@ -84,7 +84,7 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		String upperCase = word.toUpperCase();
 		String firstTwoInitials = upperCase.substring(0,2);
 		CcpJsonRepresentation id = CcpOtherConstants.EMPTY_JSON.put(Fields.firstTwoInitials, firstTwoInitials);
-		CcpJsonRepresentation oneById = ENTITY.getOneByIdOrHandleItIfThisIdWasNotFound(id, json -> CcpOtherConstants.EMPTY_JSON);
+		CcpJsonRepresentation oneById = ENTITY.getEntityDetails().getOneByIdOrHandleItIfThisIdWasNotFound(id, json -> CcpOtherConstants.EMPTY_JSON);
 		
 		boolean notFound = oneById.isEmpty();
 		

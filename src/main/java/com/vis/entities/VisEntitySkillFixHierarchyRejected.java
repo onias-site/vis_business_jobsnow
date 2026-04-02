@@ -14,7 +14,7 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyRejected.Fields.class)
 public class VisEntitySkillFixHierarchyRejected implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyRejected.class).entityInstance;

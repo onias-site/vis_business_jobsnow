@@ -18,7 +18,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityScheduleSendingResumeFees.Fields.class)
 public class VisEntityScheduleSendingResumeFees implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityScheduleSendingResumeFees.class).entityInstance;

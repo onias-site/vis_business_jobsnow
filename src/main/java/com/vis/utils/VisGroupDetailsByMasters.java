@@ -11,6 +11,7 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.db.bulk.JnExecuteBulkOperation;
+import com.jn.utils.JnDeleteKeysFromCache;
 
 public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>{
 	enum JsonFieldNames implements CcpJsonFieldName{
@@ -67,7 +68,7 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 				result.addAll(recordsInPages);
 			}
 		}
-		JnExecuteBulkOperation.INSTANCE.executeBulk(result);
+		JnExecuteBulkOperation.INSTANCE.executeBulk(result, JnDeleteKeysFromCache.INSTANCE);
 		return this;
 	}
 }

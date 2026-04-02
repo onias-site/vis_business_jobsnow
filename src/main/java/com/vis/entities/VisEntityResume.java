@@ -1,11 +1,19 @@
 package com.vis.entities;
 
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.delete;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.after;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.main;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twin;
+
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
@@ -19,10 +27,13 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJs
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
+import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.resume.VisBusinessCalculateResumeHashes;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
@@ -31,17 +42,24 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(
-		twinEntityName = "inactive_resume"
-		,afterRecordBeenTransportedFromMainToTwinEntity = {} 
-		,afterRecordBeenTransportedFromTwinToMainEntity = {VisBusinessResumeSendToRecruiters.class}
+		twinEntityName = "inactive_resume",
+		bulkExecutorClass = JnExecuteBulkOperation.class,
+		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
-//afterSaveRecord = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class},
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
 @CcpJsonGlobalValidations(
 		requiresAtLeastOne = {
 		@CcpJsonValidationFieldList({"pj", "clt" })
 })
+@CcpEntityOperations(
+		operations = {
+				@CcpEntityOperation(when = after, operation = save, entityType = main,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = delete, entityType = twin,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+		},
+		globalHandlers = {}
+		)
+
 public class VisEntityResume implements CcpEntityConfigurator {
 	
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;

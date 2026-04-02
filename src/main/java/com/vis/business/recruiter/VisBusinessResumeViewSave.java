@@ -51,7 +51,7 @@ public class VisBusinessResumeViewSave implements CcpBusiness{
 		bulkItems.addAll(itemResumeFreeView);
 		bulkItems.addAll(itemResumeLastView);
 		
-		JnExecuteBulkOperation.INSTANCE.executeBulk(bulkItems);
+		JnExecuteBulkOperation.INSTANCE.executeBulk(bulkItems, array -> {});
 		return json;
 	}
 

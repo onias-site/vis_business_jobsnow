@@ -8,6 +8,7 @@ import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDetails;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityPosition;
@@ -34,12 +35,14 @@ public enum VisServicePosition implements JnService {
 			boolean activeResume = VisEntityPosition.ENTITY.isPresentInThisUnionAll(searchResults, json);
 			
 			if(activeResume) {
-				CcpJsonRepresentation requiredEntityRow = VisEntityPosition.ENTITY.getRequiredEntityRow(searchResults, json);
+				CcpEntityDetails entityDetails = VisEntityPosition.ENTITY.getEntityDetails();
+				CcpJsonRepresentation requiredEntityRow = entityDetails.getRequiredEntityRow(searchResults, json);
 				CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, true);
 				return put;
 			}
 			
-			CcpJsonRepresentation requiredEntityRow = mirrorEntity.getRequiredEntityRow(searchResults, json);
+			CcpEntityDetails entityDetails = mirrorEntity.getEntityDetails();
+			CcpJsonRepresentation requiredEntityRow = entityDetails.getRequiredEntityRow(searchResults, json);
 			CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, false);
 			return put;
 		}

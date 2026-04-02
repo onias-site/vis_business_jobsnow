@@ -11,20 +11,22 @@ import java.util.stream.Collectors;
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpCollectionDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpPropertiesDecorator;
 import com.ccp.decorators.CcpStringDecorator;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
-import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
+import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.crud.CcpUnionAllExecutor;
-import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
+import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDetails;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.mensageria.JnFunctionMensageriaSender;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.position.VisBusinessPositionResumesSend;
 import com.vis.entities.VisEntityBalance;
 import com.vis.entities.VisEntityDeniedViewToCompany;
@@ -195,7 +197,7 @@ public class VisUtils {
 						.endRangeAndBackToSimplifiedQuery()
 					.endSimplifiedQueryAndBackToRequest()
 				;
-		String[] resourcesNames = entity.getEntitiesToSelect();
+		String[] resourcesNames = entity.getEntityDetails().getEntitiesToSelect();
 
 		List<CcpJsonRepresentation> result = queryExecutor.getResultAsList(queryToSearchLastUpdated, resourcesNames);
 		
@@ -213,7 +215,7 @@ public class VisUtils {
 						.match(VisEntityPosition.Fields.frequency, frequency)
 					.endSimplifiedQueryAndBackToRequest()
 				;
-		String[] resourcesNames = VisEntityPosition.ENTITY.getEntitiesToSelect();
+		String[] resourcesNames = VisEntityPosition.ENTITY.getEntityDetails().getEntitiesToSelect();
 		CcpJsonRepresentation positionsGroupedByRecruiters = queryExecutor.getMap(queryToSearchLastUpdatedResumes, resourcesNames, VisEntityPosition.Fields.email.name());
 		return positionsGroupedByRecruiters;
 	}
@@ -263,9 +265,11 @@ public class VisUtils {
 				continue;
 			}
 
-			CcpJsonRepresentation fee = VisEntityScheduleSendingResumeFees.ENTITY.getRequiredEntityRow(searchResults, searchParameters);
+			CcpEntityDetails entityDetails = VisEntityScheduleSendingResumeFees.ENTITY.getEntityDetails();
+			CcpJsonRepresentation fee = entityDetails.getRequiredEntityRow(searchResults, searchParameters);
 			
-			CcpJsonRepresentation balance = VisEntityBalance.ENTITY.getRequiredEntityRow(searchResults, searchParameters);
+			CcpEntityDetails entityDetails2 = VisEntityBalance.ENTITY.getEntityDetails();
+			CcpJsonRepresentation balance = entityDetails2.getRequiredEntityRow(searchResults, searchParameters);
 			
 			String recruiter = searchParameters.getAsString(VisEntityResumePerception.Fields.recruiter);
 			List<CcpJsonRepresentation> positionsGroupedByThisRecruiter = allPositionsGroupedByRecruiters.getDynamicVersion().getAsJsonList(recruiter);
@@ -320,7 +324,7 @@ public class VisUtils {
 					allPositionsGroupedByRecruiters, allPositionsWithFilteredResumes, searchParameters, searchResults);
 		}
 		
-		JnExecuteBulkOperation.INSTANCE.executeBulk(errors);
+		JnExecuteBulkOperation.INSTANCE.executeBulk(errors, JnDeleteKeysFromCache.INSTANCE);
 		
 	 	CcpJsonRepresentation allPositionsWithFilteredResumesCopy = CcpOtherConstants.EMPTY_JSON.mergeWithAnotherJson(allPositionsWithFilteredResumes);
 		
@@ -340,7 +344,8 @@ public class VisUtils {
 		
 		for (CcpJsonRepresentation positionByThisRecruiter : positionsGroupedByThisRecruiter) {
 
-			CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRequiredEntityRow(searchResults, searchParameters);
+			CcpEntityDetails entityDetails = VisEntityResume.ENTITY.getEntityDetails();
+			CcpJsonRepresentation resume = entityDetails.getRequiredEntityRow(searchResults, searchParameters);
 			
 			CcpCollectionDecorator dddsPosition = positionByThisRecruiter.getAsCollectionDecorator(VisEntityResume.Fields.ddd.name());
 			CcpCollectionDecorator dddsResume = resume.getAsCollectionDecorator(VisEntityResume.Fields.ddd.name());
@@ -475,9 +480,11 @@ public class VisUtils {
 			return false;
 		}
 		
-		CcpJsonRepresentation resumeLastView = VisEntityResumeLastView.ENTITY.getRequiredEntityRow(searchResults, searchParameters);
+		CcpEntityDetails entityDetails = VisEntityResumeLastView.ENTITY.getEntityDetails();
+		CcpJsonRepresentation resumeLastView = entityDetails.getRequiredEntityRow(searchResults, searchParameters);
 		
-		CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRequiredEntityRow(searchResults, resumeLastView);
+		CcpEntityDetails entityDetails2 = VisEntityResume.ENTITY.getEntityDetails();
+		CcpJsonRepresentation resume = entityDetails2.getRequiredEntityRow(searchResults, resumeLastView);
 		
 		Long resumeLastSeen = resumeLastView.getAsLongNumber(VisEntityResumeLastView.Fields.timestamp);
 
@@ -566,7 +573,7 @@ public class VisUtils {
 		;
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
 		
-		String[] entitiesToSelect = entityToRead.getEntitiesToSelect();
+		String[] entitiesToSelect = entityToRead.getEntityDetails().getEntitiesToSelect();
 		
 		VisGroupDetailsByMasters detailsGroupedByMasters = new VisGroupDetailsByMasters(masterField.name(), entityToRead, entityWhereGroup);
 		
@@ -586,7 +593,7 @@ public class VisUtils {
 
 		List<CcpBulkItem> allPagesTogether = getRecordsInPages(records, primaryKeySupplier, entity);
 		
-		JnExecuteBulkOperation.INSTANCE.executeBulk(allPagesTogether);
+		JnExecuteBulkOperation.INSTANCE.executeBulk(allPagesTogether, JnDeleteKeysFromCache.INSTANCE);
 	}
 
 	public static List<CcpBulkItem> getRecordsInPages(List<CcpJsonRepresentation> records,

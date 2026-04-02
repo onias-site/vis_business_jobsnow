@@ -18,8 +18,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 @CcpEntityCache(86400)
 @CcpEntityDisposable(expurgTime = CcpEntityExpurgableOptions.yearly, expurgableEntityFactory = JnDisposableEntity.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupResumesPerceptionsByResume.Fields.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
 public class VisEntityGroupResumesPerceptionsByResume implements CcpEntityConfigurator {
 	
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityGroupResumesPerceptionsByResume.class).entityInstance;

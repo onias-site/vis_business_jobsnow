@@ -1,4 +1,9 @@
 package com.vis.entities;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.delete;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.after;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.main;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twin;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
@@ -6,6 +11,8 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityA
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
@@ -23,10 +30,12 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
+import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.position.VisBusinessDuplicateFieldEmailToFieldMasters;
 import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -36,13 +45,13 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(
-		twinEntityName = "inactive_position"
-		,afterRecordBeenTransportedFromTwinToMainEntity = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}
-		,afterRecordBeenTransportedFromMainToTwinEntity = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}
+		twinEntityName = "inactive_position",
+		bulkExecutorClass = JnExecuteBulkOperation.class,
+		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
-//FIXME afterSaveRecord = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class},
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityPosition.Fields.class)
+//FIXME FUNCIONA ESTA VALIDAÇÃO?
 @CcpJsonGlobalValidations(requiresAtLeastOne = {
 		@CcpJsonValidationFieldList({"maxClt", "maxPj" }),
 		@CcpJsonValidationFieldList({"minClt", "minPj" })
@@ -50,6 +59,17 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 		@CcpJsonValidationFieldList({"maxClt", "minClt" }),
 		@CcpJsonValidationFieldList({"minPj", "maxPj" })
 })
+@CcpEntityOperations(
+		operations = {
+				@CcpEntityOperation(when = after, operation = save, entityType = main,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+				//TODO VAI SAIR ESSE FLUXO POR CAUSA DA RETIRADA DOS GROUPINGS
+				@CcpEntityOperation(when = after, operation = delete, entityType = main,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
+				//TODO REVISITAR ESTE FLUXO
+				@CcpEntityOperation(when = after, operation = delete, entityType = twin,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+		},
+		globalHandlers = {}
+		)
+
 public class VisEntityPosition implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;

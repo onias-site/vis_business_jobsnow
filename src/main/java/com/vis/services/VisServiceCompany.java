@@ -22,7 +22,7 @@ public enum VisServiceCompany implements JnService {
 			var threeInitials = search.substring(0, 3);
 			var querySearch = json.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, threeInitials);
 			CcpBusiness retrievesEmptyCompaniesList = query -> query.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies, Arrays.asList(search));
-			CcpJsonRepresentation searchResult = VisEntityGroupCompaniesByTheirFirstThreeInitials.ENTITY.getOneByIdOrHandleItIfThisIdWasNotFound(querySearch, retrievesEmptyCompaniesList);
+			CcpJsonRepresentation searchResult = VisEntityGroupCompaniesByTheirFirstThreeInitials.ENTITY.getEntityDetails().getOneByIdOrHandleItIfThisIdWasNotFound(querySearch, retrievesEmptyCompaniesList);
 			var jsonPiece = searchResult.getJsonPiece(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies);
 			
 			var typedJustThreeCharacters = search.equals(threeInitials);
