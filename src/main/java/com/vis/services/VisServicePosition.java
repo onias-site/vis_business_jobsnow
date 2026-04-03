@@ -8,7 +8,6 @@ import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDetails;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityPosition;
@@ -35,14 +34,12 @@ public enum VisServicePosition implements JnService {
 			boolean activeResume = VisEntityPosition.ENTITY.isPresentInThisUnionAll(searchResults, json);
 			
 			if(activeResume) {
-				CcpEntityDetails entityDetails = VisEntityPosition.ENTITY.getEntityDetails();
-				CcpJsonRepresentation requiredEntityRow = entityDetails.getRequiredEntityRow(searchResults, json);
+				CcpJsonRepresentation requiredEntityRow = VisEntityPosition.ENTITY.getRecordFromUnionAll(searchResults, json);
 				CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, true);
 				return put;
 			}
 			
-			CcpEntityDetails entityDetails = mirrorEntity.getEntityDetails();
-			CcpJsonRepresentation requiredEntityRow = entityDetails.getRequiredEntityRow(searchResults, json);
+			CcpJsonRepresentation requiredEntityRow = mirrorEntity.getRecordFromUnionAll(searchResults, json);
 			CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, false);
 			return put;
 		}
@@ -62,7 +59,6 @@ public enum VisServicePosition implements JnService {
 				.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY.getTwinEntity()).returnStatus(VisProcessStatusSuggestNewSkill.approvedSkill).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY).returnStatus(VisProcessStatusSuggestNewSkill.rejectedSkill).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY).returnStatus(VisProcessStatusSuggestNewSkill.pendingSkill)
-				//LATER
 				//.and()
 				//.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(new JnMensageriaSender(VisAsyncBusiness.skillsSuggest))
 				.andFinallyReturningTheseFields()

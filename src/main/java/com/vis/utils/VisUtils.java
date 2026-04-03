@@ -23,7 +23,6 @@ import com.ccp.especifications.db.crud.CcpUnionAllExecutor;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
 import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDetails;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.utils.JnDeleteKeysFromCache;
@@ -77,10 +76,6 @@ public class VisUtils {
 		return sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter;
 	}
 	
-	//FORGOT BOTAR EM FILA SEPARANDO AS VAGAS EM LOTE DE RECRUTADORES NAO REPETIDOS
-	//FORGOT UNION ALL COMEÇANDO PELOS AGRUPADORES POR CURRICULO E RECRUTADOR
-	//FORGOT PAGINAÇÃO DE BUCKET
-
 	public static List<CcpJsonRepresentation> sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(CcpJsonRepresentation schedullingPlan, Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> howToObtainResumes, Function<VisFrequencyOptions, CcpJsonRepresentation> howToObtainPositionsGroupedByRecruiters) {
 		
 		String frequency = schedullingPlan.getAsString(VisEntityPosition.Fields.frequency);
@@ -265,11 +260,9 @@ public class VisUtils {
 				continue;
 			}
 
-			CcpEntityDetails entityDetails = VisEntityScheduleSendingResumeFees.ENTITY.getEntityDetails();
-			CcpJsonRepresentation fee = entityDetails.getRequiredEntityRow(searchResults, searchParameters);
+			CcpJsonRepresentation fee = VisEntityScheduleSendingResumeFees.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
 			
-			CcpEntityDetails entityDetails2 = VisEntityBalance.ENTITY.getEntityDetails();
-			CcpJsonRepresentation balance = entityDetails2.getRequiredEntityRow(searchResults, searchParameters);
+			CcpJsonRepresentation balance = VisEntityBalance.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
 			
 			String recruiter = searchParameters.getAsString(VisEntityResumePerception.Fields.recruiter);
 			List<CcpJsonRepresentation> positionsGroupedByThisRecruiter = allPositionsGroupedByRecruiters.getDynamicVersion().getAsJsonList(recruiter);
@@ -344,8 +337,7 @@ public class VisUtils {
 		
 		for (CcpJsonRepresentation positionByThisRecruiter : positionsGroupedByThisRecruiter) {
 
-			CcpEntityDetails entityDetails = VisEntityResume.ENTITY.getEntityDetails();
-			CcpJsonRepresentation resume = entityDetails.getRequiredEntityRow(searchResults, searchParameters);
+			CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
 			
 			CcpCollectionDecorator dddsPosition = positionByThisRecruiter.getAsCollectionDecorator(VisEntityResume.Fields.ddd.name());
 			CcpCollectionDecorator dddsResume = resume.getAsCollectionDecorator(VisEntityResume.Fields.ddd.name());
@@ -369,7 +361,6 @@ public class VisUtils {
 			try {
 				requiredSkills = getRequiredSkillsInThisResume(positionByThisRecruiter, resume);
 			} catch (VisErrorBusinessRequiredSkillsMissingInResume e) {
-				// LATER: salvar skills faltando no curriculo
 				continue;
 			}
 			
@@ -480,11 +471,9 @@ public class VisUtils {
 			return false;
 		}
 		
-		CcpEntityDetails entityDetails = VisEntityResumeLastView.ENTITY.getEntityDetails();
-		CcpJsonRepresentation resumeLastView = entityDetails.getRequiredEntityRow(searchResults, searchParameters);
+		CcpJsonRepresentation resumeLastView =  VisEntityResumeLastView.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
 		
-		CcpEntityDetails entityDetails2 = VisEntityResume.ENTITY.getEntityDetails();
-		CcpJsonRepresentation resume = entityDetails2.getRequiredEntityRow(searchResults, resumeLastView);
+		CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(searchResults, resumeLastView);
 		
 		Long resumeLastSeen = resumeLastView.getAsLongNumber(VisEntityResumeLastView.Fields.timestamp);
 

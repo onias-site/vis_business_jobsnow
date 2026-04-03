@@ -2,8 +2,8 @@ package com.vis.entities;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.delete;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.after;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.main;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twin;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.*;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twinEntity;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
@@ -15,9 +15,9 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityO
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityExpurgableOptions;
+import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldTransformer;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
@@ -51,21 +51,13 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 		)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityPosition.Fields.class)
-//FIXME FUNCIONA ESTA VALIDAÇÃO?
-@CcpJsonGlobalValidations(requiresAtLeastOne = {
-		@CcpJsonValidationFieldList({"maxClt", "maxPj" }),
-		@CcpJsonValidationFieldList({"minClt", "minPj" })
-}, requiresAllOrNone = {
-		@CcpJsonValidationFieldList({"maxClt", "minClt" }),
-		@CcpJsonValidationFieldList({"minPj", "maxPj" })
-})
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = after, operation = save, entityType = main,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = save, from = mainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
 				//TODO VAI SAIR ESSE FLUXO POR CAUSA DA RETIRADA DOS GROUPINGS
-				@CcpEntityOperation(when = after, operation = delete, entityType = main,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = delete, from = mainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
 				//TODO REVISITAR ESTE FLUXO
-				@CcpEntityOperation(when = after, operation = delete, entityType = twin,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = delete, from = twinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)
@@ -74,6 +66,14 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;
 
+	//DOUBT FUNCIONA ESTA VALIDAÇÃO?
+	@CcpJsonGlobalValidations(requiresAtLeastOne = {
+			@CcpJsonValidationFieldList({"maxClt", "maxPj" }),
+			@CcpJsonValidationFieldList({"minClt", "minPj" })
+	}, requiresAllOrNone = {
+			@CcpJsonValidationFieldList({"maxClt", "minClt" }),
+			@CcpJsonValidationFieldList({"minPj", "maxPj" })
+	})
 	public static enum Fields implements CcpJsonFieldName{
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValues = {  "telegram", "whatsapp", "email", "sms" })

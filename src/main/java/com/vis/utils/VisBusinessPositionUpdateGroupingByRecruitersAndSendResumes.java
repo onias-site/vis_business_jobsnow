@@ -42,8 +42,6 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 
 		VisUtils.saveRecordsInPages(records, position, VisEntityGroupResumesByPosition.ENTITY);
 		
-		//FORGOT descobrir uma forma de gravar o agrupamento de vagas por currículos
-		
 		return positionWithFilteredAndSortedResumesAndTheirStatis;
 	}
 

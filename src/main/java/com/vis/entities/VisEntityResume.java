@@ -3,8 +3,8 @@ package com.vis.entities;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.delete;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.after;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.main;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twin;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.*;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twinEntity;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
@@ -16,8 +16,8 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityO
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
+import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
@@ -48,14 +48,10 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 		)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
-@CcpJsonGlobalValidations(
-		requiresAtLeastOne = {
-		@CcpJsonValidationFieldList({"pj", "clt" })
-})
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = after, operation = save, entityType = main,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
-				@CcpEntityOperation(when = after, operation = delete, entityType = twin,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = save, from = mainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = delete, from = twinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)
@@ -63,7 +59,11 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 public class VisEntityResume implements CcpEntityConfigurator {
 	
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
-	
+
+	@CcpJsonGlobalValidations(
+			requiresAtLeastOne = {
+			@CcpJsonValidationFieldList({"pj", "clt" })
+	})
 	public static enum Fields implements CcpJsonFieldName {
 
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)

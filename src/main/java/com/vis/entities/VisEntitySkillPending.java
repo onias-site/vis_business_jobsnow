@@ -1,21 +1,22 @@
 package com.vis.entities;
 
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.transferDataTo;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorTransferType.transferDataTo;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.after;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.before;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.main;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.mainEntity;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfer;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfers;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
+import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
@@ -23,6 +24,7 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.business.resume.skills.VisBusinessApprovingSkill;
 import com.vis.business.templates.email.VisEmailTemplates;
 import com.vis.business.templates.notify.support.VisTemplatesToNotifySupport;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -31,15 +33,18 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = before, operation = save, entityType = main,  execute = {VisTemplatesToNotifySupport.NewSkill.class, VisEmailTemplates.PedingSkillHierarchy.class}, operationHandlers = {})
+				@CcpEntityOperation(when = after, operation = save, from = mainEntity,  execute = {VisTemplatesToNotifySupport.NewSkill.class, VisEmailTemplates.PedingSkillHierarchy.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)
-// FIXME @CcpEntityDataTransfer(rules = {
-// @CcpEntityOperation(when = after, operation = transferDataTo, entityType = main,  execute = {}, operationHandlers = {}),
-//		@CcpEntityDataTransferRule(whenTransferingDataToEntity = VisEntitySkillRejected.class, thenExecuteTheFollowingFlow = {VisEmailTemplates.RejectedSkill.class}),
-//		@CcpEntityDataTransferRule(whenTransferingDataToEntity = VisEntitySkill.class, thenExecuteTheFollowingFlow = {VisBusinessApprovingSkill.class, VisEmailTemplates.AprovedSkill.class})
-//} )
+
+@CcpEntityDataTransfers(
+		globalHandlers = {},
+		transfers = {
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillRejected.class, transferType = transferDataTo, when = after, execute = {VisEmailTemplates.RejectedSkill.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkill.class, transferType = transferDataTo, when = after, execute = {VisBusinessApprovingSkill.class, VisEmailTemplates.AprovedSkill.class}, transferHandlers = {}),
+		}
+		)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillPending.Fields.class)
 public class VisEntitySkillPending implements CcpEntityConfigurator {
