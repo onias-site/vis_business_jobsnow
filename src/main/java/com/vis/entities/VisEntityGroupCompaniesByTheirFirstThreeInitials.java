@@ -79,7 +79,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 			
 			String initials = companyName.substring(0, 3);
 			
-			LinkedHashSet<String> orDefault = groupedCompanies.getDynamicVersion().getOrDefault(initials, new LinkedHashSet<>());
+			LinkedHashSet<String> orDefault = groupedCompanies.getDynamicVersion().getOrDefault(initials,() -> new LinkedHashSet<>());
 			orDefault.add(capitalizedCompanyName);
 			groupedCompanies = groupedCompanies.getDynamicVersion().put(initials, orDefault);
 		};
