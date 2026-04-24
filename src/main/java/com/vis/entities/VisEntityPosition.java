@@ -53,11 +53,11 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityPosition.Fields.class)
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = after, operation = save, from = mainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = save, into = mainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
 				//TODO VAI SAIR ESSE FLUXO POR CAUSA DA RETIRADA DOS GROUPINGS
-				@CcpEntityOperation(when = after, operation = delete, from = mainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = delete, into = mainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
 				//TODO REVISITAR ESTE FLUXO
-				@CcpEntityOperation(when = after, operation = delete, from = twinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = delete, into = twinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)

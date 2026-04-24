@@ -33,7 +33,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = after, operation = save, from = mainEntity,  execute = {VisTemplatesToNotifySupport.NewSkill.class, VisEmailTemplates.PedingSkillHierarchy.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = save, into = mainEntity,  execute = {VisTemplatesToNotifySupport.NewSkill.class, VisEmailTemplates.PedingSkillHierarchy.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)

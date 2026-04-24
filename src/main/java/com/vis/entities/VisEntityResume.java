@@ -50,8 +50,8 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = after, operation = save, from = mainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
-				@CcpEntityOperation(when = after, operation = delete, from = twinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = save, into = mainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = after, operation = delete, into = twinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)
