@@ -54,7 +54,7 @@ public class VisUtils {
 		String tenant = systemProperties.getAsString(JsonFieldNames.tenant);
 		return tenant;
 	}
-	public static boolean isInsufficientFunds(int itemsCount, 
+	public static boolean isInsufficientFunds(int itemsCount,  
 			CcpJsonRepresentation fee, CcpJsonRepresentation balance) {
 	
 		Double feeValue = fee.getAsDoubleNumber(VisEntityFees.Fields.fee);

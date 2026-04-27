@@ -140,8 +140,8 @@ public enum VisServiceSkills implements JnService {
 
 			CcpJsonRepresentation multipleByIds = entityDetails.getMultipleByIds(idsToSearch);
 			
-			List<CcpJsonRepresentation> allSkillsFoundInTheText = new ArrayList<>();
-			
+			List<CcpJsonRepresentation> allSkillsFoundInTheText = new ArrayList<>(); 
+			 
 			Set<String> ids = allWordsGroups.keySet();
 			
 			for (String id : ids) {
