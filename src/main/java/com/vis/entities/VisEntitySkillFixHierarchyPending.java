@@ -19,15 +19,15 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.vis.business.templates.email.VisEmailTemplates;
+import com.vis.business.messages.VisMessages;
 
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityDataTransfers(
 		globalHandlers = {},
 		transfers = {
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = after, execute = {VisEmailTemplates.RejectedSkillHierarchy.class}, transferHandlers = {}),
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = after, execute = {VisEmailTemplates.AprovedSkillHierarchy.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = after, execute = {VisMessages.RejectedSkillHierarchy.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = after, execute = {VisMessages.AprovedSkillHierarchy.class}, transferHandlers = {}),
 		}
 		)
 

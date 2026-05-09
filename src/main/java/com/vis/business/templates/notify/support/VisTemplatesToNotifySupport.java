@@ -19,9 +19,9 @@ public enum VisTemplatesToNotifySupport implements CcpBusiness{
 
 		JnSendMessageToUser sender = new JnSendMessageToUser();
 		sender
-		.addDefaultProcessForEmailSending()
+		.addDefaultProcessToEmailSending()
 		.and()
-		.addDefaultStepForTelegramSending()
+		.addDefaultStepToInstantMessageSending()
 		.soWithAllAddedProcessAnd()
 		.withTheTemplateEntity(this.name())
 		.andWithTheEntityToBlockMessageResend(JnEntityJobsnowWarning.ENTITY)

@@ -23,7 +23,6 @@
 			<groupId>com.ccp.jn</groupId>
 			<artifactId>jn_business_jobsnow</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
-
 		</dependency>
 	</dependencies>
 

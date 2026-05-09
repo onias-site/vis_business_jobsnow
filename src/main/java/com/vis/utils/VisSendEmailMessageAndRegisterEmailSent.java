@@ -25,7 +25,7 @@ public enum VisSendEmailMessageAndRegisterEmailSent implements CcpBusiness, CcpJ
 			
 			JnSendMessageToUser sender = new JnSendMessageToUser();
 			sender
-			.addDefaultProcessForEmailSending()
+			.addDefaultProcessToEmailSending()
 			.soWithAllAddedProcessAnd()
 			.withTheTemplateEntity(this.name())
 			.andWithTheEntityToBlockMessageResend(JnEntityEmailMessageSent.ENTITY)
