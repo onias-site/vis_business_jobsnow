@@ -20,7 +20,7 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.cache.CcpCacheDecorator;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDetails;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
@@ -75,7 +75,7 @@ public enum VisServiceSkills implements JnService {
 	RequestToCreateNewSkill{
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpBusiness action = VisEntitySkillPending.ENTITY.getEntityDetails().getOperationCallback(CcpEntityOperationType.save);
+			CcpBusiness action = VisEntitySkillPending.ENTITY.getEntityMetaData().getOperationCallback(CcpEntityOperationType.save);
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
 			.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY).returnStatus(RequestToCreateNewSkillStatus.rejected)
@@ -136,7 +136,7 @@ public enum VisServiceSkills implements JnService {
 				idsToSearch.add(put);
 			}
 			
-			CcpEntityDetails entityDetails = VisEntityGroupPositionsBySkills.ENTITY.getEntityDetails();
+			CcpEntityMetaData entityDetails = VisEntityGroupPositionsBySkills.ENTITY.getEntityMetaData();
 
 			CcpJsonRepresentation multipleByIds = entityDetails.getMultipleByIds(idsToSearch);
 			

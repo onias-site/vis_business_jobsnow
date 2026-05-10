@@ -84,7 +84,7 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		String upperCase = word.toUpperCase();
 		String firstTwoInitials = upperCase.substring(0,2);
 		CcpJsonRepresentation id = CcpOtherConstants.EMPTY_JSON.put(Fields.firstTwoInitials, firstTwoInitials);
-		CcpJsonRepresentation oneById = ENTITY.getEntityDetails().getOneByIdOrHandleItIfThisIdWasNotFound(id, json -> CcpOtherConstants.EMPTY_JSON);
+		CcpJsonRepresentation oneById = ENTITY.getEntityMetaData().getOneByIdOrHandleItIfThisIdWasNotFound(id, json -> CcpOtherConstants.EMPTY_JSON);
 		
 		boolean notFound = oneById.isEmpty();
 		

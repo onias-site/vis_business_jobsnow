@@ -192,7 +192,7 @@ public class VisUtils {
 						.endRangeAndBackToSimplifiedQuery()
 					.endSimplifiedQueryAndBackToRequest()
 				;
-		String[] resourcesNames = entity.getEntityDetails().getEntitiesToSelect();
+		String[] resourcesNames = entity.getEntityMetaData().getEntitiesToSelect();
 
 		List<CcpJsonRepresentation> result = queryExecutor.getResultAsList(queryToSearchLastUpdated, resourcesNames);
 		
@@ -210,7 +210,7 @@ public class VisUtils {
 						.match(VisEntityPosition.Fields.frequency, frequency)
 					.endSimplifiedQueryAndBackToRequest()
 				;
-		String[] resourcesNames = VisEntityPosition.ENTITY.getEntityDetails().getEntitiesToSelect();
+		String[] resourcesNames = VisEntityPosition.ENTITY.getEntityMetaData().getEntitiesToSelect();
 		CcpJsonRepresentation positionsGroupedByRecruiters = queryExecutor.getMap(queryToSearchLastUpdatedResumes, resourcesNames, VisEntityPosition.Fields.email.name());
 		return positionsGroupedByRecruiters;
 	}
@@ -562,7 +562,7 @@ public class VisUtils {
 		;
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
 		
-		String[] entitiesToSelect = entityToRead.getEntityDetails().getEntitiesToSelect();
+		String[] entitiesToSelect = entityToRead.getEntityMetaData().getEntitiesToSelect();
 		
 		VisGroupDetailsByMasters detailsGroupedByMasters = new VisGroupDetailsByMasters(masterField.name(), entityToRead, entityWhereGroup);
 		

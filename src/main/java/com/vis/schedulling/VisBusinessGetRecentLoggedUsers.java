@@ -21,7 +21,7 @@ public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 		
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
 		
-		String entityName = JnEntityLoginSessionValidation.ENTITY.getEntityDetails().entityName;
+		String entityName = JnEntityLoginSessionValidation.ENTITY.getEntityMetaData().entityName;
 		CcpQueryOptions queryToSearchLastUpdated = 
 				CcpQueryOptions.INSTANCE
 					.startQuery()
@@ -39,7 +39,7 @@ public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 					.maxResults()
 					.addDescSorting(JnEntityDisposableRecord.Fields.timestamp.name())
 				;
-		String[] resourcesNames = JnEntityDisposableRecord.ENTITY.getEntityDetails().getEntitiesToSelect();
+		String[] resourcesNames = JnEntityDisposableRecord.ENTITY.getEntityMetaData().getEntitiesToSelect();
 
 		queryExecutor.consumeQueryResult(queryToSearchLastUpdated, resourcesNames, "10m", 10000L, VisSendRecentUsersToGroupings.INSTANCE, JnEntityDisposableRecord.Fields.id.name());
 		
