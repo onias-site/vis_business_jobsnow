@@ -1,5 +1,7 @@
 package com.vis.services;
 
+import java.util.function.Supplier;
+
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
@@ -33,13 +35,14 @@ public enum VisServicePosition implements JnService {
 			
 			boolean activeResume = VisEntityPosition.ENTITY.isPresentInThisUnionAll(searchResults, json);
 			
+			Supplier<CcpJsonRepresentation> jsonSupplier = json.getJsonSupplier();
 			if(activeResume) {
-				CcpJsonRepresentation requiredEntityRow = VisEntityPosition.ENTITY.getRecordFromUnionAll(searchResults, json);
+				CcpJsonRepresentation requiredEntityRow = VisEntityPosition.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier);
 				CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, true);
 				return put;
 			}
 			
-			CcpJsonRepresentation requiredEntityRow = mirrorEntity.getRecordFromUnionAll(searchResults, json);
+			CcpJsonRepresentation requiredEntityRow = mirrorEntity.getRecordFromUnionAll(searchResults, jsonSupplier);
 			CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, false);
 			return put;
 		}

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpOtherConstants;
@@ -260,9 +261,11 @@ public class VisUtils {
 				continue;
 			}
 
-			CcpJsonRepresentation fee = VisEntityScheduleSendingResumeFees.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
+			Supplier<CcpJsonRepresentation> jsonSupplier = searchParameters.getJsonSupplier();
 			
-			CcpJsonRepresentation balance = VisEntityBalance.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
+			CcpJsonRepresentation fee = VisEntityScheduleSendingResumeFees.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier);
+			
+			CcpJsonRepresentation balance = VisEntityBalance.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier);
 			
 			String recruiter = searchParameters.getAsString(VisEntityResumePerception.Fields.recruiter);
 			List<CcpJsonRepresentation> positionsGroupedByThisRecruiter = allPositionsGroupedByRecruiters.getDynamicVersion().getAsJsonList(recruiter);
@@ -337,7 +340,9 @@ public class VisUtils {
 		
 		for (CcpJsonRepresentation positionByThisRecruiter : positionsGroupedByThisRecruiter) {
 
-			CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
+			Supplier<CcpJsonRepresentation> jsonSupplier = searchParameters.getJsonSupplier();
+			
+			CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier);
 			
 			CcpCollectionDecorator dddsPosition = positionByThisRecruiter.getAsCollectionDecorator(VisEntityResume.Fields.ddd.name());
 			CcpCollectionDecorator dddsResume = resume.getAsCollectionDecorator(VisEntityResume.Fields.ddd.name());
@@ -374,9 +379,9 @@ public class VisUtils {
 			
 			CcpJsonRepresentation emailMessageValuesToSent = allPositionsWithFilteredResumes.getDynamicVersion().getInnerJson(positionId);
 
-			CcpJsonRepresentation resumeLastView = VisEntityResumeLastView.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
+			CcpJsonRepresentation resumeLastView = VisEntityResumeLastView.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier);
 
-			CcpJsonRepresentation resumeOpinion = VisEntityResumePerception.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
+			CcpJsonRepresentation resumeOpinion = VisEntityResumePerception.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier);
 	
 			CcpJsonRepresentation resumeWithCommentAndVisualizationDetails = resume
 					.put(JsonFieldNames.resumeOpinion, resumeOpinion).put(JsonFieldNames.resumeLastView, resumeLastView);
@@ -471,9 +476,13 @@ public class VisUtils {
 			return false;
 		}
 		
-		CcpJsonRepresentation resumeLastView =  VisEntityResumeLastView.ENTITY.getRecordFromUnionAll(searchResults, searchParameters);
+		Supplier<CcpJsonRepresentation> jsonSupplier = searchParameters.getJsonSupplier();
 		
-		CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(searchResults, resumeLastView);
+		CcpJsonRepresentation resumeLastView =  VisEntityResumeLastView.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier);
+		
+		Supplier<CcpJsonRepresentation> jsonSupplier2 = resumeLastView.getJsonSupplier();
+		
+		CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier2);
 		
 		Long resumeLastSeen = resumeLastView.getAsLongNumber(VisEntityResumeLastView.Fields.timestamp);
 
