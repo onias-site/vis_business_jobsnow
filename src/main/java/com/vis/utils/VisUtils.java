@@ -123,9 +123,10 @@ public class VisUtils {
 			}	
 			
 			boolean hasAtLeastOneResume = total > 0;
+		
 			if(hasAtLeastOneResume) {
 				double avg = sum / total;
-				positionsWithFilteredResumes = positionsWithFilteredResumes.addToItem(JsonFieldNames.statis, field, avg);
+				positionsWithFilteredResumes = positionsWithFilteredResumes.addToItem(JsonFieldNames.statis, () -> field, avg);
 			}
 		}
 		int resumesSize = resumes.size();
