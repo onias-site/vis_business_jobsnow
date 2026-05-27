@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import com.ccp.business.CcpBusiness;
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpDynamicJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.cache.CcpCacheDecorator;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
@@ -147,7 +146,7 @@ public enum VisServiceSkills implements JnService {
 			for (String id : ids) {
 				CcpCacheDecorator cache = new CcpCacheDecorator(id);
 				
-				CcpJsonRepresentation innerJson = cache.get(jsn -> multipleByIds.getDynamicVersion().getInnerJson(id), 3600);
+				CcpJsonRepresentation innerJson = cache.get(jsn -> multipleByIds.getInnerJson(() -> id), 3600);
 				
 				boolean idNotFound = innerJson.isEmpty();
 				
@@ -263,17 +262,16 @@ public enum VisServiceSkills implements JnService {
 		}
 		
 		private CcpJsonRepresentation putLabel(CcpJsonRepresentation json) {
-			CcpDynamicJsonRepresentation dynamicVersion = json.getDynamicVersion();
-			String skill = dynamicVersion.getAsString("skill");
-			String word = dynamicVersion.getAsString("word");
-			
+			String skill = json.getAsString(() -> "skill");
+			String word = json.getAsString(() -> "word");
+
 			boolean sameWord = skill.equals(word);
 			if(sameWord) {
-				CcpJsonRepresentation put = dynamicVersion.put("label", skill);
+				CcpJsonRepresentation put = json.put(() -> "label", skill);
 				return put;
 			}
 			String label = word + " (" + skill + ")";
-			CcpJsonRepresentation put = dynamicVersion.put("label", label);
+			CcpJsonRepresentation put = json.put(() -> "label", label);
 			return put;
 		}
 	}, 
@@ -288,13 +286,12 @@ public enum VisServiceSkills implements JnService {
 	
 	static int getWordStatus(CcpJsonRepresentation group, String word) {
 		String initials = word.substring(0,2);
-		CcpDynamicJsonRepresentation dynamicVersion = group.getDynamicVersion();
-		boolean notContainsInitials = false == dynamicVersion.containsAllFields(initials);
-		
+		boolean notContainsInitials = false == group.containsAllFields(() -> initials);
+
 		if(notContainsInitials) {
 			return 1;
 		}
-		Set<String> set =  dynamicVersion.getAsObject(initials);
+		Set<String> set = group.getAsObject(() -> initials);
 		boolean notContains = false == set.contains(word);
 		if(notContains) {
 			return 2;

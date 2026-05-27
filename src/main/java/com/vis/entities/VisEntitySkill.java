@@ -65,14 +65,14 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		List<CcpJsonRepresentation> collect = new ArrayList<>(synonyms.stream().map(json -> {
 			int resumesCount = this.getResumesCount(json, lines);
 			
-			CcpJsonRepresentation put = json.getDynamicVersion().put("resumesCount", resumesCount);
+			CcpJsonRepresentation put = json.put(() -> "resumesCount", resumesCount);
 			
 			return put;
 			
 		}).collect(Collectors.toList()));
 		
 		
-		collect.sort((a, b) -> b.getDynamicVersion().getAsIntegerNumber("resumesCount") - a.getDynamicVersion().getAsIntegerNumber("resumesCount"));
+		collect.sort((a, b) -> b.getAsIntegerNumber(() -> "resumesCount") - a.getAsIntegerNumber(() -> "resumesCount"));
 		
 		int ranking = 1;
 		

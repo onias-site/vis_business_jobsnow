@@ -9,7 +9,7 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 public enum GetMoneyValuesFromJson  {
 	resume {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			boolean fieldIsNotPresent = false == json.getDynamicVersion().containsAllFields(field);
+			boolean fieldIsNotPresent = false == json.containsAllFields(() -> field);
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
@@ -17,7 +17,7 @@ public enum GetMoneyValuesFromJson  {
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
 			
-			int valueGaveByCandidate = json.getDynamicVersion().getAsDoubleNumber(field).intValue();
+			int valueGaveByCandidate = json.getAsDoubleNumber(() -> field).intValue();
 			
 			for(int k = valueGaveByCandidate; k <= 100000; k += 100) {
 				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k)
@@ -29,7 +29,7 @@ public enum GetMoneyValuesFromJson  {
 		}
 	}, position {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			boolean fieldIsNotPresent = false == json.getDynamicVersion().containsAllFields(field);
+			boolean fieldIsNotPresent = false == json.containsAllFields(() -> field);
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
@@ -37,7 +37,7 @@ public enum GetMoneyValuesFromJson  {
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
 			
-			int maxValueFromThisPosition = json.getDynamicVersion().getAsDoubleNumber(field).intValue();
+			int maxValueFromThisPosition = json.getAsDoubleNumber(() -> field).intValue();
 			
 			for(int k = maxValueFromThisPosition; k >= 1000; k -= 100) {
 				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k).put(JsonFieldNames.moneyType, field);

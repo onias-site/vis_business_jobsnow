@@ -58,7 +58,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
 		
 		Consumer<CcpJsonRepresentation> consumer = json -> {
-			String x = json.getDynamicVersion().getAsString("id");
+			String x = json.getAsString(() -> "id");
 				String[] split = x.split("@");
 				if(split.length != 2) {
 					return;
@@ -79,9 +79,9 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 			
 			String initials = companyName.substring(0, 3);
 			
-			LinkedHashSet<String> orDefault = groupedCompanies.getDynamicVersion().getOrDefault(initials,() -> new LinkedHashSet<>());
+			LinkedHashSet<String> orDefault = groupedCompanies.getOrDefault(() -> initials, () -> new LinkedHashSet<>());
 			orDefault.add(capitalizedCompanyName);
-			groupedCompanies = groupedCompanies.getDynamicVersion().put(initials, orDefault);
+			groupedCompanies = groupedCompanies.put(() -> initials, orDefault);
 		};
 		queryExecutor.consumeQueryResult(query, new String[] {"old_recruiters"}, "1s", 10000, consumer, "id");
 
@@ -91,7 +91,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 	}
 	
 	private CcpBulkItem toBulkItem(String initials) {
-		Set<String> companies = groupedCompanies.getDynamicVersion().getAsObject(initials);
+		Set<String> companies = groupedCompanies.getAsObject(() -> initials);
 		
 		CcpJsonRepresentation json = CcpOtherConstants.EMPTY_JSON
 		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, initials)

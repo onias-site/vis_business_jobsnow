@@ -27,16 +27,16 @@ enum ResumeSortOptions {
 		
 		for (String key : keys) {
 			
-			if(false == o1.getDynamicVersion().containsAllFields(key)) {
+			if(false == o1.containsAllFields(() -> key)) {
 				continue;
 			}
 			
-			if(false == o2.getDynamicVersion().containsAllFields(key)) {
+			if(false == o2.containsAllFields(() -> key)) {
 				continue;
 			}
 			
-			Double value1 = o1.getDynamicVersion().getAsDoubleNumber(key);
-			Double value2 = o2.getDynamicVersion().getAsDoubleNumber(key);
+			Double value1 = o1.getAsDoubleNumber(() -> key);
+			Double value2 = o2.getAsDoubleNumber(() -> key);
 			
 			int compareTo = value1.compareTo(value2);
 			
