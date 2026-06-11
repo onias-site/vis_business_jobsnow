@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
@@ -65,14 +66,14 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		List<CcpJsonRepresentation> collect = new ArrayList<>(synonyms.stream().map(json -> {
 			int resumesCount = this.getResumesCount(json, lines);
 			
-			CcpJsonRepresentation put = json.put(() -> "resumesCount", resumesCount);
+			CcpJsonRepresentation put = json.put(new CcpFieldName("resumesCount"), resumesCount);
 			
 			return put;
 			
 		}).collect(Collectors.toList()));
 		
 		
-		collect.sort((a, b) -> b.getAsIntegerNumber(() -> "resumesCount") - a.getAsIntegerNumber(() -> "resumesCount"));
+		collect.sort((a, b) -> b.getAsIntegerNumber(new CcpFieldName("resumesCount")) - a.getAsIntegerNumber(new CcpFieldName("resumesCount")));
 		
 		int ranking = 1;
 		

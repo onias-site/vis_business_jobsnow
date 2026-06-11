@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
@@ -58,7 +59,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
 		
 		Consumer<CcpJsonRepresentation> consumer = json -> {
-			String x = json.getAsString(() -> "id");
+			String x = json.getAsString(new CcpFieldName("id"));
 				String[] split = x.split("@");
 				if(split.length != 2) {
 					return;
@@ -79,9 +80,9 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 			
 			String initials = companyName.substring(0, 3);
 			
-			LinkedHashSet<String> orDefault = groupedCompanies.getOrDefault(() -> initials, () -> new LinkedHashSet<>());
+			LinkedHashSet<String> orDefault = groupedCompanies.getOrDefault(new CcpFieldName(initials), () -> new LinkedHashSet<>());
 			orDefault.add(capitalizedCompanyName);
-			groupedCompanies = groupedCompanies.put(() -> initials, orDefault);
+			groupedCompanies = groupedCompanies.put(new CcpFieldName(initials), orDefault);
 		};
 		queryExecutor.consumeQueryResult(query, new String[] {"old_recruiters"}, "1s", 10000, consumer, "id");
 
@@ -91,7 +92,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 	}
 	
 	private CcpBulkItem toBulkItem(String initials) {
-		Set<String> companies = groupedCompanies.getAsObject(() -> initials);
+		Set<String> companies = groupedCompanies.getAsObject(new CcpFieldName(initials));
 		
 		CcpJsonRepresentation json = CcpOtherConstants.EMPTY_JSON
 		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, initials)

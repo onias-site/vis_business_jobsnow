@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
@@ -56,9 +57,9 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 	private Set<String> getAllParents(List<CcpJsonRepresentation>synonyms, String word, Set<String> allParents){
 		
 		Optional<CcpJsonRepresentation> findFirst = synonyms.stream()
-		.filter(x -> x.getAsString(() -> "skill").equals(word) ||
-		             x.getAsJsonList(() -> "synonym").stream().anyMatch(y -> y.getAsString(() -> "skill").equals(word)))
-		.findFirst();	
+		.filter(x -> x.getAsString(new CcpFieldName("skill")).equals(word) ||
+		             x.getAsJsonList(new CcpFieldName("synonym")).stream().anyMatch(y -> y.getAsString(new CcpFieldName("skill")).equals(word)))
+		.findFirst();
 		
 		boolean parentNotFound = false == findFirst.isPresent();
 		
@@ -68,12 +69,12 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		
 		CcpJsonRepresentation synonym = findFirst.get();
 		
-		boolean parentAbsent = false == synonym.containsAllFields(() -> "parent");
+		boolean parentAbsent = false == synonym.containsAllFields(new CcpFieldName("parent"));
 		if(parentAbsent) {
 			return allParents;
 		}
 		
-		List<String> parent = synonym.getAsStringList(() -> "parent");
+		List<String> parent = synonym.getAsStringList(new CcpFieldName("parent"));
 		allParents.addAll(parent);
 		
 		return allParents;
@@ -122,7 +123,7 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 
 		for (CcpJsonRepresentation synonym : synonyms) {
 			
-			List<String> parents = synonym.getAsStringList(() -> "parent");
+			List<String> parents = synonym.getAsStringList(new CcpFieldName("parent"));
 
 			Set<String> allParents = new HashSet<String>();
 			allParents.addAll(parents);
@@ -132,34 +133,34 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 				allParents = this.getAllParents(synonyms, parent, allParents);
 			}
 			List<String> allNames = new ArrayList<>();
-			String mainName = synonym.getAsString(() -> "skill");
-			List<String> otherNames = synonym.getAsJsonList(() -> "synonym").stream().map(x -> x.getAsString(() -> "skill")).collect(Collectors.toList());
+			String mainName = synonym.getAsString(new CcpFieldName("skill"));
+			List<String> otherNames = synonym.getAsJsonList(new CcpFieldName("synonym")).stream().map(x -> x.getAsString(new CcpFieldName("skill"))).collect(Collectors.toList());
 			allNames.add(mainName);
 			allNames.addAll(otherNames);
 			for (var name : allNames) {
 				wordsAndParents.put(name, allParents);
 			}
 
-			String skill = synonym.getAsString(() -> "skill").toUpperCase();
+			String skill = synonym.getAsString(new CcpFieldName("skill")).toUpperCase();
 			wordsAndSkills.put(skill, skill);
 			{
-				List<CcpJsonRepresentation> words = synonym.getAsJsonList(() -> "synonym");
+				List<CcpJsonRepresentation> words = synonym.getAsJsonList(new CcpFieldName("synonym"));
 				for (CcpJsonRepresentation word : words) {
-					String upperCase = word.getAsString(() -> "skill").toUpperCase();
+					String upperCase = word.getAsString(new CcpFieldName("skill")).toUpperCase();
 					wordsAndSkills.put(upperCase, skill);
 				}
 			}
 			{
-				List<CcpJsonRepresentation> words = synonym.getAsJsonList(() -> "preRequisite");
+				List<CcpJsonRepresentation> words = synonym.getAsJsonList(new CcpFieldName("preRequisite"));
 				for (CcpJsonRepresentation word : words) {
-					String upperCase = word.getAsString(() -> "word").toUpperCase();
+					String upperCase = word.getAsString(new CcpFieldName("word")).toUpperCase();
 					wordsAndSkills.put(upperCase, skill);
 				}
 			}
 			{
-				List<CcpJsonRepresentation> words = synonym.getAsJsonList(() -> "similar");
+				List<CcpJsonRepresentation> words = synonym.getAsJsonList(new CcpFieldName("similar"));
 				for (CcpJsonRepresentation word : words) {
-					String upperCase = word.getAsString(() -> "word").toUpperCase().replace("_", " ");
+					String upperCase = word.getAsString(new CcpFieldName("word")).toUpperCase().replace("_", " ");
 					wordsAndSkills.put(upperCase, skill);
 				}
 			}
@@ -178,23 +179,23 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 			
 			String initials = word.substring(0, 2);
 			String skill = wordsAndSkills.get(word);
-			List<CcpJsonRepresentation> asJsonList = groupedSkills.getAsJsonList(() -> initials);
+			List<CcpJsonRepresentation> asJsonList = groupedSkills.getAsJsonList(new CcpFieldName(initials));
 
 			ArrayList<CcpJsonRepresentation> arrayList = new ArrayList<>(asJsonList);
 			Set<String> parent = wordsAndParents.getOrDefault(word, new HashSet<>());
 			CcpJsonRepresentation json = CcpOtherConstants.EMPTY_JSON
-					.put(() -> "skill", skill)
-					.put(() -> "word", word)
-					.put(() -> "parent", parent)
+					.put(new CcpFieldName("skill"), skill)
+					.put(new CcpFieldName("word"), word)
+					.put(new CcpFieldName("parent"), parent)
 					;
 			arrayList.add(json);
 
-			groupedSkills = groupedSkills.put(() -> initials, arrayList);
+			groupedSkills = groupedSkills.put(new CcpFieldName(initials), arrayList);
 		}
 		CcpJsonRepresentation groupedSkills2 = new CcpJsonRepresentation(groupedSkills.content);
 		List<CcpBulkItem> collect = groupedSkills.fieldSet().stream()
 		.map(initials -> {
-			List<CcpJsonRepresentation> skill = groupedSkills2.getAsJsonList(() -> initials);
+			List<CcpJsonRepresentation> skill = groupedSkills2.getAsJsonList(new CcpFieldName(initials));
 			CcpJsonRepresentation json = CcpOtherConstants.EMPTY_JSON
 					.put(VisEntityGroupPositionsBySkills.Fields.skill, skill)
 					.put(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials, initials)

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.cache.CcpCacheDecorator;
@@ -87,7 +88,7 @@ public enum VisServiceSkills implements JnService {
 			.and()
 			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).returnStatus(RequestToCreateNewSkillStatus.alreadyAdded)
 			.andFinallyReturningTheseFields()
-			.endThisProcedure(this.name(), CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
 			;
 			
 			CcpJsonRepresentation throwException = RequestToCreateNewSkillStatus.analyzing.throwException(json);
@@ -146,7 +147,7 @@ public enum VisServiceSkills implements JnService {
 			for (String id : ids) {
 				CcpCacheDecorator cache = new CcpCacheDecorator(id);
 				
-				CcpJsonRepresentation innerJson = cache.get(jsn -> multipleByIds.getInnerJson(() -> id), 3600);
+				CcpJsonRepresentation innerJson = cache.get(jsn -> multipleByIds.getInnerJson(new CcpFieldName(id)), 3600);
 				
 				boolean idNotFound = innerJson.isEmpty();
 				
@@ -262,16 +263,16 @@ public enum VisServiceSkills implements JnService {
 		}
 		
 		private CcpJsonRepresentation putLabel(CcpJsonRepresentation json) {
-			String skill = json.getAsString(() -> "skill");
-			String word = json.getAsString(() -> "word");
+			String skill = json.getAsString(new CcpFieldName("skill"));
+			String word = json.getAsString(new CcpFieldName("word"));
 
 			boolean sameWord = skill.equals(word);
 			if(sameWord) {
-				CcpJsonRepresentation put = json.put(() -> "label", skill);
+				CcpJsonRepresentation put = json.put(new CcpFieldName("label"), skill);
 				return put;
 			}
 			String label = word + " (" + skill + ")";
-			CcpJsonRepresentation put = json.put(() -> "label", label);
+			CcpJsonRepresentation put = json.put(new CcpFieldName("label"), label);
 			return put;
 		}
 	}, 
@@ -286,12 +287,12 @@ public enum VisServiceSkills implements JnService {
 	
 	static int getWordStatus(CcpJsonRepresentation group, String word) {
 		String initials = word.substring(0,2);
-		boolean notContainsInitials = false == group.containsAllFields(() -> initials);
+		boolean notContainsInitials = false == group.containsAllFields(new CcpFieldName(initials));
 
 		if(notContainsInitials) {
 			return 1;
 		}
-		Set<String> set = group.getAsObject(() -> initials);
+		Set<String> set = group.getAsObject(new CcpFieldName(initials));
 		boolean notContains = false == set.contains(word);
 		if(notContains) {
 			return 2;

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.business.CcpBusiness;
@@ -30,7 +31,7 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 		
 		List<String> email = json.getAsStringList(VisEntityPosition.Fields.email);
 
-		Function<VisFrequencyOptions, CcpJsonRepresentation> getSavingPosition = frequency -> CcpOtherConstants.EMPTY_JSON.put(() -> email.get(0), json);
+		Function<VisFrequencyOptions, CcpJsonRepresentation> getSavingPosition = frequency -> CcpOtherConstants.EMPTY_JSON.put(new CcpFieldName(email.get(0)), json);
 
 		List<CcpJsonRepresentation> positionsWithFilteredAndSortedResumesAndTheirStatis = VisUtils.sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(json, getLastUpdatedResumes, getSavingPosition);
 		

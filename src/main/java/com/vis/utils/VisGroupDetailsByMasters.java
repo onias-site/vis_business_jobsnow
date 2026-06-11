@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
@@ -32,17 +33,17 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 		String entityName = entity.getEntityMetaData().entityName;
 		
 		this.mappers = CcpOtherConstants.EMPTY_JSON
-					.put(() -> entityName, entityGrouper)
-					.put(() -> mirrorEntityName, mirrorEntityGrouper)
+					.put(new CcpFieldName(entityName), entityGrouper)
+					.put(new CcpFieldName(mirrorEntityName), mirrorEntityGrouper)
 					;
 	}
 
 	public void accept(CcpJsonRepresentation record) {
-		String master = record.getAsString(() -> this.masterFieldName);
+		String master = record.getAsString(new CcpFieldName(this.masterFieldName));
 		String entity = record.getAsString(JsonFieldNames.entity);
-		CcpJsonRepresentation entityGroup = this.groupedRecords.getInnerJson(() -> entity);
-		entityGroup = entityGroup.addToList(() -> master, record);
-		this.groupedRecords = this.groupedRecords.put(() -> entity, entityGroup);
+		CcpJsonRepresentation entityGroup = this.groupedRecords.getInnerJson(new CcpFieldName(entity));
+		entityGroup = entityGroup.addToList(new CcpFieldName(master), record);
+		this.groupedRecords = this.groupedRecords.put(new CcpFieldName(entity), entityGroup);
 	}
 	
 	private CcpJsonRepresentation mappers;
@@ -55,15 +56,15 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 		
 		for (String entity : entities) {
 			
-			CcpEntity entityGroupToSaveRecords =  this.mappers.getAsObject(() -> entity);
+			CcpEntity entityGroupToSaveRecords =  this.mappers.getAsObject(new CcpFieldName(entity));
 			
-			CcpJsonRepresentation mastersInThisGrouping = this.groupedRecords.getInnerJson(() -> entity);
+			CcpJsonRepresentation mastersInThisGrouping = this.groupedRecords.getInnerJson(new CcpFieldName(entity));
 			
 			Set<String> masters = mastersInThisGrouping.fieldSet();
 
 			for (String master : masters) {
-				List<CcpJsonRepresentation> records = mastersInThisGrouping.getAsJsonList(() -> master);
-				CcpJsonRepresentation primaryKeySupplier = CcpOtherConstants.EMPTY_JSON.put(() -> this.masterFieldName, master);
+				List<CcpJsonRepresentation> records = mastersInThisGrouping.getAsJsonList(new CcpFieldName(master));
+				CcpJsonRepresentation primaryKeySupplier = CcpOtherConstants.EMPTY_JSON.put(new CcpFieldName(this.masterFieldName), master);
 				List<CcpBulkItem> recordsInPages = VisUtils.getRecordsInPages(records, primaryKeySupplier, entityGroupToSaveRecords);
 				result.addAll(recordsInPages);
 			}

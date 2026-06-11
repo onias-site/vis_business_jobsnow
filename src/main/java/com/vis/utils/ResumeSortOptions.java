@@ -1,5 +1,6 @@
 package com.vis.utils;
 
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
@@ -27,16 +28,16 @@ enum ResumeSortOptions {
 		
 		for (String key : keys) {
 			
-			if(false == o1.containsAllFields(() -> key)) {
+			if(false == o1.containsAllFields(new CcpFieldName(key))) {
 				continue;
 			}
 			
-			if(false == o2.containsAllFields(() -> key)) {
+			if(false == o2.containsAllFields(new CcpFieldName(key))) {
 				continue;
 			}
 			
-			Double value1 = o1.getAsDoubleNumber(() -> key);
-			Double value2 = o2.getAsDoubleNumber(() -> key);
+			Double value1 = o1.getAsDoubleNumber(new CcpFieldName(key));
+			Double value2 = o2.getAsDoubleNumber(new CcpFieldName(key));
 			
 			int compareTo = value1.compareTo(value2);
 			

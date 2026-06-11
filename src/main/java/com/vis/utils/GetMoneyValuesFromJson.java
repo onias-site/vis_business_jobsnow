@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 public enum GetMoneyValuesFromJson  {
 	resume {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			boolean fieldIsNotPresent = false == json.containsAllFields(() -> field);
+			boolean fieldIsNotPresent = false == json.containsAllFields(new CcpFieldName(field));
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
@@ -17,7 +18,7 @@ public enum GetMoneyValuesFromJson  {
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
 			
-			int valueGaveByCandidate = json.getAsDoubleNumber(() -> field).intValue();
+			int valueGaveByCandidate = json.getAsDoubleNumber(new CcpFieldName(field)).intValue();
 			
 			for(int k = valueGaveByCandidate; k <= 100000; k += 100) {
 				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k)
@@ -29,7 +30,7 @@ public enum GetMoneyValuesFromJson  {
 		}
 	}, position {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			boolean fieldIsNotPresent = false == json.containsAllFields(() -> field);
+			boolean fieldIsNotPresent = false == json.containsAllFields(new CcpFieldName(field));
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
@@ -37,7 +38,7 @@ public enum GetMoneyValuesFromJson  {
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
 			
-			int maxValueFromThisPosition = json.getAsDoubleNumber(() -> field).intValue();
+			int maxValueFromThisPosition = json.getAsDoubleNumber(new CcpFieldName(field)).intValue();
 			
 			for(int k = maxValueFromThisPosition; k >= 1000; k -= 100) {
 				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k).put(JsonFieldNames.moneyType, field);

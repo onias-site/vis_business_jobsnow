@@ -3,6 +3,7 @@ package com.vis.services;
 import java.util.function.Supplier;
 
 import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
@@ -65,7 +66,7 @@ public enum VisServicePosition implements JnService {
 				//.and()
 				//.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(new JnMensageriaSender(VisAsyncBusiness.skillsSuggest))
 				.andFinallyReturningTheseFields()
-			.endThisProcedureRetrievingTheResultingData(context, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE);
+			.endThisProcedureRetrievingTheResultingData(new CcpFieldName(context), CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE);
 			
 			return findById;
 		}
@@ -90,7 +91,7 @@ public enum VisServicePosition implements JnService {
 				//.and()
 				//.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(new JnMensageriaSender(VisAsyncBusiness.skillsSuggest))
 				.andFinallyReturningTheseFields()
-			.endThisProcedureRetrievingTheResultingData(context, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE);
+			.endThisProcedureRetrievingTheResultingData(new CcpFieldName(context), CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE);
 			
 			return findById;
 		}
