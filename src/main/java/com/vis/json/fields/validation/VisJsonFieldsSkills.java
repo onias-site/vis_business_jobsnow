@@ -5,6 +5,11 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 
+/**
+ * Define as regras de validação dos campos de um objeto de skill dentro de um currículo (nested JSON).
+ * Usado em VisEntityResume.Fields.skill como referência para validação de cada item da lista de skills
+ * do candidato.
+ */
 public enum VisJsonFieldsSkills {
 
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)

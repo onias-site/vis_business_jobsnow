@@ -7,6 +7,12 @@ import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+/**
+ * Gera listas de valores monetários a partir de um JSON, com comportamento diferente dependendo se o
+ * contexto é de currículo ou de vaga. Para currículo, gera todos os valores de remuneração do valor
+ * declarado até 100.000 (o candidato aceita salários iguais ou maiores). Para vaga, gera todos os valores
+ * do máximo declarado até 1.000 (a vaga aceita candidatos que pedem igual ou menos).
+ */
 public enum GetMoneyValuesFromJson  {
 	resume {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {

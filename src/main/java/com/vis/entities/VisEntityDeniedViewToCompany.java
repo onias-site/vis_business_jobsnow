@@ -18,6 +18,11 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+/**
+ * Representa a tabela/índice que registra domínios de empresas cujos recrutadores não podem visualizar
+ * determinados currículos. Utiliza o padrão Twin Entity para rastrear quando um bloqueio é revertido
+ * (entidade twin: reallowed_view_to_company). Possui cache de 1 hora e versionamento.
+ */
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(

@@ -2,6 +2,10 @@ package com.vis.status;
 
 import com.ccp.process.CcpProcessStatus;
 
+/**
+ * Define os status de processo para a operação de sugestão de nova skill, com seus códigos HTTP
+ * correspondentes.
+ */
 public enum VisProcessStatusSuggestNewSkill implements CcpProcessStatus{
 	rejectedSkill(420),
 	approvedSkill(200),

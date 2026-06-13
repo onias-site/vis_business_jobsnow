@@ -38,6 +38,13 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
+/**
+ * Representa a entidade central de Currículo (resume) do candidato. Armazena o perfil profissional completo:
+ * tipo de contrato desejado (CLT/PJ/BTC), disponibilidade, DDDs de interesse, skills, experiência, LinkedIn,
+ * idiomas, restrições de empresa, senioridade e tempo disponível para trabalho temporário. Utiliza Twin Entity
+ * para controlar currículos inativos, escrita assíncrona, versionamento e cache de 1 hora. Ao salvar ou ao
+ * reativar (deletar do twin), dispara o cálculo de hashes e o envio do currículo para recrutadores compatíveis.
+ */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)

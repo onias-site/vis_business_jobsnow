@@ -17,6 +17,10 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Registra skills sugeridas que foram rejeitadas, armazenando o motivo da rejeição junto aos dados
+ * completos da skill proposta. Possui escrita assíncrona e cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

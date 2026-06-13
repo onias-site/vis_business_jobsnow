@@ -14,6 +14,12 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Entidade virtual utilizada para calcular um hash composto que representa uma combinação específica
+ * de atributos de matching entre currículo e vaga (senioridade, disponibilidade, PCD, tipo e valor de
+ * remuneração, sinônimos de skill). Esse hash é usado internamente pelo sistema de matching para verificar
+ * compatibilidade sem buscas complexas. Possui cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityVirtualHashGrouper.Fields.class)

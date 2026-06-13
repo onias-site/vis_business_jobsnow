@@ -14,6 +14,11 @@ import com.vis.schedulling.VisBusinessGroupResumeViewsByRecruiter;
 import com.vis.schedulling.VisBusinessGroupResumeViewsByResume;
 import com.vis.schedulling.VisBusinessGroupResumesOpinionsByRecruiter;
 import com.vis.schedulling.VisBusinessGroupResumesOpinionsByResume;
+/**
+ * Consumidor de lista de registros de sessão recentes que extrai os e-mails dos usuários e os envia para os
+ * quatro processos de agrupamento assíncronos (opiniões por recrutador, opiniões por currículo, visualizações
+ * por recrutador, visualizações por currículo), disparando as mensageiras correspondentes.
+ */
 public class VisSendRecentUsersToGroupings implements Consumer<List<CcpJsonRepresentation>> {
 	enum JsonFieldNames implements CcpJsonFieldName{
 		masters

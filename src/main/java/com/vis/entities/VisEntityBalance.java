@@ -17,6 +17,11 @@ import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Representa a tabela/índice de saldo de conta do recrutador. Armazena o saldo disponível para consumo
+ * de visualizações de currículos, identificado pelo e-mail do recrutador.
+ * Possui cache de 1 hora e versionamento habilitado.
+ */
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

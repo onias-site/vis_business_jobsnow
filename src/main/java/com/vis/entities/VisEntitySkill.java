@@ -25,6 +25,12 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Representa uma skill (habilidade) aprovada no sistema, com seu ranking de relevância (baseado na
+ * quantidade de currículos que a possuem), suas skills-pai na hierarquia e seus sinônimos.
+ * Possui cache de 1 hora. Inclui lógica de carga inicial que lê synonyms.json e um arquivo de
+ * contagem de palavras por currículo para calcular o ranking.
+ */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkill.Fields.class)

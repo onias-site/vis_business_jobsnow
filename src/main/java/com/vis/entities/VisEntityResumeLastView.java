@@ -18,6 +18,11 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Registra a última visualização de um currículo por um recrutador, armazenando um snapshot completo
+ * do currículo e da vaga no momento da visualização, além de flags indicando se o currículo estava
+ * negativado e se a vaga estava inativa. Possui escrita assíncrona e cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

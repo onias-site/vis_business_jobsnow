@@ -4,6 +4,10 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.business.CcpBusiness;
 import com.vis.utils.VisUtils;
 
+/**
+ * Implementação de CcpBusiness que delega ao utilitário VisUtils.groupPositionsGroupedByRecruiters
+ * o agrupamento das vagas por recrutador. Serve como ponto de entrada de negócio para disparar esse agrupamento.
+ */
 public class VisBusinessGroupPositionsGroupedByRecruiters implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 

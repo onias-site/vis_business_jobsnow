@@ -41,6 +41,14 @@ import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
 import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
+/**
+ * Representa a entidade central de Vaga (position) no sistema. Armazena todos os dados de uma vaga
+ * publicada por um recrutador: cargo, senioridade, localização (DDD), disponibilidade, canais de contato,
+ * skills requeridas e desejadas, faixa salarial (CLT, PJ, BTC), frequência de envio de currículos,
+ * data de expiração e critérios de ordenação. Utiliza o padrão Twin Entity para controlar vagas inativas
+ * (inactive_position), tem escrita assíncrona, versionamento e cache de 1 hora. Ao salvar ou deletar,
+ * dispara fluxos de reagrupamento e envio de currículos para recrutadores.
+ */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)

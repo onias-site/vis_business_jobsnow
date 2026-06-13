@@ -13,6 +13,11 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 		requiresAtLeastOne = {
 		@CcpJsonValidationFieldList({"pj", "clt" })
 })
+/**
+ * Define as regras de validação dos campos de estatísticas de posições (vagas), utilizado como schema de
+ * validação aninhada (nested JSON). Exige que pelo menos um dos campos pj ou clt esteja presente. Inclui
+ * campos de disponibilidade, DDD, experiência, senioridade, PCD, idioma e faixa salarial.
+ */
 public enum VisJsonFieldsPositionStatis {
 
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)

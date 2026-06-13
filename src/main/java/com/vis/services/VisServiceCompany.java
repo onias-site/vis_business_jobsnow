@@ -11,6 +11,10 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.services.JnService;
 import com.vis.entities.VisEntityGroupCompaniesByTheirFirstThreeInitials;
 
+/**
+ * Serviço de acesso a dados de empresas. Expõe operações relacionadas à busca de empresas pelo nome.
+ * Cada constante é um endpoint de serviço.
+ */
 public enum VisServiceCompany implements JnService {
 
 	SearchCompaniesByTheirFirstThreeInitials{

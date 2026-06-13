@@ -15,6 +15,10 @@ import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Armazena a tarifa programada para envio de currículos por frequência de serviço. Define o custo
+ * associado a cada serviço agendado de envio de currículos. Possui versionamento e cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

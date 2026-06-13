@@ -7,6 +7,10 @@ import java.util.function.Function;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityPosition;
 
+/**
+ * Determina com quais vagas (ou candidatos) um determinado perfil PCD pode ser comparado, retornando
+ * a lista de valores booleanos PCD para geração dos hashes de compatibilidade.
+ */
 public enum VisFunctionsGetPcdValuesFromJson implements Function<CcpJsonRepresentation, List<Boolean>> {
 	resume {
 		public List<Boolean> apply(CcpJsonRepresentation json) {

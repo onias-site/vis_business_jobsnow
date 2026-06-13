@@ -19,6 +19,9 @@ import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
 import com.vis.status.VisProcessStatusSuggestNewSkill;
 
+/**
+ * Serviço de acesso a dados de vagas. Expõe operações de CRUD e consulta de skills relacionadas a vagas.
+ */
 public enum VisServicePosition implements JnService {
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {

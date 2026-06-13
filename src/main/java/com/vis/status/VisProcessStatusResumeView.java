@@ -6,6 +6,11 @@ import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.process.CcpProcessStatus;
 import com.vis.entities.VisEntityResumeViewFailed;
 
+/**
+ * Define todos os status de processo para a operação de visualização de currículo, cada um com seu código
+ * HTTP correspondente. Utilizado pelo sistema de matching para registrar falhas de visualização em
+ * VisEntityResumeViewFailed.
+ */
 public enum VisProcessStatusResumeView implements CcpProcessStatus{
 	inactiveResume(301),
 	insufficientFunds(402),

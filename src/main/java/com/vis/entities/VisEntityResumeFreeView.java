@@ -16,6 +16,11 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Registra que um recrutador visualizou um currículo de forma gratuita (dentro do limite gratuito mensal).
+ * Sua presença indica que essa visualização específica não gerou cobrança.
+ * Possui cache de 24 horas e é expurgável mensalmente.
+ */
 @CcpEntityCache(86400)
 @CcpEntityDisposable(expurgTime = CcpEntityExpurgableOptions.monthly, expurgableEntityFactory = JnDisposableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

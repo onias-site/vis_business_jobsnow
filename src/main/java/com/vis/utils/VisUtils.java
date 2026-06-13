@@ -14,8 +14,6 @@ import com.ccp.decorators.CcpCollectionDecorator;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.decorators.CcpPropertiesDecorator;
-import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
@@ -28,6 +26,7 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.jn.utils.JnSystemProperties;
 import com.vis.business.position.VisBusinessPositionResumesSend;
 import com.vis.entities.VisEntityBalance;
 import com.vis.entities.VisEntityDeniedViewToCompany;
@@ -44,16 +43,19 @@ import com.vis.entities.VisEntityVirtualHashGrouper;
 import com.vis.exceptions.VisErrorBusinessMissingFeeToFrequency;
 import com.vis.exceptions.VisErrorBusinessRequiredSkillsMissingInResume;
 import com.vis.status.VisProcessStatusResumeView;
+/**
+ * Classe central de utilitários do módulo VIS. Concentra a lógica de alto nível do processo de matching
+ * entre currículos e vagas: filtragem, ordenação, cálculo de hashes de compatibilidade, agrupamentos,
+ * paginação e envio via mensageria. É a "cola" que conecta todos os componentes do fluxo de envio de
+ * currículos para recrutadores.
+ */
 public class VisUtils {
 	enum JsonFieldNames implements CcpJsonFieldName{
 		tenant, resumes, statis, resumeOpinion, resumeLastView, requiredSkills, type, synonyms, parents, filterResumesAlreadySeen, owner, masters, index
 	}
 	
 	public static String getTenant() {
-		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator("application_properties");
-		CcpPropertiesDecorator propertiesFrom = ccpStringDecorator.propertiesFrom();
-		CcpJsonRepresentation systemProperties = propertiesFrom.environmentVariablesOrClassLoaderOrFile();
-		String tenant = systemProperties.getAsString(JsonFieldNames.tenant);
+		String tenant =  JnSystemProperties.INSTANCE.getSystemInnerProperty(JsonFieldNames.tenant);
 		return tenant;
 	}
 	public static boolean isInsufficientFunds(int itemsCount,  

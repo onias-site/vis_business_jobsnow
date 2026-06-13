@@ -7,6 +7,11 @@ import java.util.function.Function;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.business.CcpBusiness;
 
+/**
+ * Disparada após o save ou reativação de um currículo para enviá-lo imediatamente a recrutadores com vagas
+ * compatíveis na frequência minute. Usa o currículo recém-salvo como única fonte de currículos e busca todas
+ * as vagas ativas da frequência minute.
+ */
 public class VisBusinessResumeSendToRecruiters implements CcpBusiness {
 	
 	private VisBusinessResumeSendToRecruiters() {}

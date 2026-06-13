@@ -5,6 +5,10 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 
+/**
+ * Define os critérios de ordenação de currículos em relação a uma vaga. Cada constante representa um
+ * critério de comparação numérica entre dois currículos, usando os campos relevantes do JSON do currículo.
+ */
 enum ResumeSortOptions {
 
 	disponibility(VisEntityResume.Fields.disponibility.name()),

@@ -10,6 +10,12 @@ import com.vis.entities.VisEntityResume;
 import com.vis.utils.VisFrequencyOptions;
 import com.vis.utils.VisUtils;
 
+/**
+ * Tarefa agendada principal do processo de matching. Para uma determinada frequência de envio, busca
+ * as vagas agrupadas por recrutador e os currículos atualizados recentemente, e orquestra o filtro,
+ * ordenação e envio dos currículos compatíveis para cada recrutador. É a entrada do ciclo de matching
+ * periódico (minute, hourly, daily, weekly, monthly).
+ */
 public class VisBusinessPositionResumesReceivingByFrequency  implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 

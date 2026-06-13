@@ -6,6 +6,10 @@ import com.ccp.business.CcpBusiness;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessageToUser;
+/**
+ * Define os templates de e-mail de notificação ao candidato sobre o status do salvamento do currículo,
+ * enviando a mensagem via JnSendMessageToUser e bloqueando reenvios duplicados via JnEntityEmailMessageSent.
+ */
 public enum VisSendEmailMessageAndRegisterEmailSent implements CcpBusiness, CcpJsonFieldName{
 //TODO JSON VALIDATIONS	
 	resumeSuccessSaving,

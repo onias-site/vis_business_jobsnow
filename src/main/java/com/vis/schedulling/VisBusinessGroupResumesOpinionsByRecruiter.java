@@ -6,6 +6,11 @@ import com.vis.entities.VisEntityGroupResumesPerceptionsByRecruiter;
 import com.vis.entities.VisEntityResumePerception;
 import com.vis.utils.VisUtils;
 
+/**
+ * Tarefa agendada que agrupa as percepções/avaliações de currículos pelo e-mail do recrutador, usando
+ * VisEntityResumePerception como fonte e VisEntityGroupResumesPerceptionsByRecruiter como destino.
+ * Delega ao utilitário VisUtils.groupDetailsByMasters.
+ */
 public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 

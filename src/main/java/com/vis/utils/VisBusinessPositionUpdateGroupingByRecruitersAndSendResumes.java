@@ -12,6 +12,12 @@ import com.vis.entities.VisEntityGroupResumesByPosition;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeLastView;
+/**
+ * Orquestra a atualização completa do agrupamento de vagas por recrutadores e o envio de currículos
+ * compatíveis ao ser disparada após um save ou delete de vaga. Duplica o campo email para masters,
+ * reagrupa as vagas por recrutador, busca todos os currículos do último ano, filtra e ordena os currículos
+ * compatíveis com a vaga, e salva o resultado paginado em VisEntityGroupResumesByPosition.
+ */
 public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes implements CcpBusiness{
 	enum JsonFieldNames implements CcpJsonFieldName{
 		masters, resumes

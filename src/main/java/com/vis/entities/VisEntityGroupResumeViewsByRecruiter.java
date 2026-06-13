@@ -16,6 +16,11 @@ import com.jn.entities.decorators.JnDisposableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Representa o agrupamento paginado de visualizações de currículos organizadas pelo e-mail do recrutador.
+ * Serve para consulta histórica de quais currículos foram vistos por cada recrutador.
+ * Possui cache de 24 horas e é expurgável anualmente.
+ */
 @CcpEntityCache(86400)
 @CcpEntityDisposable(expurgTime = CcpEntityExpurgableOptions.yearly, expurgableEntityFactory = JnDisposableEntity.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupResumeViewsByRecruiter.Fields.class)

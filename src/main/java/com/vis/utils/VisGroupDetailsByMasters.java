@@ -14,6 +14,11 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.utils.JnDeleteKeysFromCache;
 
+/**
+ * Consumidor de stream de registros que os agrupa por um campo-master (ex: e-mail do recrutador ou do
+ * candidato), acumulando os registros em memória para depois salvá-los paginados em bulk. Recebe no
+ * construtor as entidades de origem e de destino do agrupamento.
+ */
 public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>{
 	enum JsonFieldNames implements CcpJsonFieldName{
 		entity

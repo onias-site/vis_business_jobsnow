@@ -21,6 +21,12 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.business.messages.VisMessages;
 
+/**
+ * Representa solicitações pendentes de correção de hierarquia de skill aguardando análise. Ao salvar um
+ * registro, dispara transferência de dados para VisEntitySkillFixHierarchyRejected ou
+ * VisEntitySkillFixHierarchyApproved conforme a decisão, enviando mensagens de notificação correspondentes.
+ * Possui escrita assíncrona e cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityDataTransfers(

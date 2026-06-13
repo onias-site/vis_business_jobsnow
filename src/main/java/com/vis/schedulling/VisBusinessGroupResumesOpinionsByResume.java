@@ -6,6 +6,11 @@ import com.vis.entities.VisEntityGroupResumesPerceptionsByResume;
 import com.vis.entities.VisEntityResumePerception;
 import com.vis.utils.VisUtils;
 
+/**
+ * Tarefa agendada que agrupa as percepções/avaliações de currículos pelo e-mail do candidato, usando
+ * VisEntityResumePerception como fonte e VisEntityGroupResumesPerceptionsByResume como destino.
+ * Delega ao utilitário VisUtils.groupDetailsByMasters.
+ */
 public class VisBusinessGroupResumesOpinionsByResume implements JnBusinessSendToMensageria{
 	//TODO JSON VALIDATIONS	
 

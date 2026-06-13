@@ -9,6 +9,10 @@ import com.vis.entities.VisEntityGroupPositionsByRecruiter;
 import com.vis.entities.VisEntityGroupResumesPerceptionsByRecruiter;
 import com.vis.entities.VisEntityResumePerception;
 
+/**
+ * Serviço de acesso a dados do recrutador. Expõe operações relacionadas às interações do recrutador
+ * com currículos e vagas.
+ */
 public enum VisServiceRecruiter implements JnService {
 	GetAlreadySeenResumes{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {

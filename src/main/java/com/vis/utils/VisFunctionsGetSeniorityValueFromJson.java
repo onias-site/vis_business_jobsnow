@@ -7,6 +7,10 @@ import com.ccp.decorators.CcpTimeDecorator;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 
+/**
+ * Extrai ou calcula o valor de senioridade para o processo de matching, com lógica diferente para
+ * currículo (calcula a partir do ano de início de experiência) e para vaga (lê diretamente do campo).
+ */
 public enum VisFunctionsGetSeniorityValueFromJson implements Function<CcpJsonRepresentation, String> {
 	resume {
 		public String apply(CcpJsonRepresentation json) {

@@ -9,6 +9,11 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 
+/**
+ * Comparador de currículos em relação a uma vaga específica. Ordena os currículos considerando os critérios
+ * de ordenação definidos na vaga (sortFields), sempre incluindo desiredSkill (quantidade de skills desejadas
+ * que o currículo possui) como critério final, de forma decrescente.
+ */
 public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentation>{
 
 	private final CcpJsonRepresentation position;

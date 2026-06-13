@@ -7,6 +7,12 @@ import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.JnEntityJobsnowWarning;
 import com.jn.messages.JnSendMessageToUser;
 
+/**
+ * Define os templates de notificação enviados ao suporte quando surgem eventos relacionados a skills.
+ * Cada constante do enum corresponde a um template de mensagem: new_skill (nova skill sugerida)
+ * e new_skill_hierarchy (nova hierarquia de skill). Utiliza JnSendMessageToUser para enviar e-mail
+ * e mensagem instantânea ao suporte, bloqueando reenvios duplicados via JnEntityJobsnowWarning.
+ */
 public enum VisTemplatesToNotifySupport implements CcpBusiness{
 
 	new_skill_hierarchy(),

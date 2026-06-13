@@ -31,6 +31,10 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
+/**
+ * Representa o agrupamento de nomes de empresas pelas três primeiras letras do domínio de e-mail.
+ * Permite buscas rápidas de empresas por prefixo. Possui cache de 1 hora. Inclui lógica de carga inicial de dados.
+ */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.class)

@@ -14,6 +14,12 @@ import com.vis.entities.VisEntityResumeFreeView;
 import com.vis.entities.VisEntityResumeLastView;
 import com.vis.entities.VisEntityResumePerception;
 
+/**
+ * Implementação de CcpBusiness que registra a visualização de um currículo por um recrutador.
+ * Verifica se a visualização é gratuita ou paga (parte financeira pendente), se o currículo está
+ * negativado e se a vaga está inativa, e então persiste os registros de VisEntityResumeLastView
+ * e VisEntityResumeFreeView em operação bulk.
+ */
 public class VisBusinessResumeViewSave implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 

@@ -7,6 +7,11 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
+/**
+ * Define as regras de validação dos campos de cada objeto de skill dentro do índice
+ * VisEntityGroupPositionsBySkills (agrupamento por duas primeiras letras). Inclui o campo positionStatis
+ * para armazenar estatísticas de vagas associadas a cada skill.
+ */
 public enum VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials implements CcpJsonFieldName{
 
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)

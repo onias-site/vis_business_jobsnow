@@ -29,6 +29,12 @@ import com.vis.business.resume.skills.VisBusinessApprovingSkill;
 import com.vis.business.templates.notify.support.VisTemplatesToNotifySupport;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Representa novas skills sugeridas aguardando aprovação. Ao salvar, notifica o suporte via
+ * VisTemplatesToNotifySupport.NewSkill e envia mensagem de pendência via VisMessages.PendingSkillHierarchy.
+ * A entidade suporta transferência de dados para VisEntitySkillRejected ou para VisEntitySkill conforme
+ * a decisão. Possui escrita assíncrona e cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityOperations(

@@ -13,6 +13,10 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Registra tentativas de visualização de currículo que falharam, com o status de erro e o JSON de contexto
+ * completo. Utilizado para auditoria e diagnóstico de falhas no processo de visualização. Possui cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResumeViewFailed.Fields.class)

@@ -17,6 +17,11 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Representa a percepção/avaliação (opinião) de um recrutador sobre um currículo. O Twin Entity implícito
+ * registra quando a opinião é negativa (negativação do currículo).
+ * Possui escrita assíncrona, versionamento e cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)

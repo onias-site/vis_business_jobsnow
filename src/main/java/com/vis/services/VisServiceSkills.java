@@ -70,6 +70,10 @@ enum RequestToCreateNewSkillStatus implements CcpProcessStatus{
 	}
 	
 }
+/**
+ * Serviço de operações sobre skills: solicitação de novas skills, extração de skills de texto livre
+ * e correção de hierarquia. Contém a lógica mais rica do módulo de skills.
+ */
 public enum VisServiceSkills implements JnService {
 	
 	RequestToCreateNewSkill{

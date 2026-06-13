@@ -32,6 +32,11 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials;
 
+/**
+ * Representa o índice de habilidades (skills) agrupadas pelas duas primeiras letras da palavra,
+ * utilizado como dicionário de lookup para matching de skills em textos. Também contém lógica de
+ * carga inicial a partir de arquivo de sinônimos. Possui cache de 1 hora.
+ */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupPositionsBySkills.Fields.class)

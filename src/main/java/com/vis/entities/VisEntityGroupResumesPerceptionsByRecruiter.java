@@ -16,6 +16,11 @@ import com.jn.entities.decorators.JnDisposableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Representa o agrupamento paginado das percepções/avaliações (opiniões) que um recrutador registrou
+ * sobre currículos, organizado pelo e-mail do recrutador.
+ * Possui cache de 24 horas e é expurgável anualmente.
+ */
 @CcpEntityCache(86400)
 @CcpEntityDisposable(expurgTime = CcpEntityExpurgableOptions.yearly, expurgableEntityFactory = JnDisposableEntity.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupResumesPerceptionsByRecruiter.Fields.class)

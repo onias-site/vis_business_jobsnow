@@ -7,6 +7,10 @@ import java.util.function.Function;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityResume;
 
+/**
+ * Gera listas de valores de disponibilidade (em dias) para o processo de cálculo de hashes de compatibilidade,
+ * com comportamento diferente para currículo e vaga.
+ */
 public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJsonRepresentation, List<Integer>> {
 	resume {
 		public List<Integer> apply(CcpJsonRepresentation json) {

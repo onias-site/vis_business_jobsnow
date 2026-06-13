@@ -10,6 +10,11 @@ import com.jn.entities.JnEntityLoginSessionValidation;
 import com.vis.utils.VisFrequencyOptions;
 import com.vis.utils.VisSendRecentUsersToGroupings;
 
+/**
+ * Tarefa agendada (cron) que busca todos os usuários que fizeram login no último ano e os envia para os
+ * processos de agrupamento de visualizações de currículos e percepções. Consome o índice
+ * JnEntityDisposableRecord filtrando registros de sessão com timestamp dentro do período anual.
+ */
 public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 	//TODO JSON VALIDATIONS	
 

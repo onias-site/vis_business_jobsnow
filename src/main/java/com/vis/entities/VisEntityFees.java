@@ -15,6 +15,10 @@ import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+/**
+ * Representa a tabela/índice de tarifas (fees) cobradas por serviço no sistema de visualizações.
+ * Define o custo associado a cada tipo de serviço. Possui cache de 1 hora e versionamento.
+ */
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

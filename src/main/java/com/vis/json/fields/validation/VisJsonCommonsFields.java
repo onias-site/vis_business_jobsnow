@@ -8,6 +8,12 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUn
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefore;
 
+/**
+ * Define as validações compartilhadas pelos campos JSON mais comuns do módulo VIS, servindo como fonte
+ * de regras reutilizáveis via @CcpJsonCopyFieldValidationsFrom em outras entidades. Centraliza restrições
+ * de tipo, tamanho e valores permitidos para campos recorrentes como email, seniority, ddd, skill,
+ * recruiter, entre outros.
+ */
 public enum VisJsonCommonsFields {
 
 	@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1_000)
