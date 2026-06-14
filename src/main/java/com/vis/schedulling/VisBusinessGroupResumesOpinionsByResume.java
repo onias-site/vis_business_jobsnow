@@ -12,7 +12,7 @@ import com.vis.utils.VisUtils;
  * Delega ao utilitário VisUtils.groupDetailsByMasters.
  */
 public class VisBusinessGroupResumesOpinionsByResume implements JnBusinessSendToMensageria{
-	//TODO JSON VALIDATIONS	
+		
 
 	private VisBusinessGroupResumesOpinionsByResume() {}
 	

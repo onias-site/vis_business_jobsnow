@@ -17,7 +17,7 @@ import com.vis.utils.VisUtils;
  * periódico (minute, hourly, daily, weekly, monthly).
  */
 public class VisBusinessPositionResumesReceivingByFrequency  implements CcpBusiness{
-	//TODO JSON VALIDATIONS	
+		
 
 	private VisBusinessPositionResumesReceivingByFrequency() {}
 	

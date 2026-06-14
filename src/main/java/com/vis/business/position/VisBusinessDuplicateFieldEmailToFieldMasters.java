@@ -10,7 +10,7 @@ import com.vis.entities.VisEntityPosition;
  * agrupamento que requerem o campo masters populado.
  */
 public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpBusiness{
-	//TODO JSON VALIDATIONS	
+		
 	enum JsonFieldNames implements CcpJsonFieldName{
 		masters
 	}

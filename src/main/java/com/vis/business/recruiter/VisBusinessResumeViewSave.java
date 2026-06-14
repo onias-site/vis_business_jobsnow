@@ -21,7 +21,7 @@ import com.vis.entities.VisEntityResumePerception;
  * e VisEntityResumeFreeView em operação bulk.
  */
 public class VisBusinessResumeViewSave implements CcpBusiness{
-	//TODO JSON VALIDATIONS	
+		
 
 	private VisBusinessResumeViewSave() {}
 	

@@ -16,7 +16,7 @@ import com.vis.utils.VisSendRecentUsersToGroupings;
  * JnEntityDisposableRecord filtrando registros de sessão com timestamp dentro do período anual.
  */
 public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
-	//TODO JSON VALIDATIONS	
+		
 
 	private VisBusinessGetRecentLoggedUsers() {}
 	

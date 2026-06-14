@@ -12,7 +12,7 @@ import com.vis.utils.VisUtils;
  * Delega ao utilitário VisUtils.groupDetailsByMasters.
  */
 public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpBusiness{
-	//TODO JSON VALIDATIONS	
+		
 
 	private VisBusinessGroupResumesOpinionsByRecruiter() {}
 	

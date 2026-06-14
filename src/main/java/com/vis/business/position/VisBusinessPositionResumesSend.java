@@ -8,7 +8,7 @@ import com.ccp.business.CcpBusiness;
  * A implementação ainda está pendente (retorna o JSON sem alteração — TODO).
  */
 public class VisBusinessPositionResumesSend implements CcpBusiness{
-	//TODO JSON VALIDATIONS	
+		
 
 	private VisBusinessPositionResumesSend() {}
 	

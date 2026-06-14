@@ -8,7 +8,7 @@ import com.ccp.business.CcpBusiness;
  * A lógica está pendente de implementação (retorna o JSON de entrada — TODO).
  */
 public class VisBusinessRecruiterReceivingResumes implements CcpBusiness{
-	//TODO JSON VALIDATIONS	
+		
 
 	private VisBusinessRecruiterReceivingResumes() {}
 	

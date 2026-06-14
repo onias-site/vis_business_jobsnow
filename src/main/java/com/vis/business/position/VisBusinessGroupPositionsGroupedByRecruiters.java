@@ -9,7 +9,7 @@ import com.vis.utils.VisUtils;
  * o agrupamento das vagas por recrutador. Serve como ponto de entrada de negócio para disparar esse agrupamento.
  */
 public class VisBusinessGroupPositionsGroupedByRecruiters implements CcpBusiness{
-	//TODO JSON VALIDATIONS	
+		
 
 	public static final VisBusinessGroupPositionsGroupedByRecruiters INSTANCE = new VisBusinessGroupPositionsGroupedByRecruiters();
 	

@@ -11,7 +11,7 @@ import com.jn.messages.JnSendMessageToUser;
  * enviando a mensagem via JnSendMessageToUser e bloqueando reenvios duplicados via JnEntityEmailMessageSent.
  */
 public enum VisSendEmailMessageAndRegisterEmailSent implements CcpBusiness, CcpJsonFieldName{
-//TODO JSON VALIDATIONS	
+	
 	resumeSuccessSaving,
 	resumeErrorSaving
 ;
