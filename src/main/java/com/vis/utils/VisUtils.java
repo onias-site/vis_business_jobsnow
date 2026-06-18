@@ -1,4 +1,4 @@
-package com.vis.utils;
+﻿package com.vis.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpCollectionDecorator;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
@@ -18,7 +18,7 @@ import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.crud.CcpCrud;
-import com.ccp.especifications.db.crud.CcpSelectUnionAll;
+import com.ccp.especifications.db.crud.CcpGetEntityId.CcpSelectUnionAll;
 import com.ccp.especifications.db.crud.CcpUnionAllExecutor;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
 import com.ccp.especifications.db.query.CcpQueryOptions;
@@ -40,8 +40,6 @@ import com.vis.entities.VisEntityResumePerception;
 import com.vis.entities.VisEntityScheduleSendingResumeFees;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntityVirtualHashGrouper;
-import com.vis.exceptions.VisErrorBusinessMissingFeeToFrequency;
-import com.vis.exceptions.VisErrorBusinessRequiredSkillsMissingInResume;
 import com.vis.status.VisProcessStatusResumeView;
 /**
  * Classe central de utilitários do módulo VIS. Concentra a lógica de alto nível do processo de matching
@@ -589,12 +587,12 @@ public class VisUtils {
 	
 	
 	public static void saveRecordsInPages(
-			List<CcpJsonRepresentation> records, 
+			List<CcpJsonRepresentation> records,
 			CcpJsonRepresentation primaryKeySupplier,
 			CcpEntity entity) {
 
 		List<CcpBulkItem> allPagesTogether = getRecordsInPages(records, primaryKeySupplier, entity);
-		
+
 		JnExecuteBulkOperation.INSTANCE.executeBulk(allPagesTogether, JnDeleteKeysFromCache.INSTANCE);
 	}
 
@@ -604,7 +602,7 @@ public class VisUtils {
 		int listSize = 10;
 		int totalPages = records.size()  % listSize + 1;
 		int index = 0;
-		
+
 		for(int from = 0; from < totalPages; from++) {
 			List<CcpJsonRepresentation> page = new ArrayList<>();
 			for(;(index + 1) % listSize !=0 && index < records.size(); index++) {
@@ -622,6 +620,21 @@ public class VisUtils {
 			allPagesTogether.addAll(bulkItem);
 		}
 		return allPagesTogether;
+	}
+
+	@SuppressWarnings("serial")
+	public static class VisErrorBusinessMissingFeeToFrequency extends RuntimeException {
+		private VisErrorBusinessMissingFeeToFrequency(String frequency) {
+			super("It is missing the fee of frequency " + frequency);
+		}
+	}
+
+	@SuppressWarnings("serial")
+	public static class VisErrorBusinessRequiredSkillsMissingInResume extends RuntimeException {
+		public final List<String> requiredSkillsNotFoundInResume;
+		private VisErrorBusinessRequiredSkillsMissingInResume(List<String> requiredSkillsNotFoundInResume) {
+			this.requiredSkillsNotFoundInResume = requiredSkillsNotFoundInResume;
+		}
 	}
 
 
