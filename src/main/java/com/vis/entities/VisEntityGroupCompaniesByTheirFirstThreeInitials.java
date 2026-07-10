@@ -1,6 +1,7 @@
 
 package com.vis.entities;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,40 +60,47 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 	}
 	
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
-		CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
 		
-		Consumer<CcpJsonRepresentation> consumer = json -> {
-			String x = json.getAsString(new CcpFieldName("id"));
-				String[] split = x.split("@");
-				if(split.length != 2) {
+		try {
+			CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
+			CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
+			
+			Consumer<CcpJsonRepresentation> consumer = json -> {
+				String x = json.getAsString(new CcpFieldName("id"));
+					String[] split = x.split("@");
+					if(split.length != 2) {
+						return;
+					}
+					
+					
+				String domain = split[1];
+				
+				String[] split1 = domain.split("\\.");			
+
+				String companyName = split1[0].toUpperCase().trim();
+				
+				if(companyName.length() < 3) {
 					return;
 				}
 				
+				String capitalizedCompanyName = new CcpStringDecorator(companyName).text().capitalize().content;
 				
-			String domain = split[1];
-			
-			String[] split1 = domain.split("\\.");			
+				String initials = companyName.substring(0, 3);
+				
+				LinkedHashSet<String> orDefault = groupedCompanies.getOrDefault(new CcpFieldName(initials), () -> new LinkedHashSet<>());
+				orDefault.add(capitalizedCompanyName);
+				groupedCompanies = groupedCompanies.put(new CcpFieldName(initials), orDefault);
+			};
+			queryExecutor.consumeQueryResult(query, new String[] {"old_recruiters"}, "1s", 10000, consumer, "id");
 
-			String companyName = split1[0].toUpperCase().trim();
+			List<CcpBulkItem> collect = groupedCompanies.fieldSet().stream().map(initials -> this.toBulkItem(initials)).collect(Collectors.toList());
 			
-			if(companyName.length() < 3) {
-				return;
-			}
-			
-			String capitalizedCompanyName = new CcpStringDecorator(companyName).text().capitalize().content;
-			
-			String initials = companyName.substring(0, 3);
-			
-			LinkedHashSet<String> orDefault = groupedCompanies.getOrDefault(new CcpFieldName(initials), () -> new LinkedHashSet<>());
-			orDefault.add(capitalizedCompanyName);
-			groupedCompanies = groupedCompanies.put(new CcpFieldName(initials), orDefault);
-		};
-		queryExecutor.consumeQueryResult(query, new String[] {"old_recruiters"}, "1s", 10000, consumer, "id");
-
-		List<CcpBulkItem> collect = groupedCompanies.fieldSet().stream().map(initials -> this.toBulkItem(initials)).collect(Collectors.toList());
+			return collect;
 		
-		return collect;
+		} catch (Exception e) {
+			return new ArrayList<>();
+		}
+		
 	}
 	
 	private CcpBulkItem toBulkItem(String initials) {
