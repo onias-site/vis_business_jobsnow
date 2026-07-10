@@ -65,7 +65,7 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		.filter(x -> x.getAsString(VisEntityResume.Fields.skill).length() <= 50)
 		.collect(Collectors.toList())
 		;
-		List<String> lines = new CcpStringDecorator("C:\\logs\\skills\\countByWords.txt")
+		List<String> lines = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\vis\\database\\skills\\countByWords.txt")
 				 .file().getLines()
 				 ;
 		
