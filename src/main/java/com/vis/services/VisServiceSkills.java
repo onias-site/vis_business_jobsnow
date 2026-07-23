@@ -112,9 +112,8 @@ public enum VisServiceSkills implements JnService {
 		}
 		
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-
 			String text = json.getAsString(Fields.text).toUpperCase();
-		
+			
 			if(text.trim().isEmpty()) {
 				return CcpOtherConstants.EMPTY_JSON;
 			}
