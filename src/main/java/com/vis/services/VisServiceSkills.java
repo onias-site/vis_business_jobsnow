@@ -104,7 +104,7 @@ public enum VisServiceSkills implements JnService {
 	
 	GetSkillsFromText{
 
-		private boolean isInCache(CcpJsonRepresentation json) {
+		private boolean isAlreadyInCache(CcpJsonRepresentation json) {
 			String id = VisEntityGroupPositionsBySkills.ENTITY.calculateId(json);
 			CcpCacheDecorator cache = new CcpCacheDecorator(id);
 			boolean presentInTheCache = cache.isPresentInTheCache();
@@ -114,7 +114,9 @@ public enum VisServiceSkills implements JnService {
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			String text = json.getAsString(Fields.text).toUpperCase();
 			
-			if(text.trim().isEmpty()) {
+			boolean emptyText = text.trim().isEmpty();
+			
+			if(emptyText) {
 				return CcpOtherConstants.EMPTY_JSON;
 			}
 			
@@ -124,15 +126,20 @@ public enum VisServiceSkills implements JnService {
 			Map<String, CcpJsonRepresentation> allWordsGroups = new HashMap<>();
 		
 			for (String phrase : phrases) {
-				if(phrase.length() < 2) {
+				
+				boolean tooSmallPhrase = phrase.length() < 2;
+				
+				if(tooSmallPhrase) {
 					continue;
 				}
+				
 				String firstTwoInitials = phrase.substring(0, 2);
 				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials, firstTwoInitials);
 				String id = VisEntityGroupPositionsBySkills.ENTITY.calculateId(put);
 				allWordsGroups.put(id, put);
 				
-				if(this.isInCache(put)) {
+				boolean alreadyInCache = this.isAlreadyInCache(put);
+				if(alreadyInCache) {
 					continue;
 				}
 				
@@ -188,7 +195,6 @@ public enum VisServiceSkills implements JnService {
 				if(excludedWord) {
 					continue;
 				}
-				
 				
 				boolean isTooSmallWord = word.length() < 7;
 			
