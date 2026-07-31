@@ -1,7 +1,7 @@
 package com.vis.entities;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.delete;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.after;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.antes;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.*;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twinEntity;
 
@@ -61,11 +61,11 @@ import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityPosition.Fields.class)
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = after, operation = save, from = mainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = antes, operation = save, from = mainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
 				// TODO VAI SAIR ESSE FLUXO POR CAUSA DA RETIRADA DOS GROUPINGS
-				@CcpEntityOperation(when = after, operation = delete, from = mainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = antes, operation = delete, from = mainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
 				//TODO REVISITAR ESTE FLUXO
-				@CcpEntityOperation(when = after, operation = delete, from = twinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = antes, operation = delete, from = twinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)

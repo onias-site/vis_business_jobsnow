@@ -2,7 +2,7 @@ package com.vis.entities;
 
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.delete;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.after;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.antes;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.*;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twinEntity;
 
@@ -57,8 +57,8 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = after, operation = save, from = mainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
-				@CcpEntityOperation(when = after, operation = delete, from = twinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = antes, operation = save, from = mainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = antes, operation = delete, from = twinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)

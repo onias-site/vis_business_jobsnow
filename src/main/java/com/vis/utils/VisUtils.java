@@ -1,4 +1,4 @@
-﻿package com.vis.utils;
+package com.vis.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
