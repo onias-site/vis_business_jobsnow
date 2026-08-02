@@ -4,7 +4,6 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 
-//TODO
 /**
  * Implementação de CcpBusiness destinada ao cálculo de hashes do currículo (para indexação ou matching).
  * A implementação está marcada como TODO — retorna o JSON de entrada sem alterações.
