@@ -2,7 +2,7 @@ package com.vis.entities;
 
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorTransferType.transferDataTo;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.antes;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._before;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.mainEntity;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
@@ -39,7 +39,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = antes, operation = save, from = mainEntity,  execute = {VisTemplatesToNotifySupport.NewSkill.class, VisMessages.PendingSkillHierarchy.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = _before, operation = save, from = mainEntity,  execute = {VisTemplatesToNotifySupport.NewSkill.class, VisMessages.PendingSkillHierarchy.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)
@@ -47,8 +47,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityDataTransfers(
 		globalHandlers = {},
 		transfers = {
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillRejected.class, transferType = transferDataTo, when = antes, execute = {VisMessages.RejectedSkill.class}, transferHandlers = {}),
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkill.class, transferType = transferDataTo, when = antes, execute = {VisBusinessApprovingSkill.class, VisMessages.AprovedSkill.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillRejected.class, transferType = transferDataTo, when = _before, execute = {VisMessages.RejectedSkill.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkill.class, transferType = transferDataTo, when = _before, execute = {VisBusinessApprovingSkill.class, VisMessages.AprovedSkill.class}, transferHandlers = {}),
 		}
 		)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

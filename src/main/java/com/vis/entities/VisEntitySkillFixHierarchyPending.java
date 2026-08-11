@@ -1,7 +1,7 @@
 package com.vis.entities;
 
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorTransferType.transferDataTo;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType.antes;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._before;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.mainEntity;
 
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
@@ -32,8 +32,8 @@ import com.vis.business.messages.VisMessages;
 @CcpEntityDataTransfers(
 		globalHandlers = {},
 		transfers = {
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = antes, execute = {VisMessages.RejectedSkillHierarchy.class}, transferHandlers = {}),
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = antes, execute = {VisMessages.AprovedSkillHierarchy.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = _before, execute = {VisMessages.RejectedSkillHierarchy.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = _before, execute = {VisMessages.AprovedSkillHierarchy.class}, transferHandlers = {}),
 		}
 		)
 
