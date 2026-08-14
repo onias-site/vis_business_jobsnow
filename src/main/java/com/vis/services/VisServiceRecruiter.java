@@ -37,7 +37,7 @@ public enum VisServiceRecruiter implements JnService {
 	},
 	SendResumesToEmail{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisBusinessRecruiterReceivingResumes.INSTANCE).apply(json);
+			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisBusinessRecruiterReceivingResumes.INSTANCE).execute(json);
 			
 			return result;
 		}

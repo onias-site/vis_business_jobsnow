@@ -45,7 +45,7 @@ public enum VisTemplatesToNotifySupport implements CcpBusiness{
 			String simpleName = this.getClass().getSimpleName();
 			String lowerCase = new CcpStringDecorator(simpleName).text().toSnakeCase().content.toLowerCase();
 			VisTemplatesToNotifySupport valueOf = VisTemplatesToNotifySupport.valueOf(lowerCase);
-			CcpJsonRepresentation apply = valueOf.apply(json);
+			CcpJsonRepresentation apply = valueOf.execute(json);
 			return apply;
 		}
 		
