@@ -2,13 +2,13 @@ package com.vis.schedulling;
 
 import java.util.List;
 import java.util.function.Function;
-
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.business.CcpBusiness;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 import com.vis.utils.VisFrequencyOptions;
 import com.vis.utils.VisUtils;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 
 /**
  * Tarefa agendada principal do processo de matching. Para uma determinada frequência de envio, busca
@@ -25,7 +25,7 @@ public class VisBusinessPositionResumesReceivingByFrequency  implements CcpBusin
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation schedullingPlan) {
 
-		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.valueOf(x.getAsString(VisEntityPosition.Fields.frequency)), VisEntityPosition.Fields.timestamp.name());
+		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.valueOf(x.getAsString(VisEntityPosition.Fields.frequency)), JnJsonCommonsFields.timestamp.name());
 
 		Function<VisFrequencyOptions, CcpJsonRepresentation> getLastUpdatedPositions = frequency -> VisUtils.getAllPositionsGroupedByRecruiters(frequency);
 

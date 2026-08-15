@@ -7,13 +7,13 @@ import java.util.stream.Collectors;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.jn.entities.JnEntityDisposableRecord;
-import com.jn.entities.JnEntityLoginSessionValidation;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.vis.schedulling.VisBusinessGroupResumeViewsByRecruiter;
 import com.vis.schedulling.VisBusinessGroupResumeViewsByResume;
 import com.vis.schedulling.VisBusinessGroupResumesOpinionsByRecruiter;
 import com.vis.schedulling.VisBusinessGroupResumesOpinionsByResume;
+
 /**
  * Consumidor de lista de registros de sessão recentes que extrai os e-mails dos usuários e os envia para os
  * quatro processos de agrupamento assíncronos (opiniões por recrutador, opiniões por currículo, visualizações
@@ -30,9 +30,9 @@ public class VisSendRecentUsersToGroupings implements Consumer<List<CcpJsonRepre
 
 	public void accept(List<CcpJsonRepresentation> records) {
 		List<String> emails = records.stream()
-		.map(rec ->	rec.getAsString(JnEntityDisposableRecord.Fields.id))
+		.map(rec ->	rec.getAsString(JnJsonCommonsFields.id))
 		.map(id -> new CcpJsonRepresentation(id))
-		.map(json -> json.getAsString(JnEntityLoginSessionValidation.Fields.email))
+		.map(json -> json.getAsString(JnJsonCommonsFields.email))
 		.collect(Collectors.toList());
 		
 		CcpJsonRepresentation message = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.masters, emails);

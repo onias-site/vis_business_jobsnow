@@ -9,7 +9,6 @@ import com.ccp.business.CcpBusiness;
  */
 public class VisBusinessRecruiterReceivingResumes implements CcpBusiness{
 		
-
 	private VisBusinessRecruiterReceivingResumes() {}
 	
 	public static final VisBusinessRecruiterReceivingResumes INSTANCE = new VisBusinessRecruiterReceivingResumes();

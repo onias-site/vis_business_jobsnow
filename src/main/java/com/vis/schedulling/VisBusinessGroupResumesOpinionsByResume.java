@@ -5,6 +5,8 @@ import com.jn.mensageria.JnBusinessSendToMensageria;
 import com.vis.entities.VisEntityGroupResumesPerceptionsByResume;
 import com.vis.entities.VisEntityResumePerception;
 import com.vis.utils.VisUtils;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * Tarefa agendada que agrupa as percepções/avaliações de currículos pelo e-mail do candidato, usando
@@ -24,8 +26,8 @@ public class VisBusinessGroupResumesOpinionsByResume implements JnBusinessSendTo
 				json, 
 				VisEntityResumePerception.ENTITY, 
 				VisEntityGroupResumesPerceptionsByResume.ENTITY, 
-				VisEntityResumePerception.Fields.email, 
-				VisEntityResumePerception.Fields.timestamp
+				VisJsonCommonsFields.email, 
+				JnJsonCommonsFields.timestamp
 				);
 		
 		return groupDetailsByMasters;

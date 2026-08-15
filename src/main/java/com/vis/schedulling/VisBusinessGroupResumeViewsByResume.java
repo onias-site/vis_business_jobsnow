@@ -5,6 +5,8 @@ import com.jn.mensageria.JnBusinessSendToMensageria;
 import com.vis.entities.VisEntityGroupResumeViewsByResume;
 import com.vis.entities.VisEntityResumeFreeView;
 import com.vis.utils.VisUtils;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * Tarefa agendada que agrupa as visualizações de currículos pelo e-mail do candidato (currículo),
@@ -23,8 +25,8 @@ public class VisBusinessGroupResumeViewsByResume implements JnBusinessSendToMens
 				json, 
 				VisEntityResumeFreeView.ENTITY, 
 				VisEntityGroupResumeViewsByResume.ENTITY, 
-				VisEntityResumeFreeView.Fields.email, 
-				VisEntityResumeFreeView.Fields.timestamp
+				VisJsonCommonsFields.email, 
+				JnJsonCommonsFields.timestamp
 				);
 		
 		return groupDetailsByMasters;

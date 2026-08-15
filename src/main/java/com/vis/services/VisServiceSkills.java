@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
@@ -39,15 +38,12 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 enum Fields implements CcpJsonFieldName{
 	text,
 	excludedSkill,
-	word,
-	skill,
-	label,
-	parent, 
+	label, 
 	discardedSkills,
 	isPieceOfOtherWord,
 	associated,
 	isPieceOfOtherSkill, 
-	skillAlreadyAdded, 
+	skillAlreadyAdded 
 }
 enum RequestToCreateNewSkillStatus implements CcpProcessStatus{
 	alreadyAdded(409),
@@ -165,10 +161,10 @@ public enum VisServiceSkills implements JnService {
 					continue;
 				}
 				
-				List<CcpJsonRepresentation> skills = innerJson.getAsJsonList(VisEntityGroupPositionsBySkills.Fields.skill);
+				List<CcpJsonRepresentation> skills = innerJson.getAsJsonList(VisJsonCommonsFields.skill);
 				
 				for (CcpJsonRepresentation skill : skills) {
-					String word = skill.getAsString(Fields.word).toUpperCase();
+					String word = skill.getAsString(VisJsonCommonsFields.word).toUpperCase();
 					boolean found = text.contains(word);
 					if(found) {
 						allSkillsFoundInTheText.add(skill);
@@ -180,7 +176,7 @@ public enum VisServiceSkills implements JnService {
 			CcpJsonRepresentation discardedSkills = CcpOtherConstants.EMPTY_JSON;
 			List<CcpJsonRepresentation> excludedSkill = json.getAsJsonList(com.vis.services.GetSkillsFromText.excludedSkill);
 			
-			List<String> excluded = excludedSkill.stream().map(x -> x.getAsString(Fields.word).toUpperCase()).collect(Collectors.toList());
+			List<String> excluded = excludedSkill.stream().map(x -> x.getAsString(VisJsonCommonsFields.word).toUpperCase()).collect(Collectors.toList());
 			
 			List<CcpJsonRepresentation> choosedSkills = new ArrayList<>();
 		
@@ -188,7 +184,7 @@ public enum VisServiceSkills implements JnService {
 			
 			for (CcpJsonRepresentation skill : allSkillsFoundInTheText) {
 				
-				String word = skill.getAsString(Fields.word).toUpperCase();
+				String word = skill.getAsString(VisJsonCommonsFields.word).toUpperCase();
 
 				boolean excludedWord = excluded.contains(word);
 				
@@ -198,7 +194,7 @@ public enum VisServiceSkills implements JnService {
 				
 				boolean isTooSmallWord = word.length() < 7;
 			
-				CcpJsonRepresentation jsonPiece = skill.getJsonPiece(Fields.skill, Fields.word);
+				CcpJsonRepresentation jsonPiece = skill.getJsonPiece(VisJsonCommonsFields.skill, VisJsonCommonsFields.word);
 				
 				if(isTooSmallWord) {
 					String replaceAll = word.replaceAll(CcpOtherConstants.DELIMITERS, "");
@@ -221,11 +217,11 @@ public enum VisServiceSkills implements JnService {
 					continue;
 				}
 				
-				Optional<CcpJsonRepresentation> findFirst = allSkillsFoundInTheText.stream().filter(x -> x.getAsString(Fields.word).length() > word.length()).filter(x -> x.getAsString(Fields.word).contains(word)).findFirst();
+				Optional<CcpJsonRepresentation> findFirst = allSkillsFoundInTheText.stream().filter(x -> x.getAsString(VisJsonCommonsFields.word).length() > word.length()).filter(x -> x.getAsString(VisJsonCommonsFields.word).contains(word)).findFirst();
 				boolean isPieceOfOtherSkill = findFirst.isPresent();
 				if(isPieceOfOtherSkill) {
 					CcpJsonRepresentation jsn = findFirst.get();
-					String associated = jsn.getAsString(Fields.word);
+					String associated = jsn.getAsString(VisJsonCommonsFields.word);
 					CcpJsonRepresentation put = jsonPiece.put(Fields.associated, associated);
 					discardedSkills = discardedSkills.addToList(Fields.isPieceOfOtherSkill, put);
 					continue;
@@ -239,24 +235,24 @@ public enum VisServiceSkills implements JnService {
 			Map<String, CcpJsonRepresentation> map = new LinkedHashMap<>();
 		
 			for (CcpJsonRepresentation skill : choosedSkills) {
-				String skillName = skill.getAsString(Fields.skill);
+				String skillName = skill.getAsString(VisJsonCommonsFields.skill);
 				boolean alreadyAdded = map.containsKey(skillName);
 				
 				if(alreadyAdded){
 					CcpJsonRepresentation jsn = map.get(skillName);
-					String associated = jsn.getAsString(Fields.word);
-					CcpJsonRepresentation jsonPiece = skill.getJsonPiece(Fields.skill, Fields.word);
+					String associated = jsn.getAsString(VisJsonCommonsFields.word);
+					CcpJsonRepresentation jsonPiece = skill.getJsonPiece(VisJsonCommonsFields.skill, VisJsonCommonsFields.word);
 					CcpJsonRepresentation put = jsonPiece.put(Fields.associated, associated);
 					discardedSkills = discardedSkills.addToList(Fields.skillAlreadyAdded, put);
 					continue;
 				}
 				
-				List<String> parent = skill.getAsStringList(Fields.parent)
+				List<String> parent = skill.getAsStringList(VisJsonCommonsFields.parent)
 						.stream()
 						.map(x -> x.endsWith("123") ? x.substring(0, x.length() - 3) : x)
 						.collect(Collectors.toList());
 				
-				CcpJsonRepresentation put = skill.put(Fields.parent, parent);
+				CcpJsonRepresentation put = skill.put(VisJsonCommonsFields.parent, parent);
 				
 				map.put(skillName, put);
 			}
@@ -266,7 +262,7 @@ public enum VisServiceSkills implements JnService {
 			CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON
 					.put(Fields.discardedSkills, discardedSkills)
 					.put(Fields.excludedSkill, excludedSkill)
-					.put(Fields.skill, skills)
+					.put(VisJsonCommonsFields.skill, skills)
 ;
 			return put;
 		}
@@ -291,7 +287,7 @@ public enum VisServiceSkills implements JnService {
 			CcpJsonRepresentation save = VisEntitySkillFixHierarchyPending.ENTITY.save(json);
 			return save;
 		}
-	},
+	}
 	;
 	
 	static int getWordStatus(CcpJsonRepresentation group, String word) {
@@ -318,7 +314,7 @@ public enum VisServiceSkills implements JnService {
 		text,
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldTypeNestedJson(jsonValidation = ExcludedSkillFields.class)
-		excludedSkill,
+		excludedSkill
 	}
 	
 	
@@ -330,6 +326,6 @@ public enum VisServiceSkills implements JnService {
 
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
-		word, 
+		word 
 	
 	}

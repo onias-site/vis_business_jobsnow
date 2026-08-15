@@ -4,8 +4,8 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpStringDecorator;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
-import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.JnEntityJobsnowWarning;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.messages.JnSendMessageToUser;
 
 /**
@@ -22,7 +22,7 @@ public enum VisTemplatesToNotifySupport implements CcpBusiness{
 
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		String language = json.getAsString(JnEntityEmailTemplateMessage.Fields.language);
+		String language = json.getAsString(JnJsonCommonsFields.language);
 		//TODO GENERALIZAR ESTE PROCESSO
 		JnSendMessageToUser sender = new JnSendMessageToUser();
 		sender

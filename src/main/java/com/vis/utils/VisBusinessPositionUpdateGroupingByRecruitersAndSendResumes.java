@@ -2,16 +2,17 @@ package com.vis.utils;
 
 import java.util.List;
 import java.util.function.Function;
-
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.vis.entities.VisEntityGroupResumesByPosition;
-import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeLastView;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
+
 /**
  * Orquestra a atualização completa do agrupamento de vagas por recrutadores e o envio de currículos
  * compatíveis ao ser disparada após um save ou delete de vaga. Duplica o campo email para masters,
@@ -29,13 +30,13 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 	//0
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		CcpJsonRepresentation duplicateValueFromKey = json.duplicateValueFromField(VisEntityPosition.Fields.email, JsonFieldNames.masters);
+		CcpJsonRepresentation duplicateValueFromKey = json.duplicateValueFromField(VisJsonCommonsFields.email, JsonFieldNames.masters);
 
 		VisUtils.groupPositionsGroupedByRecruiters(duplicateValueFromKey);
 		
-		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.yearly, VisEntityResume.Fields.timestamp.name());
+		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.yearly, JnJsonCommonsFields.timestamp.name());
 		
-		List<String> email = json.getAsStringList(VisEntityPosition.Fields.email);
+		List<String> email = json.getAsStringList(VisJsonCommonsFields.email);
 
 		Function<VisFrequencyOptions, CcpJsonRepresentation> getSavingPosition = frequency -> CcpOtherConstants.EMPTY_JSON.put(new CcpFieldName(email.get(0)), json);
 

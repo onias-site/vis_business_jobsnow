@@ -6,8 +6,7 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.hash.CcpHashAlgorithm;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.business.CcpBusiness;
-import com.vis.entities.VisEntityDeniedViewToCompany;
-import com.vis.entities.VisEntityResumePerception;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * Transformador de campo aplicado ao e-mail do recrutador durante a persistência da entidade VisEntityPosition.
@@ -26,7 +25,7 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements CcpBusi
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		String recruiter = json.getAsString(VisEntityResumePerception.Fields.recruiter);
+		String recruiter = json.getAsString(VisJsonCommonsFields.recruiter);
 		
 		String[] split = recruiter.split("@");
 		
@@ -38,8 +37,8 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements CcpBusi
 		//LATER NONPROFESSIONAL DOMAINS
 		CcpJsonRepresentation put = json
 				.put(JsonFieldNames.originalRecruiter, recruiter)
-				.put(VisEntityResumePerception.Fields.recruiter, hash)
-				.put(VisEntityDeniedViewToCompany.Fields.domain, domain)
+				.put(VisJsonCommonsFields.recruiter, hash)
+				.put(VisJsonCommonsFields.domain, domain)
 				;
 		return put;
 	}

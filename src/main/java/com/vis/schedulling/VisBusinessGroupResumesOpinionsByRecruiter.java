@@ -5,6 +5,8 @@ import com.ccp.business.CcpBusiness;
 import com.vis.entities.VisEntityGroupResumesPerceptionsByRecruiter;
 import com.vis.entities.VisEntityResumePerception;
 import com.vis.utils.VisUtils;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * Tarefa agendada que agrupa as percepções/avaliações de currículos pelo e-mail do recrutador, usando
@@ -23,8 +25,8 @@ public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpBusiness{
 				json, 
 				VisEntityResumePerception.ENTITY, 
 				VisEntityGroupResumesPerceptionsByRecruiter.ENTITY, 
-				VisEntityResumePerception.Fields.recruiter, 
-				VisEntityResumePerception.Fields.timestamp
+				VisJsonCommonsFields.recruiter, 
+				JnJsonCommonsFields.timestamp
 				);
 		
 		return groupDetailsByMasters;

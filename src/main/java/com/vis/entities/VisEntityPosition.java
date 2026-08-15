@@ -4,7 +4,6 @@ import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntity
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._before;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.*;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.twinEntity;
-
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
@@ -41,6 +40,7 @@ import com.vis.business.position.VisBusinessGroupPositionsGroupedByRecruiters;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
 import com.vis.utils.VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes;
+
 /**
  * Representa a entidade central de Vaga (position) no sistema. Armazena todos os dados de uma vaga
  * publicada por um recrutador: cargo, senioridade, localização (DDD), disponibilidade, canais de contato,

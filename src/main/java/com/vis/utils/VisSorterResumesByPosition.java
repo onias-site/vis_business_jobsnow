@@ -3,11 +3,10 @@ package com.vis.utils;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
 import com.ccp.decorators.CcpCollectionDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityPosition;
-import com.vis.entities.VisEntityResume;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * Comparador de currículos em relação a uma vaga específica. Ordena os currículos considerando os critérios
@@ -56,7 +55,7 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 	}
 
 	private CcpJsonRepresentation putDesiredSkills(CcpJsonRepresentation o1, List<String> desiredSkills) {
-		CcpCollectionDecorator ccd1 = o1.getAsCollectionDecorator(VisEntityResume.Fields.skill.name());
+		CcpCollectionDecorator ccd1 = o1.getAsCollectionDecorator(VisJsonCommonsFields.skill.name());
 		int size1 = ccd1.getIntersectList(desiredSkills).size();
 		CcpJsonRepresentation put = o1.put(VisEntityPosition.Fields.desiredSkill, -size1);
 		return put;

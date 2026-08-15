@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
@@ -62,7 +61,7 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		.file()
 		.asJsonList()
 		.stream()
-		.filter(x -> x.getAsString(VisEntityResume.Fields.skill).length() <= 50)
+		.filter(x -> x.getAsString(VisJsonCommonsFields.skill).length() <= 50)
 		.collect(Collectors.toList())
 		;
 		List<String> lines = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\vis\\database\\skills\\countByWords.txt")
@@ -90,14 +89,14 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 			if(ranking == 87) {
 				System.out.println();
 			}
-			CcpJsonRepresentation put = jsonPiece.put(Fields.ranking, ranking++);
-			var synonym = put.getAsJsonList(VisEntitySkill.Fields.synonym).stream()
-					.map(x -> x.getAsString(VisEntitySkill.Fields.skill))
+			CcpJsonRepresentation put = jsonPiece.put(VisJsonCommonsFields.ranking, ranking++);
+			var synonym = put.getAsJsonList(VisJsonCommonsFields.synonym).stream()
+					.map(x -> x.getAsString(VisJsonCommonsFields.skill))
 					.filter(x -> x.length() <= 50)
 					.collect(Collectors.toList());
 			
 			
-			put = put.put(VisEntitySkill.Fields.synonym, synonym);
+			put = put.put(VisJsonCommonsFields.synonym, synonym);
 			
 			var items = ENTITY.toBulkItems(put, CcpBulkEntityOperationType.create);
 			response.addAll(items);
@@ -107,8 +106,8 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	}
 	
 	private int getResumesCount(CcpJsonRepresentation json, List<String> lines) {
-		String skill = json.getAsString(Fields.skill);
-		List<String> synonym = json.getAsStringList(Fields.synonym);
+		String skill = json.getAsString(VisJsonCommonsFields.skill);
+		List<String> synonym = json.getAsStringList(VisJsonCommonsFields.synonym);
 		Set<String> skills = new HashSet<>(synonym);
 		skills.add(skill);
 		

@@ -3,9 +3,8 @@ package com.vis.utils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.vis.entities.VisEntityResume;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * Gera listas de valores de disponibilidade (em dias) para o processo de cálculo de hashes de compatibilidade,
@@ -16,7 +15,7 @@ public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJs
 		public List<Integer> apply(CcpJsonRepresentation json) {
 			List<Integer> response = new ArrayList<>();
 			
-			int end = json.getAsDoubleNumber(VisEntityResume.Fields.disponibility).intValue();
+			int end = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility).intValue();
 			
 			for(int k = end; k <= 70; k++) {
 				response.add(k);
@@ -28,7 +27,7 @@ public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJs
 		public List<Integer> apply(CcpJsonRepresentation json) {
 			List<Integer> response = new ArrayList<>();
 			
-			int maxDisponibility = json.getAsDoubleNumber(VisEntityResume.Fields.disponibility).intValue();
+			int maxDisponibility = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility).intValue();
 			
 			for(int k = maxDisponibility; k >= 0; k--) {
 				response.add(k);

@@ -9,6 +9,7 @@ import com.jn.entities.JnEntityDisposableRecord;
 import com.jn.entities.JnEntityLoginSessionValidation;
 import com.vis.utils.VisFrequencyOptions;
 import com.vis.utils.VisSendRecentUsersToGroupings;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 
 /**
  * Tarefa agendada (cron) que busca todos os usuários que fizeram login no último ano e os envia para os
@@ -33,20 +34,20 @@ public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 						.startBool()
 							.startMust()
 								.startRange()
-									.startFieldRange(JnEntityDisposableRecord.Fields.timestamp.name())
+									.startFieldRange(JnJsonCommonsFields.timestamp.name())
 										.greaterThan(System.currentTimeMillis() - VisFrequencyOptions.yearly.hours * 3_600_000)
 									.endFieldRangeAndBackToRange()
 								.endRangeAndBackToMust()	
-								.term(JnEntityDisposableRecord.Fields.entity, entityName)
+								.term(JnJsonCommonsFields.entity, entityName)
 							.endMustAndBackToBool()
 						.endBoolAndBackToQuery()
 					.endQueryAndBackToRequest()
 					.maxResults()
-					.addDescSorting(JnEntityDisposableRecord.Fields.timestamp.name())
+					.addDescSorting(JnJsonCommonsFields.timestamp.name())
 				;
 		String[] resourcesNames = JnEntityDisposableRecord.ENTITY.getEntityMetaData().getEntitiesToSelect();
 
-		queryExecutor.consumeQueryResult(queryToSearchLastUpdated, resourcesNames, "10m", 10000L, VisSendRecentUsersToGroupings.INSTANCE, JnEntityDisposableRecord.Fields.id.name());
+		queryExecutor.consumeQueryResult(queryToSearchLastUpdated, resourcesNames, "10m", 10000L, VisSendRecentUsersToGroupings.INSTANCE, JnJsonCommonsFields.id.name());
 		
 		return json;
 	}

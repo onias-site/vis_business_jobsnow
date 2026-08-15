@@ -8,10 +8,10 @@ import java.util.function.Consumer;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.db.bulk.JnExecuteBulkOperation;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 
 /**
@@ -20,9 +20,7 @@ import com.jn.utils.JnDeleteKeysFromCache;
  * construtor as entidades de origem e de destino do agrupamento.
  */
 public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>{
-	enum JsonFieldNames implements CcpJsonFieldName{
-		entity
-	}
+	
 	
 	private CcpJsonRepresentation groupedRecords = CcpOtherConstants.EMPTY_JSON;
 
@@ -45,7 +43,7 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 
 	public void accept(CcpJsonRepresentation record) {
 		String master = record.getAsString(new CcpFieldName(this.masterFieldName));
-		String entity = record.getAsString(JsonFieldNames.entity);
+		String entity = record.getAsString(JnJsonCommonsFields.entity);
 		CcpJsonRepresentation entityGroup = this.groupedRecords.getInnerJson(new CcpFieldName(entity));
 		entityGroup = entityGroup.addToList(new CcpFieldName(master), record);
 		this.groupedRecords = this.groupedRecords.put(new CcpFieldName(entity), entityGroup);

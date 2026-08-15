@@ -3,7 +3,7 @@ package com.vis.utils;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityPosition;
-import com.vis.entities.VisEntityResume;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * Define os critérios de ordenação de currículos em relação a uma vaga. Cada constante representa um
@@ -11,10 +11,10 @@ import com.vis.entities.VisEntityResume;
  */
 enum ResumeSortOptions {
 
-	disponibility(VisEntityResume.Fields.disponibility.name()),
+	disponibility(VisJsonCommonsFields.disponibility.name()),
 	desiredSkill(VisEntityPosition.Fields.desiredSkill.name()),
-	money(VisEntityResume.Fields.clt.name(), VisEntityResume.Fields.pj.name(), VisEntityResume.Fields.btc.name()),
-	experience(VisEntityResume.Fields.experience.name()),
+	money(VisJsonCommonsFields.clt.name(), VisJsonCommonsFields.pj.name(), VisJsonCommonsFields.btc.name()),
+	experience(VisJsonCommonsFields.experience.name()),
 	;
 	final String[] fieldsToSort;
 	

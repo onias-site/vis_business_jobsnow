@@ -5,8 +5,9 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.entities.JnEntityEmailMessageSent;
-import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessageToUser;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
+
 /**
  * Define os templates de e-mail de notificação ao candidato sobre o status do salvamento do currículo,
  * enviando a mensagem via JnSendMessageToUser e bloqueando reenvios duplicados via JnEntityEmailMessageSent.
@@ -24,10 +25,10 @@ public enum VisSendEmailMessageAndRegisterEmailSent implements CcpBusiness, CcpJ
 		//TODO GENERALIZAR ESTE PROCESSO
 
 		CcpJsonRepresentation put = json
-				.renameField(JsonFieldNames.originalEmail, JnEntityEmailMessageSent.Fields.email)
-				.put(JnEntityEmailMessageSent.Fields.subjectType, this);
+				.renameField(JsonFieldNames.originalEmail, JnJsonCommonsFields.email)
+				.put(JnJsonCommonsFields.subjectType, this);
 				
-			String language = json.getAsObject(JnEntityEmailTemplateMessage.Fields.language);
+			String language = json.getAsObject(JnJsonCommonsFields.language);
 			
 			JnSendMessageToUser sender = new JnSendMessageToUser();
 			sender
