@@ -1,6 +1,7 @@
 package com.vis.json.fields.validation;
 
 import com.ccp.decorators.CcpEmailDecorator;
+import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityExpurgableOptions;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
@@ -14,7 +15,7 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefo
  * de tipo, tamanho e valores permitidos para campos recorrentes como email, seniority, ddd, skill,
  * recruiter, entre outros.
  */
-public enum VisJsonCommonsFields {
+public enum VisJsonCommonsFields implements CcpJsonFieldName {
 
 	@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1_000)
 	btc,

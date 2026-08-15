@@ -1,8 +1,9 @@
 package com.vis.utils;
 
+import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.business.CcpBusiness;
+import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.entities.JnEntityEmailMessageSent;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.messages.JnSendMessageToUser;
@@ -20,6 +21,7 @@ public enum VisSendEmailMessageAndRegisterEmailSent implements CcpBusiness, CcpJ
 	}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+		//TODO GENERALIZAR ESTE PROCESSO
 
 		CcpJsonRepresentation put = json
 				.renameField(JsonFieldNames.originalEmail, JnEntityEmailMessageSent.Fields.email)
@@ -29,7 +31,7 @@ public enum VisSendEmailMessageAndRegisterEmailSent implements CcpBusiness, CcpJ
 			
 			JnSendMessageToUser sender = new JnSendMessageToUser();
 			sender
-			.addDefaultProcessToEmailSending()
+			.addDefaultProcessToEmailSending(JnMessageSenderExceptionHandler.THROWS)
 			.soWithAllAddedProcessAnd()
 			.withTheTemplateEntity(this.name())
 			.andWithTheEntityToBlockMessageResend(JnEntityEmailMessageSent.ENTITY)

@@ -1,6 +1,7 @@
 package com.vis.business.messages;
 
 import com.jn.business.messages.JnBusinessSendMessage;
+import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillFixHierarchyApproved;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
@@ -17,37 +18,37 @@ public class VisMessages {
 	//FIXME FALTANDO TEMPLATE
 	public static class RejectedSkillHierarchy extends JnBusinessSendMessage{
 		protected RejectedSkillHierarchy() {
-			super(VisEntitySkillFixHierarchyRejected.ENTITY);
+			super(VisEntitySkillFixHierarchyRejected.ENTITY, JnMessageSenderExceptionHandler.THROWS);
 		}
 	}
 	//FIXME FALTANDO TEMPLATE
 	public static class AprovedSkillHierarchy extends JnBusinessSendMessage{
 		protected AprovedSkillHierarchy() {
-			super(VisEntitySkillFixHierarchyApproved.ENTITY);
+			super(VisEntitySkillFixHierarchyApproved.ENTITY, JnMessageSenderExceptionHandler.THROWS);
 		}
 	}
 	//FIXME FALTANDO TEMPLATE
 	public static class PendingSkillHierarchy extends JnBusinessSendMessage{
 		protected PendingSkillHierarchy() {
-			super(VisEntitySkillFixHierarchyPending.ENTITY);
+			super(VisEntitySkillFixHierarchyPending.ENTITY, JnMessageSenderExceptionHandler.THROWS);
 		}
 	}
 	//FIXME FALTANDO TEMPLATE
 	public static class RejectedSkill extends JnBusinessSendMessage{
 		protected RejectedSkill() {
-			super(VisEntitySkillRejected.ENTITY);
+			super(VisEntitySkillRejected.ENTITY, JnMessageSenderExceptionHandler.THROWS);
 		}
 	}
 	//FIXME FALTANDO TEMPLATE
 	public static class PendingSkill extends JnBusinessSendMessage{
 		protected PendingSkill() {
-			super(VisEntitySkillPending.ENTITY);
+			super(VisEntitySkillPending.ENTITY, JnMessageSenderExceptionHandler.THROWS);
 		}
 	}
 	//FIXME FALTANDO TEMPLATE
 	public static class AprovedSkill extends JnBusinessSendMessage{
 		protected AprovedSkill() {
-			super(VisEntitySkill.ENTITY);
+			super(VisEntitySkill.ENTITY, JnMessageSenderExceptionHandler.THROWS);
 		}
 	}
 }

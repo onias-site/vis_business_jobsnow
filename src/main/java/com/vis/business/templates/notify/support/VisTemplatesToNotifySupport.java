@@ -3,6 +3,7 @@ package com.vis.business.templates.notify.support;
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpStringDecorator;
+import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.JnEntityJobsnowWarning;
 import com.jn.messages.JnSendMessageToUser;
@@ -22,12 +23,12 @@ public enum VisTemplatesToNotifySupport implements CcpBusiness{
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String language = json.getAsString(JnEntityEmailTemplateMessage.Fields.language);
-
+		//TODO GENERALIZAR ESTE PROCESSO
 		JnSendMessageToUser sender = new JnSendMessageToUser();
 		sender
-		.addDefaultProcessToEmailSending()
+		.addDefaultProcessToEmailSending(JnMessageSenderExceptionHandler.THROWS)
 		.and()
-		.addDefaultStepToInstantMessageSending()
+		.addDefaultStepToInstantMessageSending(JnMessageSenderExceptionHandler.THROWS)
 		.soWithAllAddedProcessAnd()
 		.withTheTemplateEntity(this.name())
 		.andWithTheEntityToBlockMessageResend(JnEntityJobsnowWarning.ENTITY)
