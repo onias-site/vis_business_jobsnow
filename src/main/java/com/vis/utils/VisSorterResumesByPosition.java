@@ -32,7 +32,8 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 		List<String> sortFields = new ArrayList<>(asStringList);
 		
 		String desiredSkillEnumName = ResumeSortOptions.desiredSkill.name();
-		boolean desiredSkillNotChoosed = false == sortFields.contains(desiredSkillEnumName);
+		boolean contains = sortFields.contains(desiredSkillEnumName);
+		boolean desiredSkillNotChoosed = false == contains;
 		
 		if(desiredSkillNotChoosed ) {
 			sortFields.add(desiredSkillEnumName);
@@ -55,9 +56,11 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 	}
 
 	private CcpJsonRepresentation putDesiredSkills(CcpJsonRepresentation o1, List<String> desiredSkills) {
-		CcpCollectionDecorator ccd1 = o1.getAsCollectionDecorator(VisJsonCommonsFields.skill.name());
+		String skillName = VisJsonCommonsFields.skill.name();
+		CcpCollectionDecorator ccd1 = o1.getAsCollectionDecorator(skillName);
 		int size1 = ccd1.getIntersectList(desiredSkills).size();
-		CcpJsonRepresentation put = o1.put(VisEntityPosition.Fields.desiredSkill, -size1);
+		int size12 = -size1;
+		CcpJsonRepresentation put = o1.put(VisEntityPosition.Fields.desiredSkill, size12);
 		return put;
 	}
 

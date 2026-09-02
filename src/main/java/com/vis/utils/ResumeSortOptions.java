@@ -31,17 +31,25 @@ enum ResumeSortOptions {
 	private int compareTo(CcpJsonRepresentation o1, CcpJsonRepresentation o2, String... keys) {
 		
 		for (String key : keys) {
-			
-			if(false == o1.containsAllFields(new CcpFieldName(key))) {
+			CcpFieldName ccpFieldName = new CcpFieldName(key);
+			boolean containsAllFields = o1.containsAllFields(ccpFieldName);
+			boolean valorIgual = false == containsAllFields;
+		
+			if(valorIgual) {
 				continue;
 			}
-			
-			if(false == o2.containsAllFields(new CcpFieldName(key))) {
+			CcpFieldName ccpFieldName2 = new CcpFieldName(key);
+			boolean containsAllFields2 = o2.containsAllFields(ccpFieldName2);
+			boolean valorIgual2 = false == containsAllFields2;
+
+			if(valorIgual2) {
 				continue;
 			}
-			
-			Double value1 = o1.getAsDoubleNumber(new CcpFieldName(key));
-			Double value2 = o2.getAsDoubleNumber(new CcpFieldName(key));
+			CcpFieldName ccpFieldName3 = new CcpFieldName(key);
+
+			Double value1 = o1.getAsDoubleNumber(ccpFieldName3);
+			CcpFieldName ccpFieldName4 = new CcpFieldName(key);
+			Double value2 = o2.getAsDoubleNumber(ccpFieldName4);
 			
 			int compareTo = value1.compareTo(value2);
 			

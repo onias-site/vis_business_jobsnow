@@ -10,6 +10,8 @@ import com.jn.entities.JnEntityLoginSessionValidation;
 import com.vis.utils.VisFrequencyOptions;
 import com.vis.utils.VisSendRecentUsersToGroupings;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
+import com.ccp.especifications.db.query.CcpQuery;
 
 /**
  * Tarefa agendada (cron) que busca todos os usuários que fizeram login no último ano e os envia para os
@@ -26,28 +28,49 @@ public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
-		
-		String entityName = JnEntityLoginSessionValidation.ENTITY.getEntityMetaData().entityName;
-		CcpQueryOptions queryToSearchLastUpdated = 
-				CcpQueryOptions.INSTANCE
-					.startQuery()
-						.startBool()
-							.startMust()
-								.startRange()
-									.startFieldRange(JnJsonCommonsFields.timestamp.name())
-										.greaterThan(System.currentTimeMillis() - VisFrequencyOptions.yearly.hours * 3_600_000)
-									.endFieldRangeAndBackToRange()
-								.endRangeAndBackToMust()	
-								.term(JnJsonCommonsFields.entity, entityName)
-							.endMustAndBackToBool()
-						.endBoolAndBackToQuery()
-					.endQueryAndBackToRequest()
-					.maxResults()
-					.addDescSorting(JnJsonCommonsFields.timestamp.name())
-				;
-		String[] resourcesNames = JnEntityDisposableRecord.ENTITY.getEntityMetaData().getEntitiesToSelect();
+		CcpEntityMetaData entityMetaData = JnEntityLoginSessionValidation.ENTITY.getEntityMetaData();
 
-		queryExecutor.consumeQueryResult(queryToSearchLastUpdated, resourcesNames, "10m", 10000L, VisSendRecentUsersToGroupings.INSTANCE, JnJsonCommonsFields.id.name());
+		String entityName = entityMetaData.entityName;
+		CcpQuery startQuery = CcpQueryOptions.INSTANCE
+					.startQuery();
+					var startBool = startQuery
+						.startBool();
+						var startMust = startBool
+							.startMust();
+							var startRange = startMust
+								.startRange();
+								String timestampName = JnJsonCommonsFields.timestamp.name();
+								var startFieldRange = startRange
+									.startFieldRange(timestampName);
+									long currentTimeMillis = System.currentTimeMillis();
+									double hoursVezes = VisFrequencyOptions.yearly.hours * 3_600_000;
+									double currentTimeMillisMenos = currentTimeMillis - hoursVezes;
+									var greaterThan = startFieldRange
+										.greaterThan(currentTimeMillisMenos);
+										var endFieldRangeAndBackToRange = greaterThan
+										.endFieldRangeAndBackToRange();
+										var endRangeAndBackToMust = endFieldRangeAndBackToRange
+										.endRangeAndBackToMust();
+										var term = endRangeAndBackToMust	
+										.term(JnJsonCommonsFields.entity, entityName);
+										var endMustAndBackToBool = term
+										.endMustAndBackToBool();
+										var endBoolAndBackToQuery = endMustAndBackToBool
+										.endBoolAndBackToQuery();
+										var endQueryAndBackToRequest = endBoolAndBackToQuery
+										.endQueryAndBackToRequest();
+										var maxResults = endQueryAndBackToRequest
+										.maxResults();
+										String timestampName2 = JnJsonCommonsFields.timestamp.name();
+		CcpQueryOptions queryToSearchLastUpdated = 
+				maxResults
+					.addDescSorting(timestampName2)
+				;
+				CcpEntityMetaData entityMetaData2 = JnEntityDisposableRecord.ENTITY.getEntityMetaData();
+				String[] resourcesNames = entityMetaData2.getEntitiesToSelect();
+				String idName = JnJsonCommonsFields.id.name();
+
+				queryExecutor.consumeQueryResult(queryToSearchLastUpdated, resourcesNames, "10m", 10000L, VisSendRecentUsersToGroupings.INSTANCE, idName);
 		
 		return json;
 	}

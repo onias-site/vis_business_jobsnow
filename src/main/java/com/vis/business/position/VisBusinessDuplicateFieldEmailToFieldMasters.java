@@ -1,7 +1,7 @@
 package com.vis.business.position;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.business.CcpBusiness;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 

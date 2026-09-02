@@ -6,7 +6,7 @@ import java.util.List;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 /**
  * Gera listas de valores monetários a partir de um JSON, com comportamento diferente dependendo se o
  * contexto é de currículo ou de vaga. Para currículo, gera todos os valores de remuneração do valor
@@ -16,18 +16,23 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 public enum GetMoneyValuesFromJson  {
 	resume {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			boolean fieldIsNotPresent = false == json.containsAllFields(new CcpFieldName(field));
+			CcpFieldName ccpFieldName = new CcpFieldName(field);
+			boolean containsAllFields = json.containsAllFields(ccpFieldName);
+			boolean fieldIsNotPresent = false == containsAllFields;
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
 			}
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
-			
-			int valueGaveByCandidate = json.getAsDoubleNumber(new CcpFieldName(field)).intValue();
+			CcpFieldName ccpFieldName2 = new CcpFieldName(field);
+			Double asDoubleNumber = json.getAsDoubleNumber(ccpFieldName2);
+
+			int valueGaveByCandidate = asDoubleNumber.intValue();
 			
 			for(int k = valueGaveByCandidate; k <= 100000; k += 100) {
-				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k)
+				CcpJsonRepresentation put2 = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k);
+				CcpJsonRepresentation put = put2
 						.put(JsonFieldNames.moneyType, field);
 				response.add(put);
 			}
@@ -36,18 +41,23 @@ public enum GetMoneyValuesFromJson  {
 		}
 	}, position {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			boolean fieldIsNotPresent = false == json.containsAllFields(new CcpFieldName(field));
+			CcpFieldName ccpFieldName3 = new CcpFieldName(field);
+			boolean containsAllFields2 = json.containsAllFields(ccpFieldName3);
+			boolean fieldIsNotPresent = false == containsAllFields2;
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
 			}
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
-			
-			int maxValueFromThisPosition = json.getAsDoubleNumber(new CcpFieldName(field)).intValue();
+			CcpFieldName ccpFieldName4 = new CcpFieldName(field);
+			Double asDoubleNumber2 = json.getAsDoubleNumber(ccpFieldName4);
+
+			int maxValueFromThisPosition = asDoubleNumber2.intValue();
 			
 			for(int k = maxValueFromThisPosition; k >= 1000; k -= 100) {
-				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k).put(JsonFieldNames.moneyType, field);
+				CcpJsonRepresentation put3 = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k);
+				CcpJsonRepresentation put = put3.put(JsonFieldNames.moneyType, field);
 				response.add(put);
 			}
 			

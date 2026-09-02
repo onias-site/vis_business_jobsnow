@@ -17,16 +17,19 @@ public enum VisFunctionsGetSeniorityValueFromJson implements Function<CcpJsonRep
 			CcpTimeDecorator ctd = new CcpTimeDecorator();
 			int currentYear = ctd.getYear();
 			int experienceInYears = currentYear - experience;
-			
-			if(experienceInYears > 2) {
+			boolean experienceInYearsMaior = experienceInYears > 2;
+
+			if(experienceInYearsMaior) {
 				return "JR";
 			}
-			
-			if(experienceInYears > 5) {
+			boolean experienceInYearsMaior2 = experienceInYears > 5;
+
+			if(experienceInYearsMaior2) {
 				return "PL";
 			}
+			boolean experienceInYearsMaior3 = experienceInYears > 10;
 
-			if(experienceInYears > 10) {
+			if(experienceInYearsMaior3) {
 				return "SR";
 			}
 			return "ES";

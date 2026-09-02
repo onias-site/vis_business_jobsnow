@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.function.Function;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.vis.entities.VisEntityGroupResumesByPosition;

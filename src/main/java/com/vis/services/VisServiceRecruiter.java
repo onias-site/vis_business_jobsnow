@@ -1,7 +1,7 @@
 package com.vis.services;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.services.JnService;
 import com.vis.business.recruiter.VisBusinessRecruiterReceivingResumes;
@@ -37,7 +37,8 @@ public enum VisServiceRecruiter implements JnService {
 	},
 	SendResumesToEmail{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = new JnFunctionMensageriaSender(VisBusinessRecruiterReceivingResumes.INSTANCE).execute(json);
+			JnFunctionMensageriaSender jnFunctionMensageriaSender = new JnFunctionMensageriaSender(VisBusinessRecruiterReceivingResumes.INSTANCE);
+			CcpJsonRepresentation result = jnFunctionMensageriaSender.execute(json);
 			
 			return result;
 		}
@@ -53,19 +54,9 @@ public enum VisServiceRecruiter implements JnService {
 	enum JsonFieldNames implements CcpJsonFieldName{
 		activePosition
 	}
-	enum GetAlreadySeenResumes{
-		
-	}
-	enum GetPositionsFromThisRecruiter{
-		
-	}
-	enum SaveOpinionAboutThisResume{
-		
-	}
-	enum SendResumesToEmail{
-		
-	}
-	enum ChangeOpinionAboutThisResume{
-		
-	}
+
+
+
+
+
 }

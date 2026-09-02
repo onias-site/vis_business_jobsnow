@@ -2,7 +2,7 @@ package com.vis.json.transformers;
 
 import com.ccp.decorators.CcpHashDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.hash.CcpHashAlgorithm;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.business.CcpBusiness;
@@ -30,14 +30,17 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements CcpBusi
 		String[] split = recruiter.split("@");
 		
 		String domain =  split[0];
-		
-		CcpHashDecorator hash2 = new CcpStringDecorator(recruiter).hash();
+		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(recruiter);
+
+		CcpHashDecorator hash2 = ccpStringDecorator.hash();
 		
 		String hash = hash2.asString(CcpHashAlgorithm.SHA1);
+		CcpJsonRepresentation put2 = json
+				.put(JsonFieldNames.originalRecruiter, recruiter);
+				CcpJsonRepresentation put3 = put2
+				.put(VisJsonCommonsFields.recruiter, hash);
 		//LATER NONPROFESSIONAL DOMAINS
-		CcpJsonRepresentation put = json
-				.put(JsonFieldNames.originalRecruiter, recruiter)
-				.put(VisJsonCommonsFields.recruiter, hash)
+		CcpJsonRepresentation put = put3
 				.put(VisJsonCommonsFields.domain, domain)
 				;
 		return put;

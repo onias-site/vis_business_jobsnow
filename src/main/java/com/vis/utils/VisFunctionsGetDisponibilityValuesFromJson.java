@@ -14,8 +14,9 @@ public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJs
 	resume {
 		public List<Integer> apply(CcpJsonRepresentation json) {
 			List<Integer> response = new ArrayList<>();
-			
-			int end = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility).intValue();
+			Double asDoubleNumber = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility);
+
+			int end = asDoubleNumber.intValue();
 			
 			for(int k = end; k <= 70; k++) {
 				response.add(k);
@@ -26,8 +27,9 @@ public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJs
 	}, position {
 		public List<Integer> apply(CcpJsonRepresentation json) {
 			List<Integer> response = new ArrayList<>();
-			
-			int maxDisponibility = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility).intValue();
+			Double asDoubleNumber2 = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility);
+
+			int maxDisponibility = asDoubleNumber2.intValue();
 			
 			for(int k = maxDisponibility; k >= 0; k--) {
 				response.add(k);

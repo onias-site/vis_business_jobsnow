@@ -2,11 +2,11 @@ package com.vis.business.templates.notify.support;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpStringDecorator;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.entities.JnEntityJobsnowWarning;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.messages.JnSendMessageToUser;
+import com.jn.messages.JnAddDefaultStep;
 
 /**
  * Define os templates de notificação enviados ao suporte quando surgem eventos relacionados a skills.
@@ -25,36 +25,35 @@ public enum VisTemplatesToNotifySupport implements CcpBusiness{
 		String language = json.getAsString(JnJsonCommonsFields.language);
 		//TODO GENERALIZAR ESTE PROCESSO
 		JnSendMessageToUser sender = new JnSendMessageToUser();
-		sender
-		.addDefaultProcessToEmailSending(JnMessageSenderExceptionHandler.THROWS)
-		.and()
-		.addDefaultStepToInstantMessageSending(JnMessageSenderExceptionHandler.THROWS)
-		.soWithAllAddedProcessAnd()
-		.withTheTemplateEntity(this.name())
-		.andWithTheEntityToBlockMessageResend(JnEntityJobsnowWarning.ENTITY)
-		.andWithTheMessageValuesFromJson(json)
-		.andWithTheSupportLanguage(language)
+		JnAddDefaultStep addDefaultProcessToEmailSending = sender
+		.addDefaultProcessToEmailSending(JnMessageSenderExceptionHandler.THROWS);
+		var and = addDefaultProcessToEmailSending
+		.and();
+		var addDefaultStepToInstantMessageSending = and
+		.addDefaultStepToInstantMessageSending(JnMessageSenderExceptionHandler.THROWS);
+		var soWithAllAddedProcessAnd = addDefaultStepToInstantMessageSending
+		.soWithAllAddedProcessAnd();
+		String name = this.name();
+		var withTheTemplateEntity = soWithAllAddedProcessAnd
+		.withTheTemplateEntity(name);
+		var andWithTheEntityToBlockMessageResend = withTheTemplateEntity
+		.andWithTheEntityToBlockMessageResend(JnEntityJobsnowWarning.ENTITY);
+		var andWithTheMessageValuesFromJson = andWithTheEntityToBlockMessageResend
+		.andWithTheMessageValuesFromJson(json);
+		var andWithTheSupportLanguage = andWithTheMessageValuesFromJson
+		.andWithTheSupportLanguage(language);
+		andWithTheSupportLanguage
 		.sendAllMessages();
 		
 		return json;
 	}
 	
 	
-	private static class SendEmail implements CcpBusiness{
 
-		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			String simpleName = this.getClass().getSimpleName();
-			String lowerCase = new CcpStringDecorator(simpleName).text().toSnakeCase().content.toLowerCase();
-			VisTemplatesToNotifySupport valueOf = VisTemplatesToNotifySupport.valueOf(lowerCase);
-			CcpJsonRepresentation apply = valueOf.execute(json);
-			return apply;
-		}
-		
-	}
 	//FIXME FALTANDO TEMPLATE
-	public static class NewSkill extends SendEmail{}
+
 	//FIXME FALTANDO TEMPLATE
-	public static class NewSkillHierarchy extends SendEmail{}
+
 
 	
 	

@@ -4,7 +4,7 @@ import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntity
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorTransferType.transferDataTo;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._before;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.mainEntity;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
@@ -23,10 +23,12 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.vis.business.messages.VisMessages;
 import com.vis.business.resume.skills.VisBusinessApprovingSkill;
-import com.vis.business.templates.notify.support.VisTemplatesToNotifySupport;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.vis.business.messages.AprovedSkill;
+import com.vis.business.messages.PendingSkillHierarchy;
+import com.vis.business.messages.RejectedSkill;
+import com.vis.business.templates.notify.support.NewSkill;
 
 /**
  * Representa novas skills sugeridas aguardando aprovação. Ao salvar, notifica o suporte via
@@ -38,7 +40,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityOperations(
 		operations = {
-				@CcpEntityOperation(when = _before, operation = save, from = mainEntity,  execute = {VisTemplatesToNotifySupport.NewSkill.class, VisMessages.PendingSkillHierarchy.class}, operationHandlers = {}),
+				@CcpEntityOperation(when = _before, operation = save, from = mainEntity,  execute = {NewSkill.class, PendingSkillHierarchy.class}, operationHandlers = {}),
 		},
 		globalHandlers = {}
 		)
@@ -46,8 +48,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityDataTransfers(
 		globalHandlers = {},
 		transfers = {
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillRejected.class, transferType = transferDataTo, when = _before, execute = {VisMessages.RejectedSkill.class}, transferHandlers = {}),
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkill.class, transferType = transferDataTo, when = _before, execute = {VisBusinessApprovingSkill.class, VisMessages.AprovedSkill.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillRejected.class, transferType = transferDataTo, when = _before, execute = {RejectedSkill.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkill.class, transferType = transferDataTo, when = _before, execute = {VisBusinessApprovingSkill.class, AprovedSkill.class}, transferHandlers = {}),
 		}
 		)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

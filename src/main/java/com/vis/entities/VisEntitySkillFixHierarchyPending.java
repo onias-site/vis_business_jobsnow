@@ -3,7 +3,7 @@ package com.vis.entities;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorTransferType.transferDataTo;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._before;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.mainEntity;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
@@ -18,7 +18,8 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.vis.business.messages.VisMessages;
+import com.vis.business.messages.AprovedSkillHierarchy;
+import com.vis.business.messages.RejectedSkillHierarchy;
 
 /**
  * Representa solicitações pendentes de correção de hierarquia de skill aguardando análise. Ao salvar um
@@ -31,8 +32,8 @@ import com.vis.business.messages.VisMessages;
 @CcpEntityDataTransfers(
 		globalHandlers = {},
 		transfers = {
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = _before, execute = {VisMessages.RejectedSkillHierarchy.class}, transferHandlers = {}),
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = _before, execute = {VisMessages.AprovedSkillHierarchy.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = _before, execute = {RejectedSkillHierarchy.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = _before, execute = {AprovedSkillHierarchy.class}, transferHandlers = {}),
 		}
 		)
 

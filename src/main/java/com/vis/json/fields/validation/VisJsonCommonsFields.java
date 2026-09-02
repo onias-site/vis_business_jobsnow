@@ -1,7 +1,7 @@
 package com.vis.json.fields.validation;
 
 import com.ccp.decorators.CcpEmailDecorator;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityExpurgableOptions;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
@@ -97,11 +97,5 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 
 	;
 
-	enum Language {
-		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
-		name,
 
-		@CcpJsonFieldTypeNumberUnsigned(allowedValues = {1, 2})
-		level
-	}
 }

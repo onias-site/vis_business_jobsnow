@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
@@ -31,6 +31,9 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import java.util.stream.Stream;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
+import com.ccp.decorators.CcpFileDecorator;
 
 /**
  * Representa o índice de habilidades (skills) agrupadas pelas duas primeiras letras da palavra,
@@ -60,21 +63,25 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 	}
 	
 	private Set<String> getAllParents(List<CcpJsonRepresentation>synonyms, String word, Set<String> allParents){
-		
-		Optional<CcpJsonRepresentation> findFirst = synonyms.stream()
+		Stream<CcpJsonRepresentation> stream = synonyms.stream();
+		var filter = stream
 		.filter(x -> x.getAsString(VisJsonCommonsFields.skill).equals(word) ||
-		             x.getAsJsonList(VisJsonCommonsFields.synonym).stream().anyMatch(y -> y.getAsString(VisJsonCommonsFields.skill).equals(word)))
+		             x.getAsJsonList(VisJsonCommonsFields.synonym).stream().anyMatch(y -> y.getAsString(VisJsonCommonsFields.skill).equals(word)));
+
+		             Optional<CcpJsonRepresentation> findFirst = filter
 		.findFirst();
-		
-		boolean parentNotFound = false == findFirst.isPresent();
+		boolean findFirstPresent = findFirst.isPresent();
+
+		boolean parentNotFound = false == findFirstPresent;
 		
 		if(parentNotFound) {
 			return allParents;
 		}
 		
 		CcpJsonRepresentation synonym = findFirst.get();
-		
-		boolean parentAbsent = false == synonym.containsAllFields(VisJsonCommonsFields.parent);
+		boolean containsAllFields = synonym.containsAllFields(VisJsonCommonsFields.parent);
+
+		boolean parentAbsent = false == containsAllFields;
 		if(parentAbsent) {
 			return allParents;
 		}
@@ -90,7 +97,8 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		String upperCase = word.toUpperCase();
 		String firstTwoInitials = upperCase.substring(0,2);
 		CcpJsonRepresentation id = CcpOtherConstants.EMPTY_JSON.put(Fields.firstTwoInitials, firstTwoInitials);
-		CcpJsonRepresentation oneById = ENTITY.getEntityMetaData().getOneByIdOrHandleItIfThisIdWasNotFound(id, json -> CcpOtherConstants.EMPTY_JSON);
+		CcpEntityMetaData entityMetaData = ENTITY.getEntityMetaData();
+		CcpJsonRepresentation oneById = entityMetaData.getOneByIdOrHandleItIfThisIdWasNotFound(id, json -> CcpOtherConstants.EMPTY_JSON);
 		
 		boolean notFound = oneById.isEmpty();
 		
@@ -103,13 +111,15 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		for (CcpJsonRepresentation skill : skills) {
 			{
 				String wrd = skill.getAsString(VisJsonCommonsFields.word);
-				if(wrd.equals(upperCase)) {
+				boolean wrdEquals = wrd.equals(upperCase);
+				if(wrdEquals) {
 					return 0;
 				}
 			}
 			{
 				String wrd = skill.getAsString(VisJsonCommonsFields.skill);
-				if(wrd.equals(upperCase)) {
+				boolean wrdEquals2 = wrd.equals(upperCase);
+				if(wrdEquals2) {
 					return 0;
 				}
 			}
@@ -118,8 +128,10 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		return 2;
 	} 
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		var synonyms = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json")
-		.file()
+		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json");
+		CcpFileDecorator ccpStringDecoratorFile = ccpStringDecorator
+		.file();
+		var synonyms = ccpStringDecoratorFile
 		.asJsonList();
 		
 		var wordsAndParents = new HashMap<String, Set<String>>();
@@ -138,33 +150,41 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 			}
 			List<String> allNames = new ArrayList<>();
 			String mainName = synonym.getAsString(VisJsonCommonsFields.skill);
-			List<String> otherNames = synonym.getAsJsonList(VisJsonCommonsFields.synonym).stream().map(x -> x.getAsString(VisJsonCommonsFields.skill)).collect(Collectors.toList());
+			List<CcpJsonRepresentation> asJsonList2 = synonym.getAsJsonList(VisJsonCommonsFields.synonym);
+			Stream<CcpJsonRepresentation> stream2 = asJsonList2.stream();
+			var stream2Map = stream2.map(x -> x.getAsString(VisJsonCommonsFields.skill));
+			List<String> otherNames = stream2Map.collect(Collectors.toList());
 			allNames.add(mainName);
 			allNames.addAll(otherNames);
 			for (var name : allNames) {
 				wordsAndParents.put(name, allParents);
 			}
+			String asString = synonym.getAsString(VisJsonCommonsFields.skill);
 
-			String skill = synonym.getAsString(VisJsonCommonsFields.skill).toUpperCase();
+			String skill = asString.toUpperCase();
 			wordsAndSkills.put(skill, skill);
 			{
 				List<CcpJsonRepresentation> words = synonym.getAsJsonList(VisJsonCommonsFields.synonym);
 				for (CcpJsonRepresentation word : words) {
-					String upperCase = word.getAsString(VisJsonCommonsFields.skill).toUpperCase();
+					String asString2 = word.getAsString(VisJsonCommonsFields.skill);
+					String upperCase = asString2.toUpperCase();
 					wordsAndSkills.put(upperCase, skill);
 				}
 			}
 			{
 				List<CcpJsonRepresentation> words = synonym.getAsJsonList(JsonFields.preRequisite);
 				for (CcpJsonRepresentation word : words) {
-					String upperCase = word.getAsString(VisJsonCommonsFields.word).toUpperCase();
+					String asString3 = word.getAsString(VisJsonCommonsFields.word);
+					String upperCase = asString3.toUpperCase();
 					wordsAndSkills.put(upperCase, skill);
 				}
 			}
 			{
 				List<CcpJsonRepresentation> words = synonym.getAsJsonList(JsonFields.similar);
 				for (CcpJsonRepresentation word : words) {
-					String upperCase = word.getAsString(VisJsonCommonsFields.word).toUpperCase().replace("_", " ");
+					String asString4 = word.getAsString(VisJsonCommonsFields.word);
+					String toUpperCase = asString4.toUpperCase();
+					String upperCase = toUpperCase.replace("_", " ");
 					wordsAndSkills.put(upperCase, skill);
 				}
 			}
@@ -173,41 +193,55 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		Set<String> words = wordsAndSkills.keySet();
 		
 		for (String word : words) {
-			if(word.length() < 2) {
+			int wordLength = word.length();
+			boolean wordLengthMenor = wordLength < 2;
+			if(wordLengthMenor) {
 				continue;
 			}
+			int wordLength2 = word.length();
+			boolean wordLength2Maior = wordLength2 > 50;
 
-			if(word.length() > 50) {
+			if(wordLength2Maior) {
 				continue;
 			}
 			
 			String initials = word.substring(0, 2);
 			String skill = wordsAndSkills.get(word);
-			List<CcpJsonRepresentation> asJsonList = groupedSkills.getAsJsonList(new CcpFieldName(initials));
+			CcpFieldName ccpFieldName = new CcpFieldName(initials);
+			List<CcpJsonRepresentation> asJsonList = groupedSkills.getAsJsonList(ccpFieldName);
 
 			ArrayList<CcpJsonRepresentation> arrayList = new ArrayList<>(asJsonList);
 			Set<String> parent = wordsAndParents.getOrDefault(word, new HashSet<>());
-			CcpJsonRepresentation json = CcpOtherConstants.EMPTY_JSON
-					.put(VisJsonCommonsFields.skill, skill)
-					.put(VisJsonCommonsFields.word, word)
+			CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON
+					.put(VisJsonCommonsFields.skill, skill);
+					CcpJsonRepresentation put2 = put
+					.put(VisJsonCommonsFields.word, word);
+					CcpJsonRepresentation json = put2
 					.put(VisJsonCommonsFields.parent, parent)
 					;
 			arrayList.add(json);
+			CcpFieldName ccpFieldName2 = new CcpFieldName(initials);
 
-			groupedSkills = groupedSkills.put(new CcpFieldName(initials), arrayList);
+			groupedSkills = groupedSkills.put(ccpFieldName2, arrayList);
 		}
 		CcpJsonRepresentation groupedSkills2 = new CcpJsonRepresentation(groupedSkills.content);
-		List<CcpBulkItem> collect = groupedSkills.fieldSet().stream()
+		Set<String> fieldSet = groupedSkills.fieldSet();
+		Stream<String> stream3 = fieldSet.stream();
+		var stream3Map = stream3
 		.map(initials -> {
-			List<CcpJsonRepresentation> skill = groupedSkills2.getAsJsonList(new CcpFieldName(initials));
-			CcpJsonRepresentation json = CcpOtherConstants.EMPTY_JSON
-					.put(VisJsonCommonsFields.skill, skill)
+			CcpFieldName ccpFieldName3 = new CcpFieldName(initials);
+			List<CcpJsonRepresentation> skill = groupedSkills2.getAsJsonList(ccpFieldName3);
+			CcpJsonRepresentation put3 = CcpOtherConstants.EMPTY_JSON
+					.put(VisJsonCommonsFields.skill, skill);
+					CcpJsonRepresentation json = put3
 					.put(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials, initials)
 					;
 			return json
 		;
-		})
-		.map(json -> new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, ENTITY.calculateId(json)))
+		});
+		var stream3MapMap = stream3Map
+		.map(json -> new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, ENTITY.calculateId(json)));
+		List<CcpBulkItem> collect = stream3MapMap
 		.collect(Collectors.toList());
 		
 		

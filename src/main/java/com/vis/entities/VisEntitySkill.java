@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
@@ -23,6 +23,8 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.ccp.decorators.CcpFileDecorator;
+import java.util.stream.Stream;
 
 /**
  * Representa uma skill (habilidade) aprovada no sistema, com seu ranking de relevância (baseado na
@@ -57,25 +59,36 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	}
 	
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		var synonyms = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json")
-		.file()
-		.asJsonList()
-		.stream()
-		.filter(x -> x.getAsString(VisJsonCommonsFields.skill).length() <= 50)
+		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json");
+		CcpFileDecorator ccpStringDecoratorFile = ccpStringDecorator
+		.file();
+		var asJsonList = ccpStringDecoratorFile
+		.asJsonList();
+		var stream = asJsonList
+		.stream();
+		var filter = stream
+		.filter(x -> x.getAsString(VisJsonCommonsFields.skill).length() <= 50);
+		var synonyms = filter
 		.collect(Collectors.toList())
 		;
-		List<String> lines = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\vis\\database\\skills\\countByWords.txt")
-				 .file().getLines()
+		CcpStringDecorator ccpStringDecorator2 = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\vis\\database\\skills\\countByWords.txt");
+		CcpFileDecorator ccpStringDecorator2File = ccpStringDecorator2
+				 .file();
+				 List<String> lines = ccpStringDecorator2File.getLines()
 				 ;
-		
-		List<CcpJsonRepresentation> collect = new ArrayList<>(synonyms.stream().map(json -> {
+				 var stream2 = synonyms.stream();
+				 var stream2Map = stream2.map(json -> {
 			int resumesCount = this.getResumesCount(json, lines);
-			
-			CcpJsonRepresentation put = json.put(new CcpFieldName("resumesCount"), resumesCount);
+			CcpFieldName ccpFieldName = new CcpFieldName("resumesCount");
+
+			CcpJsonRepresentation put = json.put(ccpFieldName, resumesCount);
 			
 			return put;
 			
-		}).collect(Collectors.toList()));
+			});
+			var collect2 = stream2Map.collect(Collectors.toList());
+
+			List<CcpJsonRepresentation> collect = new ArrayList<>(collect2);
 		
 		
 		collect.sort((a, b) -> b.getAsIntegerNumber(new CcpFieldName("resumesCount")) - a.getAsIntegerNumber(new CcpFieldName("resumesCount")));
@@ -85,14 +98,20 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		List<CcpBulkItem> response = new ArrayList<>();
 		
 		for (CcpJsonRepresentation json : collect) {
-			CcpJsonRepresentation jsonPiece = json.getJsonPiece(Fields.values());
-			if(ranking == 87) {
+			VisEntitySkill.Fields[] fieldsValues = Fields.values();
+			CcpJsonRepresentation jsonPiece = json.getJsonPiece(fieldsValues);
+			boolean rankingIgual = ranking == 87;
+			if(rankingIgual) {
 				System.out.println();
 			}
 			CcpJsonRepresentation put = jsonPiece.put(VisJsonCommonsFields.ranking, ranking++);
-			var synonym = put.getAsJsonList(VisJsonCommonsFields.synonym).stream()
-					.map(x -> x.getAsString(VisJsonCommonsFields.skill))
-					.filter(x -> x.length() <= 50)
+			List<CcpJsonRepresentation> asJsonList2 = put.getAsJsonList(VisJsonCommonsFields.synonym);
+			Stream<CcpJsonRepresentation> stream3 = asJsonList2.stream();
+			var stream3Map = stream3
+					.map(x -> x.getAsString(VisJsonCommonsFields.skill));
+					var filter2 = stream3Map
+					.filter(x -> x.length() <= 50);
+					var synonym = filter2
 					.collect(Collectors.toList());
 			
 			
@@ -116,10 +135,15 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		 for (String word : skills) {
 			 
 			 String start = word + " = ";
-			
-			 Integer orElse = new ArrayList<>(lines).stream().filter(line -> line.startsWith(start)).map(line -> line.replace(start, "").trim())
-			 .map(line -> Integer.valueOf(line))
-			 .findFirst()
+			 var stream4 = new ArrayList<>(lines).stream();
+			 var filter3 = stream4.filter(line -> line.startsWith(start));
+			 var filter3Map = filter3.map(line -> line.replace(start, "").trim());
+			 var filter3MapMap = filter3Map
+			 .map(line -> Integer.valueOf(line));
+			 var findFirst = filter3MapMap
+			 .findFirst();
+
+			 Integer orElse = findFirst
 			 .orElse(0);
 			 
 			 total += orElse;
