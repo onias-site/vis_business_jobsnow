@@ -73,7 +73,8 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;
 
-	//DOUBT FUNCIONA ESTA VALIDAÇÃO?
+	//TODO FUNCIONA ESTA VALIDAÇÃO?
+	//TODO TROCAR ESSAS STRINGS POR ENUMS
 	@CcpJsonGlobalValidations(requiresAtLeastOne = {
 			@CcpJsonValidationFieldList({"maxClt", "maxPj" }),
 			@CcpJsonValidationFieldList({"minClt", "minPj" })
@@ -83,7 +84,7 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	})
 	public static enum Fields implements CcpJsonFieldName{
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeString(allowedValues = {  "telegram", "whatsapp", "email", "sms" })
+		@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionChannelTypes.class)
 		@CcpJsonFieldValidatorArray
 		channel, 
 		@CcpJsonFieldValidatorRequired
@@ -112,7 +113,7 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeTimeBefore(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.yearly)
 		expireDate, 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeString(allowedValues = { "minute", "hourly", "daily", "weekly", "monthly" })
+		@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionFrequencyTypes.class)
 		frequency, 
 		@CcpJsonFieldTypeBoolean
 		pcd, 
@@ -124,7 +125,7 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		seniority, 
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeString(allowedValues = { "seniority", "pj", "clt", "btc", "disponibility", "desiredSkills" })
+		@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionSortFieldTypes.class)
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		sortFields, 
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
@@ -147,6 +148,48 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		minPj,
 		@CcpJsonFieldTypeNumber(maxValue = 100_000)
 		maxPj,
+		;
+	}
+
+	/**
+	 * Canais de contato aceitos pelo campo {@code channel} da entidade de vaga (position), ou seja,
+	 * por onde o recrutador deseja receber os currículos enviados pela plataforma.
+	 */
+	public static enum VisPositionChannelTypes {
+
+		telegram,
+		whatsapp,
+		email,
+		sms
+		;
+	}
+
+	/**
+	 * Frequências aceitas pelo campo {@code frequency} da entidade de vaga (position), isto é,
+	 * de quanto em quanto tempo os currículos compatíveis são enviados ao recrutador.
+	 */
+	public static enum VisPositionFrequencyTypes {
+
+		minute,
+		hourly,
+		daily,
+		weekly,
+		monthly
+		;
+	}
+
+	/**
+	 * Critérios de ordenação aceitos pelo campo {@code sortFields} da entidade de vaga (position),
+	 * usados para ordenar os currículos que serão apresentados ao recrutador.
+	 */
+	public static enum VisPositionSortFieldTypes {
+
+		seniority,
+		pj,
+		clt,
+		btc,
+		disponibility,
+		desiredSkills
 		;
 	}
 }

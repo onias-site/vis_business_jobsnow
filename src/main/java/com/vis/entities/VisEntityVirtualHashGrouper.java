@@ -45,7 +45,7 @@ public class VisEntityVirtualHashGrouper{
 		@CcpJsonFieldTypeNumber(minValue = 1000)
 		moneyValue, 
 		@CcpEntityFieldPrimaryKey
-		@CcpJsonFieldTypeString(allowedValues = {"CLT", "BTC", "PJ"})
+		@CcpJsonFieldTypeString(allowedValuesEnum = VisMoneyTypes.class)
 		moneyType,
 		;
 	}

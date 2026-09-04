@@ -73,7 +73,7 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 	service,
 
-	@CcpJsonFieldTypeString(allowedValues = {"JR", "PL", "SR", "ES"})
+	@CcpJsonFieldTypeString(allowedValuesEnum = VisSeniorityTypes.class)
 	seniority,
 
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)

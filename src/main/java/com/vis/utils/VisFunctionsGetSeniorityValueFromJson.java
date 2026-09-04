@@ -4,6 +4,7 @@ import java.util.function.Function;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.vis.json.fields.validation.VisSeniorityTypes;
 
 /**
  * Extrai ou calcula o valor de senioridade para o processo de matching, com lógica diferente para
@@ -17,22 +18,22 @@ public enum VisFunctionsGetSeniorityValueFromJson implements Function<CcpJsonRep
 			CcpTimeDecorator ctd = new CcpTimeDecorator();
 			int currentYear = ctd.getYear();
 			int experienceInYears = currentYear - experience;
-			boolean experienceInYearsMaior = experienceInYears > 2;
+			boolean experienceInYearsMaior = experienceInYears > 10;
 
 			if(experienceInYearsMaior) {
-				return "JR";
+				return VisSeniorityTypes.ES.name();
 			}
 			boolean experienceInYearsMaior2 = experienceInYears > 5;
 
 			if(experienceInYearsMaior2) {
-				return "PL";
+				return VisSeniorityTypes.SR.name();
 			}
-			boolean experienceInYearsMaior3 = experienceInYears > 10;
+			boolean experienceInYearsMaior3 = experienceInYears > 2;
 
 			if(experienceInYearsMaior3) {
-				return "SR";
+				return VisSeniorityTypes.PL.name();
 			}
-			return "ES";
+			return VisSeniorityTypes.JR.name();
 		}
 	}, position {
 		public String apply(CcpJsonRepresentation json) {
