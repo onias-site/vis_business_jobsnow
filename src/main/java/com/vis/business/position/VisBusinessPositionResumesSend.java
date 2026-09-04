@@ -5,7 +5,7 @@ import com.ccp.business.CcpBusiness;
 
 /**
  * Implementação de CcpBusiness que representa o passo de envio de currículos associados a uma vaga.
- * A implementação ainda está pendente (retorna o JSON sem alteração — TODO).
+ * A implementação ainda está pendente (retorna o JSON sem alteração).
  */
 public class VisBusinessPositionResumesSend implements CcpBusiness{
 		

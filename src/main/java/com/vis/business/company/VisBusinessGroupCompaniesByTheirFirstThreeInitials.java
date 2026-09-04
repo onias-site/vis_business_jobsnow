@@ -5,7 +5,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 
 /**
  * Implementação de CcpBusiness responsável por agrupar empresas pelas suas três primeiras iniciais.
- * A lógica ainda está pendente de implementação (corpo do método retorna o JSON de entrada sem alterações — marcado internamente como TODO).
+ * A lógica ainda está pendente de implementação (corpo do método retorna o JSON de entrada sem alterações — marcado internamente como).
  */
 public class VisBusinessGroupCompaniesByTheirFirstThreeInitials implements CcpBusiness{
 
