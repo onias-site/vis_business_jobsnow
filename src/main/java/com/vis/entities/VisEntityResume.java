@@ -65,9 +65,13 @@ public class VisEntityResume implements CcpEntityConfigurator {
 	
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
 
+	static enum SalaryType{
+		pj, clt
+	}
+	
 	@CcpJsonGlobalValidations(
 			requiresAtLeastOne = {
-			@CcpJsonValidationFieldList({"pj", "clt" })
+			@CcpJsonValidationFieldList(SalaryType.class) 
 	})
 	public static enum Fields implements CcpJsonFieldName {
 

@@ -73,14 +73,18 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;
 
+	static enum MaxSalaryType { maxClt, maxPj }
+	static enum MinSalaryType { minClt, minPj }
+	static enum CltSalaryRange { maxClt, minClt }
+	static enum PjSalaryRange  { minPj, maxPj }
+	
 	//TODO FUNCIONA ESTA VALIDAÇÃO?
-	//TODO TROCAR ESSAS STRINGS POR ENUMS
 	@CcpJsonGlobalValidations(requiresAtLeastOne = {
-			@CcpJsonValidationFieldList({"maxClt", "maxPj" }),
-			@CcpJsonValidationFieldList({"minClt", "minPj" })
+			@CcpJsonValidationFieldList(MaxSalaryType.class),
+			@CcpJsonValidationFieldList(MinSalaryType.class)
 	}, requiresAllOrNone = {
-			@CcpJsonValidationFieldList({"maxClt", "minClt" }),
-			@CcpJsonValidationFieldList({"minPj", "maxPj" })
+			@CcpJsonValidationFieldList(CltSalaryRange.class),
+			@CcpJsonValidationFieldList(PjSalaryRange.class)
 	})
 	public static enum Fields implements CcpJsonFieldName{
 		@CcpJsonFieldValidatorRequired

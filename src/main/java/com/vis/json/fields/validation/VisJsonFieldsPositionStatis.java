@@ -9,9 +9,14 @@ import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
+
+enum SalaryType{
+	pj, clt
+}
+
 @CcpJsonGlobalValidations(
 		requiresAtLeastOne = {
-		@CcpJsonValidationFieldList({"pj", "clt" })
+		@CcpJsonValidationFieldList(SalaryType.class)
 })
 /**
  * Define as regras de validação dos campos de estatísticas de posições (vagas), utilizado como schema de
