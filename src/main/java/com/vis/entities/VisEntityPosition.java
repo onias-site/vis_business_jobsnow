@@ -78,7 +78,7 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	static enum CltSalaryRange { maxClt, minClt }
 	static enum PjSalaryRange  { minPj, maxPj }
 	
-	//TODO FUNCIONA ESTA VALIDAÇÃO?
+	//FIXME FUNCIONA ESTA VALIDAÇÃO?
 	@CcpJsonGlobalValidations(requiresAtLeastOne = {
 			@CcpJsonValidationFieldList(MaxSalaryType.class),
 			@CcpJsonValidationFieldList(MinSalaryType.class)
