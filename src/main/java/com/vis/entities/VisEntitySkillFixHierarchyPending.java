@@ -1,8 +1,10 @@
 package com.vis.entities;
 
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorTransferType.transferDataTo;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._before;
+import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._after;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.mainEntity;
+
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
@@ -11,6 +13,8 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityD
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfers;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
@@ -18,8 +22,9 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.vis.business.messages.AprovedSkillHierarchy;
-import com.vis.business.messages.RejectedSkillHierarchy;
+import com.vis.business.skills.messages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest;
+import com.vis.business.skills.messages.VisNotifyUserAboutAprovedSkillHierarchy;
+import com.vis.business.skills.messages.VisNotifyUserAboutRejectedSkillHierarchy;
 
 /**
  * Representa solicitações pendentes de correção de hierarquia de skill aguardando análise. Ao salvar um
@@ -29,11 +34,19 @@ import com.vis.business.messages.RejectedSkillHierarchy;
  */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
+@CcpEntityOperations(
+		operations = {
+				@CcpEntityOperation(when = _after, operation = save, from = mainEntity,  execute = {VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class}, operationHandlers = {}),
+		},
+		globalHandlers = {}
+		)
+
+
 @CcpEntityDataTransfers(
 		globalHandlers = {},
 		transfers = {
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = _before, execute = {RejectedSkillHierarchy.class}, transferHandlers = {}),
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = _before, execute = {AprovedSkillHierarchy.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = _after, execute = {VisNotifyUserAboutRejectedSkillHierarchy.class}, transferHandlers = {}),
+				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = _after, execute = {VisNotifyUserAboutAprovedSkillHierarchy.class}, transferHandlers = {}),
 		}
 		)
 
