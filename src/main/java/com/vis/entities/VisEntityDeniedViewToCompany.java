@@ -5,7 +5,6 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityC
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -13,7 +12,6 @@ import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFr
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.db.bulk.JnExecuteBulkOperation;
-import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
@@ -25,7 +23,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * (entidade twin: reallowed_view_to_company). Possui cache de 1 hora e versionamento.
  */
 @CcpEntityCache(3600)
-@CcpEntityVersionable(JnVersionableEntity.class)
+//FIXME
+//@CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityTwin(
 		twinEntityName = "reallowed_view_to_company",
 		bulkExecutorClass = JnExecuteBulkOperation.class,

@@ -1,19 +1,11 @@
 package com.vis.entities;
 
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.delete;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._before;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.*;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -26,15 +18,11 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.db.bulk.JnExecuteBulkOperation;
-import com.jn.entities.decorators.JnAsyncWriterEntity;
-import com.jn.entities.decorators.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
-import com.vis.business.resume.VisBusinessCalculateResumeHashes;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
-import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 /**
  * Representa a entidade central de Currículo (resume) do candidato. Armazena o perfil profissional completo:
@@ -44,22 +32,25 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
  * reativar (deletar do twin), dispara o cálculo de hashes e o envio do currículo para recrutadores compatíveis.
  */
 @CcpEntityCache(3600)
-@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
-@CcpEntityVersionable(JnVersionableEntity.class)
+//FIXME
+//@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
+//FIXME
+//@CcpEntityVersionable(JnVersionableEntity.class) 
 @CcpEntityTwin(
 		twinEntityName = "inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
-		)
+		) 
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
-@CcpEntityOperations(
-		operations = {
-				@CcpEntityOperation(when = _before, operation = save, from = mainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
-				@CcpEntityOperation(when = _before, operation = delete, from = twinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
-		},
-		globalHandlers = {}
-		)
+//FIXME
+//@CcpEntityOperations(
+//		operations = {
+//				@CcpEntityOperation(when = _before, operation = save, from = mainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+//				@CcpEntityOperation(when = _before, operation = delete, from = twinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+//		},
+//		globalHandlers = {}
+//		)
 
 public class VisEntityResume implements CcpEntityConfigurator {
 	

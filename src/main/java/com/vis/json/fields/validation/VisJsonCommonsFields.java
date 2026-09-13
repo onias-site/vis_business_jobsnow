@@ -21,7 +21,7 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 	btc,
 
 	@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 1_500)
-	clt,
+	clt, 
 
 	@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
 	detail,

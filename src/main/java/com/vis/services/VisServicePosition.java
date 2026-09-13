@@ -23,11 +23,11 @@ import com.ccp.especifications.db.crud.CcpSelectProcedure;
 /**
  * Serviço de acesso a dados de vagas. Expõe operações de CRUD e consulta de skills relacionadas a vagas.
  */
-public enum VisServicePosition implements JnService {
+public enum VisServicePosition implements JnService {  
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation result = VisEntityPosition.ENTITY.delete(json);
-			
+			 
 			return result;
 		}
 	},
@@ -61,7 +61,7 @@ public enum VisServicePosition implements JnService {
 	GetResumeList{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			var object = new Object(){};
-			var objectClass = object.getClass();
+			var objectClass = object.getClass(); 
 			var enclosingMethod = objectClass.getEnclosingMethod();
 			String context = enclosingMethod.getName();
 			CcpGetEntityId ccpGetEntityId = new CcpGetEntityId(json);

@@ -8,5 +8,5 @@ enum Language {
 	name,
 
 	@CcpJsonFieldTypeNumberUnsigned(allowedValues = {1, 2})
-	level
+	level 
 }

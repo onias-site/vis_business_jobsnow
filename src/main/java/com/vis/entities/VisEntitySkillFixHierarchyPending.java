@@ -1,30 +1,24 @@
 package com.vis.entities;
 
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType.save;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorTransferType.transferDataTo;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._after;
 import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.mainEntity;
 
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfers;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
-import com.jn.entities.decorators.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.vis.business.skills.messages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest;
-import com.vis.business.skills.messages.VisNotifyUserAboutAprovedSkillHierarchy;
-import com.vis.business.skills.messages.VisNotifyUserAboutRejectedSkillHierarchy;
+import com.vis.messages.VisMessages.VisNotifyUserAboutAprovedSkillHierarchy;
+import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 
 /**
  * Representa solicitações pendentes de correção de hierarquia de skill aguardando análise. Ao salvar um
@@ -33,14 +27,16 @@ import com.vis.business.skills.messages.VisNotifyUserAboutRejectedSkillHierarchy
  * Possui escrita assíncrona e cache de 1 hora.
  */
 @CcpEntityCache(3600)
-@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
-@CcpEntityOperations(
-		operations = {
-				@CcpEntityOperation(when = _after, operation = save, from = mainEntity,  execute = {VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class}, operationHandlers = {}),
-		},
-		globalHandlers = {}
-		)
-
+//FIXME
+//@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
+//FIXME
+//@CcpEntityOperations(
+//		operations = {
+//				@CcpEntityOperation(when = _after, operation = save, from = mainEntity,  execute = {VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class}, operationHandlers = {}),
+//		},
+//		globalHandlers = {}
+//		)
+//
 
 @CcpEntityDataTransfers(
 		globalHandlers = {},

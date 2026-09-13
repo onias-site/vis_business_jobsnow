@@ -16,7 +16,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  */
 public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements CcpBusiness {
 	enum JsonFieldNames implements CcpJsonFieldName{
-		originalRecruiter
+		originalRecruiter 
 	}
 
 	public final static VisJsonTransformerPutEmailHashAndDomainRecruiter INSTANCE = new VisJsonTransformerPutEmailHashAndDomainRecruiter();

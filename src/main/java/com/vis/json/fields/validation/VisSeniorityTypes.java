@@ -7,7 +7,7 @@ package com.vis.json.fields.validation;
 public enum VisSeniorityTypes {
 
 	JR,
-	PL,
+	PL, 
 	SR,
 	ES
 	;

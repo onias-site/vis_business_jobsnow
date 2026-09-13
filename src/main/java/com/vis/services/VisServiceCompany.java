@@ -2,21 +2,21 @@ package com.vis.services;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.ccp.business.CcpBusiness;
-import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.services.JnService;
 import com.vis.entities.VisEntityGroupCompaniesByTheirFirstThreeInitials;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
-import java.util.stream.Stream;
 
 /**
  * Serviço de acesso a dados de empresas. Expõe operações relacionadas à busca de empresas pelo nome.
  * Cada constante é um endpoint de serviço.
- */
+ */ 
 public enum VisServiceCompany implements JnService {
 
 	SearchCompaniesByTheirFirstThreeInitials{
