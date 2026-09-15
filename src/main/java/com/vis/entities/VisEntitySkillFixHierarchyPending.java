@@ -1,22 +1,32 @@
 package com.vis.entities;
 
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorTransferType.transferDataTo;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationStepType._after;
-import static com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityType.mainEntity;
+import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterSaveFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError;
+
+import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenTransferOperationType.afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError;
 
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfer;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfers;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
+import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTransfer;
+import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTransferOperation;
+import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite;
+import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWriteOperation;
+import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
+import com.jn.entities.decorators.builders.JnEntitySendMessageToUserWhenTransferBuilder;
+import com.jn.entities.decorators.builders.JnEntitySendMessageToUserWhenWriteBuilder;
+import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.messages.VisMessages;
 import com.vis.messages.VisMessages.VisNotifyUserAboutAprovedSkillHierarchy;
 import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 
@@ -27,25 +37,36 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
  * Possui escrita assíncrona e cache de 1 hora.
  */
 @CcpEntityCache(3600)
-//FIXME
-//@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
-//FIXME
-//@CcpEntityOperations(
-//		operations = {
-//				@CcpEntityOperation(when = _after, operation = save, from = mainEntity,  execute = {VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class}, operationHandlers = {}),
-//		},
-//		globalHandlers = {}
-//		)
-//
+@CcpEntityCustomDecorators(value = {
+		@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6)
+		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserWhenWriteBuilder.class, priority = 5)
+		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserWhenTransferBuilder.class, priority = 5)
+})
 
-@CcpEntityDataTransfers(
-		globalHandlers = {},
-		transfers = {
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyRejected.class, transferType = transferDataTo, when = _after, execute = {VisNotifyUserAboutRejectedSkillHierarchy.class}, transferHandlers = {}),
-				@CcpEntityDataTransfer(from = mainEntity, to = VisEntitySkillFixHierarchyApproved.class, transferType = transferDataTo, when = _after, execute = {VisNotifyUserAboutAprovedSkillHierarchy.class}, transferHandlers = {}),
+@JnEntitySendMessageToUserWhenWrite({
+	@JnEntitySendMessageToUserWhenWriteOperation(
+			operationType = afterSaveFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError,
+			messageTemplate =  VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class
+			),
+})
+@JnEntitySendMessageToUserWhenTransfer(
+		{
+			@JnEntitySendMessageToUserWhenTransferOperation
+			(
+				operationType = afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError,
+				messageTemplate = VisNotifyUserAboutRejectedSkillHierarchy.class,
+				targetEntity = VisEntitySkillFixHierarchyRejected.class
+			),
+			@JnEntitySendMessageToUserWhenTransferOperation
+			(
+				operationType = afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError,
+				messageTemplate = VisEntitySkillFixHierarchyApproved.class,
+				targetEntity = VisNotifyUserAboutAprovedSkillHierarchy.class
+			),
 		}
 		)
 
+@JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyPending.Fields.class)
 public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator {

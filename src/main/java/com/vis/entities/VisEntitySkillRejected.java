@@ -3,6 +3,8 @@ package com.vis.entities;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
@@ -11,6 +13,9 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
+import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
+import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -20,8 +25,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * completos da skill proposta. Possui escrita assíncrona e cache de 1 hora.
  */
 @CcpEntityCache(3600)
-//FIXME
-//@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6),})
+@JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillRejected.Fields.class)
 public class VisEntitySkillRejected implements CcpEntityConfigurator {

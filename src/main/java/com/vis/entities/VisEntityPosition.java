@@ -2,6 +2,8 @@ package com.vis.entities;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
@@ -21,6 +23,12 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefo
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.db.bulk.JnExecuteBulkOperation;
+import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
+import com.jn.entities.decorators.annotations.JnEntityVersionable;
+import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
+import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
+import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
@@ -36,28 +44,23 @@ import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruite
  * dispara fluxos de reagrupamento e envio de currículos para recrutadores.
  */
 @CcpEntityCache(3600)
-//FIXME
-//@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
-//FIXME
-//@CcpEntityVersionable(JnVersionableEntity.class)
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6),})
 @CcpEntityTwin(
 		twinEntityName = "inactive_position",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
+@JnEntityAsyncWriter(JnAsyncWriterEntity.class)
+@JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityPosition.Fields.class)
-//FIXME
-//@CcpEntityOperations(
-//		operations = {
-//				@CcpEntityOperation(when = _before, operation = save, from = mainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
-//				// TODO VAI SAIR ESSE FLUXO POR CAUSA DA RETIRADA DOS GROUPINGS
-//				@CcpEntityOperation(when = _before, operation = delete, from = mainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
-//				//TODO REVISITAR ESTE FLUXO
-//				@CcpEntityOperation(when = _before, operation = delete, from = twinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
-//		},
-//		globalHandlers = {}
-//		)
+//@CcpEntityOperations({
+//		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+//		// TODO VAI SAIR ESSE FLUXO POR CAUSA DA RETIRADA DOS GROUPINGS
+//		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteFromMainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
+//		//TODO REVISITAR ESTE FLUXO
+//		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteFromTwinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
+//})
 
 public class VisEntityPosition implements CcpEntityConfigurator {
 

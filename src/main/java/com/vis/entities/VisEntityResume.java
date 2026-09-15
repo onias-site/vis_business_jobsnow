@@ -3,10 +3,15 @@ package com.vis.entities;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
+import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
@@ -18,11 +23,19 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.db.bulk.JnExecuteBulkOperation;
+import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
+import com.jn.entities.decorators.annotations.JnEntityVersionable;
+import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
+import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
+import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.resume.VisBusinessCalculateResumeHashes;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
+import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 /**
  * Representa a entidade central de Currículo (resume) do candidato. Armazena o perfil profissional completo:
@@ -32,25 +45,20 @@ import com.vis.json.fields.validation.VisJsonFieldsSkills;
  * reativar (deletar do twin), dispara o cálculo de hashes e o envio do currículo para recrutadores compatíveis.
  */
 @CcpEntityCache(3600)
-//FIXME
-//@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
-//FIXME
-//@CcpEntityVersionable(JnVersionableEntity.class) 
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6),})
 @CcpEntityTwin(
 		twinEntityName = "inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		) 
+@JnEntityAsyncWriter(JnAsyncWriterEntity.class)
+@JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
-//FIXME
-//@CcpEntityOperations(
-//		operations = {
-//				@CcpEntityOperation(when = _before, operation = save, from = mainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
-//				@CcpEntityOperation(when = _before, operation = delete, from = twinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
-//		},
-//		globalHandlers = {}
-//		)
+@CcpEntityOperations({
+		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteFromTwinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+})
 
 public class VisEntityResume implements CcpEntityConfigurator {
 	
