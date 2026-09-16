@@ -11,16 +11,16 @@ import com.vis.entities.VisEntityResume;
 public enum VisServiceResume implements JnService {
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityResume.ENTITY.delete(json);
+			VisEntityResume.ENTITY.delete(json);
 
-			return  result;
+			return  json;
 		}
 	},
 	Delete{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation sessionValues) {
-			CcpJsonRepresentation result = VisEntityResume.ENTITY.delete(sessionValues);
+			VisEntityResume.ENTITY.delete(sessionValues);
 
-			return result;
+			return sessionValues;
 		}
 	},
 	GetData{
@@ -33,9 +33,9 @@ public enum VisServiceResume implements JnService {
 	Save{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation sessionValues) {
 			
-			CcpJsonRepresentation result = VisEntityResume.ENTITY.save(sessionValues);
+			VisEntityResume.ENTITY.save(sessionValues);
 
-			return result;
+			return sessionValues;
 		}
 		
 		public Class<?> getJsonValidationClass() {

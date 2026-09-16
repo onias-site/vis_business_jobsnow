@@ -30,9 +30,9 @@ public enum VisServiceRecruiter implements JnService {
 	},
 	SaveOpinionAboutThisResume{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityResumePerception.ENTITY.save(json);
-			
-			return result;
+			VisEntityResumePerception.ENTITY.save(json);
+
+			return json;
 		}
 	},
 	SendResumesToEmail{
@@ -45,9 +45,9 @@ public enum VisServiceRecruiter implements JnService {
 	},
 	ChangeOpinionAboutThisResume{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityResumePerception.ENTITY.delete(json);
-			
-			return result;
+			VisEntityResumePerception.ENTITY.delete(json);
+
+			return json;
 		}
 	},
 	;

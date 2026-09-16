@@ -26,9 +26,9 @@ import com.ccp.especifications.db.crud.CcpSelectProcedure;
 public enum VisServicePosition implements JnService {  
 	ChangeStatus{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityPosition.ENTITY.delete(json);
-			 
-			return result;
+			VisEntityPosition.ENTITY.delete(json);
+
+			return json;
 		}
 	},
 	GetData{
@@ -96,9 +96,9 @@ public enum VisServicePosition implements JnService {
 	},
 	Save{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityPosition.ENTITY.save(json);
-			
-			return result;
+			VisEntityPosition.ENTITY.save(json);
+
+			return json;
 		}
 	},
 	SuggestNewSkills{

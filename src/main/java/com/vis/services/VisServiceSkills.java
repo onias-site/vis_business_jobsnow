@@ -315,8 +315,8 @@ public enum VisServiceSkills implements JnService {
 	
 	FixSkillHierarchy{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation save = VisEntitySkillFixHierarchyPending.ENTITY.save(json);
-			return save;
+			VisEntitySkillFixHierarchyPending.ENTITY.save(json);
+			return json;
 		}
 	}
 	;
