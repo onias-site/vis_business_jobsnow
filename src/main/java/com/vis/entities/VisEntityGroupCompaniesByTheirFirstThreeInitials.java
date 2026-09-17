@@ -14,6 +14,7 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
 import com.ccp.especifications.db.query.CcpQueryOptions;
@@ -67,8 +68,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 			CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
 			
 			Consumer<CcpJsonRepresentation> consumer = json -> {
-				CcpFieldName ccpFieldName = new CcpFieldName("id");
-				String x = json.getAsString(ccpFieldName);
+				String x = json.getAsString(VisJsonCommonsFields.id);
 					String[] split = x.split("@");
 					boolean lengthDiferente = split.length != 2;
 					if(lengthDiferente) {

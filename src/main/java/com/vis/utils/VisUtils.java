@@ -44,6 +44,8 @@ import com.ccp.especifications.db.query.CcpQuerySimplifiedQuery;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.especifications.db.query.CcpQuery;
 
+import com.ccp.json.fields.validation.CcpJsonCommonsFields;
+
 /**
  * Classe central de utilitários do módulo VIS. Concentra a lógica de alto nível do processo de matching
  * entre currículos e vagas: filtragem, ordenação, cálculo de hashes de compatibilidade, agrupamentos,
@@ -52,7 +54,7 @@ import com.ccp.especifications.db.query.CcpQuery;
  */
 public class VisUtils {
 	enum JsonFieldNames implements CcpJsonFieldName{
-		tenant, resumes, statis, resumeOpinion, resumeLastView, requiredSkills, type, synonyms, parents, filterResumesAlreadySeen, owner, masters, index
+		tenant, statis, resumeOpinion, resumeLastView, requiredSkills, synonyms, parents, filterResumesAlreadySeen, owner, index
 	}
 	
 	public static String getTenant() {
@@ -106,7 +108,7 @@ public class VisUtils {
 
 	private static CcpJsonRepresentation getStatisToThisPosition(CcpJsonRepresentation positionsWithFilteredResumes) {
 
-		List<CcpJsonRepresentation> resumes = positionsWithFilteredResumes.getAsJsonList(JsonFieldNames.resumes);
+		List<CcpJsonRepresentation> resumes = positionsWithFilteredResumes.getAsJsonList(VisJsonCommonsFields.resumes);
 		String disponibilityName = VisJsonCommonsFields.disponibility.name();
 		String experienceName = VisJsonCommonsFields.experience.name();
 		String btcName = VisJsonCommonsFields.btc.name();
@@ -145,7 +147,7 @@ public class VisUtils {
 			}
 		}
 		int resumesSize = resumes.size();
-		positionsWithFilteredResumes = positionsWithFilteredResumes.addToItem(JsonFieldNames.statis, JsonFieldNames.resumes, resumesSize);
+		positionsWithFilteredResumes = positionsWithFilteredResumes.addToItem(JsonFieldNames.statis, VisJsonCommonsFields.resumes, resumesSize);
 		return positionsWithFilteredResumes;
 	}
 	
@@ -443,7 +445,7 @@ public class VisUtils {
 
 					CcpJsonRepresentation resumeWithCommentAndVisualizationDetails = put4.put(JsonFieldNames.resumeLastView, resumeLastView);
 					CcpJsonRepresentation addToList = emailMessageValuesToSent
-					.addToList(JsonFieldNames.resumes, resumeWithCommentAndVisualizationDetails);
+					.addToList(VisJsonCommonsFields.resumes, resumeWithCommentAndVisualizationDetails);
 					CcpJsonRepresentation put5 = addToList
 					.put(VisEntityResumeLastView.Fields.position, allPositionsGroupedByRecruiters);
 
@@ -475,7 +477,7 @@ public class VisUtils {
 			
 			if(skillDirectlyFoundInResume) {
 				CcpJsonRepresentation put6 = CcpOtherConstants.EMPTY_JSON
-					.put(JsonFieldNames.type, ResumeSkillFoundType.CONTAINED_IN_RESUME);
+					.put(CcpJsonCommonsFields.type, ResumeSkillFoundType.CONTAINED_IN_RESUME);
 					CcpJsonRepresentation skill = put6
 					.put(VisJsonCommonsFields.skill, requiredSkillFromPosition);
 				response.add(skill);
@@ -491,7 +493,7 @@ public class VisUtils {
 				CcpJsonRepresentation synonym = synonymFound.get();
 				String synonymName = synonym.getAsString(VisJsonCommonsFields.skill);
 				CcpJsonRepresentation put7 = CcpOtherConstants.EMPTY_JSON
-						.put(JsonFieldNames.type, ResumeSkillFoundType.SYNONYM);
+						.put(CcpJsonCommonsFields.type, ResumeSkillFoundType.SYNONYM);
 						CcpJsonRepresentation put8 = put7
 						.put(VisJsonCommonsFields.skill, requiredSkillFromPosition);
 						CcpJsonRepresentation skill = put8
@@ -515,7 +517,7 @@ public class VisUtils {
 				CcpJsonRepresentation put9 = CcpOtherConstants.EMPTY_JSON
 						.put(VisJsonCommonsFields.skill, requiredSkillFromPosition);
 						CcpJsonRepresentation put10 = put9
-						.put(JsonFieldNames.type, ResumeSkillFoundType.PARENT);
+						.put(CcpJsonCommonsFields.type, ResumeSkillFoundType.PARENT);
 						CcpJsonRepresentation skill = put10
 						.put(JsonFieldNames.parents, parents)
 						;
@@ -575,7 +577,7 @@ public class VisUtils {
 	
 		CcpJsonRepresentation positionWithResumes = allPositionsWithFilteredResumes.getInnerJson(ccpFieldName7);
 		
-		List<CcpJsonRepresentation> resumes = positionWithResumes.getAsJsonList(JsonFieldNames.resumes);
+		List<CcpJsonRepresentation> resumes = positionWithResumes.getAsJsonList(VisJsonCommonsFields.resumes);
 		int resumesSize2 = resumes.size();
 
 		boolean singleResume = resumesSize2 <= 1;
@@ -587,7 +589,7 @@ public class VisUtils {
 		VisSorterResumesByPosition positionResumesSort = new VisSorterResumesByPosition(position);
 		resumes.sort(positionResumesSort);
 		CcpJsonRepresentation mergeWithAnotherJson2 = CcpOtherConstants.EMPTY_JSON.mergeWithAnotherJson(positionWithResumes);
-		CcpJsonRepresentation put = mergeWithAnotherJson2.put(JsonFieldNames.resumes, resumes);
+		CcpJsonRepresentation put = mergeWithAnotherJson2.put(VisJsonCommonsFields.resumes, resumes);
 		return put;
 	}
 	
@@ -642,7 +644,7 @@ public class VisUtils {
 			CcpJsonFieldName masterField, 
 			CcpJsonFieldName ascField) {
 		//1
-		List<String> masters = json.getAsStringList(JsonFieldNames.masters);
+		List<String> masters = json.getAsStringList(VisJsonCommonsFields.masters);
 		CcpQuery startQuery = CcpQueryOptions.INSTANCE
 				.startQuery();
 				var startBool = startQuery

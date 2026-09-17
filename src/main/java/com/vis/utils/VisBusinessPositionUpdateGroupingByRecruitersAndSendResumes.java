@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.function.Function;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.vis.entities.VisEntityGroupResumesByPosition;
@@ -13,6 +12,7 @@ import com.vis.entities.VisEntityResumeLastView;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
+
 /**
  * Orquestra a atualização completa do agrupamento de vagas por recrutadores e o envio de currículos
  * compatíveis ao ser disparada após um save ou delete de vaga. Duplica o campo email para masters,
@@ -20,9 +20,6 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * compatíveis com a vaga, e salva o resultado paginado em VisEntityGroupResumesByPosition.
  */
 public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes implements CcpBusiness{
-	enum JsonFieldNames implements CcpJsonFieldName{
-		masters, resumes
-	}
 
 	private VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes() {}
 	
@@ -30,7 +27,7 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 	//0
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		CcpJsonRepresentation duplicateValueFromKey = json.duplicateValueFromField(VisJsonCommonsFields.email, JsonFieldNames.masters);
+		CcpJsonRepresentation duplicateValueFromKey = json.duplicateValueFromField(VisJsonCommonsFields.email, VisJsonCommonsFields.masters);
 
 		VisUtils.groupPositionsGroupedByRecruiters(duplicateValueFromKey);
 		
@@ -44,7 +41,7 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 		
 		CcpJsonRepresentation positionWithFilteredAndSortedResumesAndTheirStatis = positionsWithFilteredAndSortedResumesAndTheirStatis.get(0);
 		
-		List<CcpJsonRepresentation> records = positionWithFilteredAndSortedResumesAndTheirStatis.getAsJsonList(JsonFieldNames.resumes);
+		List<CcpJsonRepresentation> records = positionWithFilteredAndSortedResumesAndTheirStatis.getAsJsonList(VisJsonCommonsFields.resumes);
 		
 		CcpJsonRepresentation position = positionWithFilteredAndSortedResumesAndTheirStatis.getInnerJson(VisEntityResumeLastView.Fields.position);
 

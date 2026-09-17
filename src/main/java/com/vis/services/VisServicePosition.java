@@ -5,7 +5,6 @@ import java.util.function.Supplier;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
@@ -19,6 +18,8 @@ import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
 import com.vis.status.VisProcessStatusSuggestNewSkill;
 import com.ccp.especifications.db.crud.CcpSelectProcedure;
+
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 
 /**
  * Serviço de acesso a dados de vagas. Expõe operações de CRUD e consulta de skills relacionadas a vagas.
@@ -43,12 +44,12 @@ public enum VisServicePosition implements JnService {
 			Supplier<CcpJsonRepresentation> jsonSupplier = json.getJsonSupplier();
 			if(activeResume) {
 				CcpJsonRepresentation requiredEntityRow = VisEntityPosition.ENTITY.getRecordFromUnionAll(searchResults, jsonSupplier);
-				CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, true);
+				CcpJsonRepresentation put = requiredEntityRow.put(JnJsonCommonsFields.activePosition, true);
 				return put;
 			}
 			
 			CcpJsonRepresentation requiredEntityRow = mirrorEntity.getRecordFromUnionAll(searchResults, jsonSupplier);
-			CcpJsonRepresentation put = requiredEntityRow.put(JsonFieldNames.activePosition, false);
+			CcpJsonRepresentation put = requiredEntityRow.put(JnJsonCommonsFields.activePosition, false);
 			return put;
 		}
 	},
@@ -139,9 +140,6 @@ public enum VisServicePosition implements JnService {
 		}
 	},
 	;
-	enum JsonFieldNames implements CcpJsonFieldName{
-		activePosition
-	}
 
 
 

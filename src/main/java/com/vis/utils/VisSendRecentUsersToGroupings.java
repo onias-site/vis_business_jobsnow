@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonFieldName;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.vis.schedulling.VisBusinessGroupResumeViewsByRecruiter;
@@ -15,15 +14,14 @@ import com.vis.schedulling.VisBusinessGroupResumesOpinionsByRecruiter;
 import com.vis.schedulling.VisBusinessGroupResumesOpinionsByResume;
 import java.util.stream.Stream;
 
+import com.vis.json.fields.validation.VisJsonCommonsFields;
+
 /**
  * Consumidor de lista de registros de sessão recentes que extrai os e-mails dos usuários e os envia para os
  * quatro processos de agrupamento assíncronos (opiniões por recrutador, opiniões por currículo, visualizações
  * por recrutador, visualizações por currículo), disparando as mensageiras correspondentes.
  */
 public class VisSendRecentUsersToGroupings implements Consumer<List<CcpJsonRepresentation>> {
-	enum JsonFieldNames implements CcpJsonFieldName{
-		masters
-	}
 	
 	private VisSendRecentUsersToGroupings() {}
 	
@@ -40,7 +38,7 @@ public class VisSendRecentUsersToGroupings implements Consumer<List<CcpJsonRepre
 		List<String> emails = streamMapMapMap
 		.collect(Collectors.toList());
 		
-		CcpJsonRepresentation message = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.masters, emails);
+		CcpJsonRepresentation message = CcpOtherConstants.EMPTY_JSON.put(VisJsonCommonsFields.masters, emails);
 		JnFunctionMensageriaSender jnFunctionMensageriaSender = new JnFunctionMensageriaSender(VisBusinessGroupResumesOpinionsByRecruiter.INSTANCE);
 
 		jnFunctionMensageriaSender.sendToMensageria(message);

@@ -1,9 +1,9 @@
 package com.vis.business.position;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.business.CcpBusiness;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+
 
 /**
  * Implementação de CcpBusiness que copia o valor do campo email da entidade VisEntityPosition
@@ -12,9 +12,6 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  */
 public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpBusiness{
 		
-	enum JsonFieldNames implements CcpJsonFieldName{
-		masters
-	}
 
 	public static final VisBusinessDuplicateFieldEmailToFieldMasters INSTANCE = new VisBusinessDuplicateFieldEmailToFieldMasters();
 	
@@ -22,7 +19,7 @@ public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpBusiness
 	
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation duplicateValueFromField = json.duplicateValueFromField(VisJsonCommonsFields.email, JsonFieldNames.masters);
+		CcpJsonRepresentation duplicateValueFromField = json.duplicateValueFromField(VisJsonCommonsFields.email, VisJsonCommonsFields.masters);
 		return duplicateValueFromField;
 	}
 

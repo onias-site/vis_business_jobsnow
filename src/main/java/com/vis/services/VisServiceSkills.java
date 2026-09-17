@@ -293,22 +293,18 @@ public enum VisServiceSkills implements JnService {
 		}
 		
 		private CcpJsonRepresentation putLabel(CcpJsonRepresentation json) {
-			CcpFieldName ccpFieldName = new CcpFieldName("skill");
-			String skill = json.getAsString(ccpFieldName);
-			CcpFieldName ccpFieldName2 = new CcpFieldName("word");
-			String word = json.getAsString(ccpFieldName2);
+			String skill = json.getAsString(VisJsonCommonsFields.skill);
+			String word = json.getAsString(VisJsonCommonsFields.word);
 
 			boolean sameWord = skill.equals(word);
 			if(sameWord) {
-				CcpFieldName ccpFieldName3 = new CcpFieldName("label");
-				CcpJsonRepresentation put = json.put(ccpFieldName3, skill);
+				CcpJsonRepresentation put = json.put(VisJsonCommonsFields.label, skill);
 				return put;
 			}
 			String wordMais = word + " (";
 			String wordMaisMais = wordMais + skill;
 			String label = wordMaisMais + ")";
-			CcpFieldName ccpFieldName4 = new CcpFieldName("label");
-			CcpJsonRepresentation put = json.put(ccpFieldName4, label);
+			CcpJsonRepresentation put = json.put(VisJsonCommonsFields.label, label);
 			return put;
 		}
 	}, 

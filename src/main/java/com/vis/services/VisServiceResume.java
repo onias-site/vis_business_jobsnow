@@ -1,9 +1,9 @@
 package com.vis.services;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonFieldName;
 import com.jn.services.JnService;
 import com.vis.entities.VisEntityResume;
+
 
 /**
  * Serviço de acesso a dados de currículos. Expõe as operações de CRUD sobre a entidade VisEntityResume.
@@ -44,6 +44,3 @@ public enum VisServiceResume implements JnService {
 	}, 
 	;
 }
-	enum JsonFieldNames implements CcpJsonFieldName{
-		activePosition
-	}

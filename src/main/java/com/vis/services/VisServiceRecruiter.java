@@ -1,13 +1,13 @@
 package com.vis.services;
 
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonFieldName;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.services.JnService;
 import com.vis.business.recruiter.VisBusinessRecruiterReceivingResumes;
 import com.vis.entities.VisEntityGroupPositionsByRecruiter;
 import com.vis.entities.VisEntityGroupResumesPerceptionsByRecruiter;
 import com.vis.entities.VisEntityResumePerception;
+
 
 /**
  * Serviço de acesso a dados do recrutador. Expõe operações relacionadas às interações do recrutador
@@ -51,9 +51,6 @@ public enum VisServiceRecruiter implements JnService {
 		}
 	},
 	;
-	enum JsonFieldNames implements CcpJsonFieldName{
-		activePosition
-	}
 
 
 
