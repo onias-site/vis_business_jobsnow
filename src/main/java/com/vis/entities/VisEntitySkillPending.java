@@ -22,8 +22,10 @@ import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTrans
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite;
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWriteOperation;
 import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
-import com.jn.entities.decorators.builders.JnEntitySendMessageToUserWhenTransferBuilder;
-import com.jn.entities.decorators.builders.JnEntitySendMessageToUserWhenWriteBuilder;
+import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterTransferBuilder;
+import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterWriteBuilder;
+import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeTransferBuilder;
+import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeWriteBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
@@ -41,9 +43,11 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 @CcpEntityCache(3600) 
 
 @CcpEntityCustomDecorators(value = {
-		@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6)
-		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserWhenWriteBuilder.class, priority = 5)
-		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserWhenTransferBuilder.class, priority = 5)
+		@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8)
+		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeWriteBuilder.class, priority = 7)
+		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeTransferBuilder.class, priority = 7)
+		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserAfterWriteBuilder.class, priority = 5)
+		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserAfterTransferBuilder.class, priority = 5)
 })
 
 @JnEntitySendMessageToUserWhenWrite({

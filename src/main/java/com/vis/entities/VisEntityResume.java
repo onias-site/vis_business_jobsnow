@@ -45,7 +45,7 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
  * reativar (deletar do twin), dispara o cálculo de hashes e o envio do currículo para recrutadores compatíveis.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6),})
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
 @CcpEntityTwin(
 		twinEntityName = "inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,

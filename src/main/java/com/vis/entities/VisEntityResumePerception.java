@@ -27,7 +27,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * Possui escrita assíncrona, versionamento e cache de 1 hora.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6),})
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

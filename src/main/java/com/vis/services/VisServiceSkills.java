@@ -58,8 +58,7 @@ public enum VisServiceSkills implements JnService {
 	RequestToCreateNewSkill{
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpEntityMetaData entityMetaData = VisEntitySkillPending.ENTITY.getEntityMetaData();
-			CcpBusiness action = entityMetaData.getOperationCallback(CcpEntityOperationType.save);
+			CcpBusiness action = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillPending.ENTITY);
 			CcpGetEntityId ccpGetEntityId = new CcpGetEntityId(json);
 			CcpSelectProcedure toBeginProcedureAnd = ccpGetEntityId
 			.toBeginProcedureAnd();

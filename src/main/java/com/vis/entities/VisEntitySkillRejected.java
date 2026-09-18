@@ -25,7 +25,7 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * completos da skill proposta. Possui escrita assíncrona e cache de 1 hora.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6),})
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillRejected.Fields.class)

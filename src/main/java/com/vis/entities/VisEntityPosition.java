@@ -44,7 +44,7 @@ import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruite
  * dispara fluxos de reagrupamento e envio de currículos para recrutadores.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 6),})
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
 @CcpEntityTwin(
 		twinEntityName = "inactive_position",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
@@ -71,7 +71,6 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	static enum CltSalaryRange { maxClt, minClt }
 	static enum PjSalaryRange  { minPj, maxPj }
 	
-	//FIXME FUNCIONA ESTA VALIDAÇÃO?
 	@CcpJsonGlobalValidations(requiresAtLeastOne = {
 			@CcpJsonValidationFieldList(MaxSalaryType.class),
 			@CcpJsonValidationFieldList(MinSalaryType.class)
