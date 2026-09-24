@@ -39,7 +39,6 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements CcpBusi
 				.put(JsonFieldNames.originalRecruiter, recruiter);
 				CcpJsonRepresentation put3 = put2
 				.put(VisJsonCommonsFields.recruiter, hash);
-		//LATER NONPROFESSIONAL DOMAINS JnEntitySystemMessage
 		CcpJsonRepresentation put = put3
 				.put(VisJsonCommonsFields.domain, domain)
 				;

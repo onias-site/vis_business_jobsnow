@@ -64,7 +64,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 	
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
 
-	static enum SalaryType{
+	public static enum SalaryType{
 		pj, clt
 	}
 	

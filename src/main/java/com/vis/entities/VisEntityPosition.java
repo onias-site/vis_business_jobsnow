@@ -66,10 +66,10 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;
 
-	static enum MaxSalaryType { maxClt, maxPj }
-	static enum MinSalaryType { minClt, minPj }
-	static enum CltSalaryRange { maxClt, minClt }
-	static enum PjSalaryRange  { minPj, maxPj }
+	public static enum MaxSalaryType { maxClt, maxPj }
+	public static enum MinSalaryType { minClt, minPj }
+	public static enum CltSalaryRange { maxClt, minClt }
+	public static enum PjSalaryRange  { minPj, maxPj }
 	
 	@CcpJsonGlobalValidations(requiresAtLeastOne = {
 			@CcpJsonValidationFieldList(MaxSalaryType.class),
