@@ -109,7 +109,6 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		skill,
 
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisSkillFixHierarchyTypes.class)
-		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldValidatorRequired
 		type,
 

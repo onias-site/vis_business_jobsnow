@@ -68,7 +68,7 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 			(
 				operationType = afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError,
 				messageTemplate = VisNotifyUserAboutAprovedSkill.class,
-				targetEntity = VisNotifyUserAboutAprovedSkill.class
+				targetEntity = VisEntitySkill.class
 			),
 		}
 		)

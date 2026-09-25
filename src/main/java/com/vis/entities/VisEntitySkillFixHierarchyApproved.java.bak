@@ -21,18 +21,18 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Registra solicitações de correção de hierarquia de skill que foram rejeitadas, armazenando o e-mail
+ * Registra solicitações de correção de hierarquia de skill que foram aprovadas, armazenando o e-mail
  * do solicitante, o conhecimento implícito ({@code parent}), a skill, o tipo da correção ({@code add} ou
- * {@code remove}), a explicação da rejeição e a descrição da correção proposta. Versionável e com cache de 1 hora.
+ * {@code remove}), a explicação da aprovação e a descrição da correção. Versionável e com cache de 1 hora.
  */
 @CcpEntityCache(3600)
 @CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),})
 @JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyRejected.Fields.class)
-public class VisEntitySkillFixHierarchyRejected implements CcpEntityConfigurator {
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyApproved.Fields.class)
+public class VisEntitySkillFixHierarchyApproved implements CcpEntityConfigurator {
 
-	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyRejected.class).entityInstance;
+	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyApproved.class).entityInstance;
 
 	public static enum Fields implements CcpJsonFieldName{
 		@CcpEntityFieldPrimaryKey
@@ -58,7 +58,6 @@ public class VisEntitySkillFixHierarchyRejected implements CcpEntityConfigurator
 		skill,
 
 		@CcpJsonCopyFieldValidationsFrom(VisEntitySkillFixHierarchyPending.Fields.class)
-		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldValidatorRequired
 		type,
 

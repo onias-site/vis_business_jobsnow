@@ -30,7 +30,6 @@ import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityGroupPositionsBySkills;
 import com.vis.entities.VisEntitySkill;
-import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -50,8 +49,9 @@ enum Fields implements CcpJsonFieldName{
 }
 
 /**
- * Serviço de operações sobre skills: solicitação de novas skills, extração de skills de texto livre
- * e correção de hierarquia. Contém a lógica mais rica do módulo de skills.
+ * Serviço de operações sobre skills: solicitação de novas skills e extração de skills de texto livre.
+ * Contém a lógica mais rica do módulo de skills. A correção de hierarquia fica em
+ * {@link VisServiceSkillFixHierarchy}.
  */
 public enum VisServiceSkills implements JnService {
 	
@@ -305,13 +305,6 @@ public enum VisServiceSkills implements JnService {
 			String label = wordMaisMais + ")";
 			CcpJsonRepresentation put = json.put(VisJsonCommonsFields.label, label);
 			return put;
-		}
-	}, 
-	
-	FixSkillHierarchy{
-		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			VisEntitySkillFixHierarchyPending.ENTITY.save(json);
-			return json;
 		}
 	}
 	;

@@ -3,33 +3,42 @@ package com.vis.entities;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
+import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.jn.entities.decorators.annotations.JnEntityVersionable;
+import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
+import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * Registra solicitações de correção de hierarquia de skill que foram aprovadas, armazenando o e-mail
- * do solicitante, a explicação da aprovação e a descrição da correção. Possui cache de 1 hora.
+ * do solicitante, o conhecimento implícito ({@code parent}), a skill, o tipo da correção ({@code add} ou
+ * {@code remove}), a explicação da aprovação e a descrição da correção. Versionável e com cache de 1 hora.
  */
 @CcpEntityCache(3600)
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),})
+@JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyApproved.Fields.class)
 public class VisEntitySkillFixHierarchyApproved implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyApproved.class).entityInstance;
-	
+
 	public static enum Fields implements CcpJsonFieldName{
-		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		date,
-		
+		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
-		email, 
+		email,
 
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
@@ -38,9 +47,20 @@ public class VisEntitySkillFixHierarchyApproved implements CcpEntityConfigurator
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		description,
-	
-		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		timestamp,
+
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		@CcpEntityFieldPrimaryKey
+		parent,
+
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		@CcpJsonFieldValidatorArray
+		@CcpJsonFieldValidatorRequired
+		skill,
+
+		@CcpJsonCopyFieldValidationsFrom(VisEntitySkillFixHierarchyPending.Fields.class)
+		@CcpEntityFieldPrimaryKey
+		@CcpJsonFieldValidatorRequired
+		type,
 
 	}
 }

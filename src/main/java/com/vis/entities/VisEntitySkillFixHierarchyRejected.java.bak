@@ -58,7 +58,6 @@ public class VisEntitySkillFixHierarchyRejected implements CcpEntityConfigurator
 		skill,
 
 		@CcpJsonCopyFieldValidationsFrom(VisEntitySkillFixHierarchyPending.Fields.class)
-		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldValidatorRequired
 		type,
 
