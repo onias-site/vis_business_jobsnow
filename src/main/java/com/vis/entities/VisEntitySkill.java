@@ -26,10 +26,10 @@ import com.ccp.decorators.CcpFileDecorator;
 import java.util.stream.Stream;
 
 /**
- * Representa uma skill (habilidade) aprovada no sistema, com seu ranking de relevância (baseado na
- * quantidade de currículos que a possuem), suas skills-pai na hierarquia e seus sinônimos.
- * Possui cache de 1 hora. Inclui lógica de carga inicial que lê synonyms.json e um arquivo de
- * contagem de palavras por currículo para calcular o ranking.
+ * Represents a skill approved in the system, with its relevance ranking (based on the number of
+ * resumes that have it), its parent skills in the hierarchy and its synonyms.
+ * Cached for 1 hour. Includes the initial load logic, which reads synonyms.json and a file with
+ * the word count per resume to calculate the ranking.
  */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
@@ -58,64 +58,64 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	}
 	
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json");
-		CcpFileDecorator ccpStringDecoratorFile = ccpStringDecorator
+		CcpStringDecorator synonymsFilePath = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json");
+		CcpFileDecorator synonymsFile = synonymsFilePath
 		.file();
-		var asJsonList = ccpStringDecoratorFile
+		var allSynonyms = synonymsFile
 		.asJsonList();
-		var stream = asJsonList
+		var allSynonymsStream = allSynonyms
 		.stream();
-		var filter = stream
+		var synonymsWithValidSkillLength = allSynonymsStream
 		.filter(x -> x.getAsString(VisJsonCommonsFields.skill).length() <= 50);
-		var synonyms = filter
+		var synonyms = synonymsWithValidSkillLength
 		.collect(Collectors.toList())
 		;
-		CcpStringDecorator ccpStringDecorator2 = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\vis\\database\\skills\\countByWords.txt");
-		CcpFileDecorator ccpStringDecorator2File = ccpStringDecorator2
+		CcpStringDecorator countByWordsFilePath = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\vis\\database\\skills\\countByWords.txt");
+		CcpFileDecorator countByWordsFile = countByWordsFilePath
 				 .file();
-				 List<String> lines = ccpStringDecorator2File.getLines()
+				 List<String> lines = countByWordsFile.getLines()
 				 ;
-				 var stream2 = synonyms.stream();
-				 var stream2Map = stream2.map(json -> {
+				 var synonymsStream = synonyms.stream();
+				 var synonymsWithResumesCountStream = synonymsStream.map(json -> {
 			int resumesCount = this.getResumesCount(json, lines);
 
-			CcpJsonRepresentation put = json.put(VisJsonCommonsFields.resumesCount, resumesCount);
+			CcpJsonRepresentation jsonWithResumesCount = json.put(VisJsonCommonsFields.resumesCount, resumesCount);
 			
-			return put;
+			return jsonWithResumesCount;
 			
 			});
-			var collect2 = stream2Map.collect(Collectors.toList());
+			var synonymsWithResumesCount = synonymsWithResumesCountStream.collect(Collectors.toList());
 
-			List<CcpJsonRepresentation> collect = new ArrayList<>(collect2);
+			List<CcpJsonRepresentation> sortedSynonyms = new ArrayList<>(synonymsWithResumesCount);
 		
 		
-		collect.sort((a, b) -> b.getAsIntegerNumber(VisJsonCommonsFields.resumesCount) - a.getAsIntegerNumber(VisJsonCommonsFields.resumesCount));
+		sortedSynonyms.sort((a, b) -> b.getAsIntegerNumber(VisJsonCommonsFields.resumesCount) - a.getAsIntegerNumber(VisJsonCommonsFields.resumesCount));
 		
 		int ranking = 1;
 		
 		List<CcpBulkItem> response = new ArrayList<>();
 		
-		for (CcpJsonRepresentation json : collect) {
+		for (CcpJsonRepresentation json : sortedSynonyms) {
 			VisEntitySkill.Fields[] fieldsValues = Fields.values();
 			CcpJsonRepresentation jsonPiece = json.getJsonPiece(fieldsValues);
-			boolean rankingIgual = ranking == 87;
-			if(rankingIgual) {
+			boolean isDebugRanking = ranking == 87;
+			if(isDebugRanking) {
 				System.out.println();
 			}
-			CcpJsonRepresentation put = jsonPiece.put(VisJsonCommonsFields.ranking, ranking++);
-			List<CcpJsonRepresentation> asJsonList2 = put.getAsJsonList(VisJsonCommonsFields.synonym);
-			Stream<CcpJsonRepresentation> stream3 = asJsonList2.stream();
-			var stream3Map = stream3
+			CcpJsonRepresentation skillRecord = jsonPiece.put(VisJsonCommonsFields.ranking, ranking++);
+			List<CcpJsonRepresentation> synonymsOfTheSkill = skillRecord.getAsJsonList(VisJsonCommonsFields.synonym);
+			Stream<CcpJsonRepresentation> synonymsOfTheSkillStream = synonymsOfTheSkill.stream();
+			var synonymNamesStream = synonymsOfTheSkillStream
 					.map(x -> x.getAsString(VisJsonCommonsFields.skill));
-					var filter2 = stream3Map
+					var synonymNamesWithValidLength = synonymNamesStream
 					.filter(x -> x.length() <= 50);
-					var synonym = filter2
+					var synonym = synonymNamesWithValidLength
 					.collect(Collectors.toList());
 			
 			
-			put = put.put(VisJsonCommonsFields.synonym, synonym);
+			skillRecord = skillRecord.put(VisJsonCommonsFields.synonym, synonym);
 			
-			var items = ENTITY.toBulkItems(put, CcpBulkEntityOperationType.create);
+			var items = ENTITY.toBulkItems(skillRecord, CcpBulkEntityOperationType.create);
 			response.addAll(items);
 		}
 		
@@ -132,19 +132,19 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		 
 		 for (String word : skills) {
 			 
-			 String start = word + " = ";
-			 var stream4 = new ArrayList<>(lines).stream();
-			 var filter3 = stream4.filter(line -> line.startsWith(start));
-			 var filter3Map = filter3.map(line -> line.replace(start, "").trim());
-			 var filter3MapMap = filter3Map
+			 String linePrefix = word + " = ";
+			 var linesStream = new ArrayList<>(lines).stream();
+			 var linesOfTheWord = linesStream.filter(line -> line.startsWith(linePrefix));
+			 var countTextsOfTheWord = linesOfTheWord.map(line -> line.replace(linePrefix, "").trim());
+			 var countsOfTheWord = countTextsOfTheWord
 			 .map(line -> Integer.valueOf(line));
-			 var findFirst = filter3MapMap
+			 var firstCountOfTheWord = countsOfTheWord
 			 .findFirst();
 
-			 Integer orElse = findFirst
+			 Integer wordResumesCount = firstCountOfTheWord
 			 .orElse(0);
 			 
-			 total += orElse;
+			 total += wordResumesCount;
 		}
 		 
 		return total;

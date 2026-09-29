@@ -17,9 +17,9 @@ import java.util.stream.Stream;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Consumidor de lista de registros de sessão recentes que extrai os e-mails dos usuários e os envia para os
- * quatro processos de agrupamento assíncronos (opiniões por recrutador, opiniões por currículo, visualizações
- * por recrutador, visualizações por currículo), disparando as mensageiras correspondentes.
+ * Consumer of a list of recent session records that extracts the users' e-mails and sends them to the
+ * four asynchronous grouping processes (opinions by recruiter, opinions by resume, views by recruiter,
+ * views by resume), triggering the corresponding messaging senders.
  */
 public class VisSendRecentUsersToGroupings implements Consumer<List<CcpJsonRepresentation>> {
 	
@@ -28,20 +28,20 @@ public class VisSendRecentUsersToGroupings implements Consumer<List<CcpJsonRepre
 	public final static VisSendRecentUsersToGroupings INSTANCE = new VisSendRecentUsersToGroupings();
 
 	public void accept(List<CcpJsonRepresentation> records) {
-		Stream<CcpJsonRepresentation> stream = records.stream();
-		var streamMap = stream
+		Stream<CcpJsonRepresentation> recordsStream = records.stream();
+		var idsStream = recordsStream
 		.map(rec ->	rec.getAsString(JnJsonCommonsFields.id));
-		var streamMapMap = streamMap
+		var idsAsJsonStream = idsStream
 		.map(id -> new CcpJsonRepresentation(id));
-		var streamMapMapMap = streamMapMap
+		var emailsStream = idsAsJsonStream
 		.map(json -> json.getAsString(JnJsonCommonsFields.email));
-		List<String> emails = streamMapMapMap
+		List<String> emails = emailsStream
 		.collect(Collectors.toList());
 		
 		CcpJsonRepresentation message = CcpOtherConstants.EMPTY_JSON.put(VisJsonCommonsFields.masters, emails);
-		JnFunctionMensageriaSender jnFunctionMensageriaSender = new JnFunctionMensageriaSender(VisBusinessGroupResumesOpinionsByRecruiter.INSTANCE);
+		JnFunctionMensageriaSender mensageriaSender = new JnFunctionMensageriaSender(VisBusinessGroupResumesOpinionsByRecruiter.INSTANCE);
 
-		jnFunctionMensageriaSender.sendToMensageria(message);
+		mensageriaSender.sendToMensageria(message);
 		VisBusinessGroupResumesOpinionsByResume.INSTANCE.sendToMensageria(message);
 		VisBusinessGroupResumeViewsByRecruiter.INSTANCE.sendToMensageria(message);
 		VisBusinessGroupResumeViewsByResume.INSTANCE.sendToMensageria(message);

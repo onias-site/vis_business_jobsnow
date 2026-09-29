@@ -22,9 +22,9 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Registra a última visualização de um currículo por um recrutador, armazenando um snapshot completo
- * do currículo e da vaga no momento da visualização, além de flags indicando se o currículo estava
- * negativado e se a vaga estava inativa. Possui escrita assíncrona e cache de 1 hora.
+ * Records a recruiter's last view of a resume, storing a complete snapshot of the resume and of the
+ * position at the moment of the view, plus flags telling whether the resume was negativated and
+ * whether the position was inactive. Has asynchronous writing and a 1-hour cache.
  */
 @CcpEntityCache(3600)
 @CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})

@@ -9,9 +9,9 @@ import com.vis.entities.VisEntityPosition;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Comparador de currículos em relação a uma vaga específica. Ordena os currículos considerando os critérios
- * de ordenação definidos na vaga (sortFields), sempre incluindo desiredSkill (quantidade de skills desejadas
- * que o currículo possui) como critério final, de forma decrescente.
+ * Comparator of resumes against a specific position. Sorts the resumes by the sorting criteria defined
+ * in the position (sortFields), always including desiredSkill (the number of desired skills the resume has)
+ * as the final criterion, in descending order.
  */
 public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentation>{
 
@@ -25,15 +25,15 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 		
 		List<String> desiredSkill = this.position.getAsStringList(VisEntityPosition.Fields.desiredSkill);
 		
-		CcpJsonRepresentation put1 = this.putDesiredSkills(o1, desiredSkill);
-		CcpJsonRepresentation put2 = this.putDesiredSkills(o2, desiredSkill);
+		CcpJsonRepresentation firstResumeWithDesiredSkills = this.putDesiredSkills(o1, desiredSkill);
+		CcpJsonRepresentation secondResumeWithDesiredSkills = this.putDesiredSkills(o2, desiredSkill);
 		
-		List<String> asStringList = this.position.getAsStringList(VisEntityPosition.Fields.sortFields);
-		List<String> sortFields = new ArrayList<>(asStringList);
+		List<String> positionSortFields = this.position.getAsStringList(VisEntityPosition.Fields.sortFields);
+		List<String> sortFields = new ArrayList<>(positionSortFields);
 		
 		String desiredSkillEnumName = ResumeSortOptions.desiredSkill.name();
-		boolean contains = sortFields.contains(desiredSkillEnumName);
-		boolean desiredSkillNotChoosed = false == contains;
+		boolean desiredSkillChosen = sortFields.contains(desiredSkillEnumName);
+		boolean desiredSkillNotChoosed = false == desiredSkillChosen;
 		
 		if(desiredSkillNotChoosed ) {
 			sortFields.add(desiredSkillEnumName);
@@ -41,12 +41,12 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 		
 		for (String sortField : sortFields) {
 			
-			ResumeSortOptions valueOf = ResumeSortOptions.valueOf(sortField);
-			int comparationResult = valueOf.compare(put1, put2);
+			ResumeSortOptions sortOption = ResumeSortOptions.valueOf(sortField);
+			int comparationResult = sortOption.compare(firstResumeWithDesiredSkills, secondResumeWithDesiredSkills);
 			
-			boolean areEsquals = comparationResult == 0;
+			boolean areEquals = comparationResult == 0;
 			
-			if(areEsquals) {
+			if(areEquals) {
 				continue;
 			}
 			
@@ -57,11 +57,11 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 
 	private CcpJsonRepresentation putDesiredSkills(CcpJsonRepresentation o1, List<String> desiredSkills) {
 		String skillName = VisJsonCommonsFields.skill.name();
-		CcpCollectionDecorator ccd1 = o1.getAsCollectionDecorator(skillName);
-		int size1 = ccd1.getIntersectList(desiredSkills).size();
-		int size12 = -size1;
-		CcpJsonRepresentation put = o1.put(VisEntityPosition.Fields.desiredSkill, size12);
-		return put;
+		CcpCollectionDecorator resumeSkills = o1.getAsCollectionDecorator(skillName);
+		int desiredSkillsCount = resumeSkills.getIntersectList(desiredSkills).size();
+		int negativeDesiredSkillsCount = -desiredSkillsCount;
+		CcpJsonRepresentation resumeWithDesiredSkillsCount = o1.put(VisEntityPosition.Fields.desiredSkill, negativeDesiredSkillsCount);
+		return resumeWithDesiredSkillsCount;
 	}
 
 	

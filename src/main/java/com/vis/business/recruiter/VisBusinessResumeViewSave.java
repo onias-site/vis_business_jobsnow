@@ -16,10 +16,10 @@ import com.vis.entities.VisEntityResumePerception;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 
 /**
- * Implementação de CcpBusiness que registra a visualização de um currículo por um recrutador.
- * Verifica se a visualização é gratuita ou paga (parte financeira pendente), se o currículo está
- * negativado e se a vaga está inativa, e então persiste os registros de VisEntityResumeLastView
- * e VisEntityResumeFreeView em operação bulk.
+ * CcpBusiness implementation that records a recruiter viewing a resume.
+ * Checks whether the view is free or paid (the financial part is pending), whether the resume is
+ * negativated and whether the position is inactive, and then persists the VisEntityResumeLastView
+ * and VisEntityResumeFreeView records in a bulk operation.
  */
 public class VisBusinessResumeViewSave implements CcpBusiness{
 		
@@ -33,26 +33,26 @@ public class VisBusinessResumeViewSave implements CcpBusiness{
 		boolean resumeViewIsNotFree = VisEntityResumeFreeView.ENTITY.exists(json);
 		
 		if(resumeViewIsNotFree) {
-			//LATER IMPLEMENTAR PARTE FINANCEIRA
+			//LATER IMPLEMENT THE FINANCIAL PART
 		}
-		CcpEntity twinEntity = VisEntityResumePerception.ENTITY.getTwinEntity();
+		CcpEntity resumePerceptionTwinEntity = VisEntityResumePerception.ENTITY.getTwinEntity();
 
-		boolean negativatedResume = twinEntity.exists(json);
-		CcpEntity twinEntity2 = VisEntityPosition.ENTITY.getTwinEntity();
-		boolean inactivePosition = twinEntity2.exists(json);
+		boolean negativatedResume = resumePerceptionTwinEntity.exists(json);
+		CcpEntity positionTwinEntity = VisEntityPosition.ENTITY.getTwinEntity();
+		boolean inactivePosition = positionTwinEntity.exists(json);
 	
 //		CcpJsonRepresentation opinion = VisEntityResumePerception.INSTANCE.getInnerJsonFromMainAndMirrorEntities(json);
 		CcpJsonRepresentation position = VisEntityPosition.ENTITY.getOneById(json);
 		CcpJsonRepresentation resume = VisEntityResume.ENTITY.getOneById(json);
-		CcpJsonRepresentation put = json
+		CcpJsonRepresentation jsonWithResume = json
 				.put(VisEntityResumeLastView.Fields.resume, resume);
-				CcpJsonRepresentation put2 = put
+				CcpJsonRepresentation jsonWithPosition = jsonWithResume
 //				.put(VisEntityResumeLastView.Fields.opinion.name(), opinion)
 				.put(VisEntityResumeLastView.Fields.position, position);
-				CcpJsonRepresentation put3 = put2
+				CcpJsonRepresentation jsonWithInactivePosition = jsonWithPosition
 				.put(VisEntityResumeLastView.Fields.inactivePosition, inactivePosition);
 
-				CcpJsonRepresentation dataToSave = put3
+				CcpJsonRepresentation dataToSave = jsonWithInactivePosition
 				.put(VisEntityResumeLastView.Fields.negativatedResume, negativatedResume)
 				;
 		

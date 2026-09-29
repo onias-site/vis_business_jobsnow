@@ -1,10 +1,16 @@
 package com.vis.entities;
 
-import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterSaveFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError;
+import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError;
 
 import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenTransferOperationType.afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
@@ -18,6 +24,12 @@ import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFr
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.jn.business.messages.JnInstantMessageType;
+import com.jn.business.messages.JnMessageType;
+import com.jn.entities.JnEntityEmailParametersToSend;
+import com.jn.entities.JnEntityEmailTemplateMessage;
+import com.jn.entities.JnEntityInstantMessengerParametersToSend;
+import com.jn.entities.JnEntityInstantMessengerTemplateMessage;
 import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTransfer;
@@ -30,10 +42,14 @@ import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterWriteBu
 import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeTransferBuilder;
 import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeWriteBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
+import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
+import com.jn.utils.JnLanguage;
+import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 import com.vis.messages.VisMessages;
@@ -41,16 +57,19 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutAprovedSkillHierarchy;
 import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 
 /**
- * Representa solicitações pendentes de correção de hierarquia de skill aguardando análise: o usuário pede
- * para associar ({@code type = add}) ou desassociar ({@code type = remove}) uma skill do seu currículo
- * a um conhecimento implícito ({@code parent}), justificando em {@code description}. Ao salvar um
- * registro, dispara transferência de dados para VisEntitySkillFixHierarchyRejected ou
- * VisEntitySkillFixHierarchyApproved conforme a decisão, enviando mensagens de notificação correspondentes.
- * Versionável, com escrita assíncrona e cache de 1 hora.
+ * Represents pending skill hierarchy fix requests awaiting review: the user asks to associate
+ * ({@code type = add}) or dissociate ({@code type = remove}) a skill of their resume with an implicit
+ * knowledge ({@code parent}), giving the reason in {@code description}. Inserting a request notifies the
+ * user by email and the support bot operator with the {@code /fixSkillHierarchy <parent> <email>} command,
+ * and splits it into one VisEntitySkillFixHierarchyItemPending per skill. The operator's review
+ * ({@code VisBusinessSkillFixHierarchyReview}) transfers the request to VisEntitySkillFixHierarchyApproved
+ * (at least one item approved) or VisEntitySkillFixHierarchyRejected (every item rejected), which emails
+ * the user the approved and the rejected items with the operator's justifications.
+ * Versionable, with asynchronous writing and a 1-hour cache.
  */
 @CcpEntityCache(3600)
 @CcpEntityCustomDecorators(value = {
-		@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2)
+		@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5)
 		,@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8)
 		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeWriteBuilder.class, priority = 7)
 		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeTransferBuilder.class, priority = 7)
@@ -60,7 +79,7 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 
 @JnEntitySendMessageToUserWhenWrite({
 	@JnEntitySendMessageToUserWhenWriteOperation(
-			operationType = afterSaveFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError,
+			operationType = afterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError,
 			messageTemplate =  VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class
 			),
 })
@@ -88,7 +107,138 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator {
 
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyPending.class).entityInstance;
-	
+
+	/**
+	 * Seeds the messages of the {@link VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest}
+	 * template, sent when a new request becomes pending: the instant message to the support bot operator with
+	 * the {@code fixSkillHierarchy} command (one template per language, with the same text, because it is a
+	 * bot command) and its sending parameters (bot and chat), plus the email to the user telling that the
+	 * request is being reviewed (Portuguese and English) and its sending parameters.
+	 */
+	public List<CcpBulkItem> getFirstRecordsToInsert() {
+		String templateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class.getName();
+
+		String commandToTheOperator = "/fixSkillHierarchy {" + Fields.parent + "} {" + Fields.email + "}";
+		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.templateId, templateId);
+		CcpJsonRepresentation templateWithMessage = templateWithTemplateId
+				.put(JnJsonCommonsFields.message, commandToTheOperator);
+		CcpJsonRepresentation portugueseTemplate = templateWithMessage
+				.put(JnJsonCommonsFields.language, JnLanguage.portuguese);
+		CcpJsonRepresentation englishTemplate = templateWithMessage
+				.put(JnJsonCommonsFields.language, JnLanguage.english);
+
+		CcpJsonRepresentation parametersWithInstantMessageType = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonInstantMessengerFields.instantMessageType, JnInstantMessageType.text);
+		CcpJsonRepresentation parametersWithTemplateId = parametersWithInstantMessageType
+				.put(JnJsonCommonsFields.templateId, templateId);
+		CcpJsonRepresentation parametersWithMaxTries = parametersWithTemplateId
+				.addToItem(JnJsonCommonsFields.moreParameters, JnJsonCommonsFields.maxTriesToSendMessage, 10);
+		CcpJsonRepresentation parametersWithSleepTime = parametersWithMaxTries
+				.addToItem(JnJsonCommonsFields.moreParameters, JnJsonCommonsFields.sleepToSendMessage, 3000);
+		CcpJsonRepresentation parametersWithBotName = parametersWithSleepTime
+				.put(JnJsonInstantMessengerFields.botName, JnMessageType.JnBotType.support);
+		CcpJsonRepresentation parametersToTheOperator = parametersWithBotName
+				.put(JnJsonInstantMessengerFields.chatId, 751717896L);
+
+		String typeDescriptionPlaceholder = "{" + VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.JsonFieldNames.typeDescription + "}";
+		String skillNamesPlaceholder = "{" + VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.JsonFieldNames.skillNames + "}";
+		String parentPlaceholder = "{" + Fields.parent + "}";
+
+		String portugueseEmailMessage = "<html><body><p>Olá, você solicitou " + typeDescriptionPlaceholder
+				+ " entre os termos " + skillNamesPlaceholder + " e " + parentPlaceholder
+				+ ". Nosso time está avaliando e te responderá o quanto antes.</p></body></html>";
+		CcpJsonRepresentation emailTemplateWithTemplateId = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.templateId, templateId);
+		CcpJsonRepresentation portugueseEmailTemplateWithLanguage = emailTemplateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.portuguese);
+		CcpJsonRepresentation portugueseEmailTemplateWithSubject = portugueseEmailTemplateWithLanguage
+				.put(JnJsonCommonsFields.subject, "Recebemos a sua solicitação de ajuste na hierarquia de conhecimentos");
+		CcpJsonRepresentation portugueseEmailTemplate = portugueseEmailTemplateWithSubject
+				.put(JnJsonCommonsFields.message, portugueseEmailMessage);
+
+		String englishEmailMessage = "<html><body><p>Hello, you requested the " + typeDescriptionPlaceholder
+				+ " between the terms " + skillNamesPlaceholder + " and " + parentPlaceholder
+				+ ". Our team is reviewing it and will get back to you as soon as possible.</p></body></html>";
+		CcpJsonRepresentation englishEmailTemplateWithLanguage = emailTemplateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.english);
+		CcpJsonRepresentation englishEmailTemplateWithSubject = englishEmailTemplateWithLanguage
+				.put(JnJsonCommonsFields.subject, "We received your skill hierarchy fix request");
+		CcpJsonRepresentation englishEmailTemplate = englishEmailTemplateWithSubject
+				.put(JnJsonCommonsFields.message, englishEmailMessage);
+
+		CcpJsonRepresentation emailParametersWithSender = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.sender, "devs.jobsnow@gmail.com");
+		CcpJsonRepresentation emailParametersWithSubjectType = emailParametersWithSender
+				.put(JnJsonCommonsFields.subjectType, templateId);
+		CcpJsonRepresentation emailParameters = emailParametersWithSubjectType
+				.put(JnJsonCommonsFields.templateId, templateId);
+
+		List<CcpBulkItem> templateItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityInstantMessengerTemplateMessage.ENTITY, portugueseTemplate, englishTemplate);
+		List<CcpBulkItem> parametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityInstantMessengerParametersToSend.ENTITY, parametersToTheOperator);
+		List<CcpBulkItem> emailTemplateItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailTemplateMessage.ENTITY, portugueseEmailTemplate, englishEmailTemplate);
+		List<CcpBulkItem> emailParametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailParametersToSend.ENTITY, emailParameters);
+
+		String reviewSummaryPlaceholder = "{" + VisSkillFixHierarchyReviewFields.reviewSummary + "}";
+		String portugueseReviewMessage = "<html><body><p>Olá, a sua solicitação de " + typeDescriptionPlaceholder
+				+ " com o termo " + parentPlaceholder + " foi avaliada pelo nosso time.</p>" + reviewSummaryPlaceholder + "</body></html>";
+		String englishReviewMessage = "<html><body><p>Hello, your " + typeDescriptionPlaceholder
+				+ " request with the term " + parentPlaceholder + " was reviewed by our team.</p>" + reviewSummaryPlaceholder + "</body></html>";
+		String portugueseReviewSubject = "A sua solicitação de ajuste na hierarquia de conhecimentos foi avaliada";
+		String englishReviewSubject = "Your skill hierarchy fix request was reviewed";
+
+		String approvedTemplateId = VisMessages.VisNotifyUserAboutAprovedSkillHierarchy.class.getName();
+		String rejectedTemplateId = VisMessages.VisNotifyUserAboutRejectedSkillHierarchy.class.getName();
+
+		List<CcpBulkItem> reviewEmailItems = new ArrayList<>();
+		reviewEmailItems.addAll(this.getEmailTemplateAndParameters(approvedTemplateId, portugueseReviewSubject, portugueseReviewMessage, englishReviewSubject, englishReviewMessage));
+		reviewEmailItems.addAll(this.getEmailTemplateAndParameters(rejectedTemplateId, portugueseReviewSubject, portugueseReviewMessage, englishReviewSubject, englishReviewMessage));
+
+		List<CcpBulkItem> firstRecords = new ArrayList<>(templateItems);
+		firstRecords.addAll(parametersItems);
+		firstRecords.addAll(emailTemplateItems);
+		firstRecords.addAll(emailParametersItems);
+		firstRecords.addAll(reviewEmailItems);
+		return firstRecords;
+	}
+
+	/**
+	 * Email template (Portuguese and English) and sending parameters of the given template id.
+	 */
+	private List<CcpBulkItem> getEmailTemplateAndParameters(String templateId, String portugueseSubject, String portugueseMessage, String englishSubject, String englishMessage) {
+
+		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.templateId, templateId);
+
+		CcpJsonRepresentation portugueseTemplateWithLanguage = templateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.portuguese);
+		CcpJsonRepresentation portugueseTemplateWithSubject = portugueseTemplateWithLanguage
+				.put(JnJsonCommonsFields.subject, portugueseSubject);
+		CcpJsonRepresentation portugueseTemplate = portugueseTemplateWithSubject
+				.put(JnJsonCommonsFields.message, portugueseMessage);
+
+		CcpJsonRepresentation englishTemplateWithLanguage = templateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.english);
+		CcpJsonRepresentation englishTemplateWithSubject = englishTemplateWithLanguage
+				.put(JnJsonCommonsFields.subject, englishSubject);
+		CcpJsonRepresentation englishTemplate = englishTemplateWithSubject
+				.put(JnJsonCommonsFields.message, englishMessage);
+
+		CcpJsonRepresentation parametersWithSender = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.sender, "devs.jobsnow@gmail.com");
+		CcpJsonRepresentation parametersWithSubjectType = parametersWithSender
+				.put(JnJsonCommonsFields.subjectType, templateId);
+		CcpJsonRepresentation parameters = parametersWithSubjectType
+				.put(JnJsonCommonsFields.templateId, templateId);
+
+		List<CcpBulkItem> templateItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailTemplateMessage.ENTITY, portugueseTemplate, englishTemplate);
+		List<CcpBulkItem> parametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailParametersToSend.ENTITY, parameters);
+
+		List<CcpBulkItem> templateAndParameters = new ArrayList<>(templateItems);
+		templateAndParameters.addAll(parametersItems);
+		return templateAndParameters;
+	}
+
 	public static enum Fields implements CcpJsonFieldName{
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)

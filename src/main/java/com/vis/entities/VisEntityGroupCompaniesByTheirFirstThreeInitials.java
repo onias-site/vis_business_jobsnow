@@ -35,8 +35,8 @@ import com.ccp.decorators.CcpTextDecorator;
 import java.util.stream.Stream;
 
 /**
- * Representa o agrupamento de nomes de empresas pelas três primeiras letras do domínio de e-mail.
- * Permite buscas rápidas de empresas por prefixo. Possui cache de 1 hora. Inclui lógica de carga inicial de dados.
+ * Represents the grouping of company names by the first three letters of the e-mail domain.
+ * Allows fast company lookups by prefix. Cached for 1 hour. Includes the initial data load logic.
  */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
@@ -68,48 +68,48 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 			CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
 			
 			Consumer<CcpJsonRepresentation> consumer = json -> {
-				String x = json.getAsString(VisJsonCommonsFields.id);
-					String[] split = x.split("@");
-					boolean lengthDiferente = split.length != 2;
-					if(lengthDiferente) {
+				String recruiterEmail = json.getAsString(VisJsonCommonsFields.id);
+					String[] emailParts = recruiterEmail.split("@");
+					boolean isNotAnEmail = emailParts.length != 2;
+					if(isNotAnEmail) {
 						return;
 					}
 					
 					
-				String domain = split[1];
+				String domain = emailParts[1];
 				
-				String[] split1 = domain.split("\\.");			
-				String toUpperCase = split1[0].toUpperCase();
+				String[] domainParts = domain.split("\\.");			
+				String upperCaseCompanyName = domainParts[0].toUpperCase();
 
-				String companyName = toUpperCase.trim();
+				String companyName = upperCaseCompanyName.trim();
 				int companyNameLength = companyName.length();
-				boolean companyNameLengthMenor = companyNameLength < 3;
+				boolean companyNameIsTooShort = companyNameLength < 3;
 
-				if(companyNameLengthMenor) {
+				if(companyNameIsTooShort) {
 					return;
 				}
-				CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(companyName);
-				CcpTextDecorator ccpStringDecoratorText = ccpStringDecorator.text();
-				var capitalize = ccpStringDecoratorText.capitalize();
+				CcpStringDecorator companyNameDecorator = new CcpStringDecorator(companyName);
+				CcpTextDecorator companyNameText = companyNameDecorator.text();
+				var capitalizedText = companyNameText.capitalize();
 
-				String capitalizedCompanyName = capitalize.content;
+				String capitalizedCompanyName = capitalizedText.content;
 				
 				String initials = companyName.substring(0, 3);
-				CcpFieldName ccpFieldName2 = new CcpFieldName(initials);
+				CcpFieldName initialsFieldName = new CcpFieldName(initials);
 
-				LinkedHashSet<String> orDefault = groupedCompanies.getOrDefault(ccpFieldName2, () -> new LinkedHashSet<>());
-				orDefault.add(capitalizedCompanyName);
-				CcpFieldName ccpFieldName3 = new CcpFieldName(initials);
-				groupedCompanies = groupedCompanies.put(ccpFieldName3, orDefault);
+				LinkedHashSet<String> companiesWithTheseInitials = groupedCompanies.getOrDefault(initialsFieldName, () -> new LinkedHashSet<>());
+				companiesWithTheseInitials.add(capitalizedCompanyName);
+				CcpFieldName sameInitialsFieldName = new CcpFieldName(initials);
+				groupedCompanies = groupedCompanies.put(sameInitialsFieldName, companiesWithTheseInitials);
 			};
 			queryExecutor.consumeQueryResult(query, new String[] {"old_recruiters"}, "1s", 10000, consumer, "id");
-			Set<String> fieldSet = groupedCompanies.fieldSet();
-			Stream<String> stream = fieldSet.stream();
-			var streamMap = stream.map(initials -> this.toBulkItem(initials));
+			Set<String> allInitials = groupedCompanies.fieldSet();
+			Stream<String> initialsStream = allInitials.stream();
+			var bulkItemsStream = initialsStream.map(initials -> this.toBulkItem(initials));
 
-			List<CcpBulkItem> collect = streamMap.collect(Collectors.toList());
+			List<CcpBulkItem> bulkItems = bulkItemsStream.collect(Collectors.toList());
 			
-			return collect;
+			return bulkItems;
 		
 		} catch (Exception e) {
 			return new ArrayList<>();
@@ -118,15 +118,15 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 	}
 	
 	private CcpBulkItem toBulkItem(String initials) {
-		CcpFieldName ccpFieldName4 = new CcpFieldName(initials);
-		Set<String> companies = groupedCompanies.getAsObject(ccpFieldName4);
-		CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON
+		CcpFieldName groupFieldName = new CcpFieldName(initials);
+		Set<String> companies = groupedCompanies.getAsObject(groupFieldName);
+		CcpJsonRepresentation jsonWithInitials = CcpOtherConstants.EMPTY_JSON
 		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, initials);
 	
-		CcpJsonRepresentation json = put
+		CcpJsonRepresentation json = jsonWithInitials
 		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies, companies);
-		String calculateId = ENTITY.calculateId(json);
-		CcpBulkItem item = new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, calculateId);
+		String recordId = ENTITY.calculateId(json);
+		CcpBulkItem item = new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, recordId);
 		return item;
 	}
 	static CcpJsonRepresentation groupedCompanies = CcpOtherConstants.EMPTY_JSON;

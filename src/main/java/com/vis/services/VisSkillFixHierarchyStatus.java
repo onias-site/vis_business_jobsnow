@@ -6,9 +6,9 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.entities.VisEntitySkillFixHierarchyRejected;
 
 /**
- * Onde a sugestão de correção de hierarquia pode estar, na ordem em que
- * {@link VisServiceSkillFixHierarchy#GetSkillFixHierarchy} a procura. O nome de cada item é o valor
- * devolvido no campo {@code status}.
+ * Where a hierarchy fix suggestion can be, in the order in which
+ * {@link VisServiceSkillFixHierarchy#GetSkillFixHierarchy} looks for it. The name of each item is the value
+ * returned in the {@code status} field.
  */
 enum VisSkillFixHierarchyStatus {
 	pending(VisEntitySkillFixHierarchyPending.ENTITY),

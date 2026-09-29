@@ -20,9 +20,9 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Representa o agrupamento paginado de currículos filtrados e ordenados para uma vaga específica.
- * A chave inclui além do e-mail o título e senioridade da vaga, permitindo consultas paginadas dos
- * candidatos compatíveis com cada vaga. Possui cache de 24 horas e é expurgável anualmente.
+ * Represents the paginated grouping of resumes filtered and sorted for a specific position.
+ * Besides the e-mail, the key includes the position's title and seniority, allowing paginated queries of
+ * the candidates that match each position. Cached for 24 hours and purged yearly.
  */
 @CcpEntityCache(86400)
 @CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityDisposableBuilder.class, priority = 1),})

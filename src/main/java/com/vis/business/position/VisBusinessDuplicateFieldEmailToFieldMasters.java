@@ -6,9 +6,9 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 
 /**
- * Implementação de CcpBusiness que copia o valor do campo email da entidade VisEntityPosition
- * para o campo masters no mesmo JSON. Utilizada como etapa preparatória para operações de
- * agrupamento que requerem o campo masters populado.
+ * CcpBusiness implementation that copies the value of the email field of the VisEntityPosition entity
+ * into the masters field of the same JSON. Used as a preparatory step for grouping operations
+ * that require the masters field to be filled.
  */
 public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpBusiness{
 		
@@ -19,8 +19,8 @@ public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpBusiness
 	
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation duplicateValueFromField = json.duplicateValueFromField(VisJsonCommonsFields.email, VisJsonCommonsFields.masters);
-		return duplicateValueFromField;
+		CcpJsonRepresentation jsonWithMasters = json.duplicateValueFromField(VisJsonCommonsFields.email, VisJsonCommonsFields.masters);
+		return jsonWithMasters;
 	}
 
 }

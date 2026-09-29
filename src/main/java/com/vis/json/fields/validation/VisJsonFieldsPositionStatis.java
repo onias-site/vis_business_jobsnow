@@ -19,9 +19,9 @@ enum SalaryType{
 		@CcpJsonValidationFieldList(SalaryType.class)
 })
 /**
- * Define as regras de validação dos campos de estatísticas de posições (vagas), utilizado como schema de
- * validação aninhada (nested JSON). Exige que pelo menos um dos campos pj ou clt esteja presente. Inclui
- * campos de disponibilidade, DDD, experiência, senioridade, PCD, idioma e faixa salarial.
+ * Defines the validation rules of the position statistics fields, used as a nested JSON validation
+ * schema. Requires at least one of the pj or clt fields to be present. Includes availability, DDD,
+ * experience, seniority, PCD, language and salary range fields.
  */
 public enum VisJsonFieldsPositionStatis {
 

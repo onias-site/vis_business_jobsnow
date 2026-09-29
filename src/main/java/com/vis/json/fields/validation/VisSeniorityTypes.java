@@ -1,8 +1,8 @@
 package com.vis.json.fields.validation;
 
 /**
- * Senioridades aceitas pelo campo {@code seniority}, isto é, o nível de experiência profissional
- * declarado no currículo do candidato e exigido na vaga do recrutador.
+ * Seniorities accepted by the {@code seniority} field, that is, the professional experience level
+ * declared in the candidate's resume and required by the recruiter's position.
  */
 public enum VisSeniorityTypes {
 

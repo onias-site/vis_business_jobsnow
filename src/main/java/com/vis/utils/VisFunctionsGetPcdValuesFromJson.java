@@ -8,8 +8,8 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityPosition;
 
 /**
- * Determina com quais vagas (ou candidatos) um determinado perfil PCD pode ser comparado, retornando
- * a lista de valores booleanos PCD para geração dos hashes de compatibilidade.
+ * Determines which positions (or candidates) a given PCD profile can be compared with, returning
+ * the list of PCD boolean values used to generate the compatibility hashes.
  */
 public enum VisFunctionsGetPcdValuesFromJson implements Function<CcpJsonRepresentation, List<Boolean>> {
 	resume {
@@ -17,10 +17,10 @@ public enum VisFunctionsGetPcdValuesFromJson implements Function<CcpJsonRepresen
 			boolean pcdCandidate = json.getAsBoolean(VisEntityPosition.Fields.pcd);
 
 			if(pcdCandidate) {
-				// Candidatos PCD podem competir a vagas normais e a vagas PCD's.
+				// PCD candidates can compete for regular positions and for PCD positions.
 				return Arrays.asList(true, false);
 			}
-			// Candidatos normais podem competir apenas a vagas normais.
+			// Regular candidates can compete only for regular positions.
 			return Arrays.asList(false);
 		}
 	}, position {
@@ -28,11 +28,11 @@ public enum VisFunctionsGetPcdValuesFromJson implements Function<CcpJsonRepresen
 			boolean pcd = json.getAsBoolean(VisEntityPosition.Fields.pcd);
 
 			boolean pcdPosition = pcd;
-			// Vagas PCD podem filtrar apenas vagas PCD's.
+			// PCD positions can filter only PCD positions.
 			if(pcdPosition) {
 				return Arrays.asList(true);
 			}
-			// Vagas normais podem filtrar candidatos PCD's e candidatos normais.
+			// Regular positions can filter PCD candidates and regular candidates.
 			return Arrays.asList(true, false);
 		}
 	};

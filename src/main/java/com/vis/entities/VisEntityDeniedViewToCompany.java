@@ -16,6 +16,7 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
 import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
+import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
@@ -23,14 +24,14 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Representa a tabela/índice que registra domínios de empresas cujos recrutadores não podem visualizar
- * determinados currículos. Utiliza o padrão Twin Entity para rastrear quando um bloqueio é revertido
- * (entidade twin: reallowed_view_to_company). Possui cache de 1 hora e versionamento.
+ * Represents the table/index that records the company domains whose recruiters are not allowed to view
+ * certain resumes. Uses the Twin Entity pattern to track when a block is reverted
+ * (twin entity: vis_reallowed_view_to_company). Cached for 1 hour, with versioning.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),})
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),})
 @CcpEntityTwin(
-		twinEntityName = "reallowed_view_to_company",
+		twinEntityName = "vis_reallowed_view_to_company",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)

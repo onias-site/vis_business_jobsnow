@@ -7,8 +7,8 @@ import com.ccp.process.CcpProcessStatus;
 import com.vis.entities.VisEntityResumeViewFailed;
 
 /**
- * Define todos os status de processo para a operação de visualização de currículo, cada um com seu código
- * HTTP correspondente. Utilizado pelo sistema de matching para registrar falhas de visualização em
+ * Defines all the process statuses of the resume viewing operation, each one with its corresponding
+ * HTTP code. Used by the matching system to record viewing failures in
  * VisEntityResumeViewFailed.
  */
 public enum VisProcessStatusResumeView implements CcpProcessStatus{
@@ -32,8 +32,8 @@ public enum VisProcessStatusResumeView implements CcpProcessStatus{
 	}
 
 	public CcpBulkItem toBulkItemCreate(CcpJsonRepresentation json) {
-		String calculateId = VisEntityResumeViewFailed.ENTITY.calculateId(json);
-		CcpBulkItem bulkItem = new CcpBulkItem(json, CcpBulkEntityOperationType.create, VisEntityResumeViewFailed.ENTITY, calculateId);
+		String recordId = VisEntityResumeViewFailed.ENTITY.calculateId(json);
+		CcpBulkItem bulkItem = new CcpBulkItem(json, CcpBulkEntityOperationType.create, VisEntityResumeViewFailed.ENTITY, recordId);
 		return bulkItem;
 	}
 }

@@ -49,8 +49,8 @@ enum Fields implements CcpJsonFieldName{
 }
 
 /**
- * Serviço de operações sobre skills: solicitação de novas skills e extração de skills de texto livre.
- * Contém a lógica mais rica do módulo de skills. A correção de hierarquia fica em
+ * Service for skill operations: requests for new skills and extraction of skills from free text.
+ * Holds the richest logic of the skills module. The hierarchy fix lives in
  * {@link VisServiceSkillFixHierarchy}.
  */
 public enum VisServiceSkills implements JnService {
@@ -59,42 +59,42 @@ public enum VisServiceSkills implements JnService {
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpBusiness action = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillPending.ENTITY);
-			CcpGetEntityId ccpGetEntityId = new CcpGetEntityId(json);
-			CcpSelectProcedure toBeginProcedureAnd = ccpGetEntityId
+			CcpGetEntityId entityIdGetter = new CcpGetEntityId(json);
+			CcpSelectProcedure procedure = entityIdGetter
 			.toBeginProcedureAnd();
-			var ifThisIdIsPresentInEntity = toBeginProcedureAnd
+			var ifPresentInRejectedSkills = procedure
 			.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY);
-			var returnStatus = ifThisIdIsPresentInEntity.returnStatus(RequestToCreateNewSkillStatus.rejected);
-			var and = returnStatus
+			var statusIfRejected = ifPresentInRejectedSkills.returnStatus(RequestToCreateNewSkillStatus.rejected);
+			var afterRejectedCheck = statusIfRejected
 			.and();
-			var ifThisIdIsPresentInEntity2 = and
+			var ifPresentInPendingSkills = afterRejectedCheck
 			.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY);
-			var returnStatus2 = ifThisIdIsPresentInEntity2.returnStatus(RequestToCreateNewSkillStatus.pending);
-			var and2 = returnStatus2
+			var statusIfPending = ifPresentInPendingSkills.returnStatus(RequestToCreateNewSkillStatus.pending);
+			var afterPendingCheck = statusIfPending
 			.and();
-			CcpEntity twinEntity = VisEntitySkillPending.ENTITY.getTwinEntity();
-			var ifThisIdIsPresentInEntity3 = and2
-			.ifThisIdIsPresentInEntity(twinEntity);
-			var returnStatus3 = ifThisIdIsPresentInEntity3.returnStatus(RequestToCreateNewSkillStatus.approved);
-			var and3 = returnStatus3
+			CcpEntity approvedSkillsEntity = VisEntitySkillPending.ENTITY.getTwinEntity();
+			var ifPresentInApprovedSkills = afterPendingCheck
+			.ifThisIdIsPresentInEntity(approvedSkillsEntity);
+			var statusIfApproved = ifPresentInApprovedSkills.returnStatus(RequestToCreateNewSkillStatus.approved);
+			var afterApprovedCheck = statusIfApproved
 			.and();
-			var ifThisIdIsNotPresentInEntity = and3
+			var ifNotPresentInSkills = afterApprovedCheck
 			.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY);
-			var executeAction = ifThisIdIsNotPresentInEntity.executeAction(action);
-			var and4 = executeAction
+			var saveIfNewSkill = ifNotPresentInSkills.executeAction(action);
+			var afterSaveAction = saveIfNewSkill
 			.and();
-			var ifThisIdIsPresentInEntity4 = and4
+			var ifPresentInSkills = afterSaveAction
 			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY);
-			var returnStatus4 = ifThisIdIsPresentInEntity4.returnStatus(RequestToCreateNewSkillStatus.alreadyAdded);
-			var andFinallyReturningTheseFields = returnStatus4
+			var statusIfAlreadyAdded = ifPresentInSkills.returnStatus(RequestToCreateNewSkillStatus.alreadyAdded);
+			var andFinallyReturningTheseFields = statusIfAlreadyAdded
 			.andFinallyReturningTheseFields();
 			andFinallyReturningTheseFields
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
 			;
 			
-			CcpJsonRepresentation throwException = RequestToCreateNewSkillStatus.analyzing.throwException(json);
+			CcpJsonRepresentation analyzingResponse = RequestToCreateNewSkillStatus.analyzing.throwException(json);
 			
-			return throwException;
+			return analyzingResponse;
 		}
 		
 	},
@@ -109,11 +109,11 @@ public enum VisServiceSkills implements JnService {
 		}
 		
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			String asString = json.getAsString(Fields.text);
-			String text = asString.toUpperCase();
-			String textTrim = text.trim();
+			String rawText = json.getAsString(Fields.text);
+			String text = rawText.toUpperCase();
+			String trimmedText = text.trim();
 		
-			boolean emptyText = textTrim.isEmpty();
+			boolean emptyText = trimmedText.isEmpty();
 			
 			if(emptyText) {
 				return CcpOtherConstants.EMPTY_JSON;
@@ -134,16 +134,16 @@ public enum VisServiceSkills implements JnService {
 				}
 				
 				String firstTwoInitials = phrase.substring(0, 2);
-				CcpJsonRepresentation put = CcpOtherConstants.EMPTY_JSON.put(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials, firstTwoInitials);
-				String id = VisEntityGroupPositionsBySkills.ENTITY.calculateId(put);
-				allWordsGroups.put(id, put);
+				CcpJsonRepresentation initialsGroupId = CcpOtherConstants.EMPTY_JSON.put(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials, firstTwoInitials);
+				String id = VisEntityGroupPositionsBySkills.ENTITY.calculateId(initialsGroupId);
+				allWordsGroups.put(id, initialsGroupId);
 				
-				boolean alreadyInCache = this.isAlreadyInCache(put);
+				boolean alreadyInCache = this.isAlreadyInCache(initialsGroupId);
 				if(alreadyInCache) {
 					continue;
 				}
 				
-				idsToSearch.add(put);
+				idsToSearch.add(initialsGroupId);
 			}
 			
 			CcpEntityMetaData entityDetails = VisEntityGroupPositionsBySkills.ENTITY.getEntityMetaData();
@@ -168,8 +168,8 @@ public enum VisServiceSkills implements JnService {
 				List<CcpJsonRepresentation> skills = innerJson.getAsJsonList(VisJsonCommonsFields.skill);
 				
 				for (CcpJsonRepresentation skill : skills) {
-					String asString2 = skill.getAsString(VisJsonCommonsFields.word);
-					String word = asString2.toUpperCase();
+					String foundSkillWord = skill.getAsString(VisJsonCommonsFields.word);
+					String word = foundSkillWord.toUpperCase();
 					boolean found = text.contains(word);
 					if(found) {
 						allSkillsFoundInTheText.add(skill);
@@ -180,21 +180,21 @@ public enum VisServiceSkills implements JnService {
 			
 			CcpJsonRepresentation discardedSkills = CcpOtherConstants.EMPTY_JSON;
 			List<CcpJsonRepresentation> excludedSkill = json.getAsJsonList(com.vis.services.GetSkillsFromText.excludedSkill);
-			Stream<CcpJsonRepresentation> stream = excludedSkill.stream();
-			var streamMap = stream.map(x -> x.getAsString(VisJsonCommonsFields.word).toUpperCase());
+			Stream<CcpJsonRepresentation> excludedSkillStream = excludedSkill.stream();
+			var excludedWordsStream = excludedSkillStream.map(x -> x.getAsString(VisJsonCommonsFields.word).toUpperCase());
 
-			List<String> excluded = streamMap.collect(Collectors.toList());
+			List<String> excluded = excludedWordsStream.collect(Collectors.toList());
 			
 			List<CcpJsonRepresentation> choosedSkills = new ArrayList<>();
-			Stream<String> stream2 = Arrays.asList(phrases).stream();
-			var stream2Map = stream2.map(phrase -> phrase.replaceAll(CcpOtherConstants.DELIMITERS, ""));
+			Stream<String> phrasesStream = Arrays.asList(phrases).stream();
+			var cleanPhrasesStream = phrasesStream.map(phrase -> phrase.replaceAll(CcpOtherConstants.DELIMITERS, ""));
 
-			List<String> phrasesList = stream2Map.collect(Collectors.toList());
+			List<String> phrasesList = cleanPhrasesStream.collect(Collectors.toList());
 			
 			for (CcpJsonRepresentation skill : allSkillsFoundInTheText) {
-				String asString3 = skill.getAsString(VisJsonCommonsFields.word);
+				String candidateSkillWord = skill.getAsString(VisJsonCommonsFields.word);
 			
-				String word = asString3.toUpperCase();
+				String word = candidateSkillWord.toUpperCase();
 
 				boolean excludedWord = excluded.contains(word);
 				
@@ -208,87 +208,87 @@ public enum VisServiceSkills implements JnService {
 				CcpJsonRepresentation jsonPiece = skill.getJsonPiece(VisJsonCommonsFields.skill, VisJsonCommonsFields.word);
 				
 				if(isTooSmallWord) {
-					String replaceAll = word.replaceAll(CcpOtherConstants.DELIMITERS, "");
-					boolean contains = phrasesList.contains(replaceAll);
-					boolean isNotAnIndepententWord = false == contains;
-					if(isNotAnIndepententWord) {
-						Stream<String> stream3 = phrasesList.stream();
-						var filter = stream3.filter(phrase -> phrase.toUpperCase().contains(replaceAll.toUpperCase()));
-						Optional<String> findFirst = filter.findFirst();
-						boolean findFirstPresent = findFirst.isPresent();
-						boolean valorIgual = false == findFirstPresent;
+					String cleanWord = word.replaceAll(CcpOtherConstants.DELIMITERS, "");
+					boolean isIndependentWord = phrasesList.contains(cleanWord);
+					boolean isNotAnIndependentWord = false == isIndependentWord;
+					if(isNotAnIndependentWord) {
+						Stream<String> phrasesListStream = phrasesList.stream();
+						var phrasesContainingWord = phrasesListStream.filter(phrase -> phrase.toUpperCase().contains(cleanWord.toUpperCase()));
+						Optional<String> phraseContainingWord = phrasesContainingWord.findFirst();
+						boolean phraseFound = phraseContainingWord.isPresent();
+						boolean noPhraseFound = false == phraseFound;
 					
-						if(valorIgual) {
+						if(noPhraseFound) {
 							continue;
 						}
-						String associated = findFirst.get();
-						CcpJsonRepresentation put = jsonPiece.put(Fields.associated, associated);
-						discardedSkills = discardedSkills.addToList(Fields.isPieceOfOtherWord, put)
+						String associated = phraseContainingWord.get();
+						CcpJsonRepresentation pieceOfOtherWord = jsonPiece.put(Fields.associated, associated);
+						discardedSkills = discardedSkills.addToList(Fields.isPieceOfOtherWord, pieceOfOtherWord)
 								;
 						continue;
 					}
 					
-					CcpJsonRepresentation putLabel = this.putLabel(skill);
-					choosedSkills.add(putLabel);
+					CcpJsonRepresentation labeledSkill = this.putLabel(skill);
+					choosedSkills.add(labeledSkill);
 					continue;
 				}
-				Stream<CcpJsonRepresentation> stream4 = allSkillsFoundInTheText.stream();
-				var filter2 = stream4.filter(x -> x.getAsString(VisJsonCommonsFields.word).length() > word.length());
-				var filter3 = filter2.filter(x -> x.getAsString(VisJsonCommonsFields.word).contains(word));
+				Stream<CcpJsonRepresentation> skillsFoundStream = allSkillsFoundInTheText.stream();
+				var longerSkills = skillsFoundStream.filter(x -> x.getAsString(VisJsonCommonsFields.word).length() > word.length());
+				var longerSkillsContainingWord = longerSkills.filter(x -> x.getAsString(VisJsonCommonsFields.word).contains(word));
 
-				Optional<CcpJsonRepresentation> findFirst = filter3.findFirst();
-				boolean isPieceOfOtherSkill = findFirst.isPresent();
+				Optional<CcpJsonRepresentation> longerSkillContainingWord = longerSkillsContainingWord.findFirst();
+				boolean isPieceOfOtherSkill = longerSkillContainingWord.isPresent();
 				if(isPieceOfOtherSkill) {
-					CcpJsonRepresentation jsn = findFirst.get();
-					String associated = jsn.getAsString(VisJsonCommonsFields.word);
-					CcpJsonRepresentation put = jsonPiece.put(Fields.associated, associated);
-					discardedSkills = discardedSkills.addToList(Fields.isPieceOfOtherSkill, put);
+					CcpJsonRepresentation longerSkill = longerSkillContainingWord.get();
+					String associated = longerSkill.getAsString(VisJsonCommonsFields.word);
+					CcpJsonRepresentation pieceOfOtherSkill = jsonPiece.put(Fields.associated, associated);
+					discardedSkills = discardedSkills.addToList(Fields.isPieceOfOtherSkill, pieceOfOtherSkill);
 					continue;
 				}
-				CcpJsonRepresentation putLabel = this.putLabel(skill);
-				choosedSkills.add(putLabel);
+				CcpJsonRepresentation labeledSkill = this.putLabel(skill);
+				choosedSkills.add(labeledSkill);
 			}
 			
 			choosedSkills.sort((a, b) -> a.getAsString(Fields.label).length() -  b.getAsString(Fields.label).length());
 			
-			Map<String, CcpJsonRepresentation> map = new LinkedHashMap<>();
+			Map<String, CcpJsonRepresentation> chosenSkillsByName = new LinkedHashMap<>();
 		
 			for (CcpJsonRepresentation skill : choosedSkills) {
 				String skillName = skill.getAsString(VisJsonCommonsFields.skill);
-				boolean alreadyAdded = map.containsKey(skillName);
+				boolean alreadyAdded = chosenSkillsByName.containsKey(skillName);
 				
 				if(alreadyAdded){
-					CcpJsonRepresentation jsn = map.get(skillName);
-					String associated = jsn.getAsString(VisJsonCommonsFields.word);
+					CcpJsonRepresentation alreadyAddedSkill = chosenSkillsByName.get(skillName);
+					String associated = alreadyAddedSkill.getAsString(VisJsonCommonsFields.word);
 					CcpJsonRepresentation jsonPiece = skill.getJsonPiece(VisJsonCommonsFields.skill, VisJsonCommonsFields.word);
-					CcpJsonRepresentation put = jsonPiece.put(Fields.associated, associated);
-					discardedSkills = discardedSkills.addToList(Fields.skillAlreadyAdded, put);
+					CcpJsonRepresentation repeatedSkill = jsonPiece.put(Fields.associated, associated);
+					discardedSkills = discardedSkills.addToList(Fields.skillAlreadyAdded, repeatedSkill);
 					continue;
 				}
-				List<String> asStringList = skill.getAsStringList(VisJsonCommonsFields.parent);
-				Stream<String> stream5 = asStringList
+				List<String> parentSkills = skill.getAsStringList(VisJsonCommonsFields.parent);
+				Stream<String> parentSkillsStream = parentSkills
 						.stream();
-						var stream5Map = stream5
+						var cleanParentSkillsStream = parentSkillsStream
 						.map(x -> x.endsWith("123") ? x.substring(0, x.length() - 3) : x);
 
-						List<String> parent = stream5Map
+						List<String> parent = cleanParentSkillsStream
 						.collect(Collectors.toList());
 				
-				CcpJsonRepresentation put = skill.put(VisJsonCommonsFields.parent, parent);
+				CcpJsonRepresentation skillWithCleanParents = skill.put(VisJsonCommonsFields.parent, parent);
 				
-				map.put(skillName, put);
+				chosenSkillsByName.put(skillName, skillWithCleanParents);
 			}
 			
-			Collection<CcpJsonRepresentation> skills = map.values();
-			CcpJsonRepresentation put2 = CcpOtherConstants.EMPTY_JSON
+			Collection<CcpJsonRepresentation> skills = chosenSkillsByName.values();
+			CcpJsonRepresentation jsonWithDiscardedSkills = CcpOtherConstants.EMPTY_JSON
 					.put(Fields.discardedSkills, discardedSkills);
-					CcpJsonRepresentation put3 = put2
+					CcpJsonRepresentation jsonWithExcludedSkills = jsonWithDiscardedSkills
 					.put(Fields.excludedSkill, excludedSkill);
 
-					CcpJsonRepresentation put = put3
+					CcpJsonRepresentation response = jsonWithExcludedSkills
 					.put(VisJsonCommonsFields.skill, skills)
 ;
-			return put;
+			return response;
 		}
 		
 		private CcpJsonRepresentation putLabel(CcpJsonRepresentation json) {
@@ -297,31 +297,31 @@ public enum VisServiceSkills implements JnService {
 
 			boolean sameWord = skill.equals(word);
 			if(sameWord) {
-				CcpJsonRepresentation put = json.put(VisJsonCommonsFields.label, skill);
-				return put;
+				CcpJsonRepresentation labeledSkill = json.put(VisJsonCommonsFields.label, skill);
+				return labeledSkill;
 			}
-			String wordMais = word + " (";
-			String wordMaisMais = wordMais + skill;
-			String label = wordMaisMais + ")";
-			CcpJsonRepresentation put = json.put(VisJsonCommonsFields.label, label);
-			return put;
+			String labelPrefix = word + " (";
+			String labelWithoutClosing = labelPrefix + skill;
+			String label = labelWithoutClosing + ")";
+			CcpJsonRepresentation labeledSkill = json.put(VisJsonCommonsFields.label, label);
+			return labeledSkill;
 		}
 	}
 	;
 	
 	static int getWordStatus(CcpJsonRepresentation group, String word) {
 		String initials = word.substring(0,2);
-		CcpFieldName ccpFieldName5 = new CcpFieldName(initials);
-		boolean containsAllFields = group.containsAllFields(ccpFieldName5);
-		boolean notContainsInitials = false == containsAllFields;
+		CcpFieldName initialsFieldName = new CcpFieldName(initials);
+		boolean containsInitials = group.containsAllFields(initialsFieldName);
+		boolean notContainsInitials = false == containsInitials;
 
 		if(notContainsInitials) {
 			return 1;
 		}
-		CcpFieldName ccpFieldName6 = new CcpFieldName(initials);
-		Set<String> set = group.getAsObject(ccpFieldName6);
-		boolean contains2 = set.contains(word);
-		boolean notContains = false == contains2;
+		CcpFieldName sameInitialsFieldName = new CcpFieldName(initials);
+		Set<String> wordsWithTheseInitials = group.getAsObject(sameInitialsFieldName);
+		boolean containsWord = wordsWithTheseInitials.contains(word);
+		boolean notContains = false == containsWord;
 		if(notContains) {
 			return 2;
 		}

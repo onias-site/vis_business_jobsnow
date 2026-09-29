@@ -8,57 +8,57 @@ import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonFieldName;
 /**
- * Gera listas de valores monetários a partir de um JSON, com comportamento diferente dependendo se o
- * contexto é de currículo ou de vaga. Para currículo, gera todos os valores de remuneração do valor
- * declarado até 100.000 (o candidato aceita salários iguais ou maiores). Para vaga, gera todos os valores
- * do máximo declarado até 1.000 (a vaga aceita candidatos que pedem igual ou menos).
+ * Generates lists of money values from a JSON, behaving differently depending on whether the
+ * context is a resume or a position. For a resume, it generates every compensation value from the
+ * declared value up to 100,000 (the candidate accepts equal or higher salaries). For a position, it generates
+ * every value from the declared maximum down to 1,000 (the position accepts candidates asking for the same or less).
  */
 public enum GetMoneyValuesFromJson  {
 	resume {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			CcpFieldName ccpFieldName = new CcpFieldName(field);
-			boolean containsAllFields = json.containsAllFields(ccpFieldName);
-			boolean fieldIsNotPresent = false == containsAllFields;
+			CcpFieldName moneyFieldName = new CcpFieldName(field);
+			boolean fieldIsPresent = json.containsAllFields(moneyFieldName);
+			boolean fieldIsNotPresent = false == fieldIsPresent;
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
 			}
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
-			CcpFieldName ccpFieldName2 = new CcpFieldName(field);
-			Double asDoubleNumber = json.getAsDoubleNumber(ccpFieldName2);
+			CcpFieldName sameMoneyFieldName = new CcpFieldName(field);
+			Double declaredValue = json.getAsDoubleNumber(sameMoneyFieldName);
 
-			int valueGaveByCandidate = asDoubleNumber.intValue();
+			int valueGaveByCandidate = declaredValue.intValue();
 			
 			for(int k = valueGaveByCandidate; k <= 100000; k += 100) {
-				CcpJsonRepresentation put2 = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k);
-				CcpJsonRepresentation put = put2
+				CcpJsonRepresentation jsonWithMoneyValue = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k);
+				CcpJsonRepresentation moneyRecord = jsonWithMoneyValue
 						.put(JsonFieldNames.moneyType, field);
-				response.add(put);
+				response.add(moneyRecord);
 			}
 			
 			return response;
 		}
 	}, position {
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
-			CcpFieldName ccpFieldName3 = new CcpFieldName(field);
-			boolean containsAllFields2 = json.containsAllFields(ccpFieldName3);
-			boolean fieldIsNotPresent = false == containsAllFields2;
+			CcpFieldName moneyFieldName = new CcpFieldName(field);
+			boolean fieldIsPresent = json.containsAllFields(moneyFieldName);
+			boolean fieldIsNotPresent = false == fieldIsPresent;
 			
 			if(fieldIsNotPresent) {
 				return new ArrayList<>();
 			}
 
 			List<CcpJsonRepresentation> response = new ArrayList<>();
-			CcpFieldName ccpFieldName4 = new CcpFieldName(field);
-			Double asDoubleNumber2 = json.getAsDoubleNumber(ccpFieldName4);
+			CcpFieldName sameMoneyFieldName = new CcpFieldName(field);
+			Double declaredMaxValue = json.getAsDoubleNumber(sameMoneyFieldName);
 
-			int maxValueFromThisPosition = asDoubleNumber2.intValue();
+			int maxValueFromThisPosition = declaredMaxValue.intValue();
 			
 			for(int k = maxValueFromThisPosition; k >= 1000; k -= 100) {
-				CcpJsonRepresentation put3 = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k);
-				CcpJsonRepresentation put = put3.put(JsonFieldNames.moneyType, field);
-				response.add(put);
+				CcpJsonRepresentation jsonWithMoneyValue = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.moneyValue, k);
+				CcpJsonRepresentation moneyRecord = jsonWithMoneyValue.put(JsonFieldNames.moneyType, field);
+				response.add(moneyRecord);
 			}
 			
 			return response;

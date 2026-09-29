@@ -15,10 +15,10 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Entidade virtual utilizada para calcular um hash composto que representa uma combinação específica
- * de atributos de matching entre currículo e vaga (senioridade, disponibilidade, PCD, tipo e valor de
- * remuneração, sinônimos de skill). Esse hash é usado internamente pelo sistema de matching para verificar
- * compatibilidade sem buscas complexas. Possui cache de 1 hora.
+ * Virtual entity used to calculate a composite hash that represents a specific combination of
+ * resume/position matching attributes (seniority, availability, PCD, compensation type and value,
+ * skill synonyms). The matching system uses this hash internally to check compatibility without
+ * complex searches. Cached for 1 hour.
  */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

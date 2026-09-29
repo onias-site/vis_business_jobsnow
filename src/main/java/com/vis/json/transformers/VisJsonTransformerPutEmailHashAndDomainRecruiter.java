@@ -9,10 +9,10 @@ import com.ccp.business.CcpBusiness;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Transformador de campo aplicado ao e-mail do recrutador durante a persistência da entidade VisEntityPosition.
- * Extrai o e-mail original, calcula seu hash SHA1, extrai o domínio (parte antes do @) e enriquece o JSON
- * com o hash (substituindo recruiter), o e-mail original (em originalRecruiter) e o domínio (em domain).
- * Garante o anonimato do recrutador no sistema enquanto mantém a rastreabilidade por domínio.
+ * Field transformer applied to the recruiter's e-mail while the VisEntityPosition entity is persisted.
+ * Takes the original e-mail, calculates its SHA1 hash, extracts the domain (the part before the @) and enriches
+ * the JSON with the hash (replacing recruiter), the original e-mail (in originalRecruiter) and the domain (in domain).
+ * Keeps the recruiter anonymous in the system while preserving traceability by domain.
  */
 public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements CcpBusiness {
 	enum JsonFieldNames implements CcpJsonFieldName{
@@ -27,21 +27,21 @@ public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements CcpBusi
 		
 		String recruiter = json.getAsString(VisJsonCommonsFields.recruiter);
 		
-		String[] split = recruiter.split("@");
+		String[] emailParts = recruiter.split("@");
 		
-		String domain =  split[0];
-		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(recruiter);
+		String domain =  emailParts[0];
+		CcpStringDecorator recruiterDecorator = new CcpStringDecorator(recruiter);
 
-		CcpHashDecorator hash2 = ccpStringDecorator.hash();
+		CcpHashDecorator recruiterHashDecorator = recruiterDecorator.hash();
 		
-		String hash = hash2.asString(CcpHashAlgorithm.SHA1);
-		CcpJsonRepresentation put2 = json
+		String hash = recruiterHashDecorator.asString(CcpHashAlgorithm.SHA1);
+		CcpJsonRepresentation jsonWithOriginalRecruiter = json
 				.put(JsonFieldNames.originalRecruiter, recruiter);
-				CcpJsonRepresentation put3 = put2
+				CcpJsonRepresentation jsonWithHashedRecruiter = jsonWithOriginalRecruiter
 				.put(VisJsonCommonsFields.recruiter, hash);
-		CcpJsonRepresentation put = put3
+		CcpJsonRepresentation jsonWithDomain = jsonWithHashedRecruiter
 				.put(VisJsonCommonsFields.domain, domain)
 				;
-		return put;
+		return jsonWithDomain;
 	}
 }

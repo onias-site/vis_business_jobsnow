@@ -4,8 +4,8 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.business.CcpBusiness;
 
 /**
- * Tarefa agendada destinada à busca de skills. Implementação pendente — retorna o JSON de entrada
- * sem processamento.
+ * Scheduled task meant to search skills. The implementation is pending: it returns the input JSON
+ * without processing it.
  */
 public class VisBusinessSearchSkills implements  CcpBusiness{
 

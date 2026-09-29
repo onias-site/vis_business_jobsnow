@@ -7,30 +7,30 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSeniorityTypes;
 
 /**
- * Extrai ou calcula o valor de senioridade para o processo de matching, com lógica diferente para
- * currículo (calcula a partir do ano de início de experiência) e para vaga (lê diretamente do campo).
+ * Extracts or calculates the seniority value for the matching process, with different logic for
+ * resumes (calculated from the year the experience started) and for positions (read straight from the field).
  */
 public enum VisFunctionsGetSeniorityValueFromJson implements Function<CcpJsonRepresentation, String> {
 	resume {
 		public String apply(CcpJsonRepresentation json) {
 			Integer experience = json.getAsIntegerNumber(VisJsonCommonsFields.experience);
 			
-			CcpTimeDecorator ctd = new CcpTimeDecorator();
-			int currentYear = ctd.getYear();
+			CcpTimeDecorator timeDecorator = new CcpTimeDecorator();
+			int currentYear = timeDecorator.getYear();
 			int experienceInYears = currentYear - experience;
-			boolean experienceInYearsMaior = experienceInYears > 10;
+			boolean isSpecialist = experienceInYears > 10;
 
-			if(experienceInYearsMaior) {
+			if(isSpecialist) {
 				return VisSeniorityTypes.ES.name();
 			}
-			boolean experienceInYearsMaior2 = experienceInYears > 5;
+			boolean isSenior = experienceInYears > 5;
 
-			if(experienceInYearsMaior2) {
+			if(isSenior) {
 				return VisSeniorityTypes.SR.name();
 			}
-			boolean experienceInYearsMaior3 = experienceInYears > 2;
+			boolean isMidLevel = experienceInYears > 2;
 
-			if(experienceInYearsMaior3) {
+			if(isMidLevel) {
 				return VisSeniorityTypes.PL.name();
 			}
 			return VisSeniorityTypes.JR.name();

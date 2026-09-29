@@ -9,9 +9,9 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Tarefa agendada que agrupa as percepções/avaliações de currículos pelo e-mail do candidato, usando
- * VisEntityResumePerception como fonte e VisEntityGroupResumesPerceptionsByResume como destino.
- * Delega ao utilitário VisUtils.groupDetailsByMasters.
+ * Scheduled task that groups the resume perceptions/evaluations by the candidate's e-mail, using
+ * VisEntityResumePerception as the source and VisEntityGroupResumesPerceptionsByResume as the target.
+ * Delegates to the VisUtils.groupDetailsByMasters utility.
  */
 public class VisBusinessGroupResumesOpinionsByResume implements JnBusinessSendToMensageria{
 		
@@ -22,7 +22,7 @@ public class VisBusinessGroupResumesOpinionsByResume implements JnBusinessSendTo
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		CcpJsonRepresentation groupDetailsByMasters = VisUtils.groupDetailsByMasters(
+		CcpJsonRepresentation groupingResult = VisUtils.groupDetailsByMasters(
 				json, 
 				VisEntityResumePerception.ENTITY, 
 				VisEntityGroupResumesPerceptionsByResume.ENTITY, 
@@ -30,7 +30,7 @@ public class VisBusinessGroupResumesOpinionsByResume implements JnBusinessSendTo
 				JnJsonCommonsFields.timestamp
 				);
 		
-		return groupDetailsByMasters;
+		return groupingResult;
 
 	}
 

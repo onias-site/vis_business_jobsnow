@@ -8,9 +8,9 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJs
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
 /**
- * Define as regras de validação dos campos de cada objeto de skill dentro do índice
- * VisEntityGroupPositionsBySkills (agrupamento por duas primeiras letras). Inclui o campo positionStatis
- * para armazenar estatísticas de vagas associadas a cada skill.
+ * Defines the validation rules of the fields of each skill object inside the
+ * VisEntityGroupPositionsBySkills index (grouping by the first two letters). Includes the positionStatis
+ * field to store the statistics of the positions associated with each skill.
  */
 public enum VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials implements CcpJsonFieldName{
 

@@ -20,9 +20,9 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Representa o agrupamento paginado das percepções/avaliações registradas sobre um currículo específico,
- * organizado pelo e-mail do candidato.
- * Possui cache de 24 horas e é expurgável anualmente.
+ * Represents the paginated grouping of the perceptions/evaluations recorded about a specific resume,
+ * organized by the candidate's e-mail.
+ * Cached for 24 hours and purged yearly.
  */
 @CcpEntityCache(86400)
 @CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityDisposableBuilder.class, priority = 1),})

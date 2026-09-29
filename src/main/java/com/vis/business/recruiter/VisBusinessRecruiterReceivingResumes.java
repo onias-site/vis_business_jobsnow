@@ -4,8 +4,8 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.business.CcpBusiness;
 
 /**
- * Implementação de CcpBusiness que representa o processo de recebimento de currículos pelo recrutador.
- * A lógica está pendente de implementação (retorna o JSON de entrada —).
+ * CcpBusiness implementation that represents the process of a recruiter receiving resumes.
+ * The logic is still pending (returns the input JSON unchanged).
  */
 public class VisBusinessRecruiterReceivingResumes implements CcpBusiness{
 		

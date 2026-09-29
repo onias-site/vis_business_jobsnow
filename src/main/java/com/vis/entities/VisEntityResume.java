@@ -27,6 +27,7 @@ import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
 import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
+import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -38,16 +39,16 @@ import com.vis.json.fields.validation.VisJsonFieldsSkills;
 import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 /**
- * Representa a entidade central de Currículo (resume) do candidato. Armazena o perfil profissional completo:
- * tipo de contrato desejado (CLT/PJ/BTC), disponibilidade, DDDs de interesse, skills, experiência, LinkedIn,
- * idiomas, restrições de empresa, senioridade e tempo disponível para trabalho temporário. Utiliza Twin Entity
- * para controlar currículos inativos, escrita assíncrona, versionamento e cache de 1 hora. Ao salvar ou ao
- * reativar (deletar do twin), dispara o cálculo de hashes e o envio do currículo para recrutadores compatíveis.
+ * Represents the candidate's core Resume entity. Stores the complete professional profile:
+ * desired contract type (CLT/PJ/BTC), availability, DDDs of interest, skills, experience, LinkedIn,
+ * languages, company restrictions, seniority and time available for temporary work. Uses Twin Entity
+ * to control inactive resumes, asynchronous writing, versioning and a 1-hour cache. On save or on
+ * reactivation (deletion from the twin), it triggers the hash calculation and sends the resume to matching recruiters.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
 @CcpEntityTwin(
-		twinEntityName = "inactive_resume",
+		twinEntityName = "vis_inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		) 

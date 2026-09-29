@@ -15,6 +15,7 @@ import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
 import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
+import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -22,12 +23,12 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Representa a percepção/avaliação (opinião) de um recrutador sobre um currículo. O Twin Entity implícito
- * registra quando a opinião é negativa (negativação do currículo).
- * Possui escrita assíncrona, versionamento e cache de 1 hora.
+ * Represents a recruiter's perception/evaluation (opinion) of a resume. The implicit Twin Entity
+ * records when the opinion is negative (negativation of the resume).
+ * Has asynchronous writing, versioning and a 1-hour cache.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)

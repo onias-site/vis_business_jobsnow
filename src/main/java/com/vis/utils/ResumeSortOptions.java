@@ -6,8 +6,8 @@ import com.vis.entities.VisEntityPosition;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Define os critérios de ordenação de currículos em relação a uma vaga. Cada constante representa um
- * critério de comparação numérica entre dois currículos, usando os campos relevantes do JSON do currículo.
+ * Defines the criteria for sorting resumes against a position. Each constant represents a numeric
+ * comparison criterion between two resumes, using the relevant fields of the resume JSON.
  */
 enum ResumeSortOptions {
 
@@ -24,42 +24,42 @@ enum ResumeSortOptions {
 	}
 
 	public int compare(CcpJsonRepresentation o1, CcpJsonRepresentation o2) {
-		int compareTo = this.compareTo(o1, o2, this.fieldsToSort);
-		return compareTo;
+		int comparisonResult = this.compareTo(o1, o2, this.fieldsToSort);
+		return comparisonResult;
 	}
 	
 	private int compareTo(CcpJsonRepresentation o1, CcpJsonRepresentation o2, String... keys) {
 		
 		for (String key : keys) {
-			CcpFieldName ccpFieldName = new CcpFieldName(key);
-			boolean containsAllFields = o1.containsAllFields(ccpFieldName);
-			boolean valorIgual = false == containsAllFields;
+			CcpFieldName firstKeyFieldName = new CcpFieldName(key);
+			boolean firstHasField = o1.containsAllFields(firstKeyFieldName);
+			boolean firstLacksField = false == firstHasField;
 		
-			if(valorIgual) {
+			if(firstLacksField) {
 				continue;
 			}
-			CcpFieldName ccpFieldName2 = new CcpFieldName(key);
-			boolean containsAllFields2 = o2.containsAllFields(ccpFieldName2);
-			boolean valorIgual2 = false == containsAllFields2;
+			CcpFieldName secondKeyFieldName = new CcpFieldName(key);
+			boolean secondHasField = o2.containsAllFields(secondKeyFieldName);
+			boolean secondLacksField = false == secondHasField;
 
-			if(valorIgual2) {
+			if(secondLacksField) {
 				continue;
 			}
-			CcpFieldName ccpFieldName3 = new CcpFieldName(key);
+			CcpFieldName firstValueFieldName = new CcpFieldName(key);
 
-			Double value1 = o1.getAsDoubleNumber(ccpFieldName3);
-			CcpFieldName ccpFieldName4 = new CcpFieldName(key);
-			Double value2 = o2.getAsDoubleNumber(ccpFieldName4);
+			Double value1 = o1.getAsDoubleNumber(firstValueFieldName);
+			CcpFieldName secondValueFieldName = new CcpFieldName(key);
+			Double value2 = o2.getAsDoubleNumber(secondValueFieldName);
 			
-			int compareTo = value1.compareTo(value2);
+			int comparisonResult = value1.compareTo(value2);
 			
-			boolean areEquals = compareTo == 0;
+			boolean areEquals = comparisonResult == 0;
 			
 			if(areEquals) {
 				continue;
 			}
 			
-			return compareTo;
+			return comparisonResult;
 		}
 		return 0;
 	}

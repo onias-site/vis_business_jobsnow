@@ -21,8 +21,8 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Registra skills sugeridas que foram rejeitadas, armazenando o motivo da rejeição junto aos dados
- * completos da skill proposta. Possui escrita assíncrona e cache de 1 hora.
+ * Records the suggested skills that were rejected, storing the rejection reason along with the
+ * complete data of the proposed skill. Has asynchronous writing and a 1-hour cache.
  */
 @CcpEntityCache(3600)
 @CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})

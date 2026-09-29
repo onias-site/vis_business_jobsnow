@@ -8,9 +8,9 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.business.CcpBusiness;
 
 /**
- * Disparada após o save ou reativação de um currículo para enviá-lo imediatamente a recrutadores com vagas
- * compatíveis na frequência minute. Usa o currículo recém-salvo como única fonte de currículos e busca todas
- * as vagas ativas da frequência minute.
+ * Triggered after a resume is saved or reactivated, to send it right away to the recruiters with matching
+ * positions in the minute frequency. Uses the freshly saved resume as the only source of resumes and fetches
+ * every active position of the minute frequency.
  */
 public class VisBusinessResumeSendToRecruiters implements CcpBusiness {
 	
@@ -23,7 +23,7 @@ public class VisBusinessResumeSendToRecruiters implements CcpBusiness {
 		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> howToObtainResumes = x -> Arrays.asList(resumeWithSkills);
 		
 		Function<VisFrequencyOptions, CcpJsonRepresentation> howToObtainPositionsGroupedByRecruiters = frequency -> VisUtils.getAllPositionsGroupedByRecruiters(frequency);
-		//TODO TROCAR STATIC POR FUNCOES
+		//TODO REPLACE STATIC WITH FUNCTIONS
 		VisUtils.sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(VisFrequencyOptions.minute, howToObtainResumes, howToObtainPositionsGroupedByRecruiters);
 		
 		return resumeWithSkills;

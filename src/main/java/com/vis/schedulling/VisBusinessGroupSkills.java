@@ -4,8 +4,8 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.business.CcpBusiness;
 
 /**
- * Tarefa agendada destinada ao agrupamento de skills. Implementação ainda pendente — retorna o JSON
- * de entrada sem processamento.
+ * Scheduled task meant to group skills. The implementation is still pending: it returns the input
+ * JSON without processing it.
  */
 public class VisBusinessGroupSkills implements  CcpBusiness{
 

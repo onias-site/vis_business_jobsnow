@@ -20,9 +20,9 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Representa o agrupamento paginado de visualizações de um currículo, organizado pelo e-mail do candidato.
- * Permite consultar quantas e quais empresas visualizaram o currículo.
- * Possui cache de 24 horas e é expurgável anualmente.
+ * Represents the paginated grouping of the views of a resume, organized by the candidate's e-mail.
+ * Allows querying how many and which companies viewed the resume.
+ * Cached for 24 hours and purged yearly.
  */
 @CcpEntityCache(86400)
 @CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityDisposableBuilder.class, priority = 1),})

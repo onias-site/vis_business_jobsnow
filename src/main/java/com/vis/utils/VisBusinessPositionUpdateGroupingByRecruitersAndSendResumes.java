@@ -14,10 +14,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 
 /**
- * Orquestra a atualização completa do agrupamento de vagas por recrutadores e o envio de currículos
- * compatíveis ao ser disparada após um save ou delete de vaga. Duplica o campo email para masters,
- * reagrupa as vagas por recrutador, busca todos os currículos do último ano, filtra e ordena os currículos
- * compatíveis com a vaga, e salva o resultado paginado em VisEntityGroupResumesByPosition.
+ * Orchestrates the complete update of the grouping of positions by recruiters and the sending of matching
+ * resumes, when triggered after a position save or delete. Duplicates the email field into masters,
+ * regroups the positions by recruiter, fetches every resume of the last year, filters and sorts the resumes
+ * that match the position, and saves the paginated result in VisEntityGroupResumesByPosition.
  */
 public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes implements CcpBusiness{
 
@@ -27,9 +27,9 @@ public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes impleme
 	//0
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		CcpJsonRepresentation duplicateValueFromKey = json.duplicateValueFromField(VisJsonCommonsFields.email, VisJsonCommonsFields.masters);
+		CcpJsonRepresentation jsonWithMasters = json.duplicateValueFromField(VisJsonCommonsFields.email, VisJsonCommonsFields.masters);
 
-		VisUtils.groupPositionsGroupedByRecruiters(duplicateValueFromKey);
+		VisUtils.groupPositionsGroupedByRecruiters(jsonWithMasters);
 		
 		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.yearly, JnJsonCommonsFields.timestamp.name());
 		

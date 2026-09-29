@@ -10,8 +10,8 @@ import com.vis.entities.VisEntityResumePerception;
 
 
 /**
- * Serviço de acesso a dados do recrutador. Expõe operações relacionadas às interações do recrutador
- * com currículos e vagas.
+ * Recruiter data access service. Exposes the operations related to the recruiter's interactions
+ * with resumes and positions.
  */
 public enum VisServiceRecruiter implements JnService {
 	GetAlreadySeenResumes{
@@ -37,8 +37,8 @@ public enum VisServiceRecruiter implements JnService {
 	},
 	SendResumesToEmail{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			JnFunctionMensageriaSender jnFunctionMensageriaSender = new JnFunctionMensageriaSender(VisBusinessRecruiterReceivingResumes.INSTANCE);
-			CcpJsonRepresentation result = jnFunctionMensageriaSender.execute(json);
+			JnFunctionMensageriaSender mensageriaSender = new JnFunctionMensageriaSender(VisBusinessRecruiterReceivingResumes.INSTANCE);
+			CcpJsonRepresentation result = mensageriaSender.execute(json);
 			
 			return result;
 		}

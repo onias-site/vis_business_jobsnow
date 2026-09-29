@@ -11,10 +11,10 @@ import com.vis.utils.VisUtils;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
 /**
- * Tarefa agendada principal do processo de matching. Para uma determinada frequência de envio, busca
- * as vagas agrupadas por recrutador e os currículos atualizados recentemente, e orquestra o filtro,
- * ordenação e envio dos currículos compatíveis para cada recrutador. É a entrada do ciclo de matching
- * periódico (minute, hourly, daily, weekly, monthly).
+ * Main scheduled task of the matching process. For a given sending frequency, it fetches the positions
+ * grouped by recruiter and the recently updated resumes, and orchestrates the filtering, sorting and
+ * sending of the matching resumes to each recruiter. It is the entry point of the periodic matching
+ * cycle (minute, hourly, daily, weekly, monthly).
  */
 public class VisBusinessPositionResumesReceivingByFrequency  implements CcpBusiness{
 		

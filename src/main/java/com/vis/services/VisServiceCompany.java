@@ -14,8 +14,8 @@ import com.jn.services.JnService;
 import com.vis.entities.VisEntityGroupCompaniesByTheirFirstThreeInitials;
 
 /**
- * Serviço de acesso a dados de empresas. Expõe operações relacionadas à busca de empresas pelo nome.
- * Cada constante é um endpoint de serviço.
+ * Company data access service. Exposes the operations related to searching companies by name.
+ * Each constant is a service endpoint.
  */ 
 public enum VisServiceCompany implements JnService {
 
@@ -39,11 +39,11 @@ public enum VisServiceCompany implements JnService {
 			}
 
 			var companies = jsonPiece.getAsStringList(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies);
-			Stream<String> stream = companies.stream();
-			var filter = stream.filter(x -> x.toUpperCase().startsWith(search.toUpperCase()));
-			var filteredCompanies = filter.collect(Collectors.toList());
-			var filteredCompaniesEmpty = filteredCompanies.isEmpty();
-			if(filteredCompaniesEmpty) {
+			Stream<String> companiesStream = companies.stream();
+			var companiesStartingWithSearch = companiesStream.filter(x -> x.toUpperCase().startsWith(search.toUpperCase()));
+			var filteredCompanies = companiesStartingWithSearch.collect(Collectors.toList());
+			var noCompanyFound = filteredCompanies.isEmpty();
+			if(noCompanyFound) {
 				filteredCompanies = Arrays.asList(search);
 			}
 			var searchResultWithFilteredCompanies = jsonPiece.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies, filteredCompanies);

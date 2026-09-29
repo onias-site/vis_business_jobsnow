@@ -1,8 +1,8 @@
 package com.vis.utils;
 
 /**
- * Classifica como uma skill obrigatória de uma vaga foi encontrada no currículo do candidato durante
- * o processo de matching.
+ * Classifies how a required skill of a position was found in the candidate's resume during
+ * the matching process.
  */
 enum ResumeSkillFoundType {
 	CONTAINED_IN_RESUME, SYNONYM, PARENT 

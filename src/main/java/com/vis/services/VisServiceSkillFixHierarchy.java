@@ -23,9 +23,9 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Serviço de sugestões de correção de hierarquia de skill: o candidato pede para associar ({@code add})
- * ou desassociar ({@code remove}) skills do seu currículo a um conhecimento implícito ({@code parent}).
- * A sugestão fica pendente em {@link VisEntitySkillFixHierarchyPending} até ser aprovada ou rejeitada.
+ * Service for skill hierarchy fix suggestions: the candidate asks to associate ({@code add})
+ * or dissociate ({@code remove}) skills of their resume with an implicit knowledge ({@code parent}).
+ * The suggestion stays pending in {@link VisEntitySkillFixHierarchyPending} until it is approved or rejected.
  */
 public enum VisServiceSkillFixHierarchy implements JnService {
 
@@ -37,18 +37,18 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 	},
 
 	/**
-	 * Devolve a sugestão do candidato para o parent e o type informados, acrescida do campo {@code status}.
-	 * Procura primeiro na pendente: uma sugestão reenviada depois de aprovada ou rejeitada volta a ficar
-	 * pendente, e é ela que o candidato deve ver. Sem sugestão, devolve json vazio.
+	 * Returns the candidate's suggestion for the given parent and type, plus the {@code status} field.
+	 * Looks in the pending entity first: a suggestion resent after being approved or rejected becomes
+	 * pending again, and that is the one the candidate must see. Without a suggestion, returns an empty json.
 	 *
-	 * As três entidades são consultadas numa única ida ao banco (union all); a ordem de prioridade é
-	 * aplicada depois, sobre o resultado já em memória.
+	 * The three entities are queried in a single database round trip (union all); the priority order is
+	 * applied afterwards, on the result already in memory.
 	 */
 	GetSkillFixHierarchy{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			VisSkillFixHierarchyStatus[] statuses = VisSkillFixHierarchyStatus.values();
-			Stream<VisSkillFixHierarchyStatus> stream = Arrays.stream(statuses);
-			CcpEntity[] entities = stream.map(status -> status.entity).toArray(CcpEntity[]::new);
+			Stream<VisSkillFixHierarchyStatus> statusesStream = Arrays.stream(statuses);
+			CcpEntity[] entities = statusesStream.map(status -> status.entity).toArray(CcpEntity[]::new);
 
 			CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
 			CcpSelectUnionAll unionAll = crud.unionAll(json, JnDeleteKeysFromCache.INSTANCE, entities);
@@ -60,25 +60,25 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 				if(notFound) {
 					continue;
 				}
-				CcpJsonRepresentation put = found.put(GetSkillFixHierarchyResponse.status, status.name());
-				return put;
+				CcpJsonRepresentation suggestionWithStatus = found.put(GetSkillFixHierarchyResponse.status, status.name());
+				return suggestionWithStatus;
 			}
 			return CcpOtherConstants.EMPTY_JSON;
 		}
 	},
 
 	/**
-	 * O candidato desiste da sugestão ainda pendente. Só apaga da pendente: o que já foi aprovado ou
-	 * rejeitado é histórico da análise e não pode ser desfeito por ele. Responde 404 quando não há
-	 * sugestão pendente (ex.: foi analisada entre o candidato abrir o modal e desistir).
+	 * The candidate withdraws a suggestion that is still pending. Only deletes from the pending entity: what was
+	 * already approved or rejected is review history and cannot be undone by the candidate. Responds 404 when
+	 * there is no pending suggestion (e.g. it was reviewed between the candidate opening the modal and giving up).
 	 */
 	DeleteSkillFixHierarchy{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			boolean deleted = VisEntitySkillFixHierarchyPending.ENTITY.delete(json);
 			boolean notFound = false == deleted;
 			if(notFound) {
-				CcpErrorFlowDisturb ccpErrorFlowDisturb = new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
-				throw ccpErrorFlowDisturb;
+				CcpErrorFlowDisturb notFoundError = new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
+				throw notFoundError;
 			}
 			return json;
 		}
@@ -91,8 +91,8 @@ enum GetSkillFixHierarchyResponse implements CcpJsonFieldName{
 }
 
 /**
- * Validação do corpo de {@link VisServiceSkillFixHierarchy#FixSkillHierarchy}. Cada campo copia as
- * regras direto da classe que as declara, pois {@code CcpJsonCopyFieldValidationsFrom} não é recursiva.
+ * Body validation of {@link VisServiceSkillFixHierarchy#FixSkillHierarchy}. Each field copies the
+ * rules straight from the class that declares them, because {@code CcpJsonCopyFieldValidationsFrom} is not recursive.
  */
 enum FixSkillHierarchy implements CcpJsonFieldName{
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
@@ -118,8 +118,8 @@ enum FixSkillHierarchy implements CcpJsonFieldName{
 }
 
 /**
- * Validação do corpo de {@link VisServiceSkillFixHierarchy#GetSkillFixHierarchy}: só a chave primária
- * das entidades de sugestão (email + parent + type).
+ * Body validation of {@link VisServiceSkillFixHierarchy#GetSkillFixHierarchy}: only the primary key
+ * of the suggestion entities (email + parent + type).
  */
 enum GetSkillFixHierarchy implements CcpJsonFieldName{
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
@@ -136,8 +136,8 @@ enum GetSkillFixHierarchy implements CcpJsonFieldName{
 }
 
 /**
- * Validação do corpo de {@link VisServiceSkillFixHierarchy#DeleteSkillFixHierarchy}: a mesma chave
- * primária da busca (email + parent + type).
+ * Body validation of {@link VisServiceSkillFixHierarchy#DeleteSkillFixHierarchy}: the same primary
+ * key as the lookup (email + parent + type).
  */
 enum DeleteSkillFixHierarchy implements CcpJsonFieldName{
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)

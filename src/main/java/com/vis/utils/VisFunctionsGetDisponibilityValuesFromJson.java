@@ -7,18 +7,18 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Gera listas de valores de disponibilidade (em dias) para o processo de cálculo de hashes de compatibilidade,
- * com comportamento diferente para currículo e vaga.
+ * Generates lists of availability values (in days) for the compatibility hash calculation process,
+ * behaving differently for resumes and positions.
  */
 public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJsonRepresentation, List<Integer>> {
 	resume {
 		public List<Integer> apply(CcpJsonRepresentation json) {
 			List<Integer> response = new ArrayList<>();
-			Double asDoubleNumber = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility);
+			Double declaredDisponibility = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility);
 
-			int end = asDoubleNumber.intValue();
+			int candidateDisponibility = declaredDisponibility.intValue();
 			
-			for(int k = end; k <= 70; k++) {
+			for(int k = candidateDisponibility; k <= 70; k++) {
 				response.add(k);
 			}
 			
@@ -27,9 +27,9 @@ public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJs
 	}, position {
 		public List<Integer> apply(CcpJsonRepresentation json) {
 			List<Integer> response = new ArrayList<>();
-			Double asDoubleNumber2 = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility);
+			Double declaredMaxDisponibility = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility);
 
-			int maxDisponibility = asDoubleNumber2.intValue();
+			int maxDisponibility = declaredMaxDisponibility.intValue();
 			
 			for(int k = maxDisponibility; k >= 0; k--) {
 				response.add(k);

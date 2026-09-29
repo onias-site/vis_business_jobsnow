@@ -6,7 +6,7 @@ import com.vis.entities.VisEntityResume;
 
 
 /**
- * Serviço de acesso a dados de currículos. Expõe as operações de CRUD sobre a entidade VisEntityResume.
+ * Resume data access service. Exposes the CRUD operations on the VisEntityResume entity.
  */
 public enum VisServiceResume implements JnService {
 	ChangeStatus{
@@ -25,9 +25,9 @@ public enum VisServiceResume implements JnService {
 	},
 	GetData{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation changeStatus = VisEntityResume.ENTITY.getOneByIdAnyWhere(json);
+			CcpJsonRepresentation resumeData = VisEntityResume.ENTITY.getOneByIdAnyWhere(json);
 			
-			return changeStatus;
+			return resumeData;
 		}
 	},
 	Save{

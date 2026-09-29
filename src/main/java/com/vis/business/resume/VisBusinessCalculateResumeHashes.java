@@ -4,8 +4,8 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 
 /**
- * Implementação de CcpBusiness destinada ao cálculo de hashes do currículo (para indexação ou matching).
- * A implementação está marcada como TODO — retorna o JSON de entrada sem alterações.
+ * CcpBusiness implementation meant to calculate the resume hashes (for indexing or matching).
+ * The implementation is marked as TODO: it returns the input JSON unchanged.
  */
 public class VisBusinessCalculateResumeHashes implements CcpBusiness {
 

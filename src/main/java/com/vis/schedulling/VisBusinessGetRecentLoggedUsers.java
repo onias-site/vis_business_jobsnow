@@ -14,9 +14,9 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaDa
 import com.ccp.especifications.db.query.CcpQuery;
 
 /**
- * Tarefa agendada (cron) que busca todos os usuários que fizeram login no último ano e os envia para os
- * processos de agrupamento de visualizações de currículos e percepções. Consome o índice
- * JnEntityDisposableRecord filtrando registros de sessão com timestamp dentro do período anual.
+ * Scheduled (cron) task that fetches every user who logged in during the last year and sends them to the
+ * resume views and perceptions grouping processes. Consumes the JnEntityDisposableRecord index,
+ * filtering the session records whose timestamp falls within the yearly period.
  */
 public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 		
@@ -43,10 +43,10 @@ public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 								var startFieldRange = startRange
 									.startFieldRange(timestampName);
 									long currentTimeMillis = System.currentTimeMillis();
-									double hoursVezes = VisFrequencyOptions.yearly.hours * 3_600_000;
-									double currentTimeMillisMenos = currentTimeMillis - hoursVezes;
+									double oneYearInMillis = VisFrequencyOptions.yearly.hours * 3_600_000;
+									double oneYearAgoInMillis = currentTimeMillis - oneYearInMillis;
 									var greaterThan = startFieldRange
-										.greaterThan(currentTimeMillisMenos);
+										.greaterThan(oneYearAgoInMillis);
 										var endFieldRangeAndBackToRange = greaterThan
 										.endFieldRangeAndBackToRange();
 										var endRangeAndBackToMust = endFieldRangeAndBackToRange
@@ -61,13 +61,13 @@ public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 										.endQueryAndBackToRequest();
 										var maxResults = endQueryAndBackToRequest
 										.maxResults();
-										String timestampName2 = JnJsonCommonsFields.timestamp.name();
+										String sortingFieldName = JnJsonCommonsFields.timestamp.name();
 		CcpQueryOptions queryToSearchLastUpdated = 
 				maxResults
-					.addDescSorting(timestampName2)
+					.addDescSorting(sortingFieldName)
 				;
-				CcpEntityMetaData entityMetaData2 = JnEntityDisposableRecord.ENTITY.getEntityMetaData();
-				String[] resourcesNames = entityMetaData2.getEntitiesToSelect();
+				CcpEntityMetaData disposableRecordMetaData = JnEntityDisposableRecord.ENTITY.getEntityMetaData();
+				String[] resourcesNames = disposableRecordMetaData.getEntitiesToSelect();
 				String idName = JnJsonCommonsFields.id.name();
 
 				queryExecutor.consumeQueryResult(queryToSearchLastUpdated, resourcesNames, "10m", 10000L, VisSendRecentUsersToGroupings.INSTANCE, idName);

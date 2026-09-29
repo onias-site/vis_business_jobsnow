@@ -9,9 +9,9 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Tarefa agendada que agrupa as percepções/avaliações de currículos pelo e-mail do recrutador, usando
- * VisEntityResumePerception como fonte e VisEntityGroupResumesPerceptionsByRecruiter como destino.
- * Delega ao utilitário VisUtils.groupDetailsByMasters.
+ * Scheduled task that groups the resume perceptions/evaluations by the recruiter's e-mail, using
+ * VisEntityResumePerception as the source and VisEntityGroupResumesPerceptionsByRecruiter as the target.
+ * Delegates to the VisUtils.groupDetailsByMasters utility.
  */
 public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpBusiness{
 		
@@ -21,7 +21,7 @@ public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpBusiness{
 	public static final VisBusinessGroupResumesOpinionsByRecruiter INSTANCE = new VisBusinessGroupResumesOpinionsByRecruiter();
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation groupDetailsByMasters = VisUtils.groupDetailsByMasters(
+		CcpJsonRepresentation groupingResult = VisUtils.groupDetailsByMasters(
 				json, 
 				VisEntityResumePerception.ENTITY, 
 				VisEntityGroupResumesPerceptionsByRecruiter.ENTITY, 
@@ -29,7 +29,7 @@ public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpBusiness{
 				JnJsonCommonsFields.timestamp
 				);
 		
-		return groupDetailsByMasters;
+		return groupingResult;
 	}
 
 }

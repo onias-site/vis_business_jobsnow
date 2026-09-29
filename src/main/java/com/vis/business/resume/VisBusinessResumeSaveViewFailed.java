@@ -8,9 +8,9 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.ccp.json.fields.validation.CcpJsonCommonsFields;
 
 /**
- * Implementação de CcpBusiness que persiste o registro de uma tentativa de visualização de currículo
- * que falhou. Extrai o status HTTP do campo errorDetails.status e salva o registro na entidade
- * VisEntityResumeViewFailed.
+ * CcpBusiness implementation that persists the record of a failed attempt to view a resume.
+ * Extracts the HTTP status from the errorDetails.status field and saves the record in the
+ * VisEntityResumeViewFailed entity.
  */
 public class VisBusinessResumeSaveViewFailed implements CcpBusiness {
 
@@ -20,8 +20,8 @@ public class VisBusinessResumeSaveViewFailed implements CcpBusiness {
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String status = json.getValueFromPath("", CcpJsonCommonsFields.errorDetails, JnJsonCommonsFields.status);
-		CcpJsonRepresentation put = json.put(JnJsonCommonsFields.status, status);
-		VisEntityResumeViewFailed.ENTITY.save(put);
+		CcpJsonRepresentation jsonWithStatus = json.put(JnJsonCommonsFields.status, status);
+		VisEntityResumeViewFailed.ENTITY.save(jsonWithStatus);
 		return json;
 	}
 

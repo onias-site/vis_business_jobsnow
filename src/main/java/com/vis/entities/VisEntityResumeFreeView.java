@@ -20,9 +20,9 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Registra que um recrutador visualizou um currículo de forma gratuita (dentro do limite gratuito mensal).
- * Sua presença indica que essa visualização específica não gerou cobrança.
- * Possui cache de 24 horas e é expurgável mensalmente.
+ * Records that a recruiter viewed a resume for free (within the monthly free limit).
+ * Its presence means that this specific view was not charged.
+ * Cached for 24 hours and purged monthly.
  */
 @CcpEntityCache(86400)
 @CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityDisposableBuilder.class, priority = 1),})

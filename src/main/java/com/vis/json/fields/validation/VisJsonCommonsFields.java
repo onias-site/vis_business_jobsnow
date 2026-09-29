@@ -11,10 +11,10 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeTimeBefo
 
 
 /**
- * Define as validações compartilhadas pelos campos JSON mais comuns do módulo VIS, servindo como fonte
- * de regras reutilizáveis via @CcpJsonCopyFieldValidationsFrom em outras entidades. Centraliza restrições
- * de tipo, tamanho e valores permitidos para campos recorrentes como email, seniority, ddd, skill,
- * recruiter, entre outros.
+ * Defines the validations shared by the most common JSON fields of the VIS module, serving as a source
+ * of reusable rules via @CcpJsonCopyFieldValidationsFrom in other entities. Centralizes the type, size
+ * and allowed-value constraints of recurring fields such as email, seniority, ddd, skill,
+ * recruiter, among others.
  */
 public enum VisJsonCommonsFields implements CcpJsonFieldName {
 
@@ -96,9 +96,9 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 	parent,
 
 	/*
-	 * Campos abaixo centralizados a partir de enums locais que os declaravam em duplicidade.
-	 * Ficam sem anotação de validação de propósito: a centralização unifica apenas o nome da
-	 * chave, preservando o comportamento anterior.
+	 * The fields below were centralized from local enums that declared them in duplicate.
+	 * They deliberately have no validation annotation: the centralization only unifies the key
+	 * name, preserving the previous behavior.
 	 */
 	masters,
 

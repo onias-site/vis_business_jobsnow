@@ -1,7 +1,7 @@
 package com.vis.entities;
 
 import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenTransferOperationType.afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError;
-import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterSaveFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError;
+import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError;
 
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
@@ -35,10 +35,10 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutAprovedSkill;
 import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 
 /**
- * Representa novas skills sugeridas aguardando aprovação. Ao salvar, notifica o suporte via
- * VisTemplatesToNotifySupport.NewSkill e envia mensagem de pendência via VisMessages.PendingSkillHierarchy.
- * A entidade suporta transferência de dados para VisEntitySkillRejected ou para VisEntitySkill conforme
- * a decisão. Possui escrita assíncrona e cache de 1 hora.
+ * Represents newly suggested skills awaiting approval. On save, it notifies support via
+ * VisTemplatesToNotifySupport.NewSkill and sends a pending-status message via VisMessages.PendingSkillHierarchy.
+ * The entity supports transferring the data to VisEntitySkillRejected or to VisEntitySkill according to
+ * the decision. Has asynchronous writing and a 1-hour cache.
  */
 @CcpEntityCache(3600) 
 
@@ -52,7 +52,7 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 
 @JnEntitySendMessageToUserWhenWrite({
 	@JnEntitySendMessageToUserWhenWriteOperation(
-			operationType = afterSaveFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError,
+			operationType = afterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError,
 			messageTemplate =  VisMessages.VisNotifySupportAndUserAboutPendingSkillRequest.class
 			),
 })

@@ -1,9 +1,9 @@
 package com.vis.utils;
 
 /**
- * Define as frequências possíveis de envio de currículos para recrutadores, com o valor em horas
- * correspondente a cada frequência. Usado para calcular janelas de tempo nas queries de busca por
- * currículos e vagas recentes.
+ * Defines the possible frequencies for sending resumes to recruiters, with the value in hours
+ * corresponding to each frequency. Used to calculate the time windows of the queries that search for
+ * recent resumes and positions.
  */
 public enum  VisFrequencyOptions {
 	minute(1d/60d),

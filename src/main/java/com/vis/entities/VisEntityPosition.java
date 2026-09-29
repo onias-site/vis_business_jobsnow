@@ -27,6 +27,7 @@ import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
 import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
+import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -36,17 +37,17 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruiter;
 
 /**
- * Representa a entidade central de Vaga (position) no sistema. Armazena todos os dados de uma vaga
- * publicada por um recrutador: cargo, senioridade, localização (DDD), disponibilidade, canais de contato,
- * skills requeridas e desejadas, faixa salarial (CLT, PJ, BTC), frequência de envio de currículos,
- * data de expiração e critérios de ordenação. Utiliza o padrão Twin Entity para controlar vagas inativas
- * (inactive_position), tem escrita assíncrona, versionamento e cache de 1 hora. Ao salvar ou deletar,
- * dispara fluxos de reagrupamento e envio de currículos para recrutadores.
+ * Represents the core Position entity of the system. Stores all the data of a position published
+ * by a recruiter: job title, seniority, location (DDD), availability, contact channels,
+ * required and desired skills, salary range (CLT, PJ, BTC), resume sending frequency,
+ * expiration date and sorting criteria. Uses the Twin Entity pattern to control inactive positions
+ * (inactive_position), has asynchronous writing, versioning and a 1-hour cache. On save or delete,
+ * it triggers the regrouping flows and the sending of resumes to recruiters.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
+@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
 @CcpEntityTwin(
-		twinEntityName = "inactive_position",
+		twinEntityName = "vis_inactive_position",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
@@ -56,9 +57,9 @@ import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruite
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityPosition.Fields.class)
 //@CcpEntityOperations({
 //		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
-//		// TODO VAI SAIR ESSE FLUXO POR CAUSA DA RETIRADA DOS GROUPINGS
+//		// TODO THIS FLOW WILL BE REMOVED ALONG WITH THE GROUPINGS
 //		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteFromMainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
-//		//TODO REVISITAR ESTE FLUXO
+//		//TODO REVISIT THIS FLOW
 //		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteFromTwinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
 //})
 
@@ -148,8 +149,8 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	}
 
 	/**
-	 * Canais de contato aceitos pelo campo {@code channel} da entidade de vaga (position), ou seja,
-	 * por onde o recrutador deseja receber os currículos enviados pela plataforma.
+	 * Contact channels accepted by the {@code channel} field of the position entity, that is,
+	 * where the recruiter wants to receive the resumes sent by the platform.
 	 */
 	public static enum VisPositionChannelTypes {
 
@@ -161,8 +162,8 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	}
 
 	/**
-	 * Frequências aceitas pelo campo {@code frequency} da entidade de vaga (position), isto é,
-	 * de quanto em quanto tempo os currículos compatíveis são enviados ao recrutador.
+	 * Frequencies accepted by the {@code frequency} field of the position entity, that is,
+	 * how often the matching resumes are sent to the recruiter.
 	 */
 	public static enum VisPositionFrequencyTypes {
 
@@ -175,8 +176,8 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	}
 
 	/**
-	 * Critérios de ordenação aceitos pelo campo {@code sortFields} da entidade de vaga (position),
-	 * usados para ordenar os currículos que serão apresentados ao recrutador.
+	 * Sorting criteria accepted by the {@code sortFields} field of the position entity,
+	 * used to sort the resumes that will be presented to the recruiter.
 	 */
 	public static enum VisPositionSortFieldTypes {
 
