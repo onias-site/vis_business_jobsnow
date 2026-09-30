@@ -21,7 +21,8 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * {@code email} and the {@code parent} of the request and the {@code reviewDecisions}.
  *
  * <p>Each item goes to {@link VisEntitySkillFixHierarchyItemApproved} when approved, or to the twin of
- * {@link VisEntitySkillFixHierarchyItemPending} (the rejected items) when rejected. Then the request of each
+ * {@link VisEntitySkillFixHierarchyItemPending} (the rejected items) when rejected; an item that is no longer
+ * pending (decided in an earlier review) stays where it is. Then the request of each
  * reviewed type leaves {@link VisEntitySkillFixHierarchyPending}: it goes to
  * {@link VisEntitySkillFixHierarchyApproved} when at least one of its items was approved, and to
  * {@link VisEntitySkillFixHierarchyRejected} when all of them were rejected. That transfer is what emails the
@@ -68,6 +69,13 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 
 		CcpJsonRepresentation itemKeyFields = decision.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.type, VisEntitySkillFixHierarchyItemPending.Fields.skill);
 		CcpJsonRepresentation itemKey = requestKey.mergeWithAnotherJson(itemKeyFields);
+		// an item decided in an earlier review is no longer pending: its decision is only reported to the user
+		boolean itemIsNotPending = false == VisEntitySkillFixHierarchyItemPending.ENTITY.exists(itemKey);
+
+		if(itemIsNotPending) {
+			return;
+		}
+
 		VisSkillFixHierarchyDecisions itemDecision = decision.getAsEnum(VisSkillFixHierarchyReviewFields.decision, VisSkillFixHierarchyDecisions.class);
 
 		boolean isApproved = VisSkillFixHierarchyDecisions.approved == itemDecision;

@@ -8,7 +8,6 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.jn.db.bulk.JnBulkCreateResult;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
@@ -48,11 +47,11 @@ public class VisMessages {
 	 * Before notifying about the pending request, splits it into one {@link VisEntitySkillFixHierarchyItemPending}
 	 * record per skill of the {@code skill} array, created in a single bulk operation. An item that already
 	 * exists as pending, as rejected (the twin) or in {@link VisEntitySkillFixHierarchyItemApproved} is not
-	 * written. The json arrives already transformed by the pending entity (email as hash),
-	 * which is the same form the item records keep.
-	 * Returns the json with {@code skill} filtered down to the skills whose item was created now, so the
-	 * message only mentions what is really new in the request, and with the readable email back in
-	 * {@code email} (the transformer left the hash there), because the message goes to that address and
+	 * written: its decision was already taken, and the {@code fixSkillHierarchy} command of the support bot
+	 * reports that decision without asking the operator again. The json arrives already transformed by the
+	 * pending entity (email as hash), which is the same form the item records keep.
+	 * Returns the json with every skill of the request (none is filtered out) and with the readable email back
+	 * in {@code email} (the transformer left the hash there), because the message goes to that address and
 	 * the command sent to the support bot operator ({@code /fixSkillHierarchy {parent} {email}}) needs it.
 	 */
 	public static class VisNotifySupportAndUserAboutPendingSkillHierarchyRequest  implements CcpBusiness{
@@ -61,20 +60,16 @@ public class VisMessages {
 			List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
 			Stream<String> skillsStream = skills.stream();
 			Stream<String> distinctSkillsStream = skillsStream.distinct();
-			Stream<CcpJsonRepresentation> itemsStream = distinctSkillsStream.map(skill -> json.put(VisEntitySkillFixHierarchyItemPending.Fields.skill, skill));
+			List<String> distinctSkills = distinctSkillsStream.collect(Collectors.toList());
+			Stream<String> distinctSkillsToItemsStream = distinctSkills.stream();
+			Stream<CcpJsonRepresentation> itemsStream = distinctSkillsToItemsStream.map(skill -> json.put(VisEntitySkillFixHierarchyItemPending.Fields.skill, skill));
 			CcpJsonRepresentation[] items = itemsStream.toArray(CcpJsonRepresentation[]::new);
 
 			CcpEntity rejectedItemEntity = VisEntitySkillFixHierarchyItemPending.ENTITY.getTwinEntity();
 			CcpEntity[] entitiesThatPreventCreation = {rejectedItemEntity, VisEntitySkillFixHierarchyItemApproved.ENTITY};
-			List<JnBulkCreateResult> results = JnExecuteBulkOperation.INSTANCE.executeCreateBulk(VisEntitySkillFixHierarchyItemPending.ENTITY, entitiesThatPreventCreation, JnDeleteKeysFromCache.INSTANCE, items);
+			JnExecuteBulkOperation.INSTANCE.executeCreateBulk(VisEntitySkillFixHierarchyItemPending.ENTITY, entitiesThatPreventCreation, JnDeleteKeysFromCache.INSTANCE, items);
 
-			Stream<JnBulkCreateResult> resultsStream = results.stream();
-			Stream<JnBulkCreateResult> createdResultsStream = resultsStream.filter(result -> result.created);
-			Stream<String> createdSkillsStream = createdResultsStream.map(result -> result.json.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill));
-			List<String> createdSkills = createdSkillsStream.collect(Collectors.toList());
-
-			CcpJsonRepresentation jsonWithCreatedSkills = json.put(VisEntitySkillFixHierarchyPending.Fields.skill, createdSkills);
-			CcpJsonRepresentation jsonWithOriginalEmail = jsonWithCreatedSkills
+			CcpJsonRepresentation jsonWithOriginalEmail = json
 					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
 
 			String languageInTheJson = json.getAsString(JnJsonCommonsFields.language);
@@ -83,7 +78,7 @@ public class VisMessages {
 			JnLanguage language = JnLanguage.valueOf(languageName);
 			VisSkillFixHierarchyTypes type = json.getAsEnum(VisEntitySkillFixHierarchyPending.Fields.type, VisSkillFixHierarchyTypes.class);
 			String typeDescription = type.getDescription(language);
-			String skillNames = String.join(", ", createdSkills);
+			String skillNames = String.join(", ", distinctSkills);
 
 			CcpJsonRepresentation jsonWithTypeDescription = jsonWithOriginalEmail.put(JsonFieldNames.typeDescription, typeDescription);
 			CcpJsonRepresentation jsonWithSkillNames = jsonWithTypeDescription.put(JsonFieldNames.skillNames, skillNames);
@@ -95,7 +90,7 @@ public class VisMessages {
 		 * {@code type} written in the language of the message ("associação"/"association" or
 		 * "desassociação"/"dissociation"), resolved here because the template has no conditionals, in the same
 		 * language that {@code JnMessageType.email} will use to pick the template (the one in the json, or the
-		 * support language); {@code skillNames} is the filtered {@code skill} array joined by commas.
+		 * support language); {@code skillNames} is the {@code skill} array, without repetitions, joined by commas.
 		 */
 		public static enum JsonFieldNames implements CcpJsonFieldName{
 			typeDescription,

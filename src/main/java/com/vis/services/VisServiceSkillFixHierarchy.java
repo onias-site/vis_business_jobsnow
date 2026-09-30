@@ -4,13 +4,16 @@ import java.util.Arrays;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
+import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
@@ -19,8 +22,11 @@ import com.ccp.process.CcpProcessStatusDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.entities.VisEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.vis.json.fields.validation.VisUserRequestCommands;
+import com.vis.status.VisProcessStatusFixSkillHierarchy;
 
 /**
  * Service for skill hierarchy fix suggestions: the candidate asks to associate ({@code add})
@@ -29,9 +35,23 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  */
 public enum VisServiceSkillFixHierarchy implements JnService {
 
+	/**
+	 * Saves the suggestion as pending, which notifies the user and the support bot operator. A user that the
+	 * operator chose to ignore for the {@code fixSkillHierarchy} command ({@link VisEntityCommandNotAllowedToUser})
+	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified.
+	 */
 	FixSkillHierarchy{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			VisEntitySkillFixHierarchyPending.ENTITY.save(json);
+			CcpJsonRepresentation jsonWithCommandName = json.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.fixSkillHierarchy);
+			CcpBusiness saveAsPending = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillFixHierarchyPending.ENTITY);
+
+			new CcpGetEntityId(jsonWithCommandName)
+			.toBeginProcedureAnd()
+				.ifThisIdIsPresentInEntity(VisEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.userNotAllowed).and()
+				.executeAction(saveAsPending)
+				.andFinallyReturningTheseFields(FixSkillHierarchyResponse.inexistentField)
+			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+			;
 			return json;
 		}
 	},
@@ -88,6 +108,14 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 
 enum GetSkillFixHierarchyResponse implements CcpJsonFieldName{
 	status
+}
+
+/**
+ * {@link VisServiceSkillFixHierarchy#FixSkillHierarchy} answers with the json it received, so the search
+ * procedure returns no field.
+ */
+enum FixSkillHierarchyResponse implements CcpJsonFieldName{
+	inexistentField
 }
 
 /**
