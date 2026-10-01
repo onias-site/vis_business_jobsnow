@@ -9,10 +9,8 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactor
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
-import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 
@@ -29,11 +27,6 @@ public class VisEntitySkillFixHierarchyItemApproved implements CcpEntityConfigur
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyItemApproved.class).entityInstance;
 
 	public static enum Fields implements CcpJsonFieldName{
-		@CcpEntityFieldPrimaryKey
-		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		@CcpJsonFieldValidatorRequired
-		email,
-
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpEntityFieldPrimaryKey
 		parent,

@@ -91,15 +91,22 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 	 * The candidate withdraws a suggestion that is still pending. Only deletes from the pending entity: what was
 	 * already approved or rejected is review history and cannot be undone by the candidate. Responds 404 when
 	 * there is no pending suggestion (e.g. it was reviewed between the candidate opening the modal and giving up).
+	 *
+	 * The existence is checked before deleting, and not by the result of the deletion: the pending entity writes
+	 * through the messaging, so {@code delete} only tells that the message was accepted, and up to 2026-09-30
+	 * the 404 never happened. The stored request goes to the deletion (with the readable email of the key in
+	 * place of the stored hash) because its {@code skill} tells which items may have become orphans.
 	 */
 	DeleteSkillFixHierarchy{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			boolean deleted = VisEntitySkillFixHierarchyPending.ENTITY.delete(json);
-			boolean notFound = false == deleted;
+			boolean notFound = false == VisEntitySkillFixHierarchyPending.ENTITY.exists(json);
 			if(notFound) {
 				CcpErrorFlowDisturb notFoundError = new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
 				throw notFoundError;
 			}
+			CcpJsonRepresentation storedRequest = VisEntitySkillFixHierarchyPending.ENTITY.getOneById(json);
+			CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(json);
+			VisEntitySkillFixHierarchyPending.ENTITY.delete(completeRequest);
 			return json;
 		}
 	}

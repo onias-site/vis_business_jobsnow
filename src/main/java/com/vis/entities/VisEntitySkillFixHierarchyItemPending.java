@@ -13,11 +13,9 @@ import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDataTra
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
-import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyItem;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -25,8 +23,8 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 
 /**
  * Represents each skill of a pending skill hierarchy fix request, one record per skill: the same
- * fields as {@link VisEntitySkillFixHierarchyPending}, but without {@code description}, and {@code skill} holds a single value and
- * is part of the primary key (email + parent + type + skill).
+ * fields as {@link VisEntitySkillFixHierarchyPending}, but without {@code email} and {@code description}, and {@code skill} holds
+ * a single value and is part of the primary key (parent + type + skill).
  * Has the twin entity vis_skill_fix_hierarchy_item_rejected for the rejected items. The approved items are
  * transferred to {@link VisEntitySkillFixHierarchyItemApproved}, and once the transfer happens
  * {@link VisBusinessSkillFixHierarchyItem} runs.
@@ -48,11 +46,6 @@ public class VisEntitySkillFixHierarchyItemPending implements CcpEntityConfigura
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyItemPending.class).entityInstance;
 
 	public static enum Fields implements CcpJsonFieldName{
-		@CcpEntityFieldPrimaryKey
-		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		@CcpJsonFieldValidatorRequired
-		email,
-
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpEntityFieldPrimaryKey
 		parent,

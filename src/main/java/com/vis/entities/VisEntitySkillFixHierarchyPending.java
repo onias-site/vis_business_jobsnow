@@ -17,6 +17,9 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityC
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
+import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -49,6 +52,8 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.jn.utils.JnLanguage;
+import com.vis.business.skill.VisBusinessSkillFixHierarchyCreateItems;
+import com.vis.business.skill.VisBusinessSkillFixHierarchyDeleteOrphanItems;
 import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
@@ -60,8 +65,9 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
  * Represents pending skill hierarchy fix requests awaiting review: the user asks to associate
  * ({@code type = add}) or dissociate ({@code type = remove}) a skill of their resume with an implicit
  * knowledge ({@code parent}), giving the reason in {@code description}. Inserting a request notifies the
- * user by email and the support bot operator with the {@code /fixSkillHierarchy <parent> <email>} command,
- * and splits it into one VisEntitySkillFixHierarchyItemPending per skill. The operator's review
+ * user by email and the support bot operator with the {@code /fixSkillHierarchy <parent> <type> <email>} command.
+ * Every save (insert or update) splits it into one VisEntitySkillFixHierarchyItemPending per skill, and deleting
+ * it discards the items no other pending request asks for. The operator's review
  * ({@code VisBusinessSkillFixHierarchyReview}) transfers the request to VisEntitySkillFixHierarchyApproved
  * (at least one item approved) or VisEntitySkillFixHierarchyRejected (every item rejected), which emails
  * the user the approved and the rejected items with the operator's justifications.
@@ -100,6 +106,10 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 		}
 		)
 
+@CcpEntityOperations({
+		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity,  execute = {VisBusinessSkillFixHierarchyCreateItems.class}, operationHandlers = {}),
+		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteFromMainEntity,  execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {}),
+})
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
@@ -118,7 +128,7 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
 		String templateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class.getName();
 
-		String commandToTheOperator = "/fixSkillHierarchy {" + Fields.parent + "} {" + Fields.email + "}";
+		String commandToTheOperator = "/fixSkillHierarchy {" + Fields.parent + "} {" + Fields.type + "} {" + Fields.email + "}";
 		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
 				.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation templateWithMessage = templateWithTemplateId

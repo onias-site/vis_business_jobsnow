@@ -58,9 +58,9 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 	}
 
 	/**
-	 * The pending requests of both types for the email and the parent, complete (the pending entity writes
-	 * through the messaging, which validates the whole record, even to delete it), with the readable email
-	 * of the key in place of the stored hash.
+	 * The pending requests of both types for the email and the parent, complete (the {@code skill} array tells
+	 * the deletion which items may have become orphans), with the readable email of the key in place of the
+	 * stored hash.
 	 */
 	private List<CcpJsonRepresentation> getPendingRequests(CcpJsonRepresentation requestKey) {
 
@@ -85,7 +85,7 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 
 	private void discardRequest(CcpJsonRepresentation pendingRequest) {
 
-		CcpJsonRepresentation itemKeyWithoutSkill = pendingRequest.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.email, VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type);
+		CcpJsonRepresentation itemKeyWithoutSkill = pendingRequest.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type);
 		List<String> skills = pendingRequest.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
 
 		for (String skill : skills) {

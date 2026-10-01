@@ -7,15 +7,11 @@ import java.util.stream.Stream;
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.jn.utils.JnDeleteKeysFromCache;
+import com.jn.messages.JnRepeatableMessage;
 import com.jn.utils.JnLanguage;
 import com.jn.utils.JnSystemProperties;
-import com.vis.entities.VisEntitySkillFixHierarchyItemApproved;
-import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 
@@ -24,8 +20,10 @@ public class VisMessages {
 	/**
 	 * Email to the user when the request goes to {@code VisEntitySkillFixHierarchyApproved}, that is, when at least
 	 * one of its items was approved. Lists the approved and the rejected items with the operator's justifications.
+	 * Repeatable: each review is a new fact, and up to 2026-09-30 the second review of the same user in the same
+	 * day was refused as a repetition, which broke the end of the review in the support bot.
 	 */
-	public static class VisNotifyUserAboutAprovedSkillHierarchy implements CcpBusiness{
+	public static class VisNotifyUserAboutAprovedSkillHierarchy implements CcpBusiness, JnRepeatableMessage{
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation preparedJson = VisSkillFixHierarchyReviewMessage.prepare(json);
@@ -34,9 +32,10 @@ public class VisMessages {
 	}
 	/**
 	 * Email to the user when the request goes to {@code VisEntitySkillFixHierarchyRejected}, that is, when all of
-	 * its items were rejected. Lists the rejected items with the operator's justifications.
+	 * its items were rejected. Lists the rejected items with the operator's justifications. Repeatable, for the
+	 * same reason as {@link VisNotifyUserAboutAprovedSkillHierarchy}.
 	 */
-	public static class VisNotifyUserAboutRejectedSkillHierarchy  implements CcpBusiness{
+	public static class VisNotifyUserAboutRejectedSkillHierarchy  implements CcpBusiness, JnRepeatableMessage{
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation preparedJson = VisSkillFixHierarchyReviewMessage.prepare(json);
@@ -44,30 +43,22 @@ public class VisMessages {
 		}
 	}
 	/**
-	 * Before notifying about the pending request, splits it into one {@link VisEntitySkillFixHierarchyItemPending}
-	 * record per skill of the {@code skill} array, created in a single bulk operation. An item that already
-	 * exists as pending, as rejected (the twin) or in {@link VisEntitySkillFixHierarchyItemApproved} is not
-	 * written: its decision was already taken, and the {@code fixSkillHierarchy} command of the support bot
-	 * reports that decision without asking the operator again. The json arrives already transformed by the
-	 * pending entity (email as hash), which is the same form the item records keep.
-	 * Returns the json with every skill of the request (none is filtered out) and with the readable email back
-	 * in {@code email} (the transformer left the hash there), because the message goes to that address and
-	 * the command sent to the support bot operator ({@code /fixSkillHierarchy {parent} {email}}) needs it.
+	 * Notice of a new pending request, to the user by email and to the support bot operator. Returns the json
+	 * with the readable email back in {@code email} (the pending entity's transformer left the hash there),
+	 * because the message goes to that address and the command sent to the support bot operator
+	 * ({@code /fixSkillHierarchy {parent} {email}}) needs it. The items of the request are created by
+	 * {@code VisBusinessSkillFixHierarchyCreateItems}, on every save.
+	 *
+	 * <p>Repeatable: every new request is a new fact, so the notice goes out even if the same user already had
+	 * one today (the email) or the same parent within the hour (the command to the operator).
 	 */
-	public static class VisNotifySupportAndUserAboutPendingSkillHierarchyRequest  implements CcpBusiness{
+	public static class VisNotifySupportAndUserAboutPendingSkillHierarchyRequest  implements CcpBusiness, JnRepeatableMessage{
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
 			Stream<String> skillsStream = skills.stream();
 			Stream<String> distinctSkillsStream = skillsStream.distinct();
 			List<String> distinctSkills = distinctSkillsStream.collect(Collectors.toList());
-			Stream<String> distinctSkillsToItemsStream = distinctSkills.stream();
-			Stream<CcpJsonRepresentation> itemsStream = distinctSkillsToItemsStream.map(skill -> json.put(VisEntitySkillFixHierarchyItemPending.Fields.skill, skill));
-			CcpJsonRepresentation[] items = itemsStream.toArray(CcpJsonRepresentation[]::new);
-
-			CcpEntity rejectedItemEntity = VisEntitySkillFixHierarchyItemPending.ENTITY.getTwinEntity();
-			CcpEntity[] entitiesThatPreventCreation = {rejectedItemEntity, VisEntitySkillFixHierarchyItemApproved.ENTITY};
-			JnExecuteBulkOperation.INSTANCE.executeCreateBulk(VisEntitySkillFixHierarchyItemPending.ENTITY, entitiesThatPreventCreation, JnDeleteKeysFromCache.INSTANCE, items);
 
 			CcpJsonRepresentation jsonWithOriginalEmail = json
 					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
