@@ -88,6 +88,19 @@ public class VisMessages {
 			skillNames
 		}
 	}
+	/**
+	 * Email to the user when a skill hierarchy fix request is refused because every one of its skills was already
+	 * reviewed, for the same parent and type, in earlier requests. Uses the same placeholders as
+	 * {@link VisNotifySupportAndUserAboutPendingSkillHierarchyRequest} ({@code typeDescription} and
+	 * {@code skillNames}). Repeatable: every refused request is a new fact.
+	 */
+	public static class VisNotifyUserAboutAlreadyReviewedSkillHierarchy implements CcpBusiness, JnRepeatableMessage{
+
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation preparedJson = new VisNotifySupportAndUserAboutPendingSkillHierarchyRequest().execute(json);
+			return preparedJson;
+		}
+	}
 	public static class VisNotifySupportAndUserAboutPendingSkillRequest implements CcpBusiness{
 
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {

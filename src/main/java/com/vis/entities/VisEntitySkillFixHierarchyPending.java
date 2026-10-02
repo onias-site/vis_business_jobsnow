@@ -19,6 +19,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityF
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpExceptionFlow;
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
@@ -54,6 +55,9 @@ import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.jn.utils.JnLanguage;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyCreateItems;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyDeleteOrphanItems;
+import com.vis.business.skill.VisBusinessSkillFixHierarchyNotifyAlreadyReviewed;
+import com.vis.business.skill.VisBusinessSkillFixHierarchyRefuseAlreadyReviewed;
+import com.vis.business.skill.VisErrorSkillFixHierarchyAlreadyReviewed;
 import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
@@ -66,6 +70,9 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
  * ({@code type = add}) or dissociate ({@code type = remove}) a skill of their resume with an implicit
  * knowledge ({@code parent}), giving the reason in {@code description}. Inserting a request notifies the
  * user by email and the support bot operator with the {@code /fixSkillHierarchy <parent> <type> <email>} command.
+ * A request whose skills were all already reviewed, for the same parent and type, in earlier requests is not
+ * saved: {@code VisBusinessSkillFixHierarchyRefuseAlreadyReviewed} refuses it before the save and the global
+ * handler emails the user ({@link VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy}) instead.
  * Every save (insert or update) splits it into one VisEntitySkillFixHierarchyItemPending per skill, and deleting
  * it discards the items no other pending request asks for. The operator's review
  * ({@code VisBusinessSkillFixHierarchyReview}) transfers the request to VisEntitySkillFixHierarchyApproved
@@ -83,7 +90,7 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserAfterTransferBuilder.class, priority = 5)
 })
 
-@JnEntitySendMessageToUserWhenWrite({
+@JnEntitySendMessageToUserWhenWrite({ 
 	@JnEntitySendMessageToUserWhenWriteOperation(
 			operationType = afterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError,
 			messageTemplate =  VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class
@@ -106,9 +113,13 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 		}
 		)
 
-@CcpEntityOperations({
+@CcpEntityOperations(value = {
+		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessSkillFixHierarchyRefuseAlreadyReviewed.class}, operationHandlers = {}),
 		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity,  execute = {VisBusinessSkillFixHierarchyCreateItems.class}, operationHandlers = {}),
 		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteFromMainEntity,  execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {}),
+},
+globalHandlers = {
+		@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class}),
 })
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @JnEntityVersionable(JnVersionableEntity.class)
@@ -123,7 +134,9 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 	 * template, sent when a new request becomes pending: the instant message to the support bot operator with
 	 * the {@code fixSkillHierarchy} command (one template per language, with the same text, because it is a
 	 * bot command) and its sending parameters (bot and chat), plus the email to the user telling that the
-	 * request is being reviewed (Portuguese and English) and its sending parameters.
+	 * request is being reviewed (Portuguese and English) and its sending parameters. Also seeds the emails of
+	 * the review result (approved and rejected) and of the request refused because all of its skills were
+	 * already reviewed ({@link VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy}).
 	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
 		String templateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class.getName();
@@ -204,11 +217,23 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		reviewEmailItems.addAll(this.getEmailTemplateAndParameters(approvedTemplateId, portugueseReviewSubject, portugueseReviewMessage, englishReviewSubject, englishReviewMessage));
 		reviewEmailItems.addAll(this.getEmailTemplateAndParameters(rejectedTemplateId, portugueseReviewSubject, portugueseReviewMessage, englishReviewSubject, englishReviewMessage));
 
+		String alreadyReviewedTemplateId = VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy.class.getName();
+		String portugueseAlreadyReviewedMessage = "<html><body><p>Olá, você solicitou " + typeDescriptionPlaceholder
+				+ " entre os termos " + skillNamesPlaceholder + " e " + parentPlaceholder
+				+ ", mas todos eles já foram atendidos em solicitações anteriores, por isso esta solicitação não foi registrada.</p></body></html>";
+		String englishAlreadyReviewedMessage = "<html><body><p>Hello, you requested the " + typeDescriptionPlaceholder
+				+ " between the terms " + skillNamesPlaceholder + " and " + parentPlaceholder
+				+ ", but all of them were already handled in earlier requests, so this request was not registered.</p></body></html>";
+		String portugueseAlreadyReviewedSubject = "A sua solicitação de ajuste na hierarquia de conhecimentos já foi atendida";
+		String englishAlreadyReviewedSubject = "Your skill hierarchy fix request was already handled";
+		List<CcpBulkItem> alreadyReviewedEmailItems = this.getEmailTemplateAndParameters(alreadyReviewedTemplateId, portugueseAlreadyReviewedSubject, portugueseAlreadyReviewedMessage, englishAlreadyReviewedSubject, englishAlreadyReviewedMessage);
+
 		List<CcpBulkItem> firstRecords = new ArrayList<>(templateItems);
 		firstRecords.addAll(parametersItems);
 		firstRecords.addAll(emailTemplateItems);
 		firstRecords.addAll(emailParametersItems);
 		firstRecords.addAll(reviewEmailItems);
+		firstRecords.addAll(alreadyReviewedEmailItems);
 		return firstRecords;
 	}
 
@@ -252,7 +277,6 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 	public static enum Fields implements CcpJsonFieldName{
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		@CcpJsonFieldValidatorRequired
 		email,
 
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
@@ -270,7 +294,6 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisSkillFixHierarchyTypes.class)
 		@CcpEntityFieldPrimaryKey
-		@CcpJsonFieldValidatorRequired
 		type,
 
 	}

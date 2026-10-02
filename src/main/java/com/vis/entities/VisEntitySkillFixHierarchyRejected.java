@@ -38,7 +38,6 @@ public class VisEntitySkillFixHierarchyRejected implements CcpEntityConfigurator
 	public static enum Fields implements CcpJsonFieldName{
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		@CcpJsonFieldValidatorRequired
 		email,
 
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
@@ -60,7 +59,6 @@ public class VisEntitySkillFixHierarchyRejected implements CcpEntityConfigurator
 
 		@CcpJsonCopyFieldValidationsFrom(VisEntitySkillFixHierarchyPending.Fields.class)
 		@CcpEntityFieldPrimaryKey
-		@CcpJsonFieldValidatorRequired
 		type,
 
 	}
