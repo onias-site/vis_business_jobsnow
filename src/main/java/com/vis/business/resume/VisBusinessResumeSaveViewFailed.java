@@ -14,10 +14,17 @@ import com.ccp.json.fields.validation.CcpJsonCommonsFields;
  */
 public class VisBusinessResumeSaveViewFailed implements CcpBusiness {
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessResumeSaveViewFailed() {}
 	
+	/** The single instance. */
 	public static final VisBusinessResumeSaveViewFailed INSTANCE = new VisBusinessResumeSaveViewFailed();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String status = json.getValueFromPath("", CcpJsonCommonsFields.errorDetails, JnJsonCommonsFields.status);
 		CcpJsonRepresentation jsonWithStatus = json.put(JnJsonCommonsFields.status, status);

@@ -21,10 +21,17 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  */
 public class VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes implements CcpBusiness{
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes() {}
 	
+	/** The single instance. */
 	public static final VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes INSTANCE = new VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes();
 	//0
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
 		CcpJsonRepresentation jsonWithMasters = json.duplicateValueFromField(VisJsonCommonsFields.email, VisJsonCommonsFields.masters);

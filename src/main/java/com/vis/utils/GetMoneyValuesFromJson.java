@@ -14,7 +14,14 @@ import com.ccp.decorators.CcpJsonFieldName;
  * every value from the declared maximum down to 1,000 (the position accepts candidates asking for the same or less).
  */
 public enum GetMoneyValuesFromJson  {
+	/** For a resume: every value from the declared one up to 100,000, in steps of 100. */
 	resume {
+		/**
+		 * Generates the values of the resume.
+		 * @param json the resume
+		 * @param field the money field ({@code btc}, {@code clt} or {@code pj})
+		 * @return one {@code moneyValue}/{@code moneyType} item per value, or none when the field is absent
+		 */
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
 			CcpFieldName moneyFieldName = new CcpFieldName(field);
 			boolean fieldIsPresent = json.containsAllFields(moneyFieldName);
@@ -39,7 +46,15 @@ public enum GetMoneyValuesFromJson  {
 			
 			return response;
 		}
-	}, position {
+	},
+	/** For a position: every value from the declared maximum down to 1,000, in steps of 100. */
+	position {
+		/**
+		 * Generates the values of the position.
+		 * @param json the position
+		 * @param field the money field ({@code btc}, {@code clt} or {@code pj})
+		 * @return one {@code moneyValue}/{@code moneyType} item per value, or none when the field is absent
+		 */
 		public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field) {
 			CcpFieldName moneyFieldName = new CcpFieldName(field);
 			boolean fieldIsPresent = json.containsAllFields(moneyFieldName);
@@ -65,9 +80,19 @@ public enum GetMoneyValuesFromJson  {
 		}
 	};
 
+	/**
+	 * Generates the money values of the field.
+	 * @param json the resume or the position
+	 * @param field the money field
+	 * @return the money values
+	 */
 	public abstract List<CcpJsonRepresentation> apply(CcpJsonRepresentation json, String field);
+	/** Fields of a money value. */
 	enum JsonFieldNames implements CcpJsonFieldName{
-		moneyValue, moneyType
+		/** The {@code moneyValue} field. */
+		moneyValue,
+		/** The {@code moneyType} field. */
+		moneyType
 	}
 	
 }

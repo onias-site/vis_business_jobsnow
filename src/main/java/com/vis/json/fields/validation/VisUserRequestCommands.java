@@ -6,5 +6,6 @@ package com.vis.json.fields.validation;
  * of the support bot command.
  */
 public enum VisUserRequestCommands {
+	/** The command that reviews a skill hierarchy fix request. */
 	fixSkillHierarchy
 }

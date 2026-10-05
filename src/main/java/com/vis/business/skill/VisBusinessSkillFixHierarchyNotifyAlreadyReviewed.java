@@ -16,6 +16,11 @@ import com.vis.messages.VisMessages;
  */
 public class VisBusinessSkillFixHierarchyNotifyAlreadyReviewed implements CcpBusiness {
 
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String topic = VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy.class.getName();
 		JnMessageType[] messageTypes = {JnMessageType.email};

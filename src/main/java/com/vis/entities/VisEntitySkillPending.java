@@ -78,32 +78,44 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillPending.Fields.class)
 public class VisEntitySkillPending implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_skill_pending}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillPending.class).entityInstance;
 	
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code date} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date,
 		
+		/** The {@code email} field: validated as in {@code JnJsonCommonsFields}, required. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		email, 
 
+		/** The {@code parent} field: validated as in {@code VisJsonCommonsFields}, list. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorArray
 		parent,
 	
+		/** The {@code ranking} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ranking,
 		
+		/** The {@code skill} field: validated as in {@code VisJsonCommonsFields}, part of the primary key. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpEntityFieldPrimaryKey
 		skill, 
 
+		/** The {@code synonym} field: validated as in {@code VisJsonCommonsFields}, list. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorArray
 		synonym,
 		
+		/** The {@code timestamp} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp,
 

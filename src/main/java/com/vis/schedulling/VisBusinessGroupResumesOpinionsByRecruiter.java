@@ -16,10 +16,17 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 public class VisBusinessGroupResumesOpinionsByRecruiter implements CcpBusiness{
 		
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessGroupResumesOpinionsByRecruiter() {}
 	
+	/** The single instance. */
 	public static final VisBusinessGroupResumesOpinionsByRecruiter INSTANCE = new VisBusinessGroupResumesOpinionsByRecruiter();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpJsonRepresentation groupingResult = VisUtils.groupDetailsByMasters(
 				json, 

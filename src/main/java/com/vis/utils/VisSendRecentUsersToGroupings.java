@@ -23,10 +23,16 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  */
 public class VisSendRecentUsersToGroupings implements Consumer<List<CcpJsonRepresentation>> {
 	
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisSendRecentUsersToGroupings() {}
 	
+	/** The single instance. */
 	public final static VisSendRecentUsersToGroupings INSTANCE = new VisSendRecentUsersToGroupings();
 
+	/**
+	 * Reads the e-mails of the sessions and sends them, as {@code masters}, to the four grouping processes.
+	 * @param records the recent session records
+	 */
 	public void accept(List<CcpJsonRepresentation> records) {
 		Stream<CcpJsonRepresentation> recordsStream = records.stream();
 		var idsStream = recordsStream

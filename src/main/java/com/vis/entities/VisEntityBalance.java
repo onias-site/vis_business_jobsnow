@@ -33,12 +33,19 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityBalance.Fields.class)
 public class VisEntityBalance implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_balance}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityBalance.class).entityInstance;
 	
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code email} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		email, 
+		/** The {@code balance} field: required, non-negative integer. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNumberUnsigned
 		balance,

@@ -14,7 +14,6 @@ import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
-import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
@@ -31,7 +30,7 @@ import com.vis.status.VisProcessStatusFixSkillHierarchy;
 /**
  * Service for skill hierarchy fix suggestions: the candidate asks to associate ({@code add})
  * or dissociate ({@code remove}) skills of their resume with an implicit knowledge ({@code parent}).
- * The suggestion stays pending in {@link VisEntitySkillFixHierarchyPending} until it is approved or rejected.
+ * The suggestion stays pending in {@link VisEntitySkillFixHierarchyPending} until the support bot operator reviews it, when it moves to {@code VisEntitySkillFixHierarchyFulfiled}.
  */
 public enum VisServiceSkillFixHierarchy implements JnService {
 
@@ -41,6 +40,11 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified.
 	 */
 	FixSkillHierarchy{
+		/**
+		 * Runs the checks and saves the suggestion as pending; an existing pending suggestion gives 409.
+		 * @param json the suggestion
+		 * @return the same JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation jsonWithCommandName = json.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.fixSkillHierarchy);
 			CcpBusiness saveAsPending = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillFixHierarchyPending.ENTITY);
@@ -48,6 +52,7 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 			new CcpGetEntityId(jsonWithCommandName)
 			.toBeginProcedureAnd()
 				.ifThisIdIsPresentInEntity(VisEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.userNotAllowed).and()
+				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).returnStatus(CcpProcessStatusDefault.CONFLICT).and()
 				.executeAction(saveAsPending)
 				.andFinallyReturningTheseFields(FixSkillHierarchyResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
@@ -58,13 +63,18 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 
 	/**
 	 * Returns the candidate's suggestion for the given parent and type, plus the {@code status} field.
-	 * Looks in the pending entity first: a suggestion resent after being approved or rejected becomes
+	 * Looks in the pending entity first: a suggestion resent after being reviewed becomes
 	 * pending again, and that is the one the candidate must see. Without a suggestion, returns an empty json.
 	 *
-	 * The three entities are queried in a single database round trip (union all); the priority order is
+	 * The two entities are queried in a single database round trip (union all); the priority order is
 	 * applied afterwards, on the result already in memory.
 	 */
 	GetSkillFixHierarchy{
+		/**
+		 * Searches the suggestion.
+		 * @param json the suggestion key
+		 * @return the suggestion plus {@code status}, or an empty JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			VisSkillFixHierarchyStatus[] statuses = VisSkillFixHierarchyStatus.values();
 			Stream<VisSkillFixHierarchyStatus> statusesStream = Arrays.stream(statuses);
@@ -89,7 +99,7 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 
 	/**
 	 * The candidate withdraws a suggestion that is still pending. Only deletes from the pending entity: what was
-	 * already approved or rejected is review history and cannot be undone by the candidate. Responds 404 when
+	 * already reviewed (fulfiled) is review history and cannot be undone by the candidate. Responds 404 when
 	 * there is no pending suggestion (e.g. it was reviewed between the candidate opening the modal and giving up).
 	 *
 	 * The existence is checked before deleting, and not by the result of the deletion: the pending entity writes
@@ -98,30 +108,44 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 	 * place of the stored hash) because its {@code skill} tells which items may have become orphans.
 	 */
 	DeleteSkillFixHierarchy{
+		/**
+		 * Deletes the pending suggestion, or answers 404.
+		 * @param json the suggestion key
+		 * @return the same JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			boolean notFound = false == VisEntitySkillFixHierarchyPending.ENTITY.exists(json);
-			if(notFound) {
-				CcpErrorFlowDisturb notFoundError = new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
-				throw notFoundError;
-			}
-			CcpJsonRepresentation storedRequest = VisEntitySkillFixHierarchyPending.ENTITY.getOneById(json);
-			CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(json);
-			VisEntitySkillFixHierarchyPending.ENTITY.delete(completeRequest);
+			CcpBusiness deleteTheStoredRequest = jsonWithTheStoredRequest -> {
+				CcpJsonRepresentation storedRequest = jsonWithTheStoredRequest.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillFixHierarchyPending.ENTITY);
+				CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(json);
+				VisEntitySkillFixHierarchyPending.ENTITY.delete(completeRequest);
+				return jsonWithTheStoredRequest;
+			};
+
+			new CcpGetEntityId(json)
+			.toBeginProcedureAnd()
+				.ifThisIdIsNotPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).returnStatus(CcpProcessStatusDefault.NOT_FOUND).and()
+				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).executeAction(deleteTheStoredRequest)
+				.andFinallyReturningTheseFields(FixSkillHierarchyResponse.inexistentField)
+			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+			;
 			return json;
 		}
 	}
 	;
 }
 
+/** Fields of the answer of {@link VisServiceSkillFixHierarchy#GetSkillFixHierarchy}. */
 enum GetSkillFixHierarchyResponse implements CcpJsonFieldName{
+	/** The {@code status} field. */
 	status
 }
 
 /**
- * {@link VisServiceSkillFixHierarchy#FixSkillHierarchy} answers with the json it received, so the search
- * procedure returns no field.
+ * {@link VisServiceSkillFixHierarchy#FixSkillHierarchy} and {@link VisServiceSkillFixHierarchy#DeleteSkillFixHierarchy}
+ * answer with the json they received, so the search procedure returns no field.
  */
 enum FixSkillHierarchyResponse implements CcpJsonFieldName{
+	/** The {@code inexistentField} field. */
 	inexistentField
 }
 
@@ -130,23 +154,28 @@ enum FixSkillHierarchyResponse implements CcpJsonFieldName{
  * rules straight from the class that declares them, because {@code CcpJsonCopyFieldValidationsFrom} is not recursive.
  */
 enum FixSkillHierarchy implements CcpJsonFieldName{
+	/** The {@code email} field: validated as in {@code JnJsonCommonsFields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 	@CcpJsonFieldValidatorRequired
 	email,
 
+	/** The {@code parent} field: validated as in {@code VisJsonCommonsFields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 	@CcpJsonFieldValidatorRequired
 	parent,
 
+	/** The {@code skill} field: validated as in {@code VisJsonCommonsFields}, list, required. */
 	@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 	@CcpJsonFieldValidatorArray
 	@CcpJsonFieldValidatorRequired
 	skill,
 
+	/** The {@code description} field: validated as in {@code JnJsonCommonsFields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 	@CcpJsonFieldValidatorRequired
 	description,
 
+	/** The {@code type} field: validated as in {@code VisEntitySkillFixHierarchyPending.Fields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(VisEntitySkillFixHierarchyPending.Fields.class)
 	@CcpJsonFieldValidatorRequired
 	type,
@@ -157,14 +186,17 @@ enum FixSkillHierarchy implements CcpJsonFieldName{
  * of the suggestion entities (email + parent + type).
  */
 enum GetSkillFixHierarchy implements CcpJsonFieldName{
+	/** The {@code email} field: validated as in {@code JnJsonCommonsFields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 	@CcpJsonFieldValidatorRequired
 	email,
 
+	/** The {@code parent} field: validated as in {@code VisJsonCommonsFields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 	@CcpJsonFieldValidatorRequired
 	parent,
 
+	/** The {@code type} field: validated as in {@code VisEntitySkillFixHierarchyPending.Fields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(VisEntitySkillFixHierarchyPending.Fields.class)
 	@CcpJsonFieldValidatorRequired
 	type,
@@ -175,14 +207,17 @@ enum GetSkillFixHierarchy implements CcpJsonFieldName{
  * key as the lookup (email + parent + type).
  */
 enum DeleteSkillFixHierarchy implements CcpJsonFieldName{
+	/** The {@code email} field: validated as in {@code JnJsonCommonsFields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 	@CcpJsonFieldValidatorRequired
 	email,
 
+	/** The {@code parent} field: validated as in {@code VisJsonCommonsFields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 	@CcpJsonFieldValidatorRequired
 	parent,
 
+	/** The {@code type} field: validated as in {@code VisEntitySkillFixHierarchyPending.Fields}, required. */
 	@CcpJsonCopyFieldValidationsFrom(VisEntitySkillFixHierarchyPending.Fields.class)
 	@CcpJsonFieldValidatorRequired
 	type,

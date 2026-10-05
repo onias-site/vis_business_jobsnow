@@ -13,11 +13,18 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 public class VisBusinessDuplicateFieldEmailToFieldMasters implements CcpBusiness{
 		
 
+	/** The single instance. */
 	public static final VisBusinessDuplicateFieldEmailToFieldMasters INSTANCE = new VisBusinessDuplicateFieldEmailToFieldMasters();
 	
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessDuplicateFieldEmailToFieldMasters() {}
 	
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpJsonRepresentation jsonWithMasters = json.duplicateValueFromField(VisJsonCommonsFields.email, VisJsonCommonsFields.masters);
 		return jsonWithMasters;

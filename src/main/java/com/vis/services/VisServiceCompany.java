@@ -19,8 +19,17 @@ import com.vis.entities.VisEntityGroupCompaniesByTheirFirstThreeInitials;
  */ 
 public enum VisServiceCompany implements JnService {
 
+	/**
+	 * Suggests company names for the typed text: reads the group of its first three letters and keeps the names that start
+	 * with the text (case insensitive); when nothing matches, the text itself is the only suggestion.
+	 */
 	SearchCompaniesByTheirFirstThreeInitials{
 
+		/**
+		 * Runs the search.
+		 * @param json the request with {@code search}
+		 * @return {@code companies}: the suggested names
+		 */
 		@Override
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			
@@ -50,13 +59,19 @@ public enum VisServiceCompany implements JnService {
 			return searchResultWithFilteredCompanies;
 		}
 
+		/**
+		 * Validates the input with {@link FieldsToSearchCompaniesByTheirFirstThreeInitials}.
+		 * @return the validation class
+		 */
 		public Class<?> getJsonValidationClass() {
 			return FieldsToSearchCompaniesByTheirFirstThreeInitials.class;
 		}
 		
 	}
 	;
+	/** Input fields of the company search. */
 	public static enum FieldsToSearchCompaniesByTheirFirstThreeInitials implements CcpJsonFieldName{
+		/** The {@code search} field: text, required. */
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
 		@CcpJsonFieldValidatorRequired
 		search

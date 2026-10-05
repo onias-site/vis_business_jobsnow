@@ -11,23 +11,45 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  */
 enum ResumeSortOptions {
 
+	/** By availability (ascending: the sooner first). */
 	disponibility(VisJsonCommonsFields.disponibility.name()),
+	/** By the number of desired skills (stored negative, so the most first). */
 	desiredSkill(VisEntityPosition.Fields.desiredSkill.name()),
+	/** By CLT, then PJ, then bitcoin value (ascending). */
 	money(VisJsonCommonsFields.clt.name(), VisJsonCommonsFields.pj.name(), VisJsonCommonsFields.btc.name()),
+	/** By the year the experience started (ascending: the most experienced first). */
 	experience(VisJsonCommonsFields.experience.name()),
 	;
+	/** The fields compared, in order. */
 	final String[] fieldsToSort;
 	
 	
+	/**
+	 * Associates the criterion with its fields.
+	 * @param fieldsToSort the fields compared, in order
+	 */
 	private ResumeSortOptions(String... fieldsToSort) {
 		this.fieldsToSort = fieldsToSort;
 	}
 
+	/**
+	 * Compares two resumes by the fields of the criterion.
+	 * @param o1 the first resume
+	 * @param o2 the second resume
+	 * @return the comparison of the first field that differs (ascending), or 0
+	 */
 	public int compare(CcpJsonRepresentation o1, CcpJsonRepresentation o2) {
 		int comparisonResult = this.compareTo(o1, o2, this.fieldsToSort);
 		return comparisonResult;
 	}
 	
+	/**
+	 * Compares the numeric fields in order; a field absent in either resume is skipped.
+	 * @param o1 the first resume
+	 * @param o2 the second resume
+	 * @param keys the fields
+	 * @return the comparison of the first field that differs, or 0
+	 */
 	private int compareTo(CcpJsonRepresentation o1, CcpJsonRepresentation o2, String... keys) {
 		
 		for (String key : keys) {

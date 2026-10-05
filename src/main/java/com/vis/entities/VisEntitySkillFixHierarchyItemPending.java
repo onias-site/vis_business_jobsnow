@@ -43,17 +43,25 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyItemPending.Fields.class)
 public class VisEntitySkillFixHierarchyItemPending implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_skill_fix_hierarchy_item_pending}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyItemPending.class).entityInstance;
 
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code parent} field: validated as in {@code VisJsonCommonsFields}, part of the primary key. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpEntityFieldPrimaryKey
 		parent,
 
+		/** The {@code skill} field: validated as in {@code VisJsonCommonsFields}, part of the primary key. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpEntityFieldPrimaryKey
 		skill,
 
+		/** The {@code type} field: text, part of the primary key. */
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisSkillFixHierarchyTypes.class)
 		@CcpEntityFieldPrimaryKey
 		type,

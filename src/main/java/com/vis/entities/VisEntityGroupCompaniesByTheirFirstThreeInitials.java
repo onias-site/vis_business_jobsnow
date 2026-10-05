@@ -43,24 +43,39 @@ import java.util.stream.Stream;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.class)
 public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_group_companies_by_their_first_three_initials}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityGroupCompaniesByTheirFirstThreeInitials.class).entityInstance;
 	
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code firstThreeInitials} field: part of the primary key, text. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(exactLength = 3)
 		firstThreeInitials, 
+		/** The {@code companies} field: text, list, required. */
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 30)
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		@CcpJsonFieldValidatorRequired
 		companies,
+		/** The {@code timestamp} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp,
+		/** The {@code date} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date,
 		;
 		
 	}
 	
+	/**
+	 * Seeds the groups from the legacy {@code old_recruiters} index: the company name is the first part of the domain of the
+	 * recruiter e-mail (capitalized, at least 3 letters), grouped by its first three letters. Any failure (for example, a
+	 * missing legacy index) results in no seed.
+	 * @return the seed records
+	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
 		
 		try {
@@ -117,6 +132,11 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		
 	}
 	
+	/**
+	 * Builds the {@code create} item of one group.
+	 * @param initials the first three letters
+	 * @return the bulk item
+	 */
 	private CcpBulkItem toBulkItem(String initials) {
 		CcpFieldName groupFieldName = new CcpFieldName(initials);
 		Set<String> companies = groupedCompanies.getAsObject(groupFieldName);
@@ -129,6 +149,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		CcpBulkItem item = new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, recordId);
 		return item;
 	}
+	/** The companies grouped by initials while seeding (a static field, so it accumulates across calls). */
 	static CcpJsonRepresentation groupedCompanies = CcpOtherConstants.EMPTY_JSON;
 
 }

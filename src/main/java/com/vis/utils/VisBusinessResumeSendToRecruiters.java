@@ -14,10 +14,17 @@ import com.ccp.business.CcpBusiness;
  */
 public class VisBusinessResumeSendToRecruiters implements CcpBusiness {
 	
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessResumeSendToRecruiters() {}
 	
+	/** The single instance. */
 	public static final VisBusinessResumeSendToRecruiters INSTANCE = new VisBusinessResumeSendToRecruiters();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param resumeWithSkills the resume just saved
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation resumeWithSkills) {
 		
 		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> howToObtainResumes = x -> Arrays.asList(resumeWithSkills);

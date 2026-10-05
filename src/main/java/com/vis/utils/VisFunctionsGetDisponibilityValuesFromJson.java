@@ -11,7 +11,13 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * behaving differently for resumes and positions.
  */
 public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJsonRepresentation, List<Integer>> {
+	/** For a resume: every availability from the declared one up to 70 days. */
 	resume {
+		/**
+		 * Generates the availabilities of the resume.
+		 * @param json the resume
+		 * @return the availabilities
+		 */
 		public List<Integer> apply(CcpJsonRepresentation json) {
 			List<Integer> response = new ArrayList<>();
 			Double declaredDisponibility = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility);
@@ -24,7 +30,14 @@ public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJs
 			
 			return response;
 		}
-	}, position {
+	},
+	/** For a position: every availability from the declared maximum down to 0. */
+	position {
+		/**
+		 * Generates the availabilities of the position.
+		 * @param json the position
+		 * @return the availabilities
+		 */
 		public List<Integer> apply(CcpJsonRepresentation json) {
 			List<Integer> response = new ArrayList<>();
 			Double declaredMaxDisponibility = json.getAsDoubleNumber(VisJsonCommonsFields.disponibility);
@@ -39,6 +52,11 @@ public enum VisFunctionsGetDisponibilityValuesFromJson implements Function<CcpJs
 		}
 	};
 
+	/**
+	 * Generates the availabilities, in days.
+	 * @param json the resume or the position
+	 * @return the availabilities
+	 */
 	public abstract List<Integer> apply(CcpJsonRepresentation json);
 	
 }

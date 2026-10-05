@@ -9,8 +9,12 @@ import com.ccp.decorators.CcpJsonFieldName;
  * {@code reviewSummary} is those decisions written for the email sent to the user.
  */
 public enum VisSkillFixHierarchyReviewFields implements CcpJsonFieldName{
+	/** The {@code reviewDecisions} field. */
 	reviewDecisions,
+	/** The {@code decision} field. */
 	decision,
+	/** The {@code justification} field. */
 	justification,
+	/** The {@code reviewSummary} field. */
 	reviewSummary
 }

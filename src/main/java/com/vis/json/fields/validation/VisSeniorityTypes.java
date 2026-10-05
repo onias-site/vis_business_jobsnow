@@ -6,9 +6,13 @@ package com.vis.json.fields.validation;
  */
 public enum VisSeniorityTypes {
 
+	/** Junior. */
 	JR,
+	/** Mid-level. */
 	PL, 
+	/** Senior. */
 	SR,
+	/** Specialist. */
 	ES
 	;
 }

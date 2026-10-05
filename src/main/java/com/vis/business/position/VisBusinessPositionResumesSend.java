@@ -10,10 +10,17 @@ import com.ccp.business.CcpBusiness;
 public class VisBusinessPositionResumesSend implements CcpBusiness{
 		
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessPositionResumesSend() {}
 	
+	/** The single instance. */
 	public static final VisBusinessPositionResumesSend INSTANCE = new VisBusinessPositionResumesSend();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		return json;
 	}

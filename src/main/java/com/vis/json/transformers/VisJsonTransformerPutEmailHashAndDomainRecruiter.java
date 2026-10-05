@@ -15,14 +15,24 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * Keeps the recruiter anonymous in the system while preserving traceability by domain.
  */
 public class VisJsonTransformerPutEmailHashAndDomainRecruiter implements CcpBusiness {
+	/** Fields written by the transformer. */
 	enum JsonFieldNames implements CcpJsonFieldName{
+		/** The {@code originalRecruiter} field. */
 		originalRecruiter 
 	}
 
+	/** The single instance. */
 	public final static VisJsonTransformerPutEmailHashAndDomainRecruiter INSTANCE = new VisJsonTransformerPutEmailHashAndDomainRecruiter();
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisJsonTransformerPutEmailHashAndDomainRecruiter() {}
 
+	/**
+	 * Replaces {@code recruiter} with its SHA-1 hash, keeps the original in {@code originalRecruiter} and puts in
+	 * {@code domain} the part of the e-mail before the {@code @} (see finding: that is the user name, not the domain).
+	 * @param json the position
+	 * @return the position with the hash, the original e-mail and the "domain"
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
 		String recruiter = json.getAsString(VisJsonCommonsFields.recruiter);

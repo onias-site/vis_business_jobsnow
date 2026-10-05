@@ -63,87 +63,116 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 
 public class VisEntityResume implements CcpEntityConfigurator {
 	
+	/** The entity {@code vis_resume}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
 
+	/** The salary fields of the resume. */
 	public static enum SalaryType{
-		pj, clt
+		/** The value as a contractor (PJ). */
+		pj,
+		/** The salary as an employee (CLT). */
+		clt
 	}
 	
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	@CcpJsonGlobalValidations(
 			requiresAtLeastOne = {
 			@CcpJsonValidationFieldList(SalaryType.class) 
 	})
 	public static enum Fields implements CcpJsonFieldName {
 
+		/** The {@code btc} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		btc,
 
+		/** The {@code clt} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		clt,
 
+		/** The {@code date} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date,
 
+		/** The {@code disponibility} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		disponibility,
 
+		/** The {@code ddd} field: required, list, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ddd,
 
+		/** The {@code desiredJob} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		desiredJob,
 
+		/** The {@code email} field: part of the primary key, validated as in {@code JnJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
 
+		/** The {@code experience} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		experience,
 
+		/** The {@code skill} field: list, nested JSON. */
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkills.class)
 		skill,
 
+		/** The {@code lastJob} field: text. */
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		lastJob,
 
+		/** The {@code language} field: list, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorArray
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		language,
 
+		/** The {@code linkedinAddress} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(regexValidation = "^https://(www\\.)?linkedin\\.com/in/[a-zA-Z0-9-_%]+/?$")
 		linkedinAddress,
 
+		/** The {@code negotiableClaim} field: boolean. */
 		@CcpJsonFieldTypeBoolean
 		negotiableClaim,
 
+		/** The {@code notAllowedCompany} field: list, text. */
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 		notAllowedCompany,
 
+		/** The {@code pcd} field: boolean. */
 		@CcpJsonFieldTypeBoolean
 		pcd,
 
+		/** The {@code pj} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		pj,
 
+		/** The {@code resumeType} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		resumeType,
 		
+		/** The {@code timestamp} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp,
 
+		/** The {@code temporallyJobTime} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		temporallyJobTime,
 
+		/** The {@code travel} field: boolean. */
 		@CcpJsonFieldTypeBoolean
 		travel,
 		;

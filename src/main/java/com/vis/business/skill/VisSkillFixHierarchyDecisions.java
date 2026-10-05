@@ -8,14 +8,23 @@ import com.jn.utils.JnLanguage;
  */
 public enum VisSkillFixHierarchyDecisions {
 
+	/** The item was approved. */
 	approved("Itens aprovados", "Approved items"),
+	/** The item was rejected. */
 	rejected("Itens reprovados", "Rejected items")
 	;
 
+	/** The title of the group in Portuguese. */
 	private final String portugueseTitle;
 
+	/** The title of the group in English. */
 	private final String englishTitle;
 
+	/**
+	 * Associates the decision with the titles of its group.
+	 * @param portugueseTitle the title in Portuguese
+	 * @param englishTitle the title in English
+	 */
 	private VisSkillFixHierarchyDecisions(String portugueseTitle, String englishTitle) {
 		this.portugueseTitle = portugueseTitle;
 		this.englishTitle = englishTitle;

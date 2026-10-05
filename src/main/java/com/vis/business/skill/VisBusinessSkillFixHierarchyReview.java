@@ -7,13 +7,11 @@ import java.util.stream.Stream;
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.vis.entities.VisEntitySkillFixHierarchyApproved;
+import com.vis.entities.VisEntitySkillFixHierarchyFulfiled;
 import com.vis.entities.VisEntitySkillFixHierarchyItemApproved;
 import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
-import com.vis.entities.VisEntitySkillFixHierarchyRejected;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 
 /**
@@ -23,19 +21,25 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * <p>Each item goes to {@link VisEntitySkillFixHierarchyItemApproved} when approved, or to the twin of
  * {@link VisEntitySkillFixHierarchyItemPending} (the rejected items) when rejected; an item that is no longer
  * pending (decided in an earlier review) stays where it is. Then the request of each
- * reviewed type leaves {@link VisEntitySkillFixHierarchyPending}: it goes to
- * {@link VisEntitySkillFixHierarchyApproved} when at least one of its items was approved, and to
- * {@link VisEntitySkillFixHierarchyRejected} when all of them were rejected. That transfer is what emails the
+ * reviewed type leaves {@link VisEntitySkillFixHierarchyPending} for {@link VisEntitySkillFixHierarchyFulfiled},
+ * whatever the decisions were (approve all, reject all or one by one). That transfer is what emails the
  * user, and the decisions travel with it so that the email lists the approved and the rejected items with the
  * operator's justifications. The operator's justifications are also kept in the {@code explanation} of the
  * request.
  */
 public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 
+	/** The single instance. */
 	public static final VisBusinessSkillFixHierarchyReview INSTANCE = new VisBusinessSkillFixHierarchyReview();
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessSkillFixHierarchyReview() {}
 
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		CcpJsonRepresentation requestKey = json.getJsonPiece(VisEntitySkillFixHierarchyPending.Fields.email, VisEntitySkillFixHierarchyPending.Fields.parent);
@@ -65,6 +69,12 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 		return json;
 	}
 
+	/**
+	 * Moves a pending item according to its decision: an approved one to {@code vis_skill_fix_hierarchy_item_approved}, a
+	 * rejected one to the twin (by deleting it). An item no longer pending (decided in an earlier review) is left alone.
+	 * @param requestKey the key of the request
+	 * @param decision the decision of the item
+	 */
 	private void moveItem(CcpJsonRepresentation requestKey, CcpJsonRepresentation decision) {
 
 		CcpJsonRepresentation itemKeyFields = decision.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.type, VisEntitySkillFixHierarchyItemPending.Fields.skill);
@@ -89,11 +99,14 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 		VisEntitySkillFixHierarchyItemPending.ENTITY.delete(itemKey);
 	}
 
+	/**
+	 * Moves the pending request of the type to {@code vis_skill_fix_hierarchy_fulfiled}, with the decisions and their
+	 * explanation (one line per item); a request no longer pending is left alone.
+	 * @param requestKey the key of the request
+	 * @param type the type of the request
+	 * @param typeDecisions the decisions of the items of the type
+	 */
 	private void moveRequest(CcpJsonRepresentation requestKey, VisSkillFixHierarchyTypes type, List<CcpJsonRepresentation> typeDecisions) {
-
-		Stream<CcpJsonRepresentation> typeDecisionsStream = typeDecisions.stream();
-		boolean anyItemApproved = typeDecisionsStream.anyMatch(decision -> VisSkillFixHierarchyDecisions.approved == decision.getAsEnum(VisSkillFixHierarchyReviewFields.decision, VisSkillFixHierarchyDecisions.class));
-		CcpEntity targetEntity = anyItemApproved ? VisEntitySkillFixHierarchyApproved.ENTITY : VisEntitySkillFixHierarchyRejected.ENTITY;
 
 		Stream<CcpJsonRepresentation> decisionsToExplainStream = typeDecisions.stream();
 		Stream<String> explanationLinesStream = decisionsToExplainStream.map(decision -> this.getExplanationLine(decision));
@@ -114,9 +127,14 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 		CcpJsonRepresentation requestWithExplanation = completeRequest.put(JnJsonCommonsFields.explanation, explanation);
 		CcpJsonRepresentation requestWithDecisions = requestWithExplanation.put(VisSkillFixHierarchyReviewFields.reviewDecisions, typeDecisions);
 
-		VisEntitySkillFixHierarchyPending.ENTITY.transferDataTo(requestWithDecisions, targetEntity);
+		VisEntitySkillFixHierarchyPending.ENTITY.transferDataTo(requestWithDecisions, VisEntitySkillFixHierarchyFulfiled.ENTITY);
 	}
 
+	/**
+	 * Builds the line {@code skill (decision): justification}.
+	 * @param decision the decision of an item
+	 * @return the line
+	 */
 	private String getExplanationLine(CcpJsonRepresentation decision) {
 		String skill = decision.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
 		String itemDecision = decision.getAsString(VisSkillFixHierarchyReviewFields.decision);

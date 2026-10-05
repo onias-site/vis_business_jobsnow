@@ -9,10 +9,17 @@ import com.ccp.business.CcpBusiness;
  */
 public class VisBusinessSearchSkills implements  CcpBusiness{
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessSearchSkills() {}
 	
+	/** The single instance. */
 	public static final VisBusinessSearchSkills INSTANCE = new VisBusinessSearchSkills();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		return json;
 	}

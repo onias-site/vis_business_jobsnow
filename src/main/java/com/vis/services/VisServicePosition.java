@@ -25,14 +25,26 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
  * Position data access service. Exposes CRUD operations and queries of the skills related to positions.
  */
 public enum VisServicePosition implements JnService {  
+	/** Toggles the position between active and inactive: deleting it moves it to the twin (inactive). */
 	ChangeStatus{
+		/**
+		 * Deletes (deactivates) the position.
+		 * @param json the position key
+		 * @return the same JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			VisEntityPosition.ENTITY.delete(json);
 
 			return json;
 		}
 	},
+	/** Returns the position, active or inactive, with {@code activePosition}. */
 	GetData{
+		/**
+		 * Reads the position from the main entity and the twin in one search.
+		 * @param json the position key
+		 * @return the position plus {@code activePosition}
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
 			
@@ -53,13 +65,25 @@ public enum VisServicePosition implements JnService {
 			return positionWithStatus;
 		}
 	},
+	/** Extracts the important skills of a text (not implemented yet: returns the request). */
 	GetImportantSkillsFromText{
+		/**
+		 * Not implemented yet.
+		 * @param json the request
+		 * @return the same JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			
 			return json;
 		}
 	},
+	/** Should list the resumes of the position; see finding: it is a copy of {@link #SuggestNewSkills}. */
 	GetResumeList{
+		/**
+		 * Runs the same checks as {@link #SuggestNewSkills}.
+		 * @param json the request
+		 * @return the resulting data
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			var methodLocator = new Object(){};
 			var methodLocatorClass = methodLocator.getClass(); 
@@ -95,14 +119,29 @@ public enum VisServicePosition implements JnService {
 			return procedureResult;
 		}
 	},
+	/** Saves the position. */
 	Save{
+		/**
+		 * Saves the position.
+		 * @param json the position
+		 * @return the same JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			VisEntityPosition.ENTITY.save(json);
 
 			return json;
 		}
 	},
+	/**
+	 * Checks a suggested skill: already a skill (409), already approved (200), already rejected (420) or already pending
+	 * (202).
+	 */
 	SuggestNewSkills{
+		/**
+		 * Runs the checks.
+		 * @param json the suggested skill
+		 * @return the resulting data
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			var methodLocator = new Object(){};
 			var methodLocatorClass = methodLocator.getClass();

@@ -9,6 +9,11 @@ import com.ccp.decorators.CcpJsonRepresentation;
  */
 public class VisBusinessCalculateResumeHashes implements CcpBusiness {
 
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		return json;

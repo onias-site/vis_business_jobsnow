@@ -30,13 +30,20 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityScheduleSendingResumeFees.Fields.class)
 public class VisEntityScheduleSendingResumeFees implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_schedule_sending_resume_fees}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityScheduleSendingResumeFees.class).entityInstance;
 
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code fee} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		fee, 
 		
+		/** The {@code service} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		service

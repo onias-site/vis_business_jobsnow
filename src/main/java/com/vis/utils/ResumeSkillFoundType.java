@@ -5,5 +5,10 @@ package com.vis.utils;
  * the matching process.
  */
 enum ResumeSkillFoundType {
-	CONTAINED_IN_RESUME, SYNONYM, PARENT 
+	/** The resume lists the skill itself. */
+	CONTAINED_IN_RESUME,
+	/** The resume lists a synonym of the skill. */
+	SYNONYM,
+	/** The resume lists skills whose parent is the skill. */
+	PARENT
 }

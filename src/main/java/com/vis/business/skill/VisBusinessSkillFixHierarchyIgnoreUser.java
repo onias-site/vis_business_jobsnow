@@ -24,10 +24,17 @@ import com.vis.json.fields.validation.VisUserRequestCommands;
  */
 public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 
+	/** The single instance. */
 	public static final VisBusinessSkillFixHierarchyIgnoreUser INSTANCE = new VisBusinessSkillFixHierarchyIgnoreUser();
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessSkillFixHierarchyIgnoreUser() {}
 
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		CcpJsonRepresentation requestKey = json.getJsonPiece(VisEntitySkillFixHierarchyPending.Fields.email, VisEntitySkillFixHierarchyPending.Fields.parent);
@@ -83,6 +90,11 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 		return pendingRequests;
 	}
 
+	/**
+	 * Discards a pending request: deletes everywhere its pending items (a plain delete would move them to the twin, which
+	 * holds the rejected items) and deletes the request.
+	 * @param pendingRequest the pending request
+	 */
 	private void discardRequest(CcpJsonRepresentation pendingRequest) {
 
 		CcpJsonRepresentation itemKeyWithoutSkill = pendingRequest.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type);
@@ -108,6 +120,7 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 	 * one with its {@code type}, the user's {@code description} and the {@code skill} array.
 	 */
 	public static enum JsonFieldNames implements CcpJsonFieldName{
+		/** The {@code requests} field. */
 		requests
 	}
 }

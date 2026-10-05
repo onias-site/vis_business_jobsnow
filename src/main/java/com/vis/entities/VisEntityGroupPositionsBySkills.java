@@ -45,23 +45,40 @@ import com.ccp.decorators.CcpFileDecorator;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupPositionsBySkills.Fields.class)
 public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_group_positions_by_skills}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityGroupPositionsBySkills.class).entityInstance;
 	
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code firstTwoInitials} field: part of the primary key, text. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(exactLength = 2)
 		firstTwoInitials, 
+		/** The {@code skill} field: nested JSON, list, required. */
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSkillsGroupedByTheirTwoFirstInitials.class)
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		@CcpJsonFieldValidatorRequired
 		skill,
+		/** The {@code timestamp} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp,
+		/** The {@code date} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date
 		;
 	}
 	
+	/**
+	 * Adds the parents of the word: the parents of the first synonym record whose skill, or one of its synonyms, is the
+	 * word (one level only).
+	 * @param synonyms the synonym records
+	 * @param word the word
+	 * @param allParents the parents found so far
+	 * @return the parents found so far plus the ones of the word
+	 */
 	private Set<String> getAllParents(List<CcpJsonRepresentation>synonyms, String word, Set<String> allParents){
 		Stream<CcpJsonRepresentation> synonymsStream = synonyms.stream();
 		var synonymsMatchingWord = synonymsStream
@@ -93,6 +110,12 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 	}
 	
 	
+	/**
+	 * Tells whether a word is a known skill, by the group of its first two letters (upper case).
+	 * @param word the word, with at least two characters
+	 * @return 0 when the word (or skill) is in the group, 1 when there is no group for its initials, 2 when the group exists
+	 * but does not have it
+	 */
 	public static int getWordStatus(String word) {
 		String upperCase = word.toUpperCase();
 		String firstTwoInitials = upperCase.substring(0,2);
@@ -127,6 +150,12 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		
 		return 2;
 	} 
+	/**
+	 * Seeds the groups from {@code documentation/jn/skills/synonyms.json} (relative to the working directory): every skill,
+	 * synonym, prerequisite and similar word (upper case, 2 to 50 characters) becomes an item with its main skill and
+	 * parents, grouped by its first two letters.
+	 * @return the seed records
+	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
 		CcpStringDecorator synonymsFilePath = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json");
 		CcpFileDecorator synonymsFile = synonymsFilePath
@@ -248,5 +277,10 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		return bulkItems;
 	}	
 	
-	static enum JsonFields implements CcpJsonFieldName{ similar, preRequisite}
+	/** Fields of the synonym file. */
+	static enum JsonFields implements CcpJsonFieldName{
+		/** The {@code similar} field. */
+		similar,
+		/** The {@code preRequisite} field. */
+		preRequisite}
 }

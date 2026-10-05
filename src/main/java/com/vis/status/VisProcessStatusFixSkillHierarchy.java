@@ -8,15 +8,25 @@ import com.ccp.process.CcpProcessStatus;
  * {@code fixSkillHierarchy} command.
  */
 public enum VisProcessStatusFixSkillHierarchy implements CcpProcessStatus{
+	/** Status 403: the support team chose to ignore the user for the {@code fixSkillHierarchy} command. */
 	userNotAllowed(403),
 	;
 
+	/** The HTTP status code. */
 	final int status;
 
+	/**
+	 * Associates the HTTP status code.
+	 * @param status the HTTP status code
+	 */
 	private VisProcessStatusFixSkillHierarchy(int status) {
 		this.status = status;
 	}
 
+	/**
+	 * Returns the HTTP status code.
+	 * @return the status code
+	 */
 	public int asNumber() {
 		return this.status;
 	}

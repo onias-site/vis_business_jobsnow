@@ -25,25 +25,36 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityVirtualHashGrouper.Fields.class)
 public class VisEntityVirtualHashGrouper{
 
+	/** The entity {@code vis_virtual_hash_grouper}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityVirtualHashGrouper.class).entityInstance;
 
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code seniority} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		seniority, 
+		/** The {@code synonym} field: list, part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorArray
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		synonym,
+		/** The {@code disponibility} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		disponibility, 
+		/** The {@code pcd} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		pcd, 
+		/** The {@code moneyValue} field: part of the primary key, decimal number. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeNumber(minValue = 1000)
 		moneyValue, 
+		/** The {@code moneyType} field: part of the primary key, text. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisMoneyTypes.class)
 		moneyType,

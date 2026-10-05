@@ -36,27 +36,41 @@ import java.util.stream.Stream;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkill.Fields.class)
 public class VisEntitySkill implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_skill}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkill.class).entityInstance;
 	
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code parent} field: validated as in {@code VisJsonCommonsFields}, list. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorArray
 		parent,
 		
+		/** The {@code ranking} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ranking,
 
+		/** The {@code skill} field: validated as in {@code VisJsonCommonsFields}, part of the primary key. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpEntityFieldPrimaryKey
 		skill, 
 		
+		/** The {@code synonym} field: validated as in {@code VisJsonCommonsFields}, list. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorArray
 		synonym,
 		;
 	}
 	
+	/**
+	 * Seeds the skills from {@code documentation/jn/skills/synonyms.json} (skills and synonyms of at most 50 characters),
+	 * ranked by how many resumes mention them, as counted in {@code documentation/vis/database/skills/countByWords.txt}.
+	 * @return the seed records
+	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
 		CcpStringDecorator synonymsFilePath = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json");
 		CcpFileDecorator synonymsFile = synonymsFilePath
@@ -122,6 +136,12 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		return response;
 	}
 	
+	/**
+	 * Sums the resume counts of the skill and of its synonyms (lines {@code word = count} of the count file).
+	 * @param json the skill
+	 * @param lines the lines of the count file
+	 * @return the number of resumes
+	 */
 	private int getResumesCount(CcpJsonRepresentation json, List<String> lines) {
 		String skill = json.getAsString(VisJsonCommonsFields.skill);
 		List<String> synonym = json.getAsStringList(VisJsonCommonsFields.synonym);

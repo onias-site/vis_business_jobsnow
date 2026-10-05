@@ -15,12 +15,23 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  */
 public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentation>{
 
+	/** The position. */
 	private final CcpJsonRepresentation position;
 
+	/**
+	 * Sorts by the criteria of the position.
+	 * @param position the position
+	 */
 	public VisSorterResumesByPosition(CcpJsonRepresentation position) {
 		this.position = position;
 	}
 
+	/**
+	 * Compares two resumes by the {@code sortFields} of the position, plus the desired skills count when not chosen.
+	 * @param o1 the first resume
+	 * @param o2 the second resume
+	 * @return the comparison
+	 */
 	public int compare(CcpJsonRepresentation o1, CcpJsonRepresentation o2) {
 		
 		List<String> desiredSkill = this.position.getAsStringList(VisEntityPosition.Fields.desiredSkill);
@@ -55,6 +66,12 @@ public class VisSorterResumesByPosition implements Comparator<CcpJsonRepresentat
 		return 0;
 	}
 
+	/**
+	 * Puts in the resume the number of desired skills of the position it has, negative so the sort puts the most first.
+	 * @param o1 the resume
+	 * @param desiredSkills the desired skills of the position
+	 * @return the resume with the count
+	 */
 	private CcpJsonRepresentation putDesiredSkills(CcpJsonRepresentation o1, List<String> desiredSkills) {
 		String skillName = VisJsonCommonsFields.skill.name();
 		CcpCollectionDecorator resumeSkills = o1.getAsCollectionDecorator(skillName);

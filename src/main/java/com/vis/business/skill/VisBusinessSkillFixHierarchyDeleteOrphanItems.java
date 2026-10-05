@@ -23,6 +23,11 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
  */
 public class VisBusinessSkillFixHierarchyDeleteOrphanItems implements CcpBusiness {
 
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		CcpJsonRepresentation itemKeyWithoutSkill = json.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type);

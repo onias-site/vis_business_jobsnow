@@ -38,17 +38,25 @@ import com.vis.json.fields.validation.VisUserRequestCommands;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityCommandNotAllowedToUser.Fields.class)
 public class VisEntityCommandNotAllowedToUser implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_command_not_allowed_to_user}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityCommandNotAllowedToUser.class).entityInstance;
 
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code email} field: part of the primary key, validated as in {@code JnJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
 
+		/** The {@code commandName} field: part of the primary key, text. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisUserRequestCommands.class)
 		commandName,
 
+		/** The {@code description} field: nested JSON, required. */
 		@CcpJsonFieldTypeNestedJson(allowsEmptyJson = false)
 		@CcpJsonFieldValidatorRequired
 		description,

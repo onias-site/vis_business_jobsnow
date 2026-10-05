@@ -9,6 +9,10 @@ import com.ccp.decorators.CcpJsonRepresentation;
  */
 @SuppressWarnings("serial")
 public class VisErrorSkillFixHierarchyAlreadyReviewed extends RuntimeException {
+	/**
+	 * Builds the error with the request.
+	 * @param request the refused request
+	 */
 	VisErrorSkillFixHierarchyAlreadyReviewed(CcpJsonRepresentation request) {
 		super("Every skill of the request was already reviewed in earlier requests: " + request);
 	}

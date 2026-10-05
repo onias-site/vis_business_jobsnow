@@ -62,8 +62,7 @@ import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 import com.vis.messages.VisMessages;
-import com.vis.messages.VisMessages.VisNotifyUserAboutAprovedSkillHierarchy;
-import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
+import com.vis.messages.VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy;
 
 /**
  * Represents pending skill hierarchy fix requests awaiting review: the user asks to associate
@@ -75,9 +74,9 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
  * handler emails the user ({@link VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy}) instead.
  * Every save (insert or update) splits it into one VisEntitySkillFixHierarchyItemPending per skill, and deleting
  * it discards the items no other pending request asks for. The operator's review
- * ({@code VisBusinessSkillFixHierarchyReview}) transfers the request to VisEntitySkillFixHierarchyApproved
- * (at least one item approved) or VisEntitySkillFixHierarchyRejected (every item rejected), which emails
- * the user the approved and the rejected items with the operator's justifications.
+ * ({@code VisBusinessSkillFixHierarchyReview}) transfers the request to VisEntitySkillFixHierarchyFulfiled,
+ * whatever the decisions were, which emails the user the approved and the rejected items with the operator's
+ * justifications.
  * Versionable, with asynchronous writing and a 1-hour cache.
  */
 @CcpEntityCache(3600)
@@ -101,14 +100,8 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkillHierarchy;
 			@JnEntitySendMessageToUserWhenTransferOperation
 			(
 				operationType = afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError,
-				messageTemplate = VisNotifyUserAboutRejectedSkillHierarchy.class,
-				targetEntity = VisEntitySkillFixHierarchyRejected.class
-			),
-			@JnEntitySendMessageToUserWhenTransferOperation
-			(
-				operationType = afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError,
-				messageTemplate = VisNotifyUserAboutAprovedSkillHierarchy.class,
-				targetEntity = VisEntitySkillFixHierarchyApproved.class
+				messageTemplate = VisNotifyUserAboutFulfiledSkillHierarchy.class,
+				targetEntity = VisEntitySkillFixHierarchyFulfiled.class
 			),
 		}
 		)
@@ -127,6 +120,7 @@ globalHandlers = {
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyPending.Fields.class)
 public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_skill_fix_hierarchy_pending}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyPending.class).entityInstance;
 
 	/**
@@ -134,8 +128,8 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 	 * template, sent when a new request becomes pending: the instant message to the support bot operator with
 	 * the {@code fixSkillHierarchy} command (one template per language, with the same text, because it is a
 	 * bot command) and its sending parameters (bot and chat), plus the email to the user telling that the
-	 * request is being reviewed (Portuguese and English) and its sending parameters. Also seeds the emails of
-	 * the review result (approved and rejected) and of the request refused because all of its skills were
+	 * request is being reviewed (Portuguese and English) and its sending parameters. Also seeds the email of
+	 * the review result ({@link VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy}) and of the request refused because all of its skills were
 	 * already reviewed ({@link VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy}).
 	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
@@ -210,12 +204,9 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		String portugueseReviewSubject = "A sua solicitação de ajuste na hierarquia de conhecimentos foi avaliada";
 		String englishReviewSubject = "Your skill hierarchy fix request was reviewed";
 
-		String approvedTemplateId = VisMessages.VisNotifyUserAboutAprovedSkillHierarchy.class.getName();
-		String rejectedTemplateId = VisMessages.VisNotifyUserAboutRejectedSkillHierarchy.class.getName();
+		String fulfiledTemplateId = VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy.class.getName();
 
-		List<CcpBulkItem> reviewEmailItems = new ArrayList<>();
-		reviewEmailItems.addAll(this.getEmailTemplateAndParameters(approvedTemplateId, portugueseReviewSubject, portugueseReviewMessage, englishReviewSubject, englishReviewMessage));
-		reviewEmailItems.addAll(this.getEmailTemplateAndParameters(rejectedTemplateId, portugueseReviewSubject, portugueseReviewMessage, englishReviewSubject, englishReviewMessage));
+		List<CcpBulkItem> reviewEmailItems = this.getEmailTemplateAndParameters(fulfiledTemplateId, portugueseReviewSubject, portugueseReviewMessage, englishReviewSubject, englishReviewMessage);
 
 		String alreadyReviewedTemplateId = VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy.class.getName();
 		String portugueseAlreadyReviewedMessage = "<html><body><p>Olá, você solicitou " + typeDescriptionPlaceholder
@@ -274,24 +265,33 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		return templateAndParameters;
 	}
 
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code email} field: part of the primary key, validated as in {@code JnJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
 
+		/** The {@code description} field: validated as in {@code JnJsonCommonsFields}, required. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		description,
 
+		/** The {@code parent} field: validated as in {@code VisJsonCommonsFields}, part of the primary key. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpEntityFieldPrimaryKey
 		parent,
 
+		/** The {@code skill} field: validated as in {@code VisJsonCommonsFields}, list, required. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldValidatorRequired
 		skill,
 
+		/** The {@code type} field: text, part of the primary key. */
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisSkillFixHierarchyTypes.class)
 		@CcpEntityFieldPrimaryKey
 		type,

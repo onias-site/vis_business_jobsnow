@@ -7,8 +7,11 @@ package com.vis.entities;
  */
 public enum VisMoneyTypes {
 
+	/** Formal employment. */
 	CLT,
+	/** Bitcoin. */
 	BTC,
+	/** Contractor company. */
 	PJ
 	;
 }

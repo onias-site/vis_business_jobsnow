@@ -19,10 +19,17 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 public class VisBusinessPositionResumesReceivingByFrequency  implements CcpBusiness{
 		
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessPositionResumesReceivingByFrequency() {}
 	
+	/** The single instance. */
 	public static final VisBusinessPositionResumesReceivingByFrequency INSTANCE = new VisBusinessPositionResumesReceivingByFrequency();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param schedullingPlan the scheduling plan, with the {@code frequency}
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation schedullingPlan) {
 
 		Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> getLastUpdatedResumes = x -> VisUtils.getLastUpdated(VisEntityResume.ENTITY, VisFrequencyOptions.valueOf(x.getAsString(VisEntityPosition.Fields.frequency)), JnJsonCommonsFields.timestamp.name());

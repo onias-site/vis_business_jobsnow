@@ -15,28 +15,27 @@ import com.jn.utils.JnSystemProperties;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 
+/**
+ * Catalog of the message templates of the vis cost center. Each class name is the template id (topic) of a message;
+ * before the message is assembled, {@code JnSendMessageToUser} runs the {@code apply} of the class to prepare the values
+ * of the template.
+ */
 public class VisMessages {
 
 	/**
-	 * Email to the user when the request goes to {@code VisEntitySkillFixHierarchyApproved}, that is, when at least
-	 * one of its items was approved. Lists the approved and the rejected items with the operator's justifications.
-	 * Repeatable: each review is a new fact, and up to 2026-09-30 the second review of the same user in the same
-	 * day was refused as a repetition, which broke the end of the review in the support bot.
+	 * Email to the user when the request goes to {@code VisEntitySkillFixHierarchyFulfiled}, that is, when the
+	 * support bot operator reviewed it, whatever the decisions were. Lists the approved and the rejected items with
+	 * the operator's justifications. Repeatable: each review is a new fact, and up to 2026-09-30 the second review
+	 * of the same user in the same day was refused as a repetition, which broke the end of the review in the
+	 * support bot.
 	 */
-	public static class VisNotifyUserAboutAprovedSkillHierarchy implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutFulfiledSkillHierarchy implements CcpBusiness, JnRepeatableMessage{
 
-		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation preparedJson = VisSkillFixHierarchyReviewMessage.prepare(json);
-			return preparedJson;
-		}
-	}
-	/**
-	 * Email to the user when the request goes to {@code VisEntitySkillFixHierarchyRejected}, that is, when all of
-	 * its items were rejected. Lists the rejected items with the operator's justifications. Repeatable, for the
-	 * same reason as {@link VisNotifyUserAboutAprovedSkillHierarchy}.
-	 */
-	public static class VisNotifyUserAboutRejectedSkillHierarchy  implements CcpBusiness, JnRepeatableMessage{
-
+		/**
+		 * Prepares the review summary (see {@code VisSkillFixHierarchyReviewMessage.prepare}).
+		 * @param json the fulfilled request
+		 * @return the values of the template
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation preparedJson = VisSkillFixHierarchyReviewMessage.prepare(json);
 			return preparedJson;
@@ -54,6 +53,11 @@ public class VisMessages {
 	 */
 	public static class VisNotifySupportAndUserAboutPendingSkillHierarchyRequest  implements CcpBusiness, JnRepeatableMessage{
 
+		/**
+		 * Puts back the readable e-mail and adds {@code typeDescription} and {@code skillNames}.
+		 * @param json the pending request
+		 * @return the values of the template
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
 			Stream<String> skillsStream = skills.stream();
@@ -77,14 +81,16 @@ public class VisMessages {
 		}
 
 		/**
-		 * Placeholders of the email template that do not exist in the request: {@code typeDescription} is the
-		 * {@code type} written in the language of the message ("associação"/"association" or
-		 * "desassociação"/"dissociation"), resolved here because the template has no conditionals, in the same
-		 * language that {@code JnMessageType.email} will use to pick the template (the one in the json, or the
-		 * support language); {@code skillNames} is the {@code skill} array, without repetitions, joined by commas.
+		 * Placeholders of the e-mail template that do not exist in the request: {@code typeDescription} is the {@code type}
+		 * written in the language of the message (association or dissociation, in Portuguese or English), resolved here because
+		 * the template has no conditionals, in the same language that {@code JnMessageType.email} will use to pick the template
+		 * (the one in the JSON, or the support language); {@code skillNames} is the {@code skill} array, without repetitions,
+		 * joined by commas.
 		 */
 		public static enum JsonFieldNames implements CcpJsonFieldName{
+			/** The {@code typeDescription} field. */
 			typeDescription,
+			/** The {@code skillNames} field. */
 			skillNames
 		}
 	}
@@ -96,25 +102,48 @@ public class VisMessages {
 	 */
 	public static class VisNotifyUserAboutAlreadyReviewedSkillHierarchy implements CcpBusiness, JnRepeatableMessage{
 
+		/**
+		 * Prepares the same values as the pending request notice.
+		 * @param json the refused request
+		 * @return the values of the template
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation preparedJson = new VisNotifySupportAndUserAboutPendingSkillHierarchyRequest().execute(json);
 			return preparedJson;
 		}
 	}
+	/** Notice of a new skill suggestion waiting for review. */
 	public static class VisNotifySupportAndUserAboutPendingSkillRequest implements CcpBusiness{
 
+		/**
+		 * Needs no preparation.
+		 * @param json the suggestion
+		 * @return the same JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			return json;
 		}
 	}
+	/** Notice to the user that the suggested skill was approved. */
 	public static class VisNotifyUserAboutAprovedSkill implements CcpBusiness{
 
+		/**
+		 * Needs no preparation.
+		 * @param json the suggestion
+		 * @return the same JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			return json;
 		}
 	}
+	/** Notice to the user that the suggested skill was rejected. */
 	public static class VisNotifyUserAboutRejectedSkill implements CcpBusiness{
 
+		/**
+		 * Needs no preparation.
+		 * @param json the suggestion
+		 * @return the same JSON
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			return json;
 		}

@@ -11,7 +11,13 @@ import com.vis.json.fields.validation.VisSeniorityTypes;
  * resumes (calculated from the year the experience started) and for positions (read straight from the field).
  */
 public enum VisFunctionsGetSeniorityValueFromJson implements Function<CcpJsonRepresentation, String> {
+	/** For a resume: computed from the year the experience started (over 10 years ES, over 5 SR, over 2 PL, otherwise JR). */
 	resume {
+		/**
+		 * Computes the seniority of the resume.
+		 * @param json the resume
+		 * @return the seniority
+		 */
 		public String apply(CcpJsonRepresentation json) {
 			Integer experience = json.getAsIntegerNumber(VisJsonCommonsFields.experience);
 			
@@ -35,13 +41,25 @@ public enum VisFunctionsGetSeniorityValueFromJson implements Function<CcpJsonRep
 			}
 			return VisSeniorityTypes.JR.name();
 		}
-	}, position {
+	},
+	/** For a position: the {@code seniority} field. */
+	position {
+		/**
+		 * Reads the seniority of the position.
+		 * @param json the position
+		 * @return the seniority
+		 */
 		public String apply(CcpJsonRepresentation json) {
 			String seniority = json.getAsString(VisJsonCommonsFields.seniority);
 			return seniority;
 		}
 	};
 
+	/**
+	 * Returns the seniority compared in the matching.
+	 * @param json the resume or the position
+	 * @return the seniority
+	 */
 	public abstract String apply(CcpJsonRepresentation json);
 	
 }

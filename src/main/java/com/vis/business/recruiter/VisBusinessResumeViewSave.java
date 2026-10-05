@@ -24,10 +24,17 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 public class VisBusinessResumeViewSave implements CcpBusiness{
 		
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessResumeViewSave() {}
 	
+	/** The single instance. */
 	public static final VisBusinessResumeViewSave INSTANCE = new VisBusinessResumeViewSave();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
 		boolean resumeViewIsNotFree = VisEntityResumeFreeView.ENTITY.exists(json);

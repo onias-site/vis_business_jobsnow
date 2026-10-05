@@ -16,10 +16,17 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 public class VisBusinessGroupResumeViewsByResume implements JnBusinessSendToMensageria{
 		
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessGroupResumeViewsByResume() {}
 	
+	/** The single instance. */
 	public static final VisBusinessGroupResumeViewsByResume INSTANCE = new VisBusinessGroupResumeViewsByResume();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpJsonRepresentation groupingResult = VisUtils.groupDetailsByMasters(
 				json, 

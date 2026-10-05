@@ -33,25 +33,38 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResumeLastView.Fields.class)
 public class VisEntityResumeLastView implements CcpEntityConfigurator {
 	
+	/** The entity {@code vis_resume_last_view}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResumeLastView.class).entityInstance;
 
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code recruiter} field: part of the primary key, text. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)
 		recruiter, 
+		/** The {@code email} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		email, 
+		/** The {@code date} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date, 
+		/** The {@code timestamp} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp,
+		/** The {@code negativatedResume} field: boolean. */
 		@CcpJsonFieldTypeBoolean
 		negativatedResume,
+		/** The {@code inactivePosition} field: boolean. */
 		@CcpJsonFieldTypeBoolean
 		inactivePosition,
+		/** The {@code resume} field: nested JSON. */
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisEntityResume.Fields.class)
 		resume, 
+		/** The {@code position} field: nested JSON. */
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisEntityPosition.Fields.class)
 		position
 		;

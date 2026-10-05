@@ -21,10 +21,17 @@ import com.ccp.especifications.db.query.CcpQuery;
 public class VisBusinessGetRecentLoggedUsers implements CcpBusiness{
 		
 
+	/** Singleton; use {@link #INSTANCE}. */
 	private VisBusinessGetRecentLoggedUsers() {}
 	
+	/** The single instance. */
 	public static final VisBusinessGetRecentLoggedUsers INSTANCE = new VisBusinessGetRecentLoggedUsers();
 	
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);

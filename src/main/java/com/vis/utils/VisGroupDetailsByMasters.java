@@ -23,10 +23,18 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaDa
 public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>{
 	
 	
+	/** The records read so far, by entity and master. */
 	private CcpJsonRepresentation groupedRecords = CcpOtherConstants.EMPTY_JSON;
 
+	/** The master field. */
 	private final String masterFieldName;
 
+	/**
+	 * Maps the source entity to the grouping entity, and the twin of the source to the twin of the grouping.
+	 * @param masterFieldName the master field
+	 * @param entity the source entity
+	 * @param entityGrouper the grouping entity
+	 */
 	public VisGroupDetailsByMasters(String masterFieldName, CcpEntity entity , CcpEntity entityGrouper) {
 		this.masterFieldName = masterFieldName;
 		
@@ -47,6 +55,10 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 					;
 	}
 
+	/**
+	 * Adds the record to the group of its entity and master.
+	 * @param record the record, with its {@code entity}
+	 */
 	public void accept(CcpJsonRepresentation record) {
 		CcpFieldName masterField = new CcpFieldName(this.masterFieldName);
 		String master = record.getAsString(masterField);
@@ -59,8 +71,13 @@ public class VisGroupDetailsByMasters implements Consumer<CcpJsonRepresentation>
 		this.groupedRecords = this.groupedRecords.put(sameEntityField, entityGroup);
 	}
 	
+	/** The grouping entity of each source entity name. */
 	private CcpJsonRepresentation mappers;
 	
+	/**
+	 * Saves, in one bulk, the records of each master in pages of the matching grouping entity.
+	 * @return this instance
+	 */
 	public VisGroupDetailsByMasters saveAllDetailsGroupedByMasters(){
 		
 		Set<String> entities = this.groupedRecords.fieldSet();

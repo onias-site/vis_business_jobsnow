@@ -53,14 +53,46 @@ import com.ccp.json.fields.validation.CcpJsonCommonsFields;
  * the flow that sends resumes to recruiters.
  */
 public class VisUtils {
+	/** Fields used by the matching. */
 	enum JsonFieldNames implements CcpJsonFieldName{
-		tenant, statis, resumeOpinion, resumeLastView, requiredSkills, synonyms, parents, filterResumesAlreadySeen, owner, index
+		/** The {@code tenant} field. */
+		tenant,
+		/** The {@code statis} field. */
+		statis,
+		/** The {@code resumeOpinion} field. */
+		resumeOpinion,
+		/** The {@code resumeLastView} field. */
+		resumeLastView,
+		/** The {@code requiredSkills} field. */
+		requiredSkills,
+		/** The {@code synonyms} field. */
+		synonyms,
+		/** The {@code parents} field. */
+		parents,
+		/** The {@code filterResumesAlreadySeen} field. */
+		filterResumesAlreadySeen,
+		/** The {@code owner} field. */
+		owner,
+		/** The {@code index} field. */
+		index
 	}
 	
+	/**
+	 * Returns the tenant of this installation.
+	 * @return the {@code tenant} system property
+	 */
 	public static String getTenant() {
 		String tenant =  JnSystemProperties.INSTANCE.getSystemInnerProperty(JsonFieldNames.tenant);
 		return tenant;
 	}
+	/**
+	 * Tells whether the balance does not cover the fee of every item: a balance equal to the cost also counts as
+	 * insufficient.
+	 * @param itemsCount how many items are charged
+	 * @param fee the fee record ({@code fee} per item)
+	 * @param balance the balance record
+	 * @return {@code true} when {@code balance <= fee * itemsCount}
+	 */
 	public static boolean isInsufficientFunds(int itemsCount,  
 			CcpJsonRepresentation fee, CcpJsonRepresentation balance) {
 	
@@ -76,6 +108,13 @@ public class VisUtils {
 	}
 
 	
+	/**
+	 * Runs the matching of one frequency (see the overload with the scheduling plan).
+	 * @param frequency the frequency of the positions
+	 * @param howToObtainResumes reads the resumes of the scheduling plan
+	 * @param howToObtainPositionsGroupedByRecruiters reads the positions of the frequency, grouped by recruiter
+	 * @return the positions with their resumes and statistics
+	 */
 	public static List<CcpJsonRepresentation> sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(VisFrequencyOptions frequency, Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> howToObtainResumes, Function<VisFrequencyOptions, CcpJsonRepresentation> howToObtainPositionsGroupedByRecruiters) {
 	
 		CcpJsonRepresentation schedullingPlan = CcpOtherConstants.EMPTY_JSON.put(VisEntityPosition.Fields.frequency, frequency);
@@ -83,6 +122,15 @@ public class VisUtils {
 		return positionsWithResumesAndStatis;
 	}
 	
+	/**
+	 * Runs the matching: reads the positions of the frequency grouped by recruiter and the resumes, keeps for each position
+	 * the matching resumes (sorted), adds their statistics and publishes every position to
+	 * {@code VisBusinessPositionResumesSend}.
+	 * @param schedullingPlan the scheduling plan, with the {@code frequency}
+	 * @param howToObtainResumes reads the resumes of the scheduling plan
+	 * @param howToObtainPositionsGroupedByRecruiters reads the positions of the frequency, grouped by recruiter
+	 * @return the positions with their resumes and statistics
+	 */
 	public static List<CcpJsonRepresentation> sendFilteredAndSortedResumesAndTheirStatisByEachPositionToEachRecruiter(CcpJsonRepresentation schedullingPlan, Function<CcpJsonRepresentation, List<CcpJsonRepresentation>> howToObtainResumes, Function<VisFrequencyOptions, CcpJsonRepresentation> howToObtainPositionsGroupedByRecruiters) {
 		
 		String frequency = schedullingPlan.getAsString(VisEntityPosition.Fields.frequency);
@@ -106,6 +154,12 @@ public class VisUtils {
 		return allPositionsWithFilteredAndSortedResumesAndStatis;
 	}
 
+	/**
+	 * Adds to the position, under {@code statis}, the average availability, experience, bitcoin, CLT and PJ values of its
+	 * resumes (only the resumes that have the field) and the number of resumes.
+	 * @param positionsWithFilteredResumes the position with its resumes
+	 * @return the position with the statistics
+	 */
 	private static CcpJsonRepresentation getStatisToThisPosition(CcpJsonRepresentation positionsWithFilteredResumes) {
 
 		List<CcpJsonRepresentation> resumes = positionsWithFilteredResumes.getAsJsonList(VisJsonCommonsFields.resumes);
@@ -151,6 +205,12 @@ public class VisUtils {
 		return positionsWithFilteredResumes;
 	}
 	
+	/**
+	 * Computes the compatibility hashes of a resume (it has {@code experience}) or of a position: one hash per combination
+	 * of disability flag, availability and money value, with the seniority.
+	 * @param json the resume or the position
+	 * @return the hashes
+	 */
 	private static List<String> getHashes(CcpJsonRepresentation json) {
 		boolean containsField = json.containsField(VisJsonCommonsFields.experience);
 
@@ -187,6 +247,12 @@ public class VisUtils {
 		return hashes;
 	}
 	
+	/**
+	 * Returns the money values (bitcoin, CLT and PJ) of a resume or position.
+	 * @param enumsType {@code resume} or {@code position}
+	 * @param json the resume or the position
+	 * @return the money values
+	 */
 	private static List<CcpJsonRepresentation> getMoneyValues(String enumsType, CcpJsonRepresentation json){
 		
 		ArrayList<CcpJsonRepresentation> result = new ArrayList<>();
@@ -207,6 +273,13 @@ public class VisUtils {
 		return result;
 	}
 
+	/**
+	 * Reads the records of the entity whose field is later than the start of the period of the frequency.
+	 * @param entity the entity
+	 * @param frequencyOption the frequency (its length in hours)
+	 * @param filterFieldName the time field
+	 * @return the records
+	 */
 	public static List<CcpJsonRepresentation> getLastUpdated(CcpEntity entity, VisFrequencyOptions frequencyOption, String filterFieldName) {
 		
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
@@ -239,6 +312,11 @@ public class VisUtils {
 	}
 
 	
+	/**
+	 * Reads the positions of the frequency, grouped by the recruiter e-mail.
+	 * @param frequency the frequency
+	 * @return the positions by recruiter
+	 */
 	public static CcpJsonRepresentation getAllPositionsGroupedByRecruiters(VisFrequencyOptions frequency) {
 
 		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
@@ -258,6 +336,17 @@ public class VisUtils {
 		return positionsGroupedByRecruiters;
 	}
 
+	/**
+	 * For each recruiter and resume, checks in one search: the fee of the frequency (its absence is an error), the balance,
+	 * whether the funds cover every position of the recruiter, whether the resume is inactive, missing or negativated, and
+	 * whether the recruiter company may see it; each refusal is recorded as a {@code VisProcessStatusResumeView} item. The
+	 * remaining pairs are matched position by position, and the resumes of each position are sorted.
+	 * @param allPositionsGroupedByRecruiters the positions by recruiter
+	 * @param resumes the resumes
+	 * @param frequency the frequency
+	 * @return the positions with their sorted resumes
+	 * @throws VisErrorBusinessMissingFeeToFrequency when the frequency has no fee
+	 */
 	private static List<CcpJsonRepresentation> getAllPositionsWithFilteredAndSortedResumesAndTheirStatis(
 			CcpJsonRepresentation allPositionsGroupedByRecruiters, 
 			List<CcpJsonRepresentation> resumes, 
@@ -382,6 +471,18 @@ public class VisUtils {
 		return positionsWithSortedResumes;
 	}
 	
+	/**
+	 * Matches the resume against each position of the recruiter: same area code, every position hash present in the resume,
+	 * every required skill found (directly, by synonym or by parent) and, when the position asks for it, not seen since its
+	 * last update; a matching resume is added to the position. See finding: it returns an empty JSON instead of the
+	 * accumulated positions.
+	 * @param positionsGroupedByThisRecruiter the positions of the recruiter
+	 * @param allPositionsGroupedByRecruiters the positions by recruiter
+	 * @param allPositionsWithFilteredResumes the positions matched so far
+	 * @param searchParameters the recruiter and resume keys
+	 * @param searchResults the search result
+	 * @return the positions matched
+	 */
 	private static CcpJsonRepresentation getPositionWithFilteredResumes(
 			List<CcpJsonRepresentation> positionsGroupedByThisRecruiter, 
 			CcpJsonRepresentation allPositionsGroupedByRecruiters,
@@ -459,6 +560,14 @@ public class VisUtils {
 		return positionWithFilteredResumes;
 	}
 
+	/**
+	 * Finds each required skill of the position in the resume: by name ({@code CONTAINED_IN_RESUME}), by synonym
+	 * ({@code SYNONYM}) or as the parent of resume skills ({@code PARENT}).
+	 * @param positionByThisRecruiter the position
+	 * @param resume the resume
+	 * @return how each required skill was found
+	 * @throws VisErrorBusinessRequiredSkillsMissingInResume when some required skill is not found
+	 */
 	private static List<CcpJsonRepresentation> getRequiredSkillsInThisResume(
 			CcpJsonRepresentation positionByThisRecruiter, 
 			CcpJsonRepresentation resume) {
@@ -540,6 +649,13 @@ public class VisUtils {
 		return response;
 	}
 
+	/**
+	 * Tells whether the position filters resumes already seen and the resume was seen and not updated since then.
+	 * @param positionByThisRecruiter the position
+	 * @param searchResults the search result
+	 * @param searchParameters the recruiter and resume keys
+	 * @return {@code true} when the resume must be skipped
+	 */
 	private static boolean resumeAlreadySeen(CcpJsonRepresentation positionByThisRecruiter, CcpSelectUnionAll searchResults, CcpJsonRepresentation searchParameters) {
 		boolean mustFilterResumesAlreadySeen = positionByThisRecruiter.getAsBoolean(JsonFieldNames.filterResumesAlreadySeen);
 
@@ -572,6 +688,12 @@ public class VisUtils {
 		return resumeNotUpdatedSinceLastView;
 	}
 
+	/**
+	 * Sorts the resumes of the position by its criteria ({@link VisSorterResumesByPosition}).
+	 * @param positionId the position id
+	 * @param allPositionsWithFilteredResumes the positions with their resumes
+	 * @return the position with the sorted resumes
+	 */
 	private static CcpJsonRepresentation getPositionWithSortedResumes(String positionId, CcpJsonRepresentation allPositionsWithFilteredResumes) {
 		CcpFieldName positionKey = new CcpFieldName(positionId);
 	
@@ -593,6 +715,13 @@ public class VisUtils {
 		return positionWithSortedResumes;
 	}
 	
+	/**
+	 * Builds one search key per recruiter and resume: recruiter, frequency, owner and resume e-mail.
+	 * @param allPositionsGroupedByRecruiters the positions by recruiter
+	 * @param resumes the resumes
+	 * @param frequency the frequency
+	 * @return the search keys
+	 */
 	private static List<CcpJsonRepresentation> getAllSearchParameters(
 			CcpJsonRepresentation allPositionsGroupedByRecruiters, List<CcpJsonRepresentation> resumes, VisFrequencyOptions frequency) {
 		
@@ -629,6 +758,11 @@ public class VisUtils {
 
 
 	
+	/**
+	 * Regroups the positions of the recruiters named in {@code masters} into {@code vis_group_positions_by_recruiter}.
+	 * @param json the request with {@code masters}
+	 * @return the same JSON
+	 */
 	public static CcpJsonRepresentation groupPositionsGroupedByRecruiters(CcpJsonRepresentation json) {
 		
 		CcpJsonRepresentation groupingResult = groupDetailsByMasters(json, VisEntityPosition.ENTITY, 
@@ -637,6 +771,16 @@ public class VisUtils {
 		return groupingResult;
 	}
 	
+	/**
+	 * Reads the records of the masters named in {@code masters} (sorted by the ascending field) and saves them, in pages,
+	 * grouped by master in the grouping entity.
+	 * @param json the request with {@code masters}
+	 * @param entityToRead the entity of the details
+	 * @param entityWhereGroup the grouping entity
+	 * @param masterField the field of the master
+	 * @param ascField the sorting field
+	 * @return the same JSON
+	 */
 	public static CcpJsonRepresentation groupDetailsByMasters(
 			CcpJsonRepresentation json, 
 			CcpEntity entityToRead, 
@@ -681,6 +825,12 @@ public class VisUtils {
 	
 	
 	
+	/**
+	 * Saves the records in pages of the grouping entity (see {@link #getRecordsInPages}).
+	 * @param records the records
+	 * @param primaryKeySupplier the key of the group
+	 * @param entity the grouping entity
+	 */
 	public static void saveRecordsInPages(
 			List<CcpJsonRepresentation> records,
 			CcpJsonRepresentation primaryKeySupplier,
@@ -691,6 +841,15 @@ public class VisUtils {
 		JnExecuteBulkOperation.INSTANCE.executeBulk(allPagesTogether, JnDeleteKeysFromCache.INSTANCE);
 	}
 
+	/**
+	 * Splits the records in pages of 10, each page with {@code detail}, {@code listSize}, {@code from} and the key of the
+	 * group, and each record with its {@code index}. See finding: the page count is the remainder plus one and every page
+	 * after the first is empty.
+	 * @param records the records
+	 * @param primaryKeySupplier the key of the group
+	 * @param entity the grouping entity
+	 * @return the {@code create} items of the pages
+	 */
 	public static List<CcpBulkItem> getRecordsInPages(List<CcpJsonRepresentation> records,
 			CcpJsonRepresentation primaryKeySupplier, CcpEntity entity) {
 		List<CcpBulkItem> allPagesTogether = new ArrayList<>();
@@ -722,16 +881,27 @@ public class VisUtils {
 		return allPagesTogether;
 	}
 
+	/** Raised when the frequency has no fee configured. */
 	@SuppressWarnings("serial")
 	public static class VisErrorBusinessMissingFeeToFrequency extends RuntimeException {
+		/**
+		 * Builds the error.
+		 * @param frequency the frequency
+		 */
 		private VisErrorBusinessMissingFeeToFrequency(String frequency) {
 			super("It is missing the fee of frequency " + frequency);
 		}
 	}
 
+	/** Raised when a resume lacks some required skill of the position. */
 	@SuppressWarnings("serial")
 	public static class VisErrorBusinessRequiredSkillsMissingInResume extends RuntimeException {
+		/** The required skills not found. */
 		public final List<String> requiredSkillsNotFoundInResume;
+		/**
+		 * Builds the error.
+		 * @param requiredSkillsNotFoundInResume the required skills not found
+		 */
 		private VisErrorBusinessRequiredSkillsMissingInResume(List<String> requiredSkillsNotFoundInResume) {
 			this.requiredSkillsNotFoundInResume = requiredSkillsNotFoundInResume;
 		}

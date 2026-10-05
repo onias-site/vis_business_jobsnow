@@ -40,18 +40,27 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityDeniedViewToCompany.Fields.class)
 public class VisEntityDeniedViewToCompany implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_denied_view_to_company}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityDeniedViewToCompany.class).entityInstance;
 
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code domain} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		domain, 
+		/** The {@code email} field: part of the primary key, validated as in {@code JnJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
+		/** The {@code reasonType} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(maxLength = 50, minLength = 2)
 		reasonType, 
+		/** The {@code reasonText} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(maxLength = 50, minLength = 2)
 		reasonText

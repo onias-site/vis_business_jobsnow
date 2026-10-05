@@ -65,13 +65,38 @@ import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruite
 
 public class VisEntityPosition implements CcpEntityConfigurator {
 
+	/** The entity {@code vis_position}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;
 
-	public static enum MaxSalaryType { maxClt, maxPj }
-	public static enum MinSalaryType { minClt, minPj }
-	public static enum CltSalaryRange { maxClt, minClt }
-	public static enum PjSalaryRange  { minPj, maxPj }
+	/** The maximum salary fields; a position needs at least one of them. */
+	public static enum MaxSalaryType {
+		/** The maximum salary as an employee (CLT). */
+		maxClt,
+		/** The maximum value as a contractor (PJ). */
+		maxPj }
+	/** The minimum salary fields; a position needs at least one of them. */
+	public static enum MinSalaryType {
+		/** The minimum salary as an employee (CLT). */
+		minClt,
+		/** The minimum value as a contractor (PJ). */
+		minPj }
+	/** The salary range as an employee (CLT): the minimum may not exceed the maximum. */
+	public static enum CltSalaryRange {
+		/** The maximum salary as an employee. */
+		maxClt,
+		/** The minimum salary as an employee. */
+		minClt }
+	/** The value range as a contractor (PJ): the minimum may not exceed the maximum. */
+	public static enum PjSalaryRange  {
+		/** The minimum value as a contractor. */
+		minPj,
+		/** The maximum value as a contractor. */
+		maxPj }
 	
+	/**
+	 * The fields of the entity, with their validation rules (this enum is the class named by
+	 * {@code @CcpEntityFieldsValidator}).
+	 */
 	@CcpJsonGlobalValidations(requiresAtLeastOne = {
 			@CcpJsonValidationFieldList(MaxSalaryType.class),
 			@CcpJsonValidationFieldList(MinSalaryType.class)
@@ -80,69 +105,92 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 			@CcpJsonValidationFieldList(PjSalaryRange.class)
 	})
 	public static enum Fields implements CcpJsonFieldName{
+		/** The {@code channel} field: required, text, list. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionChannelTypes.class)
 		@CcpJsonFieldValidatorArray
 		channel, 
+		/** The {@code contactChannel} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 100)
 		contactChannel, 
+		/** The {@code date} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date,
+		/** The {@code ddd} field: required, list, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ddd, 
+		/** The {@code description} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 10, maxLength = 10_000)
 		description, 
+		/** The {@code desiredSkill} field: nested JSON, list. */
 		@CcpJsonFieldTypeNestedJson
 		@CcpJsonFieldValidatorArray
 		desiredSkill, 
+		/** The {@code disponibility} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		disponibility, 
+		/** The {@code email} field: part of the primary key, validated as in {@code JnJsonCommonsFields}, transformed by {@code VisJsonTransformerPutEmailHashAndDomainRecruiter}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpEntityFieldTransformer(VisJsonTransformerPutEmailHashAndDomainRecruiter.class)
 		email, 
+		/** The {@code expireDate} field: required, past timestamp. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeTimeBefore(minValue = 0, maxValue = 1, intervalType = CcpEntityExpurgableOptions.yearly)
 		expireDate, 
+		/** The {@code frequency} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionFrequencyTypes.class)
 		frequency, 
+		/** The {@code pcd} field: boolean. */
 		@CcpJsonFieldTypeBoolean
 		pcd, 
+		/** The {@code requiredSkill} field: required, list, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 30)
 		requiredSkill, 
+		/** The {@code seniority} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		seniority, 
+		/** The {@code sortFields} field: required, text, list. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionSortFieldTypes.class)
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		sortFields, 
+		/** The {@code timestamp} field: validated as in {@code JnJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		timestamp, 
+		/** The {@code title} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		title, 
+		/** The {@code showSalaryExpectation} field: required, boolean. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeBoolean
 		showSalaryExpectation,
+		/** The {@code minBtc} field: decimal number. */
 		@CcpJsonFieldTypeNumber(minValue = 1000)
 		minBtc,
+		/** The {@code maxBtc} field: decimal number. */
 		@CcpJsonFieldTypeNumber(maxValue = 100_000)
 		maxBtc,
+		/** The {@code minClt} field: decimal number. */
 		@CcpJsonFieldTypeNumber(minValue = 1000)
 		minClt,
+		/** The {@code maxClt} field: decimal number. */
 		@CcpJsonFieldTypeNumber(maxValue = 100_000)
 		maxClt,
+		/** The {@code minPj} field: decimal number. */
 		@CcpJsonFieldTypeNumber(minValue = 1_000)
 		minPj,
+		/** The {@code maxPj} field: decimal number. */
 		@CcpJsonFieldTypeNumber(maxValue = 100_000)
 		maxPj,
 		;
@@ -154,9 +202,13 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	 */
 	public static enum VisPositionChannelTypes {
 
+		/** Telegram. */
 		telegram,
+		/** WhatsApp. */
 		whatsapp,
+		/** E-mail. */
 		email,
+		/** SMS. */
 		sms
 		;
 	}
@@ -167,10 +219,15 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	 */
 	public static enum VisPositionFrequencyTypes {
 
+		/** Every minute. */
 		minute,
+		/** Every hour. */
 		hourly,
+		/** Every day. */
 		daily,
+		/** Every week. */
 		weekly,
+		/** Every month. */
 		monthly
 		;
 	}
@@ -181,11 +238,17 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 	 */
 	public static enum VisPositionSortFieldTypes {
 
+		/** By seniority. */
 		seniority,
+		/** By the value as a contractor (PJ). */
 		pj,
+		/** By the salary as an employee (CLT). */
 		clt,
+		/** By the value in bitcoin. */
 		btc,
+		/** By availability. */
 		disponibility,
+		/** By the desired skills found in the resume. */
 		desiredSkills
 		;
 	}

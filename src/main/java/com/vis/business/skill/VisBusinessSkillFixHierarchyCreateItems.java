@@ -25,6 +25,11 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
  */
 public class VisBusinessSkillFixHierarchyCreateItems implements CcpBusiness {
 
+	/**
+	 * Runs the business described in the class documentation.
+	 * @param json the input
+	 * @return the result
+	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);

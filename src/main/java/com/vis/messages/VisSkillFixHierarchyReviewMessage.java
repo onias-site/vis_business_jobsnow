@@ -23,6 +23,7 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  */
 final class VisSkillFixHierarchyReviewMessage {
 
+	/** Utility class; not instantiable. */
 	private VisSkillFixHierarchyReviewMessage() {}
 
 	/**
@@ -54,6 +55,13 @@ final class VisSkillFixHierarchyReviewMessage {
 		return jsonWithReviewSummary;
 	}
 
+	/**
+	 * Builds the HTML block of the items with the decision: a paragraph with the title and a list of the items.
+	 * @param decisions the decisions of the items
+	 * @param decision the decision of the block
+	 * @param language the language of the title
+	 * @return the block, or an empty text when no item has the decision
+	 */
 	private static String getItemsWithTheDecision(List<CcpJsonRepresentation> decisions, VisSkillFixHierarchyDecisions decision, JnLanguage language) {
 
 		String decisionName = decision.name();
@@ -74,6 +82,11 @@ final class VisSkillFixHierarchyReviewMessage {
 		return itemsWithTheDecision;
 	}
 
+	/**
+	 * Builds the HTML list item {@code skill: justification}, escaped.
+	 * @param item the decision of an item
+	 * @return the list item
+	 */
 	private static String getListItem(CcpJsonRepresentation item) {
 		String skill = item.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
 		String justification = item.getAsString(VisSkillFixHierarchyReviewFields.justification);

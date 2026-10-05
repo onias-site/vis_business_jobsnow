@@ -37,14 +37,23 @@ import com.ccp.especifications.db.crud.CcpSelectProcedure;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import java.util.stream.Stream;
 
+/** Fields of the skills services. */
 enum Fields implements CcpJsonFieldName{
+	/** The {@code text} field. */
 	text,
+	/** The {@code excludedSkill} field. */
 	excludedSkill,
+	/** The {@code label} field. */
 	label, 
+	/** The {@code discardedSkills} field. */
 	discardedSkills,
+	/** The {@code isPieceOfOtherWord} field. */
 	isPieceOfOtherWord,
+	/** The {@code associated} field. */
 	associated,
+	/** The {@code isPieceOfOtherSkill} field. */
 	isPieceOfOtherSkill, 
+	/** The {@code skillAlreadyAdded} field. */
 	skillAlreadyAdded 
 }
 
@@ -55,8 +64,18 @@ enum Fields implements CcpJsonFieldName{
  */
 public enum VisServiceSkills implements JnService {
 	
+	/**
+	 * Asks for a new skill: already rejected (412), pending (409) or approved (409); a skill that does not exist is saved as
+	 * pending; an existing one gives 409. Otherwise it always answers 202 (waiting for review).
+	 */
 	RequestToCreateNewSkill{
 
+		/**
+		 * Runs the checks and saves the request.
+		 * @param json the skill
+		 * @return never returns normally
+		 * @throws CcpErrorFlowDisturb with the resulting status
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpBusiness action = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillPending.ENTITY);
 			CcpGetEntityId entityIdGetter = new CcpGetEntityId(json);
@@ -99,8 +118,18 @@ public enum VisServiceSkills implements JnService {
 		
 	},
 	
+	/**
+	 * Finds the known skills in a free text (upper case): words of 7 characters or more are found anywhere, unless they are
+	 * part of a longer skill found; shorter words only as whole words. Excluded skills are ignored, and each skill is kept
+	 * once (the shortest label). The discarded ones come back with the reason.
+	 */
 	GetSkillsFromText{
 
+		/**
+		 * Tells whether the group of the initials is in the cache.
+		 * @param json the group key
+		 * @return {@code true} when cached
+		 */
 		private boolean isAlreadyInCache(CcpJsonRepresentation json) {
 			String id = VisEntityGroupPositionsBySkills.ENTITY.calculateId(json);
 			CcpCacheDecorator cache = new CcpCacheDecorator(id);
@@ -108,6 +137,11 @@ public enum VisServiceSkills implements JnService {
 			return presentInTheCache;
 		}
 		
+		/**
+		 * Finds the skills of the text.
+		 * @param json {@code text} and the {@code excludedSkill} list
+		 * @return {@code skill} (the chosen skills), {@code discardedSkills} and {@code excludedSkill}
+		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			String rawText = json.getAsString(Fields.text);
 			String text = rawText.toUpperCase();
@@ -291,6 +325,11 @@ public enum VisServiceSkills implements JnService {
 			return response;
 		}
 		
+		/**
+		 * Puts the label of the skill: the skill itself, or {@code word (skill)} when found by another word.
+		 * @param json the skill found
+		 * @return the skill with {@code label}
+		 */
 		private CcpJsonRepresentation putLabel(CcpJsonRepresentation json) {
 			String skill = json.getAsString(VisJsonCommonsFields.skill);
 			String word = json.getAsString(VisJsonCommonsFields.word);
@@ -309,6 +348,12 @@ public enum VisServiceSkills implements JnService {
 	}
 	;
 	
+	/**
+	 * Tells whether a word is in the group of its first two letters.
+	 * @param group the words by initials
+	 * @param word the word
+	 * @return 0 when present, 1 when there is no group, 2 when the group does not have the word
+	 */
 	static int getWordStatus(CcpJsonRepresentation group, String word) {
 		String initials = word.substring(0,2);
 		CcpFieldName initialsFieldName = new CcpFieldName(initials);
@@ -331,22 +376,28 @@ public enum VisServiceSkills implements JnService {
 
 }
 
+	/** Input rules of {@link VisServiceSkills#GetSkillsFromText}. */
 	enum GetSkillsFromText implements CcpJsonFieldName{
+		/** The {@code text} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(maxLength = 5_000_000, allowsEmptyString = true)
 		text,
+		/** The {@code excludedSkill} field: list, nested JSON. */
 		@CcpJsonFieldValidatorArray
 		@CcpJsonFieldTypeNestedJson(jsonValidation = ExcludedSkillFields.class)
 		excludedSkill
 	}
 	
 	
+	/** Rules of an excluded skill. */
 	enum ExcludedSkillFields implements CcpJsonFieldName{
 		
+		/** The {@code skill} field: validated as in {@code VisJsonCommonsFields}, required. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		skill, 
 
+		/** The {@code word} field: validated as in {@code VisJsonCommonsFields}, required. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		word 
