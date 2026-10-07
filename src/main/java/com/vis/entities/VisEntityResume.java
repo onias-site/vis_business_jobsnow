@@ -46,7 +46,11 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
  * reactivation (deletion from the twin), it triggers the hash calculation and sends the resume to matching recruiters.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),})
+@CcpEntityCustomDecorators(value = {
+		@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),
+		@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),
+		@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),
+		})
 @CcpEntityTwin(
 		twinEntityName = "vis_inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
