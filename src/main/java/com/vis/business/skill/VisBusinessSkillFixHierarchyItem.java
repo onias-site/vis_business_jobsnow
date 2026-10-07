@@ -46,13 +46,7 @@ public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 		List<String> currentParents = skillRecord.getAsStringList(VisEntitySkill.Fields.parent);
 		Set<String> parents = new LinkedHashSet<>(currentParents);
 
-		boolean isAssociation = VisSkillFixHierarchyTypes.add == type;
-
-		if(isAssociation) {
-			parents.add(parent);
-		} else {
-			parents.remove(parent);
-		}
+		type.execute(parents, parent);
 
 		List<String> updatedParents = new ArrayList<>(parents);
 		CcpJsonRepresentation skillRecordWithUpdatedParents = skillRecord.put(VisEntitySkill.Fields.parent, updatedParents);

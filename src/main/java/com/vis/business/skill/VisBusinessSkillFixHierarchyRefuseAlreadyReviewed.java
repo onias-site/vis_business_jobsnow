@@ -4,7 +4,11 @@ import java.util.List;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.dependency.injection.CcpDependencyInjection;
+import com.ccp.especifications.db.crud.CcpCrud;
+import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkillFixHierarchyItemApproved;
 import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
@@ -16,6 +20,8 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
  * vis_skill_fix_hierarchy_item_rejected (the twin of {@link VisEntitySkillFixHierarchyItemPending}). In that case
  * there is nothing left for the operator to decide, so {@link VisErrorSkillFixHierarchyAlreadyReviewed} is thrown,
  * the entity's global handler tells the user by email and the request is not saved.
+ *
+ * <p>Every item is searched in both entities with a single union all, instead of one lookup per item and entity.
  *
  * <p>A request with at least one skill not yet reviewed goes on, and {@link VisBusinessSkillFixHierarchyCreateItems}
  * creates items only for the skills not yet reviewed.
@@ -31,18 +37,30 @@ public class VisBusinessSkillFixHierarchyRefuseAlreadyReviewed implements CcpBus
 
 		CcpJsonRepresentation itemKeyWithoutSkill = json.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type);
 		List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
+		boolean noSkill = skills.isEmpty();
+
+		if(noSkill) {
+			VisErrorSkillFixHierarchyAlreadyReviewed alreadyReviewed = new VisErrorSkillFixHierarchyAlreadyReviewed(json);
+			throw alreadyReviewed;
+		}
+
+		CcpJsonRepresentation[] itemKeys = skills.stream()
+				.map(skill -> itemKeyWithoutSkill.put(VisEntitySkillFixHierarchyItemPending.Fields.skill, skill))
+				.toArray(CcpJsonRepresentation[]::new);
+
 		CcpEntity rejectedItemEntity = VisEntitySkillFixHierarchyItemPending.ENTITY.getTwinEntity();
+		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
+		CcpSelectUnionAll reviewedItems = crud.unionAll(itemKeys, JnDeleteKeysFromCache.INSTANCE, VisEntitySkillFixHierarchyItemApproved.ENTITY, rejectedItemEntity);
 
-		for (String skill : skills) {
-			CcpJsonRepresentation itemKey = itemKeyWithoutSkill.put(VisEntitySkillFixHierarchyItemPending.Fields.skill, skill);
+		for (CcpJsonRepresentation itemKey : itemKeys) {
 
-			boolean itemWasApproved = VisEntitySkillFixHierarchyItemApproved.ENTITY.exists(itemKey);
+			boolean itemWasApproved = VisEntitySkillFixHierarchyItemApproved.ENTITY.isPresentInThisUnionAll(reviewedItems, itemKey);
 
 			if(itemWasApproved) {
 				continue;
 			}
 
-			boolean itemWasRejected = rejectedItemEntity.exists(itemKey);
+			boolean itemWasRejected = rejectedItemEntity.isPresentInThisUnionAll(reviewedItems, itemKey);
 
 			if(itemWasRejected) {
 				continue;

@@ -1,6 +1,7 @@
 package com.vis.json.fields.validation;
 
-import com.jn.entities.JnEntitySystemMessage;
+import java.util.Set;
+
 import com.jn.messages.JnSystemMessage;
 import com.jn.utils.JnLanguage;
 
@@ -13,11 +14,22 @@ import com.jn.utils.JnLanguage;
 public enum VisSkillFixHierarchyTypes implements JnSystemMessage {
 
 	/** Associate the skill with the implicit knowledge. */
-	add,
+	add {
+		public void execute(Set<String> parents, String parent) {
+			parents.add(parent);
+		}
+	},
 	/** Dissociate the skill from the implicit knowledge. */
-	remove
+	remove {
+		public void execute(Set<String> parents, String parent) {
+			parents.remove(parent);
+			
+		}
+	}
 	;
 
+	public abstract void execute(Set<String> parents, String parent);	
+	
 	/**
 	 * How this type is written in a message in the given language.
 	 */

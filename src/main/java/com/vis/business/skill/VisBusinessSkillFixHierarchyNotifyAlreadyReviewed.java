@@ -5,7 +5,6 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.business.messages.JnMessageType;
 import com.jn.messages.JnSendMessageToUser;
-import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.messages.VisMessages;
 
 /**
