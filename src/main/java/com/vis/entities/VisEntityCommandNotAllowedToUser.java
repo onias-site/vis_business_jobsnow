@@ -20,10 +20,11 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.json.fields.validation.VisUserRequestCommands;
 
 /**
- * Users that the support bot operator chose to ignore for a command, because they only play with the requests
- * (absurd requests, swear words): one record per user ({@code email}, kept as hash) and command
- * ({@code commandName}), with the request that led to the decision ({@code description}). The requests of a
- * user found here for a command no longer reach the operator. Queried on every request of the user, hence
+ * Users that the support bot operator chose to ignore, because they only play with the requests
+ * (absurd requests, swear words): one record per user ({@code email}, kept as hash), with the command in which the
+ * operator decided it ({@code commandName}) and the request that led to the decision ({@code description}). The
+ * ignoring is global: since 2026-10-08 the requests of a user found here no longer reach the operator in any command
+ * (until then it was per command, and the key had the {@code commandName}). Queried on every request of the user, hence
  * the 1-hour cache.
  * Has the twin entity vis_command_reallowed_to_user, only for control and tracking: deleting a record (the
  * support bot {@code allowCommandToUser} command) moves it there, so what was undone stays recorded.
@@ -51,8 +52,8 @@ public class VisEntityCommandNotAllowedToUser implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
 
-		/** The {@code commandName} field: part of the primary key, text. */
-		@CcpEntityFieldPrimaryKey
+		/** The {@code commandName} field: the command in which the operator ignored the user (only informative), text, required. */
+		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisUserRequestCommands.class)
 		commandName,
 

@@ -8,6 +8,8 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.utils.JnLanguage;
+import com.jn.utils.JnSystemProperties;
 import com.vis.entities.VisEntitySkillFixHierarchyFulfiled;
 import com.vis.entities.VisEntitySkillFixHierarchyItemApproved;
 import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
@@ -131,15 +133,21 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 	}
 
 	/**
-	 * Builds the line {@code skill (decision): justification}.
+	 * Builds the line {@code skill (decision): justification}, with the decision written in the language of the user.
+	 * The language of the user is not stored yet, so it is the language of the system, as in the email of the review
+	 * (until 2026-10-08 the line carried the name of the enum, {@code approved} or {@code rejected}, to a Portuguese
+	 * reader).
 	 * @param decision the decision of an item
 	 * @return the line
 	 */
 	private String getExplanationLine(CcpJsonRepresentation decision) {
 		String skill = decision.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
-		String itemDecision = decision.getAsString(VisSkillFixHierarchyReviewFields.decision);
+		VisSkillFixHierarchyDecisionNames itemDecision = decision.getAsEnum(VisSkillFixHierarchyReviewFields.decision, VisSkillFixHierarchyDecisionNames.class);
+		String languageName = JnSystemProperties.INSTANCE.supportLanguage();
+		JnLanguage language = JnLanguage.valueOf(languageName);
+		String decisionName = itemDecision.getName(language);
 		String justification = decision.getAsString(VisSkillFixHierarchyReviewFields.justification);
-		String explanationLine = skill + " (" + itemDecision + "): " + justification;
+		String explanationLine = skill + " (" + decisionName + "): " + justification;
 		return explanationLine;
 	}
 

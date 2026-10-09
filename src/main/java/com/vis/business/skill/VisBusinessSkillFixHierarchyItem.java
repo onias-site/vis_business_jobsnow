@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
@@ -19,8 +20,12 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * record of its {@code skill}, adds its {@code parent} to the {@code parent} array (association, {@code add}) or
  * removes it from there (dissociation, {@code remove}).
  *
- * <p>A skill that has no {@link VisEntitySkill} record is skipped, because the record cannot be created without
- * its {@code ranking}.
+ * <p>Applies the same change to the items of the skill in the lookup the resume screen reads
+ * ({@link VisSkillWordsGroups}), in the groups of the skill and of each synonym: up to 2026-10-08 only
+ * {@link VisEntitySkill} changed, and the implicit knowledge of the resume screen never showed an approved fix.
+ *
+ * <p>A skill that has no {@link VisEntitySkill} record is not created there, because the record cannot be created
+ * without its {@code ranking}; its own word in the lookup still changes.
  */
 public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 
@@ -34,11 +39,16 @@ public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 		String skill = json.getAsString(VisEntitySkillFixHierarchyItemApproved.Fields.skill);
 		String parent = json.getAsString(VisEntitySkillFixHierarchyItemApproved.Fields.parent);
 		VisSkillFixHierarchyTypes type = json.getAsEnum(VisEntitySkillFixHierarchyItemApproved.Fields.type, VisSkillFixHierarchyTypes.class);
+		Consumer<Set<String>> changeParents = parents -> type.execute(parents, parent);
+
+		List<String> words = new ArrayList<>();
+		words.add(skill);
 
 		CcpJsonRepresentation skillKey = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkill.Fields.skill, skill);
 		boolean skillDoesNotExist = false == VisEntitySkill.ENTITY.exists(skillKey);
 
 		if(skillDoesNotExist) {
+			VisSkillWordsGroups.changeParents(skill, words, changeParents);
 			return json;
 		}
 
@@ -46,11 +56,15 @@ public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 		List<String> currentParents = skillRecord.getAsStringList(VisEntitySkill.Fields.parent);
 		Set<String> parents = new LinkedHashSet<>(currentParents);
 
-		type.execute(parents, parent);
+		changeParents.accept(parents);
 
 		List<String> updatedParents = new ArrayList<>(parents);
 		CcpJsonRepresentation skillRecordWithUpdatedParents = skillRecord.put(VisEntitySkill.Fields.parent, updatedParents);
 		VisEntitySkill.ENTITY.save(skillRecordWithUpdatedParents);
+
+		List<String> synonyms = skillRecord.getAsStringList(VisEntitySkill.Fields.synonym);
+		words.addAll(synonyms);
+		VisSkillWordsGroups.changeParents(skill, words, changeParents);
 
 		return json;
 	}

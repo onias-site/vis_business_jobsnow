@@ -13,6 +13,7 @@ import com.jn.messages.JnRepeatableMessage;
 import com.jn.utils.JnLanguage;
 import com.jn.utils.JnSystemProperties;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
+import com.vis.entities.VisEntitySkillPending;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 
 /**
@@ -45,7 +46,7 @@ public class VisMessages {
 	 * Notice of a new pending request, to the user by email and to the support bot operator. Returns the json
 	 * with the readable email back in {@code email} (the pending entity's transformer left the hash there),
 	 * because the message goes to that address and the command sent to the support bot operator
-	 * ({@code /fixSkillHierarchy {parent} {email}}) needs it. The items of the request are created by
+	 * ({@code /fixSkillHierarchy {type} {email} {parent}}) needs it. The items of the request are created by
 	 * {@code VisBusinessSkillFixHierarchyCreateItems}, on every save.
 	 *
 	 * <p>Repeatable: every new request is a new fact, so the notice goes out even if the same user already had
@@ -112,40 +113,64 @@ public class VisMessages {
 			return preparedJson;
 		}
 	}
-	/** Notice of a new skill suggestion waiting for review. */
-	public static class VisNotifySupportAndUserAboutPendingSkillRequest implements CcpBusiness{
+	/**
+	 * Notice of a new skill suggestion waiting for review, to the candidate by email and to the support bot operator
+	 * ({@code /reviewSkillSuggestion {email} {skill}}). Puts back the readable email (the pending entity's
+	 * transformer left the hash in {@code email}) and adds {@code synonymNames}. Repeatable: every suggestion is a
+	 * new fact, so the notice goes out even if the same candidate already suggested another skill today.
+	 */
+	public static class VisNotifySupportAndUserAboutPendingSkillRequest implements CcpBusiness, JnRepeatableMessage{
 
 		/**
-		 * Needs no preparation.
+		 * Puts back the readable email and adds {@code synonymNames}.
 		 * @param json the suggestion
-		 * @return the same JSON
+		 * @return the values of the template
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			return json;
+			CcpJsonRepresentation jsonWithOriginalEmail = json
+					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
+			List<String> synonyms = json.getAsStringList(VisEntitySkillPending.Fields.synonym);
+			String synonymNames = String.join(", ", synonyms);
+			CcpJsonRepresentation jsonWithSynonymNames = jsonWithOriginalEmail.put(JsonFieldNames.synonymNames, synonymNames);
+			return jsonWithSynonymNames;
+		}
+
+		/** Placeholder of the templates that does not exist in the suggestion: the {@code synonym} array joined by commas. */
+		public static enum JsonFieldNames implements CcpJsonFieldName{
+			/** The {@code synonymNames} field. */
+			synonymNames
 		}
 	}
-	/** Notice to the user that the suggested skill was approved. */
-	public static class VisNotifyUserAboutAprovedSkill implements CcpBusiness{
+	/**
+	 * Email to the candidate when the suggested skill is approved, that is, when the suggestion goes to
+	 * {@code VisEntitySkillApproved}. Repeatable: every review is a new fact.
+	 */
+	public static class VisNotifyUserAboutAprovedSkill implements CcpBusiness, JnRepeatableMessage{
 
 		/**
-		 * Needs no preparation.
-		 * @param json the suggestion
-		 * @return the same JSON
+		 * Prepares the review result (see {@code VisSkillSuggestionReviewMessage.prepare}).
+		 * @param json the approved suggestion
+		 * @return the values of the template
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			return json;
+			CcpJsonRepresentation preparedJson = VisSkillSuggestionReviewMessage.prepare(json);
+			return preparedJson;
 		}
 	}
-	/** Notice to the user that the suggested skill was rejected. */
-	public static class VisNotifyUserAboutRejectedSkill implements CcpBusiness{
+	/**
+	 * Email to the candidate when the suggested skill is rejected, that is, when the suggestion goes to
+	 * {@code VisEntitySkillRejected}. Repeatable: every review is a new fact.
+	 */
+	public static class VisNotifyUserAboutRejectedSkill implements CcpBusiness, JnRepeatableMessage{
 
 		/**
-		 * Needs no preparation.
-		 * @param json the suggestion
-		 * @return the same JSON
+		 * Prepares the review result (see {@code VisSkillSuggestionReviewMessage.prepare}).
+		 * @param json the rejected suggestion
+		 * @return the values of the template
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			return json;
+			CcpJsonRepresentation preparedJson = VisSkillSuggestionReviewMessage.prepare(json);
+			return preparedJson;
 		}
 	}
 

@@ -22,19 +22,20 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * Skill suggestions rejected by the support bot operator: the suggestion of {@link VisEntitySkillPending} with the
- * operator's justification ({@code explanation}), which the candidate sees when looking up their suggestion.
+ * Skill suggestions approved by the support bot operator: the suggestion of {@link VisEntitySkillPending} with the
+ * operator's justification ({@code explanation}). The approval also put the skill in {@link VisEntitySkill}; this
+ * entity keeps who suggested it and why, and answers the candidate's lookup of their suggestion.
  * Versionable, with a 1-hour cache.
  */
 @CcpEntityCache(3600)
 @CcpEntityCustomDecorators(value = {@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),})
 @JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillRejected.Fields.class)
-public class VisEntitySkillRejected implements CcpEntityConfigurator {
+@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillApproved.Fields.class)
+public class VisEntitySkillApproved implements CcpEntityConfigurator {
 
-	/** The entity {@code vis_skill_rejected}, with every decorator of this configuration. */
-	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillRejected.class).entityInstance;
+	/** The entity {@code vis_skill_approved}, with every decorator of this configuration. */
+	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillApproved.class).entityInstance;
 
 	/**
 	 * The fields of the entity, with their validation rules (this enum is the class named by

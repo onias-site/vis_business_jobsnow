@@ -14,6 +14,7 @@ import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntitySkill;
+import com.vis.entities.VisEntitySkillApproved;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
 import com.vis.status.VisProcessStatusSuggestNewSkill;
@@ -96,7 +97,7 @@ public enum VisServicePosition implements JnService {
 				.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY);
 				var statusIfSkillExists = ifPresentInSkills.returnStatus(VisProcessStatusSuggestNewSkill.alreadyExists);
 				var afterSkillCheck = statusIfSkillExists.and();
-				CcpEntity approvedSkillsEntity = VisEntitySkillPending.ENTITY.getTwinEntity();
+				CcpEntity approvedSkillsEntity = VisEntitySkillApproved.ENTITY;
 				var ifPresentInApprovedSkills = afterSkillCheck
 				.ifThisIdIsPresentInEntity(approvedSkillsEntity);
 				var statusIfApproved = ifPresentInApprovedSkills.returnStatus(VisProcessStatusSuggestNewSkill.approvedSkill);
@@ -154,7 +155,7 @@ public enum VisServicePosition implements JnService {
 				.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY);
 				var statusIfSkillExists = ifPresentInSkills.returnStatus(VisProcessStatusSuggestNewSkill.alreadyExists);
 				var afterSkillCheck = statusIfSkillExists.and();
-				CcpEntity approvedSkillsEntity = VisEntitySkillPending.ENTITY.getTwinEntity();
+				CcpEntity approvedSkillsEntity = VisEntitySkillApproved.ENTITY;
 				var ifPresentInApprovedSkills = afterSkillCheck
 				.ifThisIdIsPresentInEntity(approvedSkillsEntity);
 				var statusIfApproved = ifPresentInApprovedSkills.returnStatus(VisProcessStatusSuggestNewSkill.approvedSkill);

@@ -58,6 +58,7 @@ import com.vis.business.skill.VisBusinessSkillFixHierarchyDeleteOrphanItems;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyNotifyAlreadyReviewed;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyRefuseAlreadyReviewed;
 import com.vis.business.skill.VisErrorSkillFixHierarchyAlreadyReviewed;
+import com.vis.business.skill.VisSkillFixHierarchyDecisionNames;
 import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
@@ -68,7 +69,7 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy;
  * Represents pending skill hierarchy fix requests awaiting review: the user asks to associate
  * ({@code type = add}) or dissociate ({@code type = remove}) a skill of their resume with an implicit
  * knowledge ({@code parent}), giving the reason in {@code description}. Inserting a request notifies the
- * user by email and the support bot operator with the {@code /fixSkillHierarchy <parent> <type> <email>} command.
+ * user by email and the support bot operator with the {@code /fixSkillHierarchy <type> <email> <parent>} command.
  * A request whose skills were all already reviewed, for the same parent and type, in earlier requests is not
  * saved: {@code VisBusinessSkillFixHierarchyRefuseAlreadyReviewed} refuses it before the save and the global
  * handler emails the user ({@link VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy}) instead.
@@ -130,12 +131,14 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 	 * bot command) and its sending parameters (bot and chat), plus the email to the user telling that the
 	 * request is being reviewed (Portuguese and English) and its sending parameters. Also seeds the email of
 	 * the review result ({@link VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy}) and of the request refused because all of its skills were
-	 * already reviewed ({@link VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy}).
+	 * already reviewed ({@link VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy}), and the name of each decision
+	 * in the explanation of the reviewed request ({@link VisSkillFixHierarchyDecisionNames}).
 	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
 		String templateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class.getName();
 
-		String commandToTheOperator = "/fixSkillHierarchy {" + Fields.parent + "} {" + Fields.type + "} {" + Fields.email + "}";
+		// the parent goes last because it may have spaces (FRONT END): the last parameter of a bot command takes the rest of the text
+		String commandToTheOperator = "/fixSkillHierarchy {" + Fields.type + "} {" + Fields.email + "} {" + Fields.parent + "}";
 		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
 				.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation templateWithMessage = templateWithTemplateId
@@ -225,6 +228,16 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		firstRecords.addAll(emailParametersItems);
 		firstRecords.addAll(reviewEmailItems);
 		firstRecords.addAll(alreadyReviewedEmailItems);
+
+		// the name of each decision beside an item in the explanation of the reviewed request, read in the screen
+		List<CcpBulkItem> portugueseApprovedName = VisSkillFixHierarchyDecisionNames.approved.toBulkItems(JnLanguage.portuguese, "aprovado");
+		List<CcpBulkItem> englishApprovedName = VisSkillFixHierarchyDecisionNames.approved.toBulkItems(JnLanguage.english, "approved");
+		List<CcpBulkItem> portugueseRejectedName = VisSkillFixHierarchyDecisionNames.rejected.toBulkItems(JnLanguage.portuguese, "reprovado");
+		List<CcpBulkItem> englishRejectedName = VisSkillFixHierarchyDecisionNames.rejected.toBulkItems(JnLanguage.english, "rejected");
+		firstRecords.addAll(portugueseApprovedName);
+		firstRecords.addAll(englishApprovedName);
+		firstRecords.addAll(portugueseRejectedName);
+		firstRecords.addAll(englishRejectedName);
 		return firstRecords;
 	}
 

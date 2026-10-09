@@ -12,14 +12,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.cache.CcpCacheDecorator;
-import com.ccp.especifications.db.crud.CcpGetEntityId;
-import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
@@ -27,14 +24,8 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.services.JnService;
-import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityGroupPositionsBySkills;
-import com.vis.entities.VisEntitySkill;
-import com.vis.entities.VisEntitySkillPending;
-import com.vis.entities.VisEntitySkillRejected;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
-import com.ccp.especifications.db.crud.CcpSelectProcedure;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
 import java.util.stream.Stream;
 
 /** Fields of the skills services. */
@@ -58,65 +49,11 @@ enum Fields implements CcpJsonFieldName{
 }
 
 /**
- * Service for skill operations: requests for new skills and extraction of skills from free text.
+ * Service for skill operations: extraction of skills from free text.
  * Holds the richest logic of the skills module. The hierarchy fix lives in
- * {@link VisServiceSkillFixHierarchy}.
+ * {@link VisServiceSkillFixHierarchy} and the skill suggestions in {@link VisServiceSkillSuggestion}.
  */
 public enum VisServiceSkills implements JnService {
-	
-	/**
-	 * Asks for a new skill: already rejected (412), pending (409) or approved (409); a skill that does not exist is saved as
-	 * pending; an existing one gives 409. Otherwise it always answers 202 (waiting for review).
-	 */
-	RequestToCreateNewSkill{
-
-		/**
-		 * Runs the checks and saves the request.
-		 * @param json the skill
-		 * @return never returns normally
-		 * @throws CcpErrorFlowDisturb with the resulting status
-		 */
-		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpBusiness action = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillPending.ENTITY);
-			CcpGetEntityId entityIdGetter = new CcpGetEntityId(json);
-			CcpSelectProcedure procedure = entityIdGetter
-			.toBeginProcedureAnd();
-			var ifPresentInRejectedSkills = procedure
-			.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY);
-			var statusIfRejected = ifPresentInRejectedSkills.returnStatus(RequestToCreateNewSkillStatus.rejected);
-			var afterRejectedCheck = statusIfRejected
-			.and();
-			var ifPresentInPendingSkills = afterRejectedCheck
-			.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY);
-			var statusIfPending = ifPresentInPendingSkills.returnStatus(RequestToCreateNewSkillStatus.pending);
-			var afterPendingCheck = statusIfPending
-			.and();
-			CcpEntity approvedSkillsEntity = VisEntitySkillPending.ENTITY.getTwinEntity();
-			var ifPresentInApprovedSkills = afterPendingCheck
-			.ifThisIdIsPresentInEntity(approvedSkillsEntity);
-			var statusIfApproved = ifPresentInApprovedSkills.returnStatus(RequestToCreateNewSkillStatus.approved);
-			var afterApprovedCheck = statusIfApproved
-			.and();
-			var ifNotPresentInSkills = afterApprovedCheck
-			.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY);
-			var saveIfNewSkill = ifNotPresentInSkills.executeAction(action);
-			var afterSaveAction = saveIfNewSkill
-			.and();
-			var ifPresentInSkills = afterSaveAction
-			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY);
-			var statusIfAlreadyAdded = ifPresentInSkills.returnStatus(RequestToCreateNewSkillStatus.alreadyAdded);
-			var andFinallyReturningTheseFields = statusIfAlreadyAdded
-			.andFinallyReturningTheseFields();
-			andFinallyReturningTheseFields
-			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
-			;
-			
-			CcpJsonRepresentation analyzingResponse = RequestToCreateNewSkillStatus.analyzing.throwException(json);
-			
-			return analyzingResponse;
-		}
-		
-	},
 	
 	/**
 	 * Finds the known skills in a free text (upper case): words of 7 characters or more are found anywhere, unless they are

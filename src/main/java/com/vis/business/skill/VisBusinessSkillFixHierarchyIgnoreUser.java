@@ -14,7 +14,8 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 import com.vis.json.fields.validation.VisUserRequestCommands;
 
 /**
- * The support bot operator decided to ignore the user for the {@code fixSkillHierarchy} command, given the
+ * The support bot operator, in the {@code fixSkillHierarchy} command, decided to ignore the user (in every command:
+ * the ignoring is global), given the
  * {@code email} and the {@code parent} of the request being reviewed.
  *
  * <p>Records the user in {@link VisEntityCommandNotAllowedToUser}, with the pending requests for that parent

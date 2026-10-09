@@ -35,13 +35,30 @@ public class VisBusinessSkillFixHierarchyRefuseAlreadyReviewed implements CcpBus
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
+		boolean notYetReviewed = false == allItemsAlreadyReviewed(json);
+
+		if(notYetReviewed) {
+			return json;
+		}
+
+		VisErrorSkillFixHierarchyAlreadyReviewed alreadyReviewed = new VisErrorSkillFixHierarchyAlreadyReviewed(json);
+		throw alreadyReviewed;
+	}
+
+	/**
+	 * Tells whether every skill of the request was already reviewed (approved or rejected) for the same parent and type;
+	 * a request with no skill counts as reviewed. Also used by the service, which tells the user at once.
+	 * @param json the request
+	 * @return {@code true} when nothing is left for the operator to decide
+	 */
+	public static boolean allItemsAlreadyReviewed(CcpJsonRepresentation json) {
+
 		CcpJsonRepresentation itemKeyWithoutSkill = json.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type);
 		List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
 		boolean noSkill = skills.isEmpty();
 
 		if(noSkill) {
-			VisErrorSkillFixHierarchyAlreadyReviewed alreadyReviewed = new VisErrorSkillFixHierarchyAlreadyReviewed(json);
-			throw alreadyReviewed;
+			return true;
 		}
 
 		CcpJsonRepresentation[] itemKeys = skills.stream()
@@ -66,10 +83,9 @@ public class VisBusinessSkillFixHierarchyRefuseAlreadyReviewed implements CcpBus
 				continue;
 			}
 
-			return json;
+			return false;
 		}
 
-		VisErrorSkillFixHierarchyAlreadyReviewed alreadyReviewed = new VisErrorSkillFixHierarchyAlreadyReviewed(json);
-		throw alreadyReviewed;
+		return true;
 	}
 }

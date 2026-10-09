@@ -9,15 +9,6 @@ import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
-
-/** The salary fields; at least one is required. */
-enum SalaryType{
-	/** The value as a contractor (PJ). */
-	pj,
-	/** The salary as an employee (CLT). */
-	clt
-}
-
 /**
  * Validation rules of the position statistics, used as a nested JSON schema: at least one of {@code pj} or
  * {@code clt} is required.

@@ -1,4 +1,4 @@
-package com.vis.services;
+﻿package com.vis.services;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -18,13 +18,15 @@ import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFr
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.process.CcpProcessStatusDefault;
+import com.jn.business.messages.JnBusinessCancelSupportPendingCommand;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.skill.VisBusinessSkillFixHierarchyRefuseAlreadyReviewed;
 import com.vis.entities.VisEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
-import com.vis.json.fields.validation.VisUserRequestCommands;
+import com.vis.messages.VisMessages;
 import com.vis.status.VisProcessStatusFixSkillHierarchy;
 
 /**
@@ -36,8 +38,9 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 
 	/**
 	 * Saves the suggestion as pending, which notifies the user and the support bot operator. A user that the
-	 * operator chose to ignore for the {@code fixSkillHierarchy} command ({@link VisEntityCommandNotAllowedToUser})
-	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified.
+	 * operator chose to ignore (in any command: the ignoring is global, {@link VisEntityCommandNotAllowedToUser})
+	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified. A request whose skills were
+	 * all reviewed before gets {@code alreadyReviewed} (208): nothing stays pending and the user is emailed.
 	 */
 	FixSkillHierarchy{
 		/**
@@ -46,10 +49,9 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 		 * @return the same JSON
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation jsonWithCommandName = json.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.fixSkillHierarchy);
 			CcpBusiness saveAsPending = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillFixHierarchyPending.ENTITY);
 
-			new CcpGetEntityId(jsonWithCommandName)
+			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
 				.ifThisIdIsPresentInEntity(VisEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.userNotAllowed).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).returnStatus(CcpProcessStatusDefault.CONFLICT).and()
@@ -57,6 +59,14 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 				.andFinallyReturningTheseFields(FixSkillHierarchyResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
 			;
+			// the save goes through the messaging, where the refusal of a request with nothing left to decide only
+			// emails the user: the answer must tell them too, instead of a 200 that reads as "sent for review"
+			boolean alreadyReviewed = VisBusinessSkillFixHierarchyRefuseAlreadyReviewed.allItemsAlreadyReviewed(json);
+
+			if(alreadyReviewed) {
+				VisProcessStatusFixSkillHierarchy.alreadyReviewed.throwException(json);
+			}
+
 			return json;
 		}
 	},
@@ -118,6 +128,9 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 				CcpJsonRepresentation storedRequest = jsonWithTheStoredRequest.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillFixHierarchyPending.ENTITY);
 				CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(json);
 				VisEntitySkillFixHierarchyPending.ENTITY.delete(completeRequest);
+				// the operator's ticket of this request leaves /pendingTickets
+				String noticeTemplateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class.getName();
+				JnBusinessCancelSupportPendingCommand.INSTANCE.cancel(noticeTemplateId, completeRequest);
 				return jsonWithTheStoredRequest;
 			};
 
