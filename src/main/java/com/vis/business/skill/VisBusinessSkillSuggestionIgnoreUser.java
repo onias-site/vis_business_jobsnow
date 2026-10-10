@@ -14,7 +14,9 @@ import com.vis.json.fields.validation.VisUserRequestCommands;
  *
  * <p>Records the user in {@link VisEntityCommandNotAllowedToUser}, with the suggestion ({@code skill},
  * {@code synonym} and {@code description}) in the {@code description}, so that the next suggestions of the user no
- * longer reach the operator. Then discards the suggestion, without any decision and without notifying the user.
+ * longer reach the operator. Saving the user discards this suggestion and every other request of the user still
+ * pending, as if they had never existed ({@code VisBusinessDiscardPendingRequestsOfIgnoredUser}), without any decision
+ * and without notifying the user.
  */
 public class VisBusinessSkillSuggestionIgnoreUser implements CcpBusiness {
 
@@ -41,12 +43,8 @@ public class VisBusinessSkillSuggestionIgnoreUser implements CcpBusiness {
 		CcpJsonRepresentation ignoredUserWithEmail = CcpOtherConstants.EMPTY_JSON.put(VisEntityCommandNotAllowedToUser.Fields.email, email);
 		CcpJsonRepresentation ignoredUserWithCommand = ignoredUserWithEmail.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.reviewSkillSuggestion);
 		CcpJsonRepresentation ignoredUser = ignoredUserWithCommand.put(VisEntityCommandNotAllowedToUser.Fields.description, description);
+		// saving the user discards this suggestion and every other pending request of the user
 		VisEntityCommandNotAllowedToUser.ENTITY.save(ignoredUser);
-
-		if(suggestionIsPending) {
-			VisEntitySkillPending.ENTITY.delete(completeSuggestion);
-		}
-
 		return json;
 	}
 }

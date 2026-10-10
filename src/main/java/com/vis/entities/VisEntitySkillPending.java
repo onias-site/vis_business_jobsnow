@@ -51,6 +51,8 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.jn.utils.JnLanguage;
 import com.vis.business.skill.VisBusinessSkillSuggestionApply;
+import com.vis.business.skill.VisBusinessSkillSuggestionShareApproval;
+import com.vis.business.skill.VisBusinessSkillSuggestionShareRejection;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.messages.VisMessages;
 import com.vis.messages.VisMessages.VisNotifyUserAboutAprovedSkill;
@@ -64,7 +66,9 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
  * {@code /reviewSkillSuggestion <email> <skill>} command. The review transfers the suggestion to
  * {@link VisEntitySkillApproved} or to {@link VisEntitySkillRejected}, with the operator's justification
  * ({@code explanation}), which emails the candidate the result; the approval also puts the skill in
- * {@link VisEntitySkill} ({@code VisBusinessSkillSuggestionApply}).
+ * {@link VisEntitySkill} ({@code VisBusinessSkillSuggestionApply}). Both decisions are also recorded per skill in
+ * {@link VisEntitySkillReviewed}, which every candidate who suggests the same skill afterwards gets instead of a new
+ * review.
  * Versionable, with asynchronous writing and a 1-hour cache.
  */
 @CcpEntityCache(3600)
@@ -101,7 +105,8 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 		}
 		)
 @CcpEntityDataTransfers({
-		@CcpEntityDataTransfer(operationType = CcpEntityDataTransferType.afterTransferDataFromMainEntity, targetEntity = VisEntitySkillApproved.class, execute = {VisBusinessSkillSuggestionApply.class}, transferHandlers = {}),
+		@CcpEntityDataTransfer(operationType = CcpEntityDataTransferType.afterTransferDataFromMainEntity, targetEntity = VisEntitySkillApproved.class, execute = {VisBusinessSkillSuggestionApply.class, VisBusinessSkillSuggestionShareApproval.class}, transferHandlers = {}),
+		@CcpEntityDataTransfer(operationType = CcpEntityDataTransferType.afterTransferDataFromMainEntity, targetEntity = VisEntitySkillRejected.class, execute = {VisBusinessSkillSuggestionShareRejection.class}, transferHandlers = {}),
 })
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @JnEntityVersionable(JnVersionableEntity.class)

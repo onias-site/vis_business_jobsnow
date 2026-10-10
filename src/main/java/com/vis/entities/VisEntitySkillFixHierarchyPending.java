@@ -111,6 +111,7 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy;
 		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessSkillFixHierarchyRefuseAlreadyReviewed.class}, operationHandlers = {}),
 		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity,  execute = {VisBusinessSkillFixHierarchyCreateItems.class}, operationHandlers = {}),
 		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteFromMainEntity,  execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {}),
+		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteAnyWhereFromMainEntity,  execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {}),
 },
 globalHandlers = {
 		@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class}),

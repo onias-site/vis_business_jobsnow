@@ -8,7 +8,6 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.vis.entities.VisEntityCommandNotAllowedToUser;
-import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 import com.vis.json.fields.validation.VisUserRequestCommands;
@@ -20,7 +19,8 @@ import com.vis.json.fields.validation.VisUserRequestCommands;
  *
  * <p>Records the user in {@link VisEntityCommandNotAllowedToUser}, with the pending requests for that parent
  * (both types) in the {@code description}, so that the next requests of the user no longer reach the operator.
- * Then discards those requests and their items still pending, without any decision and without notifying the
+ * Saving the user discards these requests and every other request of the user still pending, as if they had never
+ * existed ({@code VisBusinessDiscardPendingRequestsOfIgnoredUser}), without any decision and without notifying the
  * user: nothing is approved or rejected, and the items already decided in earlier reviews stay as they are.
  */
 public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
@@ -56,12 +56,8 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 		CcpJsonRepresentation ignoredUserWithEmail = CcpOtherConstants.EMPTY_JSON.put(VisEntityCommandNotAllowedToUser.Fields.email, email);
 		CcpJsonRepresentation ignoredUserWithCommand = ignoredUserWithEmail.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.fixSkillHierarchy);
 		CcpJsonRepresentation ignoredUser = ignoredUserWithCommand.put(VisEntityCommandNotAllowedToUser.Fields.description, description);
+		// saving the user discards these requests and every other pending request of the user
 		VisEntityCommandNotAllowedToUser.ENTITY.save(ignoredUser);
-
-		for (CcpJsonRepresentation pendingRequest : pendingRequests) {
-			this.discardRequest(pendingRequest);
-		}
-
 		return json;
 	}
 
@@ -89,31 +85,6 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 		}
 
 		return pendingRequests;
-	}
-
-	/**
-	 * Discards a pending request: deletes everywhere its pending items (a plain delete would move them to the twin, which
-	 * holds the rejected items) and deletes the request.
-	 * @param pendingRequest the pending request
-	 */
-	private void discardRequest(CcpJsonRepresentation pendingRequest) {
-
-		CcpJsonRepresentation itemKeyWithoutSkill = pendingRequest.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type);
-		List<String> skills = pendingRequest.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
-
-		for (String skill : skills) {
-			CcpJsonRepresentation itemKey = itemKeyWithoutSkill.put(VisEntitySkillFixHierarchyItemPending.Fields.skill, skill);
-			boolean itemIsNotPending = false == VisEntitySkillFixHierarchyItemPending.ENTITY.exists(itemKey);
-
-			if(itemIsNotPending) {
-				continue;
-			}
-
-			// a plain delete would move the item to the twin, which holds the rejected items
-			VisEntitySkillFixHierarchyItemPending.ENTITY.deleteAnyWhere(itemKey);
-		}
-
-		VisEntitySkillFixHierarchyPending.ENTITY.delete(pendingRequest);
 	}
 
 	/**

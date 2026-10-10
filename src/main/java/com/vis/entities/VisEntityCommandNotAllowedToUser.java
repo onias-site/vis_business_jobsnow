@@ -5,8 +5,11 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
+import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
@@ -17,6 +20,7 @@ import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.skill.VisBusinessDiscardPendingRequestsOfIgnoredUser;
 import com.vis.json.fields.validation.VisUserRequestCommands;
 
 /**
@@ -28,12 +32,17 @@ import com.vis.json.fields.validation.VisUserRequestCommands;
  * the 1-hour cache.
  * Has the twin entity vis_command_reallowed_to_user, only for control and tracking: deleting a record (the
  * support bot {@code allowCommandToUser} command) moves it there, so what was undone stays recorded.
+ * Saving a user discards every request of the user still pending, as if it had never existed
+ * ({@link VisBusinessDiscardPendingRequestsOfIgnoredUser}).
  */
 @CcpEntityTwin(
 		twinEntityName = "vis_command_reallowed_to_user",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
+@CcpEntityOperations(value = {
+		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity,  execute = {VisBusinessDiscardPendingRequestsOfIgnoredUser.class}, operationHandlers = {}),
+})
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityCommandNotAllowedToUser.Fields.class)

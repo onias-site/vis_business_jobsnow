@@ -6,7 +6,8 @@ import com.ccp.process.CcpProcessStatus;
  * Defines the process statuses of the skill suggestion, with their corresponding HTTP codes:
  * {@code userNotAllowed} (403) when the support bot operator chose to ignore the user (in any command,
  * the ignoring is global), {@code skillAlreadyExists} (412) when the suggested skill is already
- * known by the system, and {@code alreadyRejected} (410) when the support already rejected it for the same user.
+ * known by the system, {@code alreadyRejected} (410) when the support already rejected it for the same user, and
+ * {@code alreadyReviewed} (410) when the support already approved or rejected it for another user.
  */
 public enum VisProcessStatusSuggestSkill implements CcpProcessStatus{
 	/** Status 403: the support team chose to ignore the user. */
@@ -18,6 +19,11 @@ public enum VisProcessStatusSuggestSkill implements CcpProcessStatus{
 	 * already decided in a skill hierarchy fix is not asked again.
 	 */
 	alreadyRejected(410),
+	/**
+	 * Status 410: the support already reviewed this skill, suggested by another user. The decision holds for everyone,
+	 * so the suggestion does not reach the operator again: the user gets the decision when looking up the suggestion.
+	 */
+	alreadyReviewed(410),
 	;
 
 	/** The HTTP status code. */

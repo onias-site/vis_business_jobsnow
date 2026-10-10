@@ -1,4 +1,4 @@
-﻿package com.vis.services;
+package com.vis.services;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -22,6 +22,7 @@ import com.vis.entities.VisEntityGroupPositionsBySkills;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
+import com.vis.entities.VisEntitySkillReviewed;
 import com.vis.messages.VisMessages;
 import com.vis.status.VisProcessStatusSuggestSkill;
 
@@ -38,7 +39,9 @@ public enum VisServiceSkillSuggestion implements JnService {
 	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified. A word already known,
 	 * as a skill or as a synonym of one ({@link VisEntityGroupPositionsBySkills}, {@link VisEntitySkill}), gets
 	 * {@code skillAlreadyExists} (412), a skill this candidate already had rejected gets {@code alreadyRejected} (410: the
-	 * rejection is final), and a suggestion of the same skill by the same candidate still pending gets 409.
+	 * rejection is final), a skill the support already reviewed from another candidate's suggestion gets
+	 * {@code alreadyReviewed} (410: the decision holds for everyone, so no new ticket reaches the operator), and a
+	 * suggestion of the same skill by the same candidate still pending gets 409.
 	 */
 	SuggestSkill{
 		/**
@@ -64,6 +67,7 @@ public enum VisServiceSkillSuggestion implements JnService {
 				.ifThisIdIsPresentInEntity(VisEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusSuggestSkill.userNotAllowed).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).returnStatus(VisProcessStatusSuggestSkill.skillAlreadyExists).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY).returnStatus(VisProcessStatusSuggestSkill.alreadyRejected).and()
+				.ifThisIdIsPresentInEntity(VisEntitySkillReviewed.ENTITY).returnStatus(VisProcessStatusSuggestSkill.alreadyReviewed).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY).returnStatus(CcpProcessStatusDefault.CONFLICT).and()
 				.executeAction(saveAsPending)
 				.andFinallyReturningTheseFields(VisSkillSuggestionResponse.inexistentField)
@@ -76,10 +80,12 @@ public enum VisServiceSkillSuggestion implements JnService {
 	/**
 	 * Returns the candidate's suggestion of the given skill, plus the {@code status} field ({@code pending},
 	 * {@code approved} or {@code rejected}). Looks in the pending entity first: a skill suggested again after being
-	 * rejected becomes pending again, and that is the one the candidate must see. Without a suggestion, returns an
-	 * empty json.
+	 * rejected becomes pending again, and that is the one the candidate must see. Without a suggestion of their own,
+	 * returns the decision the support took on the same skill suggested by another candidate
+	 * ({@link VisEntitySkillReviewed}: skill, synonyms, {@code status} and the operator's {@code explanation}, never
+	 * the other candidate's email or justification). Without either, returns an empty json.
 	 *
-	 * The three entities are queried in a single database round trip (union all); the priority order is applied
+	 * The four entities are queried in a single database round trip (union all); the priority order is applied
 	 * afterwards, on the result already in memory.
 	 */
 	GetSkillSuggestion{
@@ -91,7 +97,10 @@ public enum VisServiceSkillSuggestion implements JnService {
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			VisSkillSuggestionStatus[] statuses = VisSkillSuggestionStatus.values();
 			Stream<VisSkillSuggestionStatus> statusesStream = Arrays.stream(statuses);
-			CcpEntity[] entities = statusesStream.map(status -> status.entity).toArray(CcpEntity[]::new);
+			Stream<CcpEntity> suggestionEntities = statusesStream.map(status -> status.entity);
+			Stream<CcpEntity> reviewedEntity = Stream.of(VisEntitySkillReviewed.ENTITY);
+			Stream<CcpEntity> allEntities = Stream.concat(suggestionEntities, reviewedEntity);
+			CcpEntity[] entities = allEntities.toArray(CcpEntity[]::new);
 
 			CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
 			CcpSelectUnionAll unionAll = crud.unionAll(json, JnDeleteKeysFromCache.INSTANCE, entities);
@@ -106,7 +115,10 @@ public enum VisServiceSkillSuggestion implements JnService {
 				CcpJsonRepresentation suggestionWithStatus = found.put(VisSkillSuggestionResponse.status, status.name());
 				return suggestionWithStatus;
 			}
-			return CcpOtherConstants.EMPTY_JSON;
+			// the stored status is the operator's decision, already one of the values of the status field; empty when
+			// nobody suggested the skill yet
+			CcpJsonRepresentation reviewedFromAnotherSuggestion = VisEntitySkillReviewed.ENTITY.getRecordFromUnionAll(unionAll, jsonSupplier);
+			return reviewedFromAnotherSuggestion;
 		}
 	},
 
