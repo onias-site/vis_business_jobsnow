@@ -62,6 +62,7 @@ import com.vis.business.skill.VisSkillFixHierarchyDecisionNames;
 import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
+import com.vis.messages.VisEmailHtmlFields;
 import com.vis.messages.VisMessages;
 import com.vis.messages.VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy;
 
@@ -165,10 +166,24 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		String typeDescriptionPlaceholder = "{" + VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.JsonFieldNames.typeDescription + "}";
 		String skillNamesPlaceholder = "{" + VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.JsonFieldNames.skillNames + "}";
 		String parentPlaceholder = "{" + Fields.parent + "}";
+		String escapedDescriptionPlaceholder = "{" + VisEmailHtmlFields.escapedDescription + "}";
 
-		String portugueseEmailMessage = "<html><body><p>Olá, você solicitou " + typeDescriptionPlaceholder
-				+ " entre os termos " + skillNamesPlaceholder + " e " + parentPlaceholder
-				+ ". Nosso time está avaliando e te responderá o quanto antes.</p></body></html>";
+		// the parent (the implicit knowledge) and the skills are told apart, and the user's justification goes along: up
+		// to 2026-10-11 the email read "between the terms ANGULAR, ANT, AOP and AGIL", without telling which was the parent
+		String portugueseRequestDetails = "<ul><li><b>Conhecimento implícito (pai):</b> " + parentPlaceholder + "</li>"
+				+ "<li><b>Habilidades:</b> " + skillNamesPlaceholder + "</li>"
+				+ "<li><b>Sua justificativa:</b> " + escapedDescriptionPlaceholder + "</li></ul>";
+		String englishRequestDetails = "<ul><li><b>Implicit knowledge (parent):</b> " + parentPlaceholder + "</li>"
+				+ "<li><b>Skills:</b> " + skillNamesPlaceholder + "</li>"
+				+ "<li><b>Your justification:</b> " + escapedDescriptionPlaceholder + "</li></ul>";
+
+		String portugueseRequestSentence = "você solicitou " + typeDescriptionPlaceholder + " entre as habilidades " + skillNamesPlaceholder
+				+ " e o conhecimento implícito (pai) " + parentPlaceholder;
+		String englishRequestSentence = "you requested the " + typeDescriptionPlaceholder + " between the skills " + skillNamesPlaceholder
+				+ " and the implicit knowledge (parent) " + parentPlaceholder;
+
+		String portugueseEmailMessage = "<html><body><p>Olá, " + portugueseRequestSentence
+				+ ".</p>" + portugueseRequestDetails + "<p>Nosso time está avaliando e te responderá o quanto antes.</p></body></html>";
 		CcpJsonRepresentation emailTemplateWithTemplateId = CcpOtherConstants.EMPTY_JSON
 				.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation portugueseEmailTemplateWithLanguage = emailTemplateWithTemplateId
@@ -178,9 +193,8 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		CcpJsonRepresentation portugueseEmailTemplate = portugueseEmailTemplateWithSubject
 				.put(JnJsonCommonsFields.message, portugueseEmailMessage);
 
-		String englishEmailMessage = "<html><body><p>Hello, you requested the " + typeDescriptionPlaceholder
-				+ " between the terms " + skillNamesPlaceholder + " and " + parentPlaceholder
-				+ ". Our team is reviewing it and will get back to you as soon as possible.</p></body></html>";
+		String englishEmailMessage = "<html><body><p>Hello, " + englishRequestSentence
+				+ ".</p>" + englishRequestDetails + "<p>Our team is reviewing it and will get back to you as soon as possible.</p></body></html>";
 		CcpJsonRepresentation englishEmailTemplateWithLanguage = emailTemplateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.english);
 		CcpJsonRepresentation englishEmailTemplateWithSubject = englishEmailTemplateWithLanguage
@@ -202,9 +216,11 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 
 		String reviewSummaryPlaceholder = "{" + VisSkillFixHierarchyReviewFields.reviewSummary + "}";
 		String portugueseReviewMessage = "<html><body><p>Olá, a sua solicitação de " + typeDescriptionPlaceholder
-				+ " com o termo " + parentPlaceholder + " foi avaliada pelo nosso time.</p>" + reviewSummaryPlaceholder + "</body></html>";
+				+ " com o conhecimento implícito (pai) " + parentPlaceholder + " foi avaliada pelo nosso time.</p>" + portugueseRequestDetails
+				+ reviewSummaryPlaceholder + "</body></html>";
 		String englishReviewMessage = "<html><body><p>Hello, your " + typeDescriptionPlaceholder
-				+ " request with the term " + parentPlaceholder + " was reviewed by our team.</p>" + reviewSummaryPlaceholder + "</body></html>";
+				+ " request with the implicit knowledge (parent) " + parentPlaceholder + " was reviewed by our team.</p>" + englishRequestDetails
+				+ reviewSummaryPlaceholder + "</body></html>";
 		String portugueseReviewSubject = "A sua solicitação de ajuste na hierarquia de conhecimentos foi avaliada";
 		String englishReviewSubject = "Your skill hierarchy fix request was reviewed";
 
@@ -213,12 +229,12 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		List<CcpBulkItem> reviewEmailItems = this.getEmailTemplateAndParameters(fulfiledTemplateId, portugueseReviewSubject, portugueseReviewMessage, englishReviewSubject, englishReviewMessage);
 
 		String alreadyReviewedTemplateId = VisMessages.VisNotifyUserAboutAlreadyReviewedSkillHierarchy.class.getName();
-		String portugueseAlreadyReviewedMessage = "<html><body><p>Olá, você solicitou " + typeDescriptionPlaceholder
-				+ " entre os termos " + skillNamesPlaceholder + " e " + parentPlaceholder
-				+ ", mas todos eles já foram atendidos em solicitações anteriores, por isso esta solicitação não foi registrada.</p></body></html>";
-		String englishAlreadyReviewedMessage = "<html><body><p>Hello, you requested the " + typeDescriptionPlaceholder
-				+ " between the terms " + skillNamesPlaceholder + " and " + parentPlaceholder
-				+ ", but all of them were already handled in earlier requests, so this request was not registered.</p></body></html>";
+		String portugueseAlreadyReviewedMessage = "<html><body><p>Olá, " + portugueseRequestSentence
+				+ ", mas todas elas já foram atendidas em solicitações anteriores, por isso esta solicitação não foi registrada.</p>"
+				+ portugueseRequestDetails + "</body></html>";
+		String englishAlreadyReviewedMessage = "<html><body><p>Hello, " + englishRequestSentence
+				+ ", but all of them were already handled in earlier requests, so this request was not registered.</p>"
+				+ englishRequestDetails + "</body></html>";
 		String portugueseAlreadyReviewedSubject = "A sua solicitação de ajuste na hierarquia de conhecimentos já foi atendida";
 		String englishAlreadyReviewedSubject = "Your skill hierarchy fix request was already handled";
 		List<CcpBulkItem> alreadyReviewedEmailItems = this.getEmailTemplateAndParameters(alreadyReviewedTemplateId, portugueseAlreadyReviewedSubject, portugueseAlreadyReviewedMessage, englishAlreadyReviewedSubject, englishAlreadyReviewedMessage);

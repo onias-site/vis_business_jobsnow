@@ -50,9 +50,11 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 		}
 
 		CcpJsonRepresentation descriptionWithParent = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkillFixHierarchyPending.Fields.parent, parent);
-		CcpJsonRepresentation description = descriptionWithParent.put(JsonFieldNames.requests, requestsDescriptions);
+		CcpJsonRepresentation descriptionWithRequests = descriptionWithParent.put(JsonFieldNames.requests, requestsDescriptions);
 
 		String email = requestKey.getAsString(VisEntitySkillFixHierarchyPending.Fields.email);
+		// the email of the record is kept as hash; the readable one goes in the description, for the operator to list the ignored users
+		CcpJsonRepresentation description = descriptionWithRequests.put(VisEntitySkillFixHierarchyPending.Fields.email, email);
 		CcpJsonRepresentation ignoredUserWithEmail = CcpOtherConstants.EMPTY_JSON.put(VisEntityCommandNotAllowedToUser.Fields.email, email);
 		CcpJsonRepresentation ignoredUserWithCommand = ignoredUserWithEmail.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.fixSkillHierarchy);
 		CcpJsonRepresentation ignoredUser = ignoredUserWithCommand.put(VisEntityCommandNotAllowedToUser.Fields.description, description);

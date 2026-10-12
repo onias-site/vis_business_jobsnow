@@ -15,8 +15,9 @@ final class VisSkillSuggestionReviewMessage {
 	private VisSkillSuggestionReviewMessage() {}
 
 	/**
-	 * Puts back the readable email (the address the email goes to) and escapes the {@code explanation}, which the
-	 * operator typed in the bot and goes into an HTML email body.
+	 * Puts back the readable email (the address the email goes to), escapes the {@code explanation}, which the
+	 * operator typed in the bot and goes into an HTML email body, and adds the candidate's own justification, escaped
+	 * ({@code escapedDescription}).
 	 * @param json the reviewed suggestion
 	 * @return the values of the template
 	 */
@@ -24,10 +25,9 @@ final class VisSkillSuggestionReviewMessage {
 		CcpJsonRepresentation jsonWithOriginalEmail = json
 				.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
 		String explanation = json.getAsString(JnJsonCommonsFields.explanation);
-		String withoutAmpersand = explanation.replace("&", "&amp;");
-		String withoutLessThan = withoutAmpersand.replace("<", "&lt;");
-		String escapedExplanation = withoutLessThan.replace(">", "&gt;");
+		String escapedExplanation = VisEmailHtml.escape(explanation);
 		CcpJsonRepresentation jsonWithEscapedExplanation = jsonWithOriginalEmail.put(JnJsonCommonsFields.explanation, escapedExplanation);
-		return jsonWithEscapedExplanation;
+		CcpJsonRepresentation jsonWithEscapedDescription = VisEmailHtml.putEscapedDescription(jsonWithEscapedExplanation);
+		return jsonWithEscapedDescription;
 	}
 }

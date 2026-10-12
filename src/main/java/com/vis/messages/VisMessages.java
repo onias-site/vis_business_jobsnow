@@ -55,16 +55,12 @@ public class VisMessages {
 	public static class VisNotifySupportAndUserAboutPendingSkillHierarchyRequest  implements CcpBusiness, JnRepeatableMessage{
 
 		/**
-		 * Puts back the readable e-mail and adds {@code typeDescription} and {@code skillNames}.
+		 * Puts back the readable e-mail and adds {@code typeDescription}, {@code skillNames} and the user's
+		 * justification escaped for the email ({@code escapedDescription}).
 		 * @param json the pending request
 		 * @return the values of the template
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
-			Stream<String> skillsStream = skills.stream();
-			Stream<String> distinctSkillsStream = skillsStream.distinct();
-			List<String> distinctSkills = distinctSkillsStream.collect(Collectors.toList());
-
 			CcpJsonRepresentation jsonWithOriginalEmail = json
 					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
 
@@ -74,10 +70,25 @@ public class VisMessages {
 			JnLanguage language = JnLanguage.valueOf(languageName);
 			VisSkillFixHierarchyTypes type = json.getAsEnum(VisEntitySkillFixHierarchyPending.Fields.type, VisSkillFixHierarchyTypes.class);
 			String typeDescription = type.getDescription(language);
-			String skillNames = String.join(", ", distinctSkills);
 
 			CcpJsonRepresentation jsonWithTypeDescription = jsonWithOriginalEmail.put(JsonFieldNames.typeDescription, typeDescription);
-			CcpJsonRepresentation jsonWithSkillNames = jsonWithTypeDescription.put(JsonFieldNames.skillNames, skillNames);
+			CcpJsonRepresentation jsonWithSkillNames = putSkillNames(jsonWithTypeDescription);
+			CcpJsonRepresentation jsonWithEscapedDescription = VisEmailHtml.putEscapedDescription(jsonWithSkillNames);
+			return jsonWithEscapedDescription;
+		}
+
+		/**
+		 * Adds {@code skillNames}: the {@code skill} array of the request, without repetitions, joined by commas.
+		 * @param json the request
+		 * @return the json with {@code skillNames}
+		 */
+		static CcpJsonRepresentation putSkillNames(CcpJsonRepresentation json) {
+			List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
+			Stream<String> skillsStream = skills.stream();
+			Stream<String> distinctSkillsStream = skillsStream.distinct();
+			List<String> distinctSkills = distinctSkillsStream.collect(Collectors.toList());
+			String skillNames = String.join(", ", distinctSkills);
+			CcpJsonRepresentation jsonWithSkillNames = json.put(JsonFieldNames.skillNames, skillNames);
 			return jsonWithSkillNames;
 		}
 
@@ -122,7 +133,8 @@ public class VisMessages {
 	public static class VisNotifySupportAndUserAboutPendingSkillRequest implements CcpBusiness, JnRepeatableMessage{
 
 		/**
-		 * Puts back the readable email and adds {@code synonymNames}.
+		 * Puts back the readable email and adds {@code synonymNames} and the candidate's justification escaped for the
+		 * email ({@code escapedDescription}).
 		 * @param json the suggestion
 		 * @return the values of the template
 		 */
@@ -132,7 +144,8 @@ public class VisMessages {
 			List<String> synonyms = json.getAsStringList(VisEntitySkillPending.Fields.synonym);
 			String synonymNames = String.join(", ", synonyms);
 			CcpJsonRepresentation jsonWithSynonymNames = jsonWithOriginalEmail.put(JsonFieldNames.synonymNames, synonymNames);
-			return jsonWithSynonymNames;
+			CcpJsonRepresentation jsonWithEscapedDescription = VisEmailHtml.putEscapedDescription(jsonWithSynonymNames);
+			return jsonWithEscapedDescription;
 		}
 
 		/** Placeholder of the templates that does not exist in the suggestion: the {@code synonym} array joined by commas. */

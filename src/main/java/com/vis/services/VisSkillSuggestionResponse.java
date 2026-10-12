@@ -11,5 +11,7 @@ enum VisSkillSuggestionResponse implements CcpJsonFieldName{
 	/** The {@code status} field. */
 	status,
 	/** The {@code inexistentField} field. */
-	inexistentField
+	inexistentField,
+	/** The {@code typedSynonym} field: the skill typed by the candidate, when the suggestion was found through it as a synonym. */
+	typedSynonym
 }

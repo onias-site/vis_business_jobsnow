@@ -142,7 +142,7 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 	 */
 	private String getExplanationLine(CcpJsonRepresentation decision) {
 		String skill = decision.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
-		VisSkillFixHierarchyDecisionNames itemDecision = decision.getAsEnum(VisSkillFixHierarchyReviewFields.decision, VisSkillFixHierarchyDecisionNames.class);
+		VisSkillFixHierarchyDecisionNames  itemDecision = decision.getAsEnum(VisSkillFixHierarchyReviewFields.decision, VisSkillFixHierarchyDecisionNames.class);
 		String languageName = JnSystemProperties.INSTANCE.supportLanguage();
 		JnLanguage language = JnLanguage.valueOf(languageName);
 		String decisionName = itemDecision.getName(language);

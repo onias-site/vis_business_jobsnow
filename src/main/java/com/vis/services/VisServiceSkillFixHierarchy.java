@@ -25,8 +25,10 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyRefuseAlreadyReviewed;
 import com.vis.entities.VisEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
+import com.vis.entities.VisEntitySkillFixHierarchyWithdrawn;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.messages.VisMessages;
+import com.vis.status.VisProcessStatusDeleteSkillFixHierarchy;
 import com.vis.status.VisProcessStatusFixSkillHierarchy;
 
 /**
@@ -110,7 +112,11 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 	/**
 	 * The candidate withdraws a suggestion that is still pending. Only deletes from the pending entity: what was
 	 * already reviewed (fulfiled) is review history and cannot be undone by the candidate. Responds 404 when
-	 * there is no pending suggestion (e.g. it was reviewed between the candidate opening the modal and giving up).
+	 * there is no pending suggestion (e.g. it was reviewed between the candidate opening the modal and giving up), and
+	 * {@code withdrawnRecently} (429) when the candidate already withdrew a request of the same parent and type within the
+	 * hour ({@link VisEntitySkillFixHierarchyWithdrawn}, recorded at each withdrawal): requesting it again is allowed,
+	 * withdrawing it again is not, so that an undecided candidate does not open and cancel tickets to the operator (and
+	 * emails to themselves) in a loop. Same rule as the withdrawal of a skill suggestion.
 	 *
 	 * The existence is checked before deleting, and not by the result of the deletion: the pending entity writes
 	 * through the messaging, so {@code delete} only tells that the message was accepted, and up to 2026-09-30
@@ -128,6 +134,7 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 				CcpJsonRepresentation storedRequest = jsonWithTheStoredRequest.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillFixHierarchyPending.ENTITY);
 				CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(json);
 				VisEntitySkillFixHierarchyPending.ENTITY.delete(completeRequest);
+				VisEntitySkillFixHierarchyWithdrawn.ENTITY.save(json);
 				// the operator's ticket of this request leaves /pendingTickets
 				String noticeTemplateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class.getName();
 				JnBusinessCancelSupportPendingCommand.INSTANCE.cancel(noticeTemplateId, completeRequest);
@@ -137,6 +144,7 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
 				.ifThisIdIsNotPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).returnStatus(CcpProcessStatusDefault.NOT_FOUND).and()
+				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyWithdrawn.ENTITY).returnStatus(VisProcessStatusDeleteSkillFixHierarchy.withdrawnRecently).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).executeAction(deleteTheStoredRequest)
 				.andFinallyReturningTheseFields(FixSkillHierarchyResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)

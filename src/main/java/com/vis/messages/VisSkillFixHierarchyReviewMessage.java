@@ -52,7 +52,9 @@ final class VisSkillFixHierarchyReviewMessage {
 
 		CcpJsonRepresentation jsonWithTypeDescription = jsonWithOriginalEmail.put(VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.JsonFieldNames.typeDescription, typeDescription);
 		CcpJsonRepresentation jsonWithReviewSummary = jsonWithTypeDescription.put(VisSkillFixHierarchyReviewFields.reviewSummary, reviewSummary);
-		return jsonWithReviewSummary;
+		CcpJsonRepresentation jsonWithSkillNames = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.putSkillNames(jsonWithReviewSummary);
+		CcpJsonRepresentation jsonWithEscapedDescription = VisEmailHtml.putEscapedDescription(jsonWithSkillNames);
+		return jsonWithEscapedDescription;
 	}
 
 	/**
@@ -90,19 +92,10 @@ final class VisSkillFixHierarchyReviewMessage {
 	private static String getListItem(CcpJsonRepresentation item) {
 		String skill = item.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
 		String justification = item.getAsString(VisSkillFixHierarchyReviewFields.justification);
-		String escapedSkill = escapeHtml(skill);
-		String escapedJustification = escapeHtml(justification);
+		// the justification is typed by the operator in the bot and goes into an HTML email body
+		String escapedSkill = VisEmailHtml.escape(skill);
+		String escapedJustification = VisEmailHtml.escape(justification);
 		String listItem = "<li><b>" + escapedSkill + "</b>: " + escapedJustification + "</li>";
 		return listItem;
-	}
-
-	/**
-	 * The justification is typed by the operator in the bot and goes into an HTML email body.
-	 */
-	private static String escapeHtml(String text) {
-		String withoutAmpersand = text.replace("&", "&amp;");
-		String withoutLessThan = withoutAmpersand.replace("<", "&lt;");
-		String escaped = withoutLessThan.replace(">", "&gt;");
-		return escaped;
 	}
 }

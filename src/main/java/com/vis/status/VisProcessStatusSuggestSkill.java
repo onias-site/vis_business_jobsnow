@@ -24,6 +24,11 @@ public enum VisProcessStatusSuggestSkill implements CcpProcessStatus{
 	 * so the suggestion does not reach the operator again: the user gets the decision when looking up the suggestion.
 	 */
 	alreadyReviewed(410),
+	/**
+	 * Status 409: the skill is a synonym given in a suggestion this user already made (PTL, after suggesting PICK BY
+	 * LIGHT with the synonym PTL): it is the same skill, suggested again under another name.
+	 */
+	suggestedThroughSynonym(409),
 	;
 
 	/** The HTTP status code. */

@@ -54,6 +54,7 @@ import com.vis.business.skill.VisBusinessSkillSuggestionApply;
 import com.vis.business.skill.VisBusinessSkillSuggestionShareApproval;
 import com.vis.business.skill.VisBusinessSkillSuggestionShareRejection;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.vis.messages.VisEmailHtmlFields;
 import com.vis.messages.VisMessages;
 import com.vis.messages.VisMessages.VisNotifyUserAboutAprovedSkill;
 import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
@@ -156,29 +157,39 @@ public class VisEntitySkillPending implements CcpEntityConfigurator {
 		String skillPlaceholder = "{" + Fields.skill + "}";
 		String synonymNamesPlaceholder = "{" + VisMessages.VisNotifySupportAndUserAboutPendingSkillRequest.JsonFieldNames.synonymNames + "}";
 		String explanationPlaceholder = "{" + JnJsonCommonsFields.explanation + "}";
+		// the candidate's own justification goes in every email of the suggestion (pending, approved and rejected)
+		String escapedDescriptionPlaceholder = "{" + VisEmailHtmlFields.escapedDescription + "}";
+		String portugueseOwnJustification = "<p>Sua justificativa: " + escapedDescriptionPlaceholder + "</p>";
+		String englishOwnJustification = "<p>Your justification: " + escapedDescriptionPlaceholder + "</p>";
 
 		String portuguesePendingMessage = "<html><body><p>Olá, você sugeriu a habilidade " + skillPlaceholder
-				+ " (sinônimos: " + synonymNamesPlaceholder + "). Nosso time está avaliando e te responderá o quanto antes.</p></body></html>";
+				+ " (sinônimos: " + synonymNamesPlaceholder + "). Nosso time está avaliando e te responderá o quanto antes.</p>"
+				+ portugueseOwnJustification + "</body></html>";
 		String englishPendingMessage = "<html><body><p>Hello, you suggested the skill " + skillPlaceholder
-				+ " (synonyms: " + synonymNamesPlaceholder + "). Our team is reviewing it and will get back to you as soon as possible.</p></body></html>";
+				+ " (synonyms: " + synonymNamesPlaceholder + "). Our team is reviewing it and will get back to you as soon as possible.</p>"
+				+ englishOwnJustification + "</body></html>";
 		List<CcpBulkItem> pendingEmailItems = this.getEmailTemplateAndParameters(templateId
 				, "Recebemos a sua sugestão de habilidade", portuguesePendingMessage
 				, "We received your skill suggestion", englishPendingMessage);
 
 		String approvedTemplateId = VisMessages.VisNotifyUserAboutAprovedSkill.class.getName();
 		String portugueseApprovedMessage = "<html><body><p>Olá, a habilidade " + skillPlaceholder
-				+ " que você sugeriu foi aprovada pelo nosso time e passa a ser reconhecida nos currículos.</p><p>" + explanationPlaceholder + "</p></body></html>";
+				+ " que você sugeriu foi aprovada pelo nosso time e passa a ser reconhecida nos currículos.</p>" + portugueseOwnJustification
+				+ "<p>Justificativa do suporte: " + explanationPlaceholder + "</p></body></html>";
 		String englishApprovedMessage = "<html><body><p>Hello, the skill " + skillPlaceholder
-				+ " you suggested was approved by our team and is now recognized in the resumes.</p><p>" + explanationPlaceholder + "</p></body></html>";
+				+ " you suggested was approved by our team and is now recognized in the resumes.</p>" + englishOwnJustification
+				+ "<p>Support justification: " + explanationPlaceholder + "</p></body></html>";
 		List<CcpBulkItem> approvedEmailItems = this.getEmailTemplateAndParameters(approvedTemplateId
 				, "A sua sugestão de habilidade foi aprovada", portugueseApprovedMessage
 				, "Your skill suggestion was approved", englishApprovedMessage);
 
 		String rejectedTemplateId = VisMessages.VisNotifyUserAboutRejectedSkill.class.getName();
 		String portugueseRejectedMessage = "<html><body><p>Olá, a habilidade " + skillPlaceholder
-				+ " que você sugeriu não foi aprovada pelo nosso time.</p><p>" + explanationPlaceholder + "</p></body></html>";
+				+ " que você sugeriu não foi aprovada pelo nosso time.</p>" + portugueseOwnJustification
+				+ "<p>Justificativa do suporte: " + explanationPlaceholder + "</p></body></html>";
 		String englishRejectedMessage = "<html><body><p>Hello, the skill " + skillPlaceholder
-				+ " you suggested was not approved by our team.</p><p>" + explanationPlaceholder + "</p></body></html>";
+				+ " you suggested was not approved by our team.</p>" + englishOwnJustification
+				+ "<p>Support justification: " + explanationPlaceholder + "</p></body></html>";
 		List<CcpBulkItem> rejectedEmailItems = this.getEmailTemplateAndParameters(rejectedTemplateId
 				, "A sua sugestão de habilidade não foi aprovada", portugueseRejectedMessage
 				, "Your skill suggestion was not approved", englishRejectedMessage);

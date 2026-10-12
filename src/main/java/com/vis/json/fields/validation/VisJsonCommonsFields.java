@@ -95,12 +95,15 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 	@CcpJsonFieldTypeString(allowedValuesEnum = VisSeniorityTypes.class)
 	seniority,
 
-	/** The {@code skill} field: text. */
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
+	/**
+	 * The {@code skill} field: text with at least two characters that are not blank, which is the same as more than one
+	 * character after a trim ({@code " X "} is refused).
+	 */
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50, regexValidation = "(?s).*\\S.*\\S.*")
 	skill,
 
-	/** The {@code synonym} field: text. */
-	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
+	/** The {@code synonym} field: text, with the same rules of {@code skill}. */
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50, regexValidation = "(?s).*\\S.*\\S.*")
 	synonym,
 
 	/** The {@code temporallyJobTime} field: non-negative integer. */

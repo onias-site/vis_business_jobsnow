@@ -37,9 +37,11 @@ public class VisBusinessSkillSuggestionIgnoreUser implements CcpBusiness {
 		boolean suggestionIsPending = VisEntitySkillPending.ENTITY.exists(suggestionKey);
 		CcpJsonRepresentation storedSuggestion = suggestionIsPending ? VisEntitySkillPending.ENTITY.getOneById(suggestionKey) : CcpOtherConstants.EMPTY_JSON;
 		CcpJsonRepresentation completeSuggestion = storedSuggestion.mergeWithAnotherJson(suggestionKey);
-		CcpJsonRepresentation description = completeSuggestion.getJsonPiece(VisEntitySkillPending.Fields.skill, VisEntitySkillPending.Fields.synonym, VisEntitySkillPending.Fields.description);
+		CcpJsonRepresentation requestDescription = completeSuggestion.getJsonPiece(VisEntitySkillPending.Fields.skill, VisEntitySkillPending.Fields.synonym, VisEntitySkillPending.Fields.description);
 
 		String email = suggestionKey.getAsString(VisEntitySkillPending.Fields.email);
+		// the email of the record is kept as hash; the readable one goes in the description, for the operator to list the ignored users
+		CcpJsonRepresentation description = requestDescription.put(VisEntitySkillPending.Fields.email, email);
 		CcpJsonRepresentation ignoredUserWithEmail = CcpOtherConstants.EMPTY_JSON.put(VisEntityCommandNotAllowedToUser.Fields.email, email);
 		CcpJsonRepresentation ignoredUserWithCommand = ignoredUserWithEmail.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.reviewSkillSuggestion);
 		CcpJsonRepresentation ignoredUser = ignoredUserWithCommand.put(VisEntityCommandNotAllowedToUser.Fields.description, description);

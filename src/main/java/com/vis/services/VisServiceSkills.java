@@ -25,6 +25,7 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJs
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.services.JnService;
 import com.vis.entities.VisEntityGroupPositionsBySkills;
+import com.vis.entities.VisEntitySkill;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import java.util.stream.Stream;
 
@@ -250,7 +251,8 @@ public enum VisServiceSkills implements JnService {
 				chosenSkillsByName.put(skillName, skillWithCleanParents);
 			}
 			
-			Collection<CcpJsonRepresentation> skills = chosenSkillsByName.values();
+			Collection<CcpJsonRepresentation> chosenSkills = chosenSkillsByName.values();
+			List<CcpJsonRepresentation> skills = this.putSynonyms(chosenSkills);
 			CcpJsonRepresentation jsonWithDiscardedSkills = CcpOtherConstants.EMPTY_JSON
 					.put(Fields.discardedSkills, discardedSkills);
 					CcpJsonRepresentation jsonWithExcludedSkills = jsonWithDiscardedSkills
@@ -262,6 +264,32 @@ public enum VisServiceSkills implements JnService {
 			return response;
 		}
 		
+		/**
+		 * Puts in each skill its synonyms ({@code synonym}, empty when it has none), read from {@link VisEntitySkill} by
+		 * id, all in a single round trip. The screen needs them to refuse the suggestion of a skill that is already in the
+		 * resume under another name: the resume says PICK BY LIGHT and the candidate suggests PTL, one of its synonyms.
+		 * @param chosenSkills the skills found in the text
+		 * @return the same skills, each one with its synonyms
+		 */
+		private List<CcpJsonRepresentation> putSynonyms(Collection<CcpJsonRepresentation> chosenSkills) {
+			Stream<CcpJsonRepresentation> chosenSkillsStream = chosenSkills.stream();
+			Stream<CcpJsonRepresentation> skillKeysStream = chosenSkillsStream.map(skill -> skill.getJsonPiece(VisJsonCommonsFields.skill));
+			Set<CcpJsonRepresentation> skillKeys = skillKeysStream.collect(Collectors.toSet());
+			CcpEntityMetaData skillEntityDetails = VisEntitySkill.ENTITY.getEntityMetaData();
+			CcpJsonRepresentation storedSkillsById = skillEntityDetails.getMultipleByIds(skillKeys);
+
+			List<CcpJsonRepresentation> skillsWithSynonyms = new ArrayList<>();
+			for (CcpJsonRepresentation skill : chosenSkills) {
+				String id = VisEntitySkill.ENTITY.calculateId(skill);
+				CcpFieldName idFieldName = new CcpFieldName(id);
+				CcpJsonRepresentation storedSkill = storedSkillsById.getInnerJson(idFieldName);
+				List<String> synonyms = storedSkill.getAsStringList(VisJsonCommonsFields.synonym);
+				CcpJsonRepresentation skillWithSynonyms = skill.put(VisJsonCommonsFields.synonym, synonyms);
+				skillsWithSynonyms.add(skillWithSynonyms);
+			}
+			return skillsWithSynonyms;
+		}
+
 		/**
 		 * Puts the label of the skill: the skill itself, or {@code word (skill)} when found by another word.
 		 * @param json the skill found
