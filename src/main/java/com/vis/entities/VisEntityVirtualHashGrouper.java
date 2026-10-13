@@ -8,17 +8,16 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityF
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
-import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.vis.json.fields.validation.VisJsonHashCombinationFields;
 
 /**
- * Virtual entity used to calculate a composite hash that represents a specific combination of
- * resume/position matching attributes (seniority, availability, PCD, compensation type and value,
- * skill synonyms). The matching system uses this hash internally to check compatibility without
- * complex searches. Cached for 1 hour.
+ * Virtual entity used to calculate a composite hash that represents one search a resume satisfies: a single
+ * combination of resume type, region, skill, spoken language and level, seniority, travel, negotiable claim and
+ * disability flag. Every field is part of the primary key and holds a single exact value, so the id of each combination
+ * works as the hash; the numeric ranges (claims, availability, temporary job time) stay out of it and are compared
+ * after the read by id. Cached for 1 hour.
  */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
@@ -33,31 +32,42 @@ public class VisEntityVirtualHashGrouper{
 	 * {@code @CcpEntityFieldsValidator}).
 	 */
 	public static enum Fields implements CcpJsonFieldName{
-		/** The {@code seniority} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
+		/** The {@code travel} field: part of the primary key, validated as in {@code VisJsonHashCombinationFields}. */
+		@CcpEntityFieldPrimaryKey
+		@CcpJsonCopyFieldValidationsFrom(VisJsonHashCombinationFields.class)
+		travel,
+		/** The {@code negotiableClaim} field: part of the primary key, validated as in {@code VisJsonHashCombinationFields}. */
+		@CcpEntityFieldPrimaryKey
+		@CcpJsonCopyFieldValidationsFrom(VisJsonHashCombinationFields.class)
+		negotiableClaim,
+		/** The {@code pcd} field: part of the primary key, validated as in {@code VisJsonHashCombinationFields}. */
+		@CcpEntityFieldPrimaryKey
+		@CcpJsonCopyFieldValidationsFrom(VisJsonHashCombinationFields.class)
+		pcd,
+		/** The {@code ddd} field: part of the primary key, validated as in {@code VisJsonHashCombinationFields}. */
+		@CcpEntityFieldPrimaryKey
+		@CcpJsonCopyFieldValidationsFrom(VisJsonHashCombinationFields.class)
+		ddd,
+		/** The {@code skillName} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		seniority, 
-		/** The {@code synonym} field: list, part of the primary key, validated as in {@code VisJsonCommonsFields}. */
-		@CcpJsonFieldValidatorArray
+		skillName,
+		/** The {@code languageName} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		synonym,
-		/** The {@code disponibility} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
+		languageName,
+		/** The {@code languageLevel} field: part of the primary key, validated as in {@code VisJsonHashCombinationFields}. */
+		@CcpEntityFieldPrimaryKey
+		@CcpJsonCopyFieldValidationsFrom(VisJsonHashCombinationFields.class)
+		languageLevel,
+		/** The {@code resumeType} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		disponibility, 
-		/** The {@code pcd} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
+		resumeType,
+		/** The {@code seniority} field: part of the primary key, validated as in {@code VisJsonHashCombinationFields}. */
 		@CcpEntityFieldPrimaryKey
-		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		pcd, 
-		/** The {@code moneyValue} field: part of the primary key, decimal number. */
-		@CcpEntityFieldPrimaryKey
-		@CcpJsonFieldTypeNumber(minValue = 1000)
-		moneyValue, 
-		/** The {@code moneyType} field: part of the primary key, text. */
-		@CcpEntityFieldPrimaryKey
-		@CcpJsonFieldTypeString(allowedValuesEnum = VisMoneyTypes.class)
-		moneyType,
+		@CcpJsonCopyFieldValidationsFrom(VisJsonHashCombinationFields.class)
+		seniority,
 		;
 	}
 }

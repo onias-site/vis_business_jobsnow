@@ -4,8 +4,6 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.mensageria.JnFunctionMensageriaSender;
 import com.jn.services.JnService;
 import com.vis.business.recruiter.VisBusinessRecruiterReceivingResumes;
-import com.vis.entities.VisEntityGroupPositionsByRecruiter;
-import com.vis.entities.VisEntityGroupResumesPerceptionsByRecruiter;
 import com.vis.entities.VisEntityResumePerception;
 
 
@@ -14,32 +12,6 @@ import com.vis.entities.VisEntityResumePerception;
  * with resumes and positions.
  */
 public enum VisServiceRecruiter implements JnService {
-	/** Returns the resumes the recruiter already gave an opinion about. */
-	GetAlreadySeenResumes{
-		/**
-		 * Reads the opinion groups of the recruiter.
-		 * @param json the recruiter key
-		 * @return the groups, by entity
-		 */
-		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityGroupResumesPerceptionsByRecruiter.ENTITY.getOneByIdAnyWhere(json);
-			
-			return result;
-		}
-	},
-	/** Returns the positions of the recruiter. */
-	GetPositionsFromThisRecruiter{
-		/**
-		 * Reads the position groups of the recruiter.
-		 * @param json the recruiter key
-		 * @return the groups, by entity
-		 */
-		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation result = VisEntityGroupPositionsByRecruiter.ENTITY.getOneByIdAnyWhere(json);
-			
-			return result;
-		}
-	},
 	/** Saves the opinion of the recruiter about a resume. */
 	SaveOpinionAboutThisResume{
 		/**

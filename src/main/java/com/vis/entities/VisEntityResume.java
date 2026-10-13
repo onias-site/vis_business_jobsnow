@@ -1,6 +1,17 @@
 package com.vis.entities;
 
+import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterDeleteAnyWhereFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
+import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
+import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning;
+import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
@@ -14,16 +25,23 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactor
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
+import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldTransformer;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.db.bulk.JnExecuteBulkOperation;
+import com.jn.entities.JnEntityEmailParametersToSend;
+import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
+import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite;
+import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWriteOperation;
+import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterWriteBuilder;
+import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeWriteBuilder;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
 import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
@@ -33,24 +51,62 @@ import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
-import com.vis.business.resume.VisBusinessCalculateResumeHashes;
+import com.jn.utils.JnLanguage;
+import com.vis.business.resume.VisBusinessResumeAddToGroupers;
+import com.vis.business.resume.VisBusinessResumeRemoveFromGroupers;
+import com.vis.messages.VisMessages;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
-import com.vis.utils.VisBusinessResumeSendToRecruiters;
+import com.vis.json.transformers.VisJsonTransformerExperienceStartYear;
+import com.vis.json.transformers.VisJsonTransformerResumeHashes;
+import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 
 /**
  * Represents the candidate's core Resume entity. Stores the complete professional profile:
- * desired contract type (CLT/PJ/BTC), availability, DDDs of interest, skills, experience, LinkedIn,
- * languages, company restrictions, seniority and time available for temporary work. Uses Twin Entity
- * to control inactive resumes, asynchronous writing, versioning and a 1-hour cache. On save or on
- * reactivation (deletion from the twin), it triggers the hash calculation and sends the resume to matching recruiters.
+ * desired contract type (CLT/PJ/BTC), availability, DDDs of interest, skills, the year the experience started (the
+ * seniority is calculated from it), LinkedIn, spoken languages, company restrictions and time available for temporary
+ * work; date and time of each version live in the versionable copy. Uses Twin Entity
+ * to control inactive resumes, asynchronous writing, versioning and a 1-hour cache.
+ *
+ * <p>Life cycle (the delete moves the resume to the twin, {@code vis_inactive_resume}; the delete on the twin moves it
+ * back, which is the reactivation):
+ * <ul>
+ * <li>before the save, the field transformers fill the {@code hash} list with every search the resume satisfies, and
+ * the resume leaves the groups of {@code JnEntityGrouper} of the hashes it had;</li>
+ * <li>after the save, it enters the groups of its hashes and the owner is told by e-mail;</li>
+ * <li>after the deactivation, it leaves its groups and the owner is told by e-mail;</li>
+ * <li>after the reactivation, it enters its groups again and the owner is told by e-mail;</li>
+ * <li>before the delete everywhere, it leaves its groups (while it can still be read), and the owner is told by e-mail
+ * afterwards.</li>
+ * </ul>
+ * A notice that fails to go out saves a warning instead of undoing the write.
  */
 @CcpEntityCache(3600)
 @CcpEntityCustomDecorators(value = {
 		@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),
 		@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),
 		@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),
+		@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeWriteBuilder.class, priority = 7),
+		@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserAfterWriteBuilder.class, priority = 5),
 		})
+@JnEntitySendMessageToUserWhenWrite({
+	@JnEntitySendMessageToUserWhenWriteOperation(
+			operationType = afterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning,
+			messageTemplate = VisMessages.VisNotifyUserAboutSavedResume.class
+			),
+	@JnEntitySendMessageToUserWhenWriteOperation(
+			operationType = afterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning,
+			messageTemplate = VisMessages.VisNotifyUserAboutDeactivatedResume.class
+			),
+	@JnEntitySendMessageToUserWhenWriteOperation(
+			operationType = afterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning,
+			messageTemplate = VisMessages.VisNotifyUserAboutReactivatedResume.class
+			),
+	@JnEntitySendMessageToUserWhenWriteOperation(
+			operationType = afterDeleteAnyWhereFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning,
+			messageTemplate = VisMessages.VisNotifyUserAboutDeletedResume.class
+			),
+})
 @CcpEntityTwin(
 		twinEntityName = "vis_inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
@@ -61,14 +117,105 @@ import com.vis.utils.VisBusinessResumeSendToRecruiters;
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
 @CcpEntityOperations({
-		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessCalculateResumeHashes.class, VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
-		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteFromTwinEntity,  execute = {VisBusinessResumeSendToRecruiters.class}, operationHandlers = {}),
+		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessResumeRemoveFromGroupers.class}, operationHandlers = {}),
+		// after the save because, unlike the before side, it runs inside the field transformers: the hash list is ready
+		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity,  execute = {VisBusinessResumeAddToGroupers.class}, operationHandlers = {}),
+		// deactivation: the resume is read from the twin, where it went
+		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteFromMainEntity,  execute = {VisBusinessResumeRemoveFromGroupers.class}, operationHandlers = {}),
+		// reactivation: the resume is read from the main entity, where it came back to
+		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteFromTwinEntity,  execute = {VisBusinessResumeAddToGroupers.class}, operationHandlers = {}),
+		// before, because after the delete everywhere the resume (and its hashes) can no longer be read
+		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteAnyWhereFromMainEntity,  execute = {VisBusinessResumeRemoveFromGroupers.class}, operationHandlers = {}),
 })
 
 public class VisEntityResume implements CcpEntityConfigurator {
 	
 	/** The entity {@code vis_resume}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
+
+	/**
+	 * Seeds the e-mails to the owner of the resume (Portuguese and English) and their sending parameters: saved,
+	 * deactivated, reactivated and deleted everywhere.
+	 */
+	public List<CcpBulkItem> getFirstRecordsToInsert() {
+		List<CcpBulkItem> items = new ArrayList<>();
+
+		String savedTemplateId = VisMessages.VisNotifyUserAboutSavedResume.class.getName();
+		List<CcpBulkItem> savedItems = this.getEmailTemplateAndParameters(savedTemplateId,
+				"O seu currículo foi salvo",
+				"<html><body><p>Olá, o seu currículo foi salvo no JobsNow e já está disponível para os recrutadores.</p></body></html>",
+				"Your resume was saved",
+				"<html><body><p>Hello, your resume was saved on JobsNow and is now available to the recruiters.</p></body></html>");
+		items.addAll(savedItems);
+
+		String deactivatedTemplateId = VisMessages.VisNotifyUserAboutDeactivatedResume.class.getName();
+		List<CcpBulkItem> deactivatedItems = this.getEmailTemplateAndParameters(deactivatedTemplateId,
+				"O seu currículo foi desativado",
+				"<html><body><p>Olá, o seu currículo foi desativado no JobsNow e deixou de aparecer para os recrutadores. Você pode reativá-lo quando quiser.</p></body></html>",
+				"Your resume was deactivated",
+				"<html><body><p>Hello, your resume was deactivated on JobsNow and no longer shows up to the recruiters. You can reactivate it whenever you want.</p></body></html>");
+		items.addAll(deactivatedItems);
+
+		String reactivatedTemplateId = VisMessages.VisNotifyUserAboutReactivatedResume.class.getName();
+		List<CcpBulkItem> reactivatedItems = this.getEmailTemplateAndParameters(reactivatedTemplateId,
+				"O seu currículo foi reativado",
+				"<html><body><p>Olá, o seu currículo foi reativado no JobsNow e voltou a aparecer para os recrutadores.</p></body></html>",
+				"Your resume was reactivated",
+				"<html><body><p>Hello, your resume was reactivated on JobsNow and shows up to the recruiters again.</p></body></html>");
+		items.addAll(reactivatedItems);
+
+		String deletedTemplateId = VisMessages.VisNotifyUserAboutDeletedResume.class.getName();
+		List<CcpBulkItem> deletedItems = this.getEmailTemplateAndParameters(deletedTemplateId,
+				"Os dados do seu currículo foram excluídos",
+				"<html><body><p>Olá, todos os dados do seu currículo foram excluídos do JobsNow de forma permanente.</p></body></html>",
+				"Your resume data was deleted",
+				"<html><body><p>Hello, every data of your resume was permanently deleted from JobsNow.</p></body></html>");
+		items.addAll(deletedItems);
+
+		return items;
+	}
+
+	/**
+	 * Builds the e-mail template (Portuguese and English) and the sending parameters of a template id.
+	 * @param templateId the template id
+	 * @param portugueseSubject the subject in Portuguese
+	 * @param portugueseMessage the message in Portuguese
+	 * @param englishSubject the subject in English
+	 * @param englishMessage the message in English
+	 * @return the bulk items of the templates and of the parameters
+	 */
+	private List<CcpBulkItem> getEmailTemplateAndParameters(String templateId, String portugueseSubject, String portugueseMessage, String englishSubject, String englishMessage) {
+		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.templateId, templateId);
+
+		CcpJsonRepresentation portugueseTemplateWithLanguage = templateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.portuguese);
+		CcpJsonRepresentation portugueseTemplateWithSubject = portugueseTemplateWithLanguage
+				.put(JnJsonCommonsFields.subject, portugueseSubject);
+		CcpJsonRepresentation portugueseTemplate = portugueseTemplateWithSubject
+				.put(JnJsonCommonsFields.message, portugueseMessage);
+
+		CcpJsonRepresentation englishTemplateWithLanguage = templateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.english);
+		CcpJsonRepresentation englishTemplateWithSubject = englishTemplateWithLanguage
+				.put(JnJsonCommonsFields.subject, englishSubject);
+		CcpJsonRepresentation englishTemplate = englishTemplateWithSubject
+				.put(JnJsonCommonsFields.message, englishMessage);
+
+		CcpJsonRepresentation parametersWithSender = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.sender, "devs.jobsnow@gmail.com");
+		CcpJsonRepresentation parametersWithSubjectType = parametersWithSender
+				.put(JnJsonCommonsFields.subjectType, templateId);
+		CcpJsonRepresentation parameters = parametersWithSubjectType
+				.put(JnJsonCommonsFields.templateId, templateId);
+
+		List<CcpBulkItem> templateItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailTemplateMessage.ENTITY, portugueseTemplate, englishTemplate);
+		List<CcpBulkItem> parametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailParametersToSend.ENTITY, parameters);
+
+		List<CcpBulkItem> templateAndParameters = new ArrayList<>(templateItems);
+		templateAndParameters.addAll(parametersItems);
+		return templateAndParameters;
+	}
 
 	/** The salary fields of the resume. */
 	public static enum SalaryType{
@@ -96,10 +243,6 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		clt,
 
-		/** The {@code date} field: validated as in {@code JnJsonCommonsFields}. */
-		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		date,
-
 		/** The {@code disponibility} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
@@ -121,10 +264,23 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		email,
 
-		/** The {@code experience} field: required, validated as in {@code VisJsonCommonsFields}. */
+		/**
+		 * The {@code experience} field: required, the years of experience (0 to 70) on input; transformed by
+		 * {@code VisJsonTransformerExperienceStartYear}, it is stored as the year the experience started.
+		 */
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		@CcpJsonFieldTypeNumberUnsigned(maxValue = 70)
+		@CcpEntityFieldTransformer(VisJsonTransformerExperienceStartYear.class)
 		experience,
+
+		/**
+		 * The {@code hash} field: list, validated as in {@code VisJsonCommonsFields}; calculated by
+		 * {@code VisJsonTransformerResumeHashes}, it holds the id of every search the resume satisfies.
+		 */
+		@CcpJsonFieldValidatorArray
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		@CcpEntityFieldTransformer(VisJsonTransformerResumeHashes.class)
+		hash,
 
 		/** The {@code skill} field: list, nested JSON. */
 		@CcpJsonFieldValidatorArray
@@ -135,18 +291,22 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		lastJob,
 
-		/** The {@code language} field: list, validated as in {@code VisJsonCommonsFields}. */
+		/**
+		 * The {@code spokenLanguage} field: list, validated as in {@code VisJsonCommonsFields}; transformed by
+		 * {@code VisJsonTransformerSpokenLanguageWithoutId}, which drops the {@code id} of each language.
+		 */
 		@CcpJsonFieldValidatorArray
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		language,
+		@CcpEntityFieldTransformer(VisJsonTransformerSpokenLanguageWithoutId.class)
+		spokenLanguage,
 
 		/** The {@code linkedinAddress} field: required, text. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(regexValidation = "^https://(www\\.)?linkedin\\.com/in/[a-zA-Z0-9-_%]+/?$")
 		linkedinAddress,
 
-		/** The {@code negotiableClaim} field: boolean. */
-		@CcpJsonFieldTypeBoolean
+		/** The {@code negotiableClaim} field: validated as in {@code VisJsonCommonsFields}. */
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		negotiableClaim,
 
 		/** The {@code notAllowedCompany} field: list, text. */
@@ -154,8 +314,8 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
 		notAllowedCompany,
 
-		/** The {@code pcd} field: boolean. */
-		@CcpJsonFieldTypeBoolean
+		/** The {@code pcd} field: validated as in {@code VisJsonCommonsFields}. */
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		pcd,
 
 		/** The {@code pj} field: validated as in {@code JnJsonCommonsFields}. */
@@ -166,18 +326,14 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		resumeType,
-		
-		/** The {@code timestamp} field: validated as in {@code JnJsonCommonsFields}. */
-		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
-		timestamp,
 
 		/** The {@code temporallyJobTime} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		temporallyJobTime,
 
-		/** The {@code travel} field: boolean. */
-		@CcpJsonFieldTypeBoolean
+		/** The {@code travel} field: validated as in {@code VisJsonCommonsFields}. */
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		travel,
 		;
 	}	

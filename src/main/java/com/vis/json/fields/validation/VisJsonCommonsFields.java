@@ -3,6 +3,7 @@ package com.vis.json.fields.validation;
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityExpurgableOptions;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
@@ -64,12 +65,36 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 	from,
 
 	/** The {@code language} field: nested JSON. */
-	@CcpJsonFieldTypeNestedJson(jsonValidation = Language.class)
+	@CcpJsonFieldTypeNestedJson(jsonValidation = VisLanguages.class)
 	language,
+
+	/** The {@code spokenLanguage} field: nested JSON, with the same rules of {@code language}. */
+	@CcpJsonFieldTypeNestedJson(jsonValidation = VisLanguages.class)
+	spokenLanguage,
+
+	/** The {@code hash} field: text, the id of one record of {@code VisEntityVirtualHashGrouper}. */
+	@CcpJsonFieldTypeString(minLength = 1, maxLength = 50)
+	hash,
+
+	/** The {@code languageName} field: text of 3 to 20 characters, the same rule of the {@code name} of {@code VisLanguages}. */
+	@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
+	languageName,
+
+	/** The {@code languageLevel} field: 1 or 2, the same rule of the {@code level} of {@code VisLanguages}. */
+	@CcpJsonFieldTypeNumberUnsigned(allowedValues = {1, 2})
+	languageLevel,
 
 	/** The {@code listSize} field: non-negative integer. */
 	@CcpJsonFieldTypeNumberUnsigned
 	listSize,
+
+	/** The {@code negotiableClaim} field: boolean. */
+	@CcpJsonFieldTypeBoolean
+	negotiableClaim,
+
+	/** The {@code pcd} field: boolean. */
+	@CcpJsonFieldTypeBoolean
+	pcd,
 
 	/** The {@code pj} field: decimal number. */
 	@CcpJsonFieldTypeNumber(maxValue = 100_000, minValue = 2_500)
@@ -102,6 +127,10 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50, regexValidation = "(?s).*\\S.*\\S.*")
 	skill,
 
+	/** The {@code skillName} field: text, with the same rules of {@code skill}. */
+	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50, regexValidation = "(?s).*\\S.*\\S.*")
+	skillName,
+
 	/** The {@code synonym} field: text, with the same rules of {@code skill}. */
 	@CcpJsonFieldTypeString(minLength = 2, maxLength = 50, regexValidation = "(?s).*\\S.*\\S.*")
 	synonym,
@@ -109,6 +138,10 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 	/** The {@code temporallyJobTime} field: non-negative integer. */
 	@CcpJsonFieldTypeNumberUnsigned(maxValue = 12)
 	temporallyJobTime,
+
+	/** The {@code travel} field: boolean. */
+	@CcpJsonFieldTypeBoolean
+	travel,
 
 	/** The {@code title} field: text. */
 	@CcpJsonFieldTypeString(minLength = 35, maxLength = 50)

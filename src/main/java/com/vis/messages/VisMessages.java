@@ -187,5 +187,71 @@ public class VisMessages {
 		}
 	}
 
+	/**
+	 * Tells the owner of the resume that it was saved. Repeatable: every save is a new fact.
+	 */
+	public static class VisNotifyUserAboutSavedResume implements CcpBusiness, JnRepeatableMessage{
 
+		/**
+		 * Puts the original e-mail of the owner in {@code email}.
+		 * @param json the saved resume
+		 * @return the values of the template
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation jsonWithOriginalEmail = json
+					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
+			return jsonWithOriginalEmail;
+		}
+	}
+
+	/**
+	 * Tells the owner of the resume that it was deactivated (moved to the inactive resumes). Repeatable.
+	 */
+	public static class VisNotifyUserAboutDeactivatedResume implements CcpBusiness, JnRepeatableMessage{
+
+		/**
+		 * Puts the original e-mail of the owner in {@code email}.
+		 * @param json the key of the resume
+		 * @return the values of the template
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation jsonWithOriginalEmail = json
+					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
+			return jsonWithOriginalEmail;
+		}
+	}
+
+	/**
+	 * Tells the owner of the resume that it was reactivated (moved back from the inactive resumes). Repeatable.
+	 */
+	public static class VisNotifyUserAboutReactivatedResume implements CcpBusiness, JnRepeatableMessage{
+
+		/**
+		 * Puts the original e-mail of the owner in {@code email}.
+		 * @param json the key of the resume
+		 * @return the values of the template
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation jsonWithOriginalEmail = json
+					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
+			return jsonWithOriginalEmail;
+		}
+	}
+
+	/**
+	 * Tells the owner of the resume that every data of it was deleted for good. Repeatable.
+	 */
+	public static class VisNotifyUserAboutDeletedResume implements CcpBusiness, JnRepeatableMessage{
+
+		/**
+		 * Puts the original e-mail of the owner in {@code email}.
+		 * @param json the key of the resume
+		 * @return the values of the template
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation jsonWithOriginalEmail = json
+					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
+			return jsonWithOriginalEmail;
+		}
+	}
 }

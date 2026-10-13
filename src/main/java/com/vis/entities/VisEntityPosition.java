@@ -55,13 +55,6 @@ import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruite
 @JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityPosition.Fields.class)
-//@CcpEntityOperations({
-//		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
-//		// TODO THIS FLOW WILL BE REMOVED ALONG WITH THE GROUPINGS
-//		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteFromMainEntity,  execute = {VisBusinessDuplicateFieldEmailToFieldMasters.class, VisBusinessGroupPositionsGroupedByRecruiters.class}, operationHandlers = {}),
-//		//TODO REVISIT THIS FLOW
-//		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteFromTwinEntity,  execute = {VisBusinessPositionUpdateGroupingByRecruitersAndSendResumes.class}, operationHandlers = {}),
-//})
 
 public class VisEntityPosition implements CcpEntityConfigurator {
 
