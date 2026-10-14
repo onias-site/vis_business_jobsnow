@@ -18,11 +18,8 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityC
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
-import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldTransformer;
@@ -38,12 +35,15 @@ import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
+import com.jn.entities.decorators.annotations.JnEntityGrouperChild;
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite;
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWriteOperation;
 import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterWriteBuilder;
 import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeWriteBuilder;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
 import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
+import com.jn.entities.decorators.builders.JnEntityGrouperChildAfterWriteBuilder;
+import com.jn.entities.decorators.builders.JnEntityGrouperChildBeforeWriteBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
@@ -52,8 +52,7 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
-import com.vis.business.resume.VisBusinessResumeAddToGroupers;
-import com.vis.business.resume.VisBusinessResumeRemoveFromGroupers;
+import com.vis.json.transformers.VisResumeHashCombinations;
 import com.vis.messages.VisMessages;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
@@ -71,13 +70,12 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
  * <p>Life cycle (the delete moves the resume to the twin, {@code vis_inactive_resume}; the delete on the twin moves it
  * back, which is the reactivation):
  * <ul>
- * <li>before the save, the field transformers fill the {@code hash} list with every search the resume satisfies, and
- * the resume leaves the groups of {@code JnEntityGrouper} of the hashes it had;</li>
- * <li>after the save, it enters the groups of its hashes and the owner is told by e-mail;</li>
- * <li>after the deactivation, it leaves its groups and the owner is told by e-mail;</li>
- * <li>after the reactivation, it enters its groups again and the owner is told by e-mail;</li>
- * <li>before the delete everywhere, it leaves its groups (while it can still be read), and the owner is told by e-mail
- * afterwards.</li>
+ * <li>the field transformers fill the {@code hash} list with every search the resume satisfies;</li>
+ * <li>{@code @JnEntityGrouperChild} keeps the id of the resume in the groups of {@code JnEntityGrouper} of its hashes:
+ * the active resumes in the main groups, the inactive ones in the twin groups ({@code jn_inactive_grouper}); the save
+ * moves it to the groups of its new hashes, the deactivation and the reactivation move it between the sides, and the
+ * delete everywhere takes it out of both;</li>
+ * <li>the owner is told by e-mail after the save, the deactivation, the reactivation and the delete everywhere.</li>
  * </ul>
  * A notice that fails to go out saves a warning instead of undoing the write.
  */
@@ -88,6 +86,8 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 		@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),
 		@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeWriteBuilder.class, priority = 7),
 		@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserAfterWriteBuilder.class, priority = 5),
+		@CcpEntityCustomDecorator(value = JnEntityGrouperChildBeforeWriteBuilder.class, priority = 7),
+		@CcpEntityCustomDecorator(value = JnEntityGrouperChildAfterWriteBuilder.class, priority = 5),
 		})
 @JnEntitySendMessageToUserWhenWrite({
 	@JnEntitySendMessageToUserWhenWriteOperation(
@@ -116,18 +116,13 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 @JnEntityVersionable(JnVersionableEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
-@CcpEntityOperations({
-		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessResumeRemoveFromGroupers.class}, operationHandlers = {}),
-		// after the save because, unlike the before side, it runs inside the field transformers: the hash list is ready
-		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity,  execute = {VisBusinessResumeAddToGroupers.class}, operationHandlers = {}),
-		// deactivation: the resume is read from the twin, where it went
-		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteFromMainEntity,  execute = {VisBusinessResumeRemoveFromGroupers.class}, operationHandlers = {}),
-		// reactivation: the resume is read from the main entity, where it came back to
-		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteFromTwinEntity,  execute = {VisBusinessResumeAddToGroupers.class}, operationHandlers = {}),
-		// before, because after the delete everywhere the resume (and its hashes) can no longer be read
-		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteAnyWhereFromMainEntity,  execute = {VisBusinessResumeRemoveFromGroupers.class}, operationHandlers = {}),
-})
-
+// one group per hash (each search the resume satisfies): the combinations of its values, the entity that gives the id
+// of each one (and names the groups) and the list where the transformers keep those ids
+@JnEntityGrouperChild(
+		parentsCombinations = VisResumeHashCombinations.class,
+		parentIdEntity = VisEntityVirtualHashGrouper.class,
+		storedParentIdsField = "hash"
+		)
 public class VisEntityResume implements CcpEntityConfigurator {
 	
 	/** The entity {@code vis_resume}, with every decorator of this configuration. */
