@@ -37,6 +37,7 @@ import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTrans
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite;
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWriteOperation;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
+import com.jn.entities.decorators.annotations.JnEntityVersionablePurge;
 import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
 import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterTransferBuilder;
 import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterWriteBuilder;
@@ -46,10 +47,12 @@ import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
+import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.jn.utils.JnLanguage;
+import com.vis.business.bots.skill.suggestion.VisSupportSkillSuggestionBotConfiguration;
 import com.vis.business.skill.VisBusinessSkillSuggestionApply;
 import com.vis.business.skill.VisBusinessSkillSuggestionShareApproval;
 import com.vis.business.skill.VisBusinessSkillSuggestionShareRejection;
@@ -111,6 +114,7 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 })
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @JnEntityVersionable(JnVersionableEntity.class)
+@JnEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillPending.Fields.class)
 public class VisEntitySkillPending implements CcpEntityConfigurator {
@@ -199,6 +203,9 @@ public class VisEntitySkillPending implements CcpEntityConfigurator {
 		firstRecords.addAll(pendingEmailItems);
 		firstRecords.addAll(approvedEmailItems);
 		firstRecords.addAll(rejectedEmailItems);
+		// the command of the support bot that reviews these suggestions: since 2026-10-15 vis seeds it, and not jb
+		List<CcpBulkItem> reviewCommandItems = VisSupportSkillSuggestionBotConfiguration.getSeeds();
+		firstRecords.addAll(reviewCommandItems);
 		return firstRecords;
 	}
 

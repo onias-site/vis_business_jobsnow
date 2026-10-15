@@ -14,10 +14,11 @@ import com.vis.json.fields.validation.VisJsonHashCombinationFields;
 
 /**
  * Virtual entity used to calculate a composite hash that represents one search a resume satisfies: a single
- * combination of resume type, region, skill, spoken language and level, seniority, travel, negotiable claim and
- * disability flag. Every field is part of the primary key and holds a single exact value, so the id of each combination
- * works as the hash; the numeric ranges (claims, availability, temporary job time) stay out of it and are compared
- * after the read by id. Cached for 1 hour.
+ * combination of resume type, skill, spoken language and level, seniority, travel, negotiable claim and disability
+ * flag. Every field is part of the primary key and holds a single exact value, so the id of each combination works as
+ * the hash; the numeric ranges (claims, availability, temporary job time) and the regions (ddd) stay out of it and are
+ * compared after the read by id. Until 2026-10-14 the ddd was part of the hash: it multiplied the combinations by the
+ * number of regions, up to 48,720 groups for one resume. Cached for 1 hour.
  */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
@@ -44,10 +45,6 @@ public class VisEntityVirtualHashGrouper{
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonHashCombinationFields.class)
 		pcd,
-		/** The {@code ddd} field: part of the primary key, validated as in {@code VisJsonHashCombinationFields}. */
-		@CcpEntityFieldPrimaryKey
-		@CcpJsonCopyFieldValidationsFrom(VisJsonHashCombinationFields.class)
-		ddd,
 		/** The {@code skillName} field: part of the primary key, validated as in {@code VisJsonCommonsFields}. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)

@@ -7,6 +7,9 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.crud.CcpGetEntityId;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
@@ -66,35 +69,48 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 	/**
 	 * The pending requests of both types for the email and the parent, complete (the {@code skill} array tells
 	 * the deletion which items may have become orphans), with the readable email of the key in place of the
-	 * stored hash.
+	 * stored hash. Both types are read by id in a single union all.
 	 */
 	private List<CcpJsonRepresentation> getPendingRequests(CcpJsonRepresentation requestKey) {
 
 		VisSkillFixHierarchyTypes[] types = VisSkillFixHierarchyTypes.values();
+		int typesCount = types.length;
+		CcpJsonRepresentation[] requestKeys = new CcpJsonRepresentation[typesCount];
+
+		for (int index = 0; index < typesCount; index++) {
+			VisSkillFixHierarchyTypes type = types[index];
+			requestKeys[index] = requestKey.put(VisEntitySkillFixHierarchyPending.Fields.type, type);
+		}
+
 		List<CcpJsonRepresentation> pendingRequests = new ArrayList<>();
-
-		for (VisSkillFixHierarchyTypes type : types) {
-			CcpJsonRepresentation requestWithType = requestKey.put(VisEntitySkillFixHierarchyPending.Fields.type, type);
-			boolean requestIsNotPending = false == VisEntitySkillFixHierarchyPending.ENTITY.exists(requestWithType);
-
-			if(requestIsNotPending) {
-				continue;
-			}
-
-			CcpJsonRepresentation storedRequest = VisEntitySkillFixHierarchyPending.ENTITY.getOneById(requestWithType);
+		CcpBusiness collectTheRequest = requestWithTheStoredRecord -> {
+			CcpJsonRepresentation storedRequest = requestWithTheStoredRecord.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillFixHierarchyPending.ENTITY);
+			CcpJsonRepresentation requestWithType = requestWithTheStoredRecord.getJsonPiece(VisEntitySkillFixHierarchyPending.Fields.email, VisEntitySkillFixHierarchyPending.Fields.parent, VisEntitySkillFixHierarchyPending.Fields.type);
 			CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(requestWithType);
 			pendingRequests.add(completeRequest);
-		}
+			return requestWithTheStoredRecord;
+		};
+
+		// the action runs only for the types with a pending request
+		new CcpGetEntityId(requestKeys)
+		.toBeginProcedureAnd()
+			.forEachIdPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).executeAction(collectTheRequest)
+			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
+		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+		;
 
 		return pendingRequests;
 	}
 
 	/**
 	 * Field of the {@code description} of {@link VisEntityCommandNotAllowedToUser}: the ignored requests, each
-	 * one with its {@code type}, the user's {@code description} and the {@code skill} array.
+	 * one with its {@code type}, the user's {@code description} and the {@code skill} array. Also holds the field
+	 * returned by the reading procedure, which answers nothing.
 	 */
 	public static enum JsonFieldNames implements CcpJsonFieldName{
 		/** The {@code requests} field. */
-		requests
+		requests,
+		/** The {@code inexistentField} field: the reading procedure returns no field. */
+		inexistentField
 	}
 }

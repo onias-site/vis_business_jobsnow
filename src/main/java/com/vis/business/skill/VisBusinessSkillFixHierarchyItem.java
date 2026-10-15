@@ -8,7 +8,11 @@ import java.util.function.Consumer;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.crud.CcpGetEntityId;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillFixHierarchyItemApproved;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
@@ -45,28 +49,45 @@ public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 		words.add(skill);
 
 		CcpJsonRepresentation skillKey = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkill.Fields.skill, skill);
-		boolean skillDoesNotExist = false == VisEntitySkill.ENTITY.exists(skillKey);
 
-		if(skillDoesNotExist) {
+		CcpBusiness changeOnlyTheLookup = skillNotFound -> {
 			VisSkillWordsGroups.changeParents(skill, words, changeParents);
-			return json;
-		}
+			return skillNotFound;
+		};
 
-		CcpJsonRepresentation skillRecord = VisEntitySkill.ENTITY.getOneById(skillKey);
-		List<String> currentParents = skillRecord.getAsStringList(VisEntitySkill.Fields.parent);
-		Set<String> parents = new LinkedHashSet<>(currentParents);
+		CcpBusiness changeTheSkillAndTheLookup = jsonWithTheStoredSkill -> {
+			CcpJsonRepresentation skillRecord = jsonWithTheStoredSkill.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkill.ENTITY);
+			List<String> currentParents = skillRecord.getAsStringList(VisEntitySkill.Fields.parent);
+			Set<String> parents = new LinkedHashSet<>(currentParents);
 
-		changeParents.accept(parents);
+			changeParents.accept(parents);
 
-		List<String> updatedParents = new ArrayList<>(parents);
-		CcpJsonRepresentation skillRecordWithUpdatedParents = skillRecord.put(VisEntitySkill.Fields.parent, updatedParents);
-		VisEntitySkill.ENTITY.save(skillRecordWithUpdatedParents);
+			List<String> updatedParents = new ArrayList<>(parents);
+			CcpJsonRepresentation skillRecordWithUpdatedParents = skillRecord.put(VisEntitySkill.Fields.parent, updatedParents);
+			VisEntitySkill.ENTITY.save(skillRecordWithUpdatedParents);
 
-		List<String> synonyms = skillRecord.getAsStringList(VisEntitySkill.Fields.synonym);
-		words.addAll(synonyms);
-		VisSkillWordsGroups.changeParents(skill, words, changeParents);
+			List<String> synonyms = skillRecord.getAsStringList(VisEntitySkill.Fields.synonym);
+			words.addAll(synonyms);
+			VisSkillWordsGroups.changeParents(skill, words, changeParents);
+			return jsonWithTheStoredSkill;
+		};
+
+		// a single read by id decides the branch and brings the stored skill
+		new CcpGetEntityId(skillKey)
+		.toBeginProcedureAnd()
+			.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(changeOnlyTheLookup).and()
+			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).executeAction(changeTheSkillAndTheLookup)
+			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
+		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+		;
 
 		return json;
+	}
+
+	/** The procedure answers nothing: the business returns the json it received. */
+	enum JsonFieldNames implements CcpJsonFieldName{
+		/** The {@code inexistentField} field. */
+		inexistentField
 	}
 
 }

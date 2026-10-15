@@ -18,6 +18,9 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityC
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
+import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
@@ -41,6 +44,8 @@ import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite
 import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterWriteBuilder;
 import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeWriteBuilder;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
+import com.jn.entities.decorators.annotations.JnEntityVersionablePurge;
+import com.jn.entities.decorators.annotations.JnStoredParentIdsField;
 import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
 import com.jn.entities.decorators.builders.JnEntityGrouperChildAfterWriteBuilder;
 import com.jn.entities.decorators.builders.JnEntityGrouperChildBeforeWriteBuilder;
@@ -48,16 +53,19 @@ import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
+import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
+import com.vis.business.resume.VisBusinessResumeLinkedinOwner;
+import com.vis.business.resume.VisBusinessResumeLinkedinRelease;
 import com.vis.json.transformers.VisResumeHashCombinations;
 import com.vis.messages.VisMessages;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
+import com.vis.json.fields.validation.VisJsonValidatorHomeOfficeAlone;
 import com.vis.json.transformers.VisJsonTransformerExperienceStartYear;
-import com.vis.json.transformers.VisJsonTransformerResumeHashes;
 import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 
 /**
@@ -70,12 +78,15 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
  * <p>Life cycle (the delete moves the resume to the twin, {@code vis_inactive_resume}; the delete on the twin moves it
  * back, which is the reactivation):
  * <ul>
- * <li>the field transformers fill the {@code hash} list with every search the resume satisfies;</li>
+ * <li>the save fills the {@code hash} list with every search the resume satisfies;</li>
  * <li>{@code @JnEntityGrouperChild} keeps the id of the resume in the groups of {@code JnEntityGrouper} of its hashes:
  * the active resumes in the main groups, the inactive ones in the twin groups ({@code jn_inactive_grouper}); the save
  * moves it to the groups of its new hashes, the deactivation and the reactivation move it between the sides, and the
  * delete everywhere takes it out of both;</li>
- * <li>the owner is told by e-mail after the save, the deactivation, the reactivation and the delete everywhere.</li>
+ * <li>the owner is told by e-mail after the save, the deactivation, the reactivation and the delete everywhere;</li>
+ * <li>{@link VisEntityResumeLinkedin} keeps the e-mails that use each LinkedIn address: saving an address that is in
+ * the resume of another e-mail saves the resume anyway and tells the support operator; a new address or the delete
+ * everywhere takes only this e-mail out of the old address.</li>
  * </ul>
  * A notice that fails to go out saves a warning instead of undoing the write.
  */
@@ -112,17 +123,21 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		) 
+// the e-mails that use each LinkedIn address, read by id on the save: an address already used by another e-mail
+// reaches the support operator (VisEntityResumeLinkedin)
+@CcpEntityOperations(value = {
+		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity, execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {}),
+		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity, execute = {VisBusinessResumeLinkedinOwner.class}, operationHandlers = {}),
+		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteAnyWhereFromMainEntity, execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {}),
+})
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @JnEntityVersionable(JnVersionableEntity.class)
+@JnEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
-// one group per hash (each search the resume satisfies): the combinations of its values, the entity that gives the id
-// of each one (and names the groups) and the list where the transformers keep those ids
-@JnEntityGrouperChild(
-		parentsCombinations = VisResumeHashCombinations.class,
-		parentIdEntity = VisEntityVirtualHashGrouper.class,
-		storedParentIdsField = "hash"
-		)
+// one group per hash (each search the resume satisfies): the entity that gives the id of each one (and names the
+// groups); the combinations of its values and the list where the save keeps those ids come from the field hash
+@JnEntityGrouperChild(VisEntityVirtualHashGrouper.class)
 public class VisEntityResume implements CcpEntityConfigurator {
 	
 	/** The entity {@code vis_resume}, with every decorator of this configuration. */
@@ -226,8 +241,10 @@ public class VisEntityResume implements CcpEntityConfigurator {
 	 */
 	@CcpJsonGlobalValidations(
 			requiresAtLeastOne = {
-			@CcpJsonValidationFieldList(SalaryType.class) 
-	})
+			@CcpJsonValidationFieldList(SalaryType.class)
+			},
+			customJsonValidators = {VisJsonValidatorHomeOfficeAlone.class}
+	)
 	public static enum Fields implements CcpJsonFieldName {
 
 		/** The {@code btc} field: validated as in {@code JnJsonCommonsFields}. */
@@ -269,12 +286,13 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		experience,
 
 		/**
-		 * The {@code hash} field: list, validated as in {@code VisJsonCommonsFields}; calculated by
-		 * {@code VisJsonTransformerResumeHashes}, it holds the id of every search the resume satisfies.
+		 * The {@code hash} field: list, validated as in {@code VisJsonCommonsFields}; filled on every save by the decorator
+		 * of {@code @JnEntityGrouperChild}, it holds the id of every search the resume satisfies: the groups the resume is
+		 * in, one per combination of {@code VisResumeHashCombinations}.
 		 */
 		@CcpJsonFieldValidatorArray
+		@JnStoredParentIdsField(VisResumeHashCombinations.class)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
-		@CcpEntityFieldTransformer(VisJsonTransformerResumeHashes.class)
 		hash,
 
 		/** The {@code skill} field: list, nested JSON. */
@@ -295,9 +313,9 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpEntityFieldTransformer(VisJsonTransformerSpokenLanguageWithoutId.class)
 		spokenLanguage,
 
-		/** The {@code linkedinAddress} field: required, text. */
+		/** The {@code linkedinAddress} field: required, validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeString(regexValidation = "^https://(www\\.)?linkedin\\.com/in/[a-zA-Z0-9-_%]+/?$")
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		linkedinAddress,
 
 		/** The {@code negotiableClaim} field: validated as in {@code VisJsonCommonsFields}. */
@@ -306,7 +324,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 
 		/** The {@code notAllowedCompany} field: list, text. */
 		@CcpJsonFieldValidatorArray
-		@CcpJsonFieldTypeString(minLength = 2, maxLength = 20)
+		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
 		notAllowedCompany,
 
 		/** The {@code pcd} field: validated as in {@code VisJsonCommonsFields}. */

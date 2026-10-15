@@ -36,6 +36,7 @@ import com.jn.entities.JnEntityInstantMessengerParametersToSend;
 import com.jn.entities.JnEntityInstantMessengerTemplateMessage;
 import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
 import com.jn.entities.decorators.annotations.JnEntityVersionable;
+import com.jn.entities.decorators.annotations.JnEntityVersionablePurge;
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTransfer;
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTransferOperation;
 import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite;
@@ -49,10 +50,12 @@ import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
 import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
+import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.jn.utils.JnLanguage;
+import com.vis.business.bots.skill.hierarchy.VisSupportSkillFixHierarchyBotConfiguration;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyCreateItems;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyDeleteOrphanItems;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyNotifyAlreadyReviewed;
@@ -119,6 +122,7 @@ globalHandlers = {
 })
 @JnEntityAsyncWriter(JnAsyncWriterEntity.class)
 @JnEntityVersionable(JnVersionableEntity.class)
+@JnEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyPending.Fields.class)
 public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator {
@@ -255,6 +259,9 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		firstRecords.addAll(englishApprovedName);
 		firstRecords.addAll(portugueseRejectedName);
 		firstRecords.addAll(englishRejectedName);
+		// the command of the support bot that reviews these requests: since 2026-10-15 vis seeds it, and not jb
+		List<CcpBulkItem> reviewCommandItems = VisSupportSkillFixHierarchyBotConfiguration.getSeeds();
+		firstRecords.addAll(reviewCommandItems);
 		return firstRecords;
 	}
 

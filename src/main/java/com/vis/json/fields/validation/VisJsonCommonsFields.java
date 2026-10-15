@@ -56,6 +56,13 @@ public enum VisJsonCommonsFields implements CcpJsonFieldName {
 	@CcpJsonFieldTypeTimeBefore(maxValue = 70, intervalType = CcpEntityExpurgableOptions.yearly)
 	experience,
 
+	/**
+	 * The {@code linkedinAddress} field: text, the address of a LinkedIn profile; the profile does not end with a hyphen,
+	 * the address cut at the line break of a PDF (accepted until 2026-10-14).
+	 */
+	@CcpJsonFieldTypeString(regexValidation = "^https://(www\\.)?linkedin\\.com/in/[a-zA-Z0-9-_%]*[a-zA-Z0-9_%]/?$")
+	linkedinAddress,
+
 	/** The {@code fee} field: decimal number. */
 	@CcpJsonFieldTypeNumber(minValue = 0)
 	fee,

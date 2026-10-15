@@ -6,8 +6,12 @@ import java.util.stream.Stream;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.crud.CcpGetEntityId;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
 import com.jn.utils.JnSystemProperties;
 import com.vis.entities.VisEntitySkillFixHierarchyFulfiled;
@@ -47,9 +51,7 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 		CcpJsonRepresentation requestKey = json.getJsonPiece(VisEntitySkillFixHierarchyPending.Fields.email, VisEntitySkillFixHierarchyPending.Fields.parent);
 		List<CcpJsonRepresentation> decisions = json.getAsJsonList(VisSkillFixHierarchyReviewFields.reviewDecisions);
 
-		for (CcpJsonRepresentation decision : decisions) {
-			this.moveItem(requestKey, decision);
-		}
+		this.moveItems(requestKey, decisions);
 
 		VisSkillFixHierarchyTypes[] types = VisSkillFixHierarchyTypes.values();
 
@@ -72,33 +74,53 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 	}
 
 	/**
-	 * Moves a pending item according to its decision: an approved one to {@code vis_skill_fix_hierarchy_item_approved}, a
-	 * rejected one to the twin (by deleting it). An item no longer pending (decided in an earlier review) is left alone.
+	 * Moves each pending item according to its decision: an approved one to {@code vis_skill_fix_hierarchy_item_approved},
+	 * a rejected one to the twin (by deleting it). An item no longer pending (decided in an earlier review) is left alone.
+	 * Every item is read by id in a single union all.
 	 * @param requestKey the key of the request
-	 * @param decision the decision of the item
+	 * @param decisions the decisions of the items
 	 */
-	private void moveItem(CcpJsonRepresentation requestKey, CcpJsonRepresentation decision) {
+	private void moveItems(CcpJsonRepresentation requestKey, List<CcpJsonRepresentation> decisions) {
 
-		CcpJsonRepresentation itemKeyFields = decision.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.type, VisEntitySkillFixHierarchyItemPending.Fields.skill);
-		CcpJsonRepresentation itemKey = requestKey.mergeWithAnotherJson(itemKeyFields);
-		// an item decided in an earlier review is no longer pending: its decision is only reported to the user
-		boolean itemIsNotPending = false == VisEntitySkillFixHierarchyItemPending.ENTITY.exists(itemKey);
+		boolean noDecision = decisions.isEmpty();
 
-		if(itemIsNotPending) {
+		if(noDecision) {
 			return;
 		}
 
-		VisSkillFixHierarchyDecisions itemDecision = decision.getAsEnum(VisSkillFixHierarchyReviewFields.decision, VisSkillFixHierarchyDecisions.class);
+		int decisionsCount = decisions.size();
+		CcpJsonRepresentation[] itemsWithTheirDecisions = new CcpJsonRepresentation[decisionsCount];
 
-		boolean isApproved = VisSkillFixHierarchyDecisions.approved == itemDecision;
-
-		if(isApproved) {
-			VisEntitySkillFixHierarchyItemPending.ENTITY.transferDataTo(itemKey, VisEntitySkillFixHierarchyItemApproved.ENTITY);
-			return;
+		for (int index = 0; index < decisionsCount; index++) {
+			CcpJsonRepresentation decision = decisions.get(index);
+			CcpJsonRepresentation itemKeyFields = decision.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.type, VisEntitySkillFixHierarchyItemPending.Fields.skill, VisSkillFixHierarchyReviewFields.decision);
+			itemsWithTheirDecisions[index] = requestKey.mergeWithAnotherJson(itemKeyFields);
 		}
 
-		// deleting from a twin entity moves the record to the twin, which holds the rejected items
-		VisEntitySkillFixHierarchyItemPending.ENTITY.delete(itemKey);
+		CcpBusiness moveTheItem = itemWithTheStoredRecord -> {
+			CcpJsonRepresentation itemKey = itemWithTheStoredRecord.getJsonPiece(VisEntitySkillFixHierarchyPending.Fields.email, VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type, VisEntitySkillFixHierarchyItemPending.Fields.skill);
+			VisSkillFixHierarchyDecisions itemDecision = itemWithTheStoredRecord.getAsEnum(VisSkillFixHierarchyReviewFields.decision, VisSkillFixHierarchyDecisions.class);
+
+			boolean isApproved = VisSkillFixHierarchyDecisions.approved == itemDecision;
+
+			if(isApproved) {
+				VisEntitySkillFixHierarchyItemPending.ENTITY.transferDataTo(itemKey, VisEntitySkillFixHierarchyItemApproved.ENTITY);
+				return itemWithTheStoredRecord;
+			}
+
+			// deleting from a twin entity moves the record to the twin, which holds the rejected items
+			VisEntitySkillFixHierarchyItemPending.ENTITY.delete(itemKey);
+			return itemWithTheStoredRecord;
+		};
+
+		// an item decided in an earlier review is no longer pending, so the action does not run for it: its decision is
+		// only reported to the user
+		new CcpGetEntityId(itemsWithTheirDecisions)
+		.toBeginProcedureAnd()
+			.forEachIdPresentInEntity(VisEntitySkillFixHierarchyItemPending.ENTITY).executeAction(moveTheItem)
+			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
+		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+		;
 	}
 
 	/**
@@ -116,20 +138,26 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 
 		CcpJsonRepresentation requestWithType = requestKey.put(VisEntitySkillFixHierarchyPending.Fields.type, type);
 
-		boolean requestIsNotPending = false == VisEntitySkillFixHierarchyPending.ENTITY.exists(requestWithType);
+		CcpBusiness transferToFulfiled = jsonWithTheStoredRequest -> {
+			// the pending entity writes through the messaging, which validates the whole record (description and
+			// skill are required); the stored email is the hash, so the readable one from the request key prevails
+			CcpJsonRepresentation storedRequest = jsonWithTheStoredRequest.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillFixHierarchyPending.ENTITY);
+			CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(requestWithType);
+			CcpJsonRepresentation requestWithExplanation = completeRequest.put(JnJsonCommonsFields.explanation, explanation);
+			CcpJsonRepresentation requestWithDecisions = requestWithExplanation.put(VisSkillFixHierarchyReviewFields.reviewDecisions, typeDecisions);
 
-		if(requestIsNotPending) {
-			return;
-		}
+			VisEntitySkillFixHierarchyPending.ENTITY.transferDataTo(requestWithDecisions, VisEntitySkillFixHierarchyFulfiled.ENTITY);
+			return jsonWithTheStoredRequest;
+		};
 
-		// the pending entity writes through the messaging, which validates the whole record (description and
-		// skill are required); the stored email is the hash, so the readable one from the request key prevails
-		CcpJsonRepresentation storedRequest = VisEntitySkillFixHierarchyPending.ENTITY.getOneById(requestWithType);
-		CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(requestWithType);
-		CcpJsonRepresentation requestWithExplanation = completeRequest.put(JnJsonCommonsFields.explanation, explanation);
-		CcpJsonRepresentation requestWithDecisions = requestWithExplanation.put(VisSkillFixHierarchyReviewFields.reviewDecisions, typeDecisions);
-
-		VisEntitySkillFixHierarchyPending.ENTITY.transferDataTo(requestWithDecisions, VisEntitySkillFixHierarchyFulfiled.ENTITY);
+		// a single read by id: the presence check and the stored request come together (a request no longer pending
+		// runs no action)
+		new CcpGetEntityId(requestWithType)
+		.toBeginProcedureAnd()
+			.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).executeAction(transferToFulfiled)
+			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
+		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+		;
 	}
 
 	/**
@@ -160,5 +188,11 @@ public class VisBusinessSkillFixHierarchyReview implements CcpBusiness {
 		CcpJsonRepresentation decisionWithDecision = decisionWithSkill.put(VisSkillFixHierarchyReviewFields.decision, decision.name());
 		CcpJsonRepresentation decisionWithJustification = decisionWithDecision.put(VisSkillFixHierarchyReviewFields.justification, justification);
 		return decisionWithJustification;
+	}
+
+	/** The procedures answer nothing: the business returns the json it received. */
+	enum JsonFieldNames implements CcpJsonFieldName{
+		/** The {@code inexistentField} field. */
+		inexistentField
 	}
 }

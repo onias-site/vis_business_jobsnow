@@ -1,6 +1,10 @@
 package com.vis.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ccp.decorators.CcpJsonFieldName;
+import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
@@ -20,6 +24,8 @@ import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.bots.command.allowed.VisSupportAllowCommandToUserBotConfiguration;
+import com.vis.business.bots.ignored.users.VisSupportIgnoredUsersBotConfiguration;
 import com.vis.business.skill.VisBusinessDiscardPendingRequestsOfIgnoredUser;
 import com.vis.json.fields.validation.VisUserRequestCommands;
 
@@ -71,5 +77,18 @@ public class VisEntityCommandNotAllowedToUser implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		description,
 
+	}
+
+	/**
+	 * Seeds the commands of the support bot that undo the ignoring: {@code /allowCommandToUser <email>} and
+	 * {@code /ignoredUsers}. Since 2026-10-15 vis seeds them, and not jb.
+	 * @return the seed records
+	 */
+	public List<CcpBulkItem> getFirstRecordsToInsert() {
+		List<CcpBulkItem> allowCommandToUserItems = VisSupportAllowCommandToUserBotConfiguration.getSeeds();
+		List<CcpBulkItem> ignoredUsersItems = VisSupportIgnoredUsersBotConfiguration.getSeeds();
+		List<CcpBulkItem> firstRecords = new ArrayList<>(allowCommandToUserItems);
+		firstRecords.addAll(ignoredUsersItems);
+		return firstRecords;
 	}
 }

@@ -5,7 +5,8 @@ import com.ccp.process.CcpProcessStatus;
 /**
  * Defines the process statuses of the skill hierarchy fix suggestion, with their corresponding HTTP codes:
  * {@code userNotAllowed} (403) when the support bot operator chose to ignore the user (the ignoring is global,
- * it holds for every command), and {@code alreadyReviewed} (208) when every skill of the request was already reviewed.
+ * it holds for every command), {@code alreadyReviewed} (208) when every skill of the request was already reviewed, and
+ * {@code dailyLimitReached} (429) when the user requested a fix in the last 24 hours.
  */
 public enum VisProcessStatusFixSkillHierarchy implements CcpProcessStatus{
 	/** Status 403: the support team chose to ignore the user. */
@@ -15,6 +16,11 @@ public enum VisProcessStatusFixSkillHierarchy implements CcpProcessStatus{
 	 * pending; the request is complete and the user is told by email.
 	 */
 	alreadyReviewed(208),
+	/**
+	 * Status 429: the user requested a skill hierarchy fix in the last 24 hours ({@code VisEntitySkillFixHierarchyDailyLimit});
+	 * one request per 24 hours, because each one emails the user and opens a ticket to the support operator.
+	 */
+	dailyLimitReached(429),
 	;
 
 	/** The HTTP status code. */

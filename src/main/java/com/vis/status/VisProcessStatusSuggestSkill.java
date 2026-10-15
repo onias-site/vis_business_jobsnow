@@ -7,7 +7,8 @@ import com.ccp.process.CcpProcessStatus;
  * {@code userNotAllowed} (403) when the support bot operator chose to ignore the user (in any command,
  * the ignoring is global), {@code skillAlreadyExists} (412) when the suggested skill is already
  * known by the system, {@code alreadyRejected} (410) when the support already rejected it for the same user, and
- * {@code alreadyReviewed} (410) when the support already approved or rejected it for another user.
+ * {@code alreadyReviewed} (410) when the support already approved or rejected it for another user, and
+ * {@code dailyLimitReached} (429) when the user suggested a skill in the last 24 hours.
  */
 public enum VisProcessStatusSuggestSkill implements CcpProcessStatus{
 	/** Status 403: the support team chose to ignore the user. */
@@ -29,6 +30,11 @@ public enum VisProcessStatusSuggestSkill implements CcpProcessStatus{
 	 * LIGHT with the synonym PTL): it is the same skill, suggested again under another name.
 	 */
 	suggestedThroughSynonym(409),
+	/**
+	 * Status 429: the user suggested a skill in the last 24 hours ({@code VisEntitySkillSuggestionDailyLimit}); one suggestion
+	 * per 24 hours, because each one emails the user and opens a ticket to the support operator.
+	 */
+	dailyLimitReached(429),
 	;
 
 	/** The HTTP status code. */

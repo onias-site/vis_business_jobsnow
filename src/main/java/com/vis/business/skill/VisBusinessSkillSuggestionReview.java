@@ -1,9 +1,13 @@
 package com.vis.business.skill;
 
 import com.ccp.business.CcpBusiness;
+import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkillPending;
 
 /**
@@ -30,22 +34,35 @@ public class VisBusinessSkillSuggestionReview implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		CcpJsonRepresentation suggestionKey = json.getJsonPiece(VisEntitySkillPending.Fields.email, VisEntitySkillPending.Fields.skill);
-		boolean suggestionIsNotPending = false == VisEntitySkillPending.ENTITY.exists(suggestionKey);
 
-		if(suggestionIsNotPending) {
-			return json;
-		}
+		CcpBusiness transferWithTheDecision = jsonWithTheStoredSuggestion -> {
+			// the pending entity writes through the messaging, which validates the whole record (description is
+			// required); the stored email is the hash, so the readable one from the key prevails
+			CcpJsonRepresentation storedSuggestion = jsonWithTheStoredSuggestion.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillPending.ENTITY);
+			CcpJsonRepresentation completeSuggestion = storedSuggestion.mergeWithAnotherJson(suggestionKey);
+			String explanation = json.getAsString(JnJsonCommonsFields.explanation);
+			CcpJsonRepresentation suggestionWithExplanation = completeSuggestion.put(JnJsonCommonsFields.explanation, explanation);
 
-		// the pending entity writes through the messaging, which validates the whole record (description is
-		// required); the stored email is the hash, so the readable one from the key prevails
-		CcpJsonRepresentation storedSuggestion = VisEntitySkillPending.ENTITY.getOneById(suggestionKey);
-		CcpJsonRepresentation completeSuggestion = storedSuggestion.mergeWithAnotherJson(suggestionKey);
-		String explanation = json.getAsString(JnJsonCommonsFields.explanation);
-		CcpJsonRepresentation suggestionWithExplanation = completeSuggestion.put(JnJsonCommonsFields.explanation, explanation);
+			VisSkillSuggestionDecisions decision = json.getAsEnum(VisSkillSuggestionReviewFields.decision, VisSkillSuggestionDecisions.class);
+			CcpEntity targetEntity = decision.getTargetEntity();
+			VisEntitySkillPending.ENTITY.transferDataTo(suggestionWithExplanation, targetEntity);
+			return jsonWithTheStoredSuggestion;
+		};
 
-		VisSkillSuggestionDecisions decision = json.getAsEnum(VisSkillSuggestionReviewFields.decision, VisSkillSuggestionDecisions.class);
-		CcpEntity targetEntity = decision.getTargetEntity();
-		VisEntitySkillPending.ENTITY.transferDataTo(suggestionWithExplanation, targetEntity);
+		// a single read by id: the presence check and the stored suggestion come together (a suggestion no longer
+		// pending runs no action)
+		new CcpGetEntityId(suggestionKey)
+		.toBeginProcedureAnd()
+			.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY).executeAction(transferWithTheDecision)
+			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
+		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+		;
 		return json;
+	}
+
+	/** The procedure answers nothing: the business returns the json it received. */
+	enum JsonFieldNames implements CcpJsonFieldName{
+		/** The {@code inexistentField} field. */
+		inexistentField
 	}
 }

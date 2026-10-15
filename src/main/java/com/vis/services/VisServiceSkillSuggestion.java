@@ -28,10 +28,9 @@ import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
 import com.vis.entities.VisEntitySkillReviewed;
-import com.vis.entities.VisEntitySkillSuggestionWithdrawn;
+import com.vis.entities.VisEntitySkillSuggestionDailyLimit;
 import com.vis.entities.VisEntitySkillSynonym;
 import com.vis.messages.VisMessages;
-import com.vis.status.VisProcessStatusDeleteSkillSuggestion;
 import com.vis.status.VisProcessStatusSuggestSkill;
 
 /**
@@ -52,6 +51,9 @@ public enum VisServiceSkillSuggestion implements JnService {
 	 * {@code alreadyReviewed} (410: the decision holds for everyone, so no new ticket reaches the operator), and a
 	 * suggestion of the same skill by the same candidate still pending gets 409. A skill that is a synonym given in a
 	 * suggestion this candidate already made ({@link VisEntitySkillSynonym}) gets {@code suggestedThroughSynonym} (409).
+	 * A candidate who suggested a skill in the last 24 hours ({@link VisEntitySkillSuggestionDailyLimit}, written at each saved
+	 * suggestion) gets {@code dailyLimitReached} (429): each suggestion emails the candidate and opens a ticket to the
+	 * operator, so one per 24 hours. The refusals above send nothing and are checked first, so they do not spend the day.
 	 * <p>
 	 * Saving the suggestion also records each of its synonyms in {@link VisEntitySkillSynonym}, pointing to the
 	 * suggested skill, in a single bulk.
@@ -73,18 +75,27 @@ public enum VisServiceSkillSuggestion implements JnService {
 				VisProcessStatusSuggestSkill.skillAlreadyExists.throwException(json);
 			}
 
+			// it depends on the value read from the synonym record, so it cannot be a step of the fluent interface below;
+			// it comes before it because, sending nothing, it must not be shadowed by the daily limit
+			CcpJsonRepresentation ownSuggestionOfTheSynonym = getOwnSuggestionThroughSynonym(json);
+			boolean suggestedThroughSynonym = false == ownSuggestionOfTheSynonym.isEmpty();
+			if(suggestedThroughSynonym) {
+				VisProcessStatusSuggestSkill.suggestedThroughSynonym.throwException(json);
+			}
+
 			CcpBusiness saveAsPending = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillPending.ENTITY);
 			CcpBusiness saveWithSynonyms = suggestion -> {
-				CcpJsonRepresentation ownSuggestionOfTheSynonym = getOwnSuggestionThroughSynonym(json);
-				boolean suggestedThroughSynonym = false == ownSuggestionOfTheSynonym.isEmpty();
-				if(suggestedThroughSynonym) {
-					VisProcessStatusSuggestSkill.suggestedThroughSynonym.throwException(json);
-				}
 				CcpJsonRepresentation savedSuggestion = saveAsPending.execute(suggestion);
 				saveSynonyms(json);
+				// written here, and not by the pending entity, because that one writes through the messaging: the next
+				// request of the candidate must already find the day spent
+				String email = json.getAsString(VisEntitySkillPending.Fields.email);
+				CcpJsonRepresentation dailyLimit = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkillSuggestionDailyLimit.Fields.email, email);
+				VisEntitySkillSuggestionDailyLimit.ENTITY.save(dailyLimit);
 				return savedSuggestion;
 			};
 
+			// the daily limit is the last check: every refusal before it sends nothing, so it does not spend the day
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
 				.ifThisIdIsPresentInEntity(VisEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusSuggestSkill.userNotAllowed).and()
@@ -92,6 +103,7 @@ public enum VisServiceSkillSuggestion implements JnService {
 				.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY).returnStatus(VisProcessStatusSuggestSkill.alreadyRejected).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillReviewed.ENTITY).returnStatus(VisProcessStatusSuggestSkill.alreadyReviewed).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY).returnStatus(CcpProcessStatusDefault.CONFLICT).and()
+				.ifThisIdIsPresentInEntity(VisEntitySkillSuggestionDailyLimit.ENTITY).returnStatus(VisProcessStatusSuggestSkill.dailyLimitReached).and()
 				.executeAction(saveWithSynonyms)
 				.andFinallyReturningTheseFields(VisSkillSuggestionResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
@@ -224,17 +236,16 @@ public enum VisServiceSkillSuggestion implements JnService {
 	/**
 	 * The candidate withdraws a suggestion that is still pending. Only deletes from the pending entity: what was
 	 * already reviewed is review history and cannot be undone by the candidate. Responds 404 when there is no pending
-	 * suggestion (e.g. it was reviewed between the candidate opening the modal and giving up), and
-	 * {@code withdrawnRecently} (429) when the candidate already withdrew a suggestion of the same skill within the hour
-	 * ({@link VisEntitySkillSuggestionWithdrawn}, recorded at each withdrawal): suggesting it again is allowed,
-	 * withdrawing it again is not, so that nobody opens and cancels tickets to the operator in a loop.
+	 * suggestion (e.g. it was reviewed between the candidate opening the modal and giving up). Withdrawing the same
+	 * skill again is allowed: the daily limit of {@link #SuggestSkill} already bounds how many tickets the candidate
+	 * opens to the operator.
 	 *
 	 * The existence is checked before deleting, and not by the result of the deletion: the pending entity writes
 	 * through the messaging, so {@code delete} only tells that the message was accepted.
 	 */
 	DeleteSkillSuggestion{
 		/**
-		 * Deletes the pending suggestion, or answers 404 or 429.
+		 * Deletes the pending suggestion, or answers 404.
 		 * @param json the suggestion key
 		 * @return the same JSON
 		 */
@@ -243,7 +254,6 @@ public enum VisServiceSkillSuggestion implements JnService {
 				CcpJsonRepresentation storedSuggestion = jsonWithTheStoredSuggestion.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillPending.ENTITY);
 				CcpJsonRepresentation completeSuggestion = storedSuggestion.mergeWithAnotherJson(json);
 				VisEntitySkillPending.ENTITY.delete(completeSuggestion);
-				VisEntitySkillSuggestionWithdrawn.ENTITY.save(json);
 				// the operator's ticket of this suggestion leaves /pendingTickets
 				String noticeTemplateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillRequest.class.getName();
 				JnBusinessCancelSupportPendingCommand.INSTANCE.cancel(noticeTemplateId, completeSuggestion);
@@ -253,7 +263,6 @@ public enum VisServiceSkillSuggestion implements JnService {
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
 				.ifThisIdIsNotPresentInEntity(VisEntitySkillPending.ENTITY).returnStatus(CcpProcessStatusDefault.NOT_FOUND).and()
-				.ifThisIdIsPresentInEntity(VisEntitySkillSuggestionWithdrawn.ENTITY).returnStatus(VisProcessStatusDeleteSkillSuggestion.withdrawnRecently).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY).executeAction(deleteTheStoredSuggestion)
 				.andFinallyReturningTheseFields(VisSkillSuggestionResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)

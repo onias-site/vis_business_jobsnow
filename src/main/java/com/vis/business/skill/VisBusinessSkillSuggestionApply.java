@@ -7,8 +7,12 @@ import java.util.Set;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.query.CcpQueryOptions;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillApproved;
 
@@ -56,9 +60,8 @@ public class VisBusinessSkillSuggestionApply implements CcpBusiness {
 	private void saveSkill(String skill, List<String> suggestedSynonyms) {
 
 		CcpJsonRepresentation skillKey = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkill.Fields.skill, skill);
-		boolean skillIsNew = false == VisEntitySkill.ENTITY.exists(skillKey);
 
-		if(skillIsNew) {
+		CcpBusiness createTheSkill = skillNotFound -> {
 			long skillsCount = CcpQueryOptions.INSTANCE
 					.matchAll()
 					.selectFrom(VisEntitySkill.ENTITY)
@@ -67,16 +70,34 @@ public class VisBusinessSkillSuggestionApply implements CcpBusiness {
 			CcpJsonRepresentation newSkillWithSynonyms = skillKey.put(VisEntitySkill.Fields.synonym, suggestedSynonyms);
 			CcpJsonRepresentation newSkill = newSkillWithSynonyms.put(VisEntitySkill.Fields.ranking, ranking);
 			VisEntitySkill.ENTITY.save(newSkill);
-			return;
-		}
+			return skillNotFound;
+		};
 
-		CcpJsonRepresentation skillRecord = VisEntitySkill.ENTITY.getOneById(skillKey);
-		List<String> currentSynonyms = skillRecord.getAsStringList(VisEntitySkill.Fields.synonym);
-		Set<String> synonyms = new LinkedHashSet<>(currentSynonyms);
-		synonyms.addAll(suggestedSynonyms);
-		List<String> updatedSynonyms = new ArrayList<>(synonyms);
-		CcpJsonRepresentation skillRecordWithSynonyms = skillRecord.put(VisEntitySkill.Fields.synonym, updatedSynonyms);
-		VisEntitySkill.ENTITY.save(skillRecordWithSynonyms);
+		CcpBusiness addTheMissingSynonyms = jsonWithTheStoredSkill -> {
+			CcpJsonRepresentation skillRecord = jsonWithTheStoredSkill.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkill.ENTITY);
+			List<String> currentSynonyms = skillRecord.getAsStringList(VisEntitySkill.Fields.synonym);
+			Set<String> synonyms = new LinkedHashSet<>(currentSynonyms);
+			synonyms.addAll(suggestedSynonyms);
+			List<String> updatedSynonyms = new ArrayList<>(synonyms);
+			CcpJsonRepresentation skillRecordWithSynonyms = skillRecord.put(VisEntitySkill.Fields.synonym, updatedSynonyms);
+			VisEntitySkill.ENTITY.save(skillRecordWithSynonyms);
+			return jsonWithTheStoredSkill;
+		};
+
+		// a single read by id decides the branch and brings the stored skill
+		new CcpGetEntityId(skillKey)
+		.toBeginProcedureAnd()
+			.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(createTheSkill).and()
+			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).executeAction(addTheMissingSynonyms)
+			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
+		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+		;
+	}
+
+	/** The procedure answers nothing: the business returns the json it received. */
+	enum JsonFieldNames implements CcpJsonFieldName{
+		/** The {@code inexistentField} field. */
+		inexistentField
 	}
 
 }

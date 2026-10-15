@@ -3,11 +3,15 @@ package com.vis.business.skill;
 import java.util.List;
 
 import com.ccp.business.CcpBusiness;
+import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.query.CcpQueryBool;
 import com.ccp.especifications.db.query.CcpQueryMust;
 import com.ccp.especifications.db.query.CcpQueryMustNot;
 import com.ccp.especifications.db.query.CcpQueryOptions;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 
@@ -32,26 +36,49 @@ public class VisBusinessSkillFixHierarchyDeleteOrphanItems implements CcpBusines
 
 		CcpJsonRepresentation itemKeyWithoutSkill = json.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type);
 		List<String> skills = json.getAsStringList(VisEntitySkillFixHierarchyPending.Fields.skill);
+		boolean noSkill = skills.isEmpty();
 
-		for (String skill : skills) {
-			CcpJsonRepresentation itemKey = itemKeyWithoutSkill.put(VisEntitySkillFixHierarchyItemPending.Fields.skill, skill);
-			boolean itemIsNotPending = false == VisEntitySkillFixHierarchyItemPending.ENTITY.exists(itemKey);
+		if(noSkill) {
+			return json;
+		}
 
-			if(itemIsNotPending) {
-				continue;
-			}
+		int skillsCount = skills.size();
+		CcpJsonRepresentation[] itemKeys = new CcpJsonRepresentation[skillsCount];
 
+		for (int index = 0; index < skillsCount; index++) {
+			String skill = skills.get(index);
+			itemKeys[index] = itemKeyWithoutSkill.put(VisEntitySkillFixHierarchyItemPending.Fields.skill, skill);
+		}
+
+		CcpBusiness deleteIfOrphan = itemWithTheStoredRecord -> {
+			String skill = itemWithTheStoredRecord.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
 			boolean anotherRequestAsksForIt = this.anotherRequestAsksFor(json, skill);
 
 			if(anotherRequestAsksForIt) {
-				continue;
+				return itemWithTheStoredRecord;
 			}
 
+			CcpJsonRepresentation itemKey = itemWithTheStoredRecord.getJsonPiece(VisEntitySkillFixHierarchyItemPending.Fields.parent, VisEntitySkillFixHierarchyItemPending.Fields.type, VisEntitySkillFixHierarchyItemPending.Fields.skill);
 			// a plain delete would move the item to the twin, which holds the rejected items
 			VisEntitySkillFixHierarchyItemPending.ENTITY.deleteAnyWhere(itemKey);
-		}
+			return itemWithTheStoredRecord;
+		};
+
+		// every item is read by id in a single union all; the action runs only for the items still pending
+		new CcpGetEntityId(itemKeys)
+		.toBeginProcedureAnd()
+			.forEachIdPresentInEntity(VisEntitySkillFixHierarchyItemPending.ENTITY).executeAction(deleteIfOrphan)
+			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
+		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+		;
 
 		return json;
+	}
+
+	/** The procedure answers nothing: the business returns the json it received. */
+	enum JsonFieldNames implements CcpJsonFieldName{
+		/** The {@code inexistentField} field. */
+		inexistentField
 	}
 
 	/**

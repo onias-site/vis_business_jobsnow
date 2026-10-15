@@ -9,7 +9,8 @@ public enum VisSeniorityType {
 	junior(1,3),
 	pleno(3,5),
 	senior(5,10),
-	especialista(10, 70)
+	// the upper bound is exclusive: 71 keeps the 70 years accepted by the validation of the experience field
+	especialista(10, 71)
 	;
 	
 	private final int min;

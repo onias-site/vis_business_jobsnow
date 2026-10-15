@@ -239,6 +239,27 @@ public class VisMessages {
 	}
 
 	/**
+	 * Tells the support bot operator that a LinkedIn address already in the resume of another e-mail was saved in the
+	 * resume of {@code email}: the resume is saved anyway, the operator checks whether the profile belongs to someone
+	 * else. Repeatable: each save that takes the address from another e-mail is a new fact. Without it, two resumes
+	 * saving the same address at the same time raced between the "already sent" check and the record of the sending,
+	 * and the bulk of that record ended in {@code JnErrorReprocessInfiniteLoopPrevented}.
+	 */
+	public static class VisNotifySupportAboutSharedLinkedin implements CcpBusiness, JnRepeatableMessage{
+
+		/**
+		 * Puts the original e-mail of the last resume that saved the address in {@code email}.
+		 * @param json the address and the e-mail of the resume
+		 * @return the values of the template
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation jsonWithOriginalEmail = json
+					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
+			return jsonWithOriginalEmail;
+		}
+	}
+
+	/**
 	 * Tells the owner of the resume that every data of it was deleted for good. Repeatable.
 	 */
 	public static class VisNotifyUserAboutDeletedResume implements CcpBusiness, JnRepeatableMessage{

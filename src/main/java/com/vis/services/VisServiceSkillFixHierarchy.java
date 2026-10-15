@@ -24,11 +24,10 @@ import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyRefuseAlreadyReviewed;
 import com.vis.entities.VisEntityCommandNotAllowedToUser;
+import com.vis.entities.VisEntitySkillFixHierarchyDailyLimit;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
-import com.vis.entities.VisEntitySkillFixHierarchyWithdrawn;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.messages.VisMessages;
-import com.vis.status.VisProcessStatusDeleteSkillFixHierarchy;
 import com.vis.status.VisProcessStatusFixSkillHierarchy;
 
 /**
@@ -42,7 +41,10 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 	 * Saves the suggestion as pending, which notifies the user and the support bot operator. A user that the
 	 * operator chose to ignore (in any command: the ignoring is global, {@link VisEntityCommandNotAllowedToUser})
 	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified. A request whose skills were
-	 * all reviewed before gets {@code alreadyReviewed} (208): nothing stays pending and the user is emailed.
+	 * all reviewed before gets {@code alreadyReviewed} (208): nothing stays pending and the user is emailed. A candidate
+	 * who requested a fix in the last 24 hours ({@link VisEntitySkillFixHierarchyDailyLimit}, written at each saved request)
+	 * gets {@code dailyLimitReached} (429): each request emails the candidate and opens a ticket to the operator, so one
+	 * per 24 hours. The 409 of a request still pending is checked first and does not spend the day.
 	 */
 	FixSkillHierarchy{
 		/**
@@ -52,12 +54,22 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpBusiness saveAsPending = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillFixHierarchyPending.ENTITY);
+			CcpBusiness saveAndSpendTheDay = request -> {
+				CcpJsonRepresentation savedRequest = saveAsPending.execute(request);
+				// written here, and not by the pending entity, because that one writes through the messaging: the next
+				// request of the candidate must already find the day spent
+				String email = json.getAsString(VisEntitySkillFixHierarchyPending.Fields.email);
+				CcpJsonRepresentation dailyLimit = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkillFixHierarchyDailyLimit.Fields.email, email);
+				VisEntitySkillFixHierarchyDailyLimit.ENTITY.save(dailyLimit);
+				return savedRequest;
+			};
 
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
 				.ifThisIdIsPresentInEntity(VisEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.userNotAllowed).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).returnStatus(CcpProcessStatusDefault.CONFLICT).and()
-				.executeAction(saveAsPending)
+				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyDailyLimit.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.dailyLimitReached).and()
+				.executeAction(saveAndSpendTheDay)
 				.andFinallyReturningTheseFields(FixSkillHierarchyResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
 			;
@@ -112,11 +124,9 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 	/**
 	 * The candidate withdraws a suggestion that is still pending. Only deletes from the pending entity: what was
 	 * already reviewed (fulfiled) is review history and cannot be undone by the candidate. Responds 404 when
-	 * there is no pending suggestion (e.g. it was reviewed between the candidate opening the modal and giving up), and
-	 * {@code withdrawnRecently} (429) when the candidate already withdrew a request of the same parent and type within the
-	 * hour ({@link VisEntitySkillFixHierarchyWithdrawn}, recorded at each withdrawal): requesting it again is allowed,
-	 * withdrawing it again is not, so that an undecided candidate does not open and cancel tickets to the operator (and
-	 * emails to themselves) in a loop. Same rule as the withdrawal of a skill suggestion.
+	 * there is no pending suggestion (e.g. it was reviewed between the candidate opening the modal and giving up).
+	 * Withdrawing the same parent and type again is allowed: the daily limit of {@link #FixSkillHierarchy} already
+	 * bounds how many tickets the candidate opens to the operator.
 	 *
 	 * The existence is checked before deleting, and not by the result of the deletion: the pending entity writes
 	 * through the messaging, so {@code delete} only tells that the message was accepted, and up to 2026-09-30
@@ -134,7 +144,6 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 				CcpJsonRepresentation storedRequest = jsonWithTheStoredRequest.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillFixHierarchyPending.ENTITY);
 				CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(json);
 				VisEntitySkillFixHierarchyPending.ENTITY.delete(completeRequest);
-				VisEntitySkillFixHierarchyWithdrawn.ENTITY.save(json);
 				// the operator's ticket of this request leaves /pendingTickets
 				String noticeTemplateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class.getName();
 				JnBusinessCancelSupportPendingCommand.INSTANCE.cancel(noticeTemplateId, completeRequest);
@@ -144,7 +153,6 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
 				.ifThisIdIsNotPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).returnStatus(CcpProcessStatusDefault.NOT_FOUND).and()
-				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyWithdrawn.ENTITY).returnStatus(VisProcessStatusDeleteSkillFixHierarchy.withdrawnRecently).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).executeAction(deleteTheStoredRequest)
 				.andFinallyReturningTheseFields(FixSkillHierarchyResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)

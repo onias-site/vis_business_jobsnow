@@ -1,6 +1,5 @@
 package com.vis.json.transformers;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -14,8 +13,6 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityVirtualHashGrouper;
-import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
-import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
 import com.vis.json.fields.validation.VisLanguages;
 import com.vis.json.fields.validation.VisResumeSkillCategories;
@@ -25,8 +22,9 @@ import com.vis.json.fields.validation.VisResumeSkillCategories;
  * primary key field of the grouper, then every combination among those lists (each combination is one record, whose id
  * is a hash of the resume). Only exact values take part; the numeric ranges (claims, availability, temporary job time)
  * stay out of the hash and are compared after the read by id. A spoken language always gets the neutral value
- * {@code none} too, and so does the skill, so a search that requires no language, or no skill, finds the resume. A
- * resume that accepts every region gets the single neutral ddd {@link #ANY_REGION} instead of one value per region.
+ * {@code none} too, and so does the skill, so a search that requires no language, or no skill, finds the resume. The
+ * regions (ddd) stay out of the hash, compared after the read by id like the ranges: until 2026-10-14 they took part,
+ * and multiplied the combinations by the number of regions (up to 48,720 groups for one resume, saves of 230 s).
  */
 public class VisResumeHashCombinations implements Function<CcpJsonRepresentation, List<CcpJsonRepresentation>>{
 
@@ -38,37 +36,6 @@ public class VisResumeHashCombinations implements Function<CcpJsonRepresentation
 
 	/** The largest number of years of experience: a larger {@code experience} is the year the experience started. */
 	private static final int MAX_YEARS_OF_EXPERIENCE = 70;
-
-	/** The ddd of the home office jobs, the only accepted ddd that is not a region. */
-	private static final int HOME_OFFICE = 10;
-
-	/** The neutral ddd: a resume that accepts every region ("any state / city") gets only this one. */
-	public static final int ANY_REGION = 0;
-
-	/** Every region: the ddds accepted by {@code VisJsonCommonsFields.ddd}, except the home office. */
-	private static final Set<Integer> ALL_REGIONS = getAllRegions();
-
-	/**
-	 * Reads the ddds accepted by {@code VisJsonCommonsFields.ddd}, except the home office.
-	 * @return the regions
-	 */
-	private static Set<Integer> getAllRegions() {
-		try {
-			String dddFieldName = VisJsonCommonsFields.ddd.name();
-			Field dddField = VisJsonCommonsFields.class.getField(dddFieldName);
-			CcpJsonFieldTypeNumberUnsigned dddRule = dddField.getAnnotation(CcpJsonFieldTypeNumberUnsigned.class);
-			long[] allowedDdds = dddRule.allowedValues();
-			Set<Integer> regions = new LinkedHashSet<>();
-			for (long allowedDdd : allowedDdds) {
-				int region = (int) allowedDdd;
-				regions.add(region);
-			}
-			regions.remove(HOME_OFFICE);
-			return regions;
-		} catch (NoSuchFieldException e) {
-			throw new IllegalStateException(e);
-		}
-	}
 
 	/**
 	 * Combines the values of every field: each combination becomes one record of the grouper.
@@ -163,26 +130,6 @@ public class VisResumeHashCombinations implements Function<CcpJsonRepresentation
 			skillValues.add(skillValue);
 		}
 
-		// the json keeps numbers as decimals ("11.0")
-		Set<Integer> ddds = new LinkedHashSet<>();
-		List<String> dddTexts = json.getAsStringList(VisEntityResume.Fields.ddd);
-		for (String dddText : dddTexts) {
-			double dddNumber = Double.parseDouble(dddText);
-			int ddd = (int) dddNumber;
-			ddds.add(ddd);
-		}
-		// "any state / city" is a single neutral value: a search reads the group of its own ddd and the group of ANY_REGION
-		boolean acceptsAnyRegion = ddds.containsAll(ALL_REGIONS);
-		if(acceptsAnyRegion) {
-			ddds.removeAll(ALL_REGIONS);
-			ddds.add(ANY_REGION);
-		}
-		List<CcpJsonRepresentation> dddValues = new ArrayList<>();
-		for (Integer ddd : ddds) {
-			CcpJsonRepresentation dddValue = CcpOtherConstants.EMPTY_JSON.put(VisEntityVirtualHashGrouper.Fields.ddd, ddd);
-			dddValues.add(dddValue);
-		}
-
 		Integer[] pcds = VisRecordType.recordToSave.fromBooleanField(VisEntityResume.Fields.pcd, json);
 		List<CcpJsonRepresentation> pcdValues = this.toValues(VisEntityVirtualHashGrouper.Fields.pcd, pcds);
 
@@ -211,7 +158,6 @@ public class VisResumeHashCombinations implements Function<CcpJsonRepresentation
 				resumeTypeValues,
 				languageValues,
 				skillValues,
-				dddValues,
 				pcdValues,
 				negotiableClaimValues,
 				travelValues,

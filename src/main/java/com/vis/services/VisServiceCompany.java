@@ -34,14 +34,16 @@ public enum VisServiceCompany implements JnService {
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			
 			var search = json.getAsString(VisServiceCompany.FieldsToSearchCompaniesByTheirFirstThreeInitials.search);	
-			var threeInitials = search.substring(0, 3);
+			// the groups are keyed by the three initials in capitals; the text itself keeps the spelling of the user
+			var typedInitials = search.substring(0, 3);
+			var threeInitials = typedInitials.toUpperCase();
 			var querySearch = json.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, threeInitials);
 			CcpBusiness retrievesEmptyCompaniesList = query -> query.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies, Arrays.asList(search));
 			CcpEntityMetaData entityMetaData = VisEntityGroupCompaniesByTheirFirstThreeInitials.ENTITY.getEntityMetaData();
 			CcpJsonRepresentation searchResult = entityMetaData.getOneByIdOrHandleItIfThisIdWasNotFound(querySearch, retrievesEmptyCompaniesList);
 			var jsonPiece = searchResult.getJsonPiece(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies);
 			
-			var typedJustThreeCharacters = search.equals(threeInitials);
+			var typedJustThreeCharacters = search.equals(typedInitials);
 			
 			if(typedJustThreeCharacters) {
 				return jsonPiece;
@@ -72,7 +74,7 @@ public enum VisServiceCompany implements JnService {
 	/** Input fields of the company search. */
 	public static enum FieldsToSearchCompaniesByTheirFirstThreeInitials implements CcpJsonFieldName{
 		/** The {@code search} field: text, required. */
-		@CcpJsonFieldTypeString(minLength = 3, maxLength = 20)
+		@CcpJsonFieldTypeString(minLength = 3, maxLength = 50)
 		@CcpJsonFieldValidatorRequired
 		search
 	}
