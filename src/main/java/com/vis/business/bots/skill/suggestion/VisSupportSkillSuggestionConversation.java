@@ -3,7 +3,6 @@ package com.vis.business.bots.skill.suggestion;
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.vis.business.bots.skill.hierarchy.VisSupportSkillFixHierarchyFields;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnLanguage;
 import com.vis.entities.VisEntitySkillPending;

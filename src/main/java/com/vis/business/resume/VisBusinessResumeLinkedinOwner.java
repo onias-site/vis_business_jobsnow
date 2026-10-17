@@ -10,7 +10,6 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.messages.JnSendMessageToUser;
 import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityResumeLinkedin;
 import com.vis.messages.VisMessages;
 
 /**

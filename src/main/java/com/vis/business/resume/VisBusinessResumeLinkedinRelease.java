@@ -7,7 +7,6 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityResumeLinkedin;
 
 /**
  * Runs before a resume is saved and before it is deleted everywhere: takes the e-mail of the resume out of the LinkedIn

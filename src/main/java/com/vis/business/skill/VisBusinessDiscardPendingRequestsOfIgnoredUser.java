@@ -10,7 +10,6 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.business.messages.JnBusinessCancelSupportPendingCommand;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.vis.entities.VisEntityCommandNotAllowedToUser;
 
 /**
  * Runs after a user is saved in {@link VisEntityCommandNotAllowedToUser}, that is, when the support bot operator

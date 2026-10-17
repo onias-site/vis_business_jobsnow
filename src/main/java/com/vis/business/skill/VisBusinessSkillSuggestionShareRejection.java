@@ -2,8 +2,6 @@ package com.vis.business.skill;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.vis.entities.VisEntitySkillRejected;
-import com.vis.entities.VisEntitySkillReviewed;
 
 /**
  * Callback of the transfer of a {@code VisEntitySkillPending} suggestion to {@link VisEntitySkillRejected}, executed after the
