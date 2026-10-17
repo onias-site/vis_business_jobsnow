@@ -41,8 +41,8 @@ import com.ccp.decorators.CcpFileDecorator;
  * Cached for 1 hour.
  */
 @CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupPositionsBySkills.Fields.class)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntityGroupPositionsBySkills.Fields.class)
 public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_group_positions_by_skills}, with every decorator of this configuration. */

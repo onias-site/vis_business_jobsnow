@@ -27,8 +27,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * is shown to every candidate. 1-hour cache.
  */
 @CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillReviewed.Fields.class)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntitySkillReviewed.Fields.class)
 public class VisEntitySkillReviewed implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_skill_reviewed}, with every decorator of this configuration. */

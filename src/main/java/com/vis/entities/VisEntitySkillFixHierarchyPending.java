@@ -1,9 +1,5 @@
 package com.vis.entities;
 
-import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError;
-
-import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenTransferOperationType.afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,15 +8,19 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpExceptionFlow;
-import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.transfer.CcpAfterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.write.CcpAfterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteAnyWhereFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -34,20 +34,6 @@ import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.JnEntityInstantMessengerParametersToSend;
 import com.jn.entities.JnEntityInstantMessengerTemplateMessage;
-import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
-import com.jn.entities.decorators.annotations.JnEntityVersionable;
-import com.jn.entities.decorators.annotations.JnEntityVersionablePurge;
-import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTransfer;
-import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenTransferOperation;
-import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite;
-import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWriteOperation;
-import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
-import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterTransferBuilder;
-import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterWriteBuilder;
-import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeTransferBuilder;
-import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeWriteBuilder;
-import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
-import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
@@ -85,46 +71,17 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy;
  * Versionable, with asynchronous writing and a 1-hour cache.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {
-		@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5)
-		,@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8)
-		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeWriteBuilder.class, priority = 7)
-		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeTransferBuilder.class, priority = 7)
-		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserAfterWriteBuilder.class, priority = 5)
-		,@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserAfterTransferBuilder.class, priority = 5)
-})
-
-@JnEntitySendMessageToUserWhenWrite({ 
-	@JnEntitySendMessageToUserWhenWriteOperation(
-			operationType = afterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError,
-			messageTemplate =  VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class
-			),
-})
-@JnEntitySendMessageToUserWhenTransfer(
-		{
-			@JnEntitySendMessageToUserWhenTransferOperation
-			(
-				operationType = afterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError,
-				messageTemplate = VisNotifyUserAboutFulfiledSkillHierarchy.class,
-				targetEntity = VisEntitySkillFixHierarchyFulfiled.class
-			),
-		}
-		)
-
-@CcpEntityOperations(value = {
-		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity,  execute = {VisBusinessSkillFixHierarchyRefuseAlreadyReviewed.class}, operationHandlers = {}),
-		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity,  execute = {VisBusinessSkillFixHierarchyCreateItems.class}, operationHandlers = {}),
-		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteFromMainEntity,  execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {}),
-		@CcpEntityOperation(operationType = CcpEntityOperationType.afterDeleteAnyWhereFromMainEntity,  execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {}),
-},
-globalHandlers = {
-		@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class}),
-})
-@JnEntityAsyncWriter(JnAsyncWriterEntity.class)
-@JnEntityVersionable(JnVersionableEntity.class)
-@JnEntityVersionablePurge(JnVersionablePurgeEntity.class)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyPending.Fields.class)
+@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
+@CcpEntityVersionable(JnVersionableEntity.class)
+@CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntitySkillFixHierarchyPending.Fields.class)
+@CcpAfterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError(VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class)
+@CcpAfterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError(messageTemplate = VisNotifyUserAboutFulfiledSkillHierarchy.class, targetEntity = VisEntitySkillFixHierarchyFulfiled.class)
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessSkillFixHierarchyCreateItems.class}, operationHandlers = {@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class})})
+@CcpAfterDeleteFromMainEntity(execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class})})
+@CcpBeforeSaveFromMainEntity(execute = {VisBusinessSkillFixHierarchyRefuseAlreadyReviewed.class}, operationHandlers = {@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class})})
+@CcpAfterDeleteAnyWhereFromMainEntity(execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class})})
 public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_skill_fix_hierarchy_pending}, with every decorator of this configuration. */

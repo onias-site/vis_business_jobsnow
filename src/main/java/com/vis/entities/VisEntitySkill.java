@@ -32,8 +32,8 @@ import java.util.stream.Stream;
  * the word count per resume to calculate the ranking.
  */
 @CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkill.Fields.class)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntitySkill.Fields.class)
 public class VisEntitySkill implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_skill}, with every decorator of this configuration. */

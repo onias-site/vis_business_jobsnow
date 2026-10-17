@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.ccp.business.CcpBusiness;
+import com.jn.business.messages.JnMessageTemplate;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -30,7 +30,7 @@ public class VisMessages {
 	 * of the same user in the same day was refused as a repetition, which broke the end of the review in the
 	 * support bot.
 	 */
-	public static class VisNotifyUserAboutFulfiledSkillHierarchy implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutFulfiledSkillHierarchy implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Prepares the review summary (see {@code VisSkillFixHierarchyReviewMessage.prepare}).
@@ -52,7 +52,7 @@ public class VisMessages {
 	 * <p>Repeatable: every new request is a new fact, so the notice goes out even if the same user already had
 	 * one today (the email) or the same parent within the hour (the command to the operator).
 	 */
-	public static class VisNotifySupportAndUserAboutPendingSkillHierarchyRequest  implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifySupportAndUserAboutPendingSkillHierarchyRequest  implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Puts back the readable e-mail and adds {@code typeDescription}, {@code skillNames} and the user's
@@ -112,7 +112,7 @@ public class VisMessages {
 	 * {@link VisNotifySupportAndUserAboutPendingSkillHierarchyRequest} ({@code typeDescription} and
 	 * {@code skillNames}). Repeatable: every refused request is a new fact.
 	 */
-	public static class VisNotifyUserAboutAlreadyReviewedSkillHierarchy implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutAlreadyReviewedSkillHierarchy implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Prepares the same values as the pending request notice.
@@ -130,7 +130,7 @@ public class VisMessages {
 	 * transformer left the hash in {@code email}) and adds {@code synonymNames}. Repeatable: every suggestion is a
 	 * new fact, so the notice goes out even if the same candidate already suggested another skill today.
 	 */
-	public static class VisNotifySupportAndUserAboutPendingSkillRequest implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifySupportAndUserAboutPendingSkillRequest implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Puts back the readable email and adds {@code synonymNames} and the candidate's justification escaped for the
@@ -158,7 +158,7 @@ public class VisMessages {
 	 * Email to the candidate when the suggested skill is approved, that is, when the suggestion goes to
 	 * {@code VisEntitySkillApproved}. Repeatable: every review is a new fact.
 	 */
-	public static class VisNotifyUserAboutAprovedSkill implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutAprovedSkill implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Prepares the review result (see {@code VisSkillSuggestionReviewMessage.prepare}).
@@ -174,7 +174,7 @@ public class VisMessages {
 	 * Email to the candidate when the suggested skill is rejected, that is, when the suggestion goes to
 	 * {@code VisEntitySkillRejected}. Repeatable: every review is a new fact.
 	 */
-	public static class VisNotifyUserAboutRejectedSkill implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutRejectedSkill implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Prepares the review result (see {@code VisSkillSuggestionReviewMessage.prepare}).
@@ -190,7 +190,7 @@ public class VisMessages {
 	/**
 	 * Tells the owner of the resume that it was saved. Repeatable: every save is a new fact.
 	 */
-	public static class VisNotifyUserAboutSavedResume implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutSavedResume implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Puts the original e-mail of the owner in {@code email}.
@@ -207,7 +207,7 @@ public class VisMessages {
 	/**
 	 * Tells the owner of the resume that it was deactivated (moved to the inactive resumes). Repeatable.
 	 */
-	public static class VisNotifyUserAboutDeactivatedResume implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutDeactivatedResume implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Puts the original e-mail of the owner in {@code email}.
@@ -224,7 +224,7 @@ public class VisMessages {
 	/**
 	 * Tells the owner of the resume that it was reactivated (moved back from the inactive resumes). Repeatable.
 	 */
-	public static class VisNotifyUserAboutReactivatedResume implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutReactivatedResume implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Puts the original e-mail of the owner in {@code email}.
@@ -245,7 +245,7 @@ public class VisMessages {
 	 * saving the same address at the same time raced between the "already sent" check and the record of the sending,
 	 * and the bulk of that record ended in {@code JnErrorReprocessInfiniteLoopPrevented}.
 	 */
-	public static class VisNotifySupportAboutSharedLinkedin implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifySupportAboutSharedLinkedin implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Puts the original e-mail of the last resume that saved the address in {@code email}.
@@ -262,7 +262,7 @@ public class VisMessages {
 	/**
 	 * Tells the owner of the resume that every data of it was deleted for good. Repeatable.
 	 */
-	public static class VisNotifyUserAboutDeletedResume implements CcpBusiness, JnRepeatableMessage{
+	public static class VisNotifyUserAboutDeletedResume implements JnMessageTemplate, JnRepeatableMessage{
 
 		/**
 		 * Puts the original e-mail of the owner in {@code email}.

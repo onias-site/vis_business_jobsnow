@@ -39,8 +39,8 @@ import java.util.stream.Stream;
  * Allows fast company lookups by prefix. Cached for 1 hour. Includes the initial data load logic.
  */
 @CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.class)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.class)
 public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_group_companies_by_their_first_three_initials}, with every decorator of this configuration. */

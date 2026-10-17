@@ -9,11 +9,9 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
-import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
@@ -41,17 +39,15 @@ import com.vis.json.fields.validation.VisUserRequestCommands;
  * Saving a user discards every request of the user still pending, as if it had never existed
  * ({@link VisBusinessDiscardPendingRequestsOfIgnoredUser}).
  */
+@CcpEntityCache(3600)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntityCommandNotAllowedToUser.Fields.class)
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessDiscardPendingRequestsOfIgnoredUser.class}, operationHandlers = {})
 @CcpEntityTwin(
 		twinEntityName = "vis_command_reallowed_to_user",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
-@CcpEntityOperations(value = {
-		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity,  execute = {VisBusinessDiscardPendingRequestsOfIgnoredUser.class}, operationHandlers = {}),
-})
-@CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityCommandNotAllowedToUser.Fields.class)
 public class VisEntityCommandNotAllowedToUser implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_command_not_allowed_to_user}, with every decorator of this configuration. */

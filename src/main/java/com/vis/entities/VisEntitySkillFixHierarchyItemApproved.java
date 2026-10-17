@@ -20,8 +20,8 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * 1-hour cache.
  */
 @CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyItemApproved.Fields.class)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntitySkillFixHierarchyItemApproved.Fields.class)
 public class VisEntitySkillFixHierarchyItemApproved implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_skill_fix_hierarchy_item_approved}, with every decorator of this configuration. */

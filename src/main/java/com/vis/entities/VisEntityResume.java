@@ -1,10 +1,5 @@
 package com.vis.entities;
 
-import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterDeleteAnyWhereFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
-import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
-import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning;
-import static com.jn.entities.decorators.enums.JnEntitySendMessageToUserWhenWriteOperationType.afterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,15 +8,22 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorator;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCustomDecorators;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperation;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityOperations;
-import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityOperationType;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpStoredParentIdsField;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.write.CcpAfterDeleteAnyWhereFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.write.CcpAfterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.write.CcpAfterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.write.CcpAfterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeDeleteAnyWhereFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -37,21 +39,9 @@ import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.entities.JnEntityEmailTemplateMessage;
-import com.jn.entities.decorators.annotations.JnEntityAsyncWriter;
-import com.jn.entities.decorators.annotations.JnEntityGrouperChild;
-import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWrite;
-import com.jn.entities.decorators.annotations.JnEntitySendMessageToUserWhenWriteOperation;
-import com.jn.entities.decorators.builders.JnEntitySendMessageToUserAfterWriteBuilder;
-import com.jn.entities.decorators.builders.JnEntitySendMessageToUserBeforeWriteBuilder;
-import com.jn.entities.decorators.annotations.JnEntityVersionable;
-import com.jn.entities.decorators.annotations.JnEntityVersionablePurge;
-import com.jn.entities.decorators.annotations.JnStoredParentIdsField;
-import com.jn.entities.decorators.builders.JnEntityAsyncWriterBuilder;
-import com.jn.entities.decorators.builders.JnEntityGrouperChildAfterWriteBuilder;
-import com.jn.entities.decorators.builders.JnEntityGrouperChildBeforeWriteBuilder;
-import com.jn.entities.decorators.builders.JnEntityVersionableBuilder;
-import com.jn.entities.decorators.builders.JnEntityVersionablePurgeBuilder;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -60,13 +50,13 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
 import com.vis.business.resume.VisBusinessResumeLinkedinOwner;
 import com.vis.business.resume.VisBusinessResumeLinkedinRelease;
-import com.vis.json.transformers.VisResumeHashCombinations;
-import com.vis.messages.VisMessages;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
 import com.vis.json.fields.validation.VisJsonValidatorHomeOfficeAlone;
 import com.vis.json.transformers.VisJsonTransformerExperienceStartYear;
 import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
+import com.vis.json.transformers.VisResumeHashCombinations;
+import com.vis.messages.VisMessages;
 
 /**
  * Represents the candidate's core Resume entity. Stores the complete professional profile:
@@ -79,7 +69,7 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
  * back, which is the reactivation):
  * <ul>
  * <li>the save fills the {@code hash} list with every search the resume satisfies;</li>
- * <li>{@code @JnEntityGrouperChild} keeps the id of the resume in the groups of {@code JnEntityGrouper} of its hashes:
+ * <li>{@code @CcpEntityGrouperChild} keeps the id of the resume in the groups of {@code JnEntityGrouper} of its hashes:
  * the active resumes in the main groups, the inactive ones in the twin groups ({@code jn_inactive_grouper}); the save
  * moves it to the groups of its new hashes, the deactivation and the reactivation move it between the sides, and the
  * delete everywhere takes it out of both;</li>
@@ -91,53 +81,28 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
  * A notice that fails to go out saves a warning instead of undoing the write.
  */
 @CcpEntityCache(3600)
-@CcpEntityCustomDecorators(value = {
-		@CcpEntityCustomDecorator(value = JnEntityVersionableBuilder.class, priority = 2),
-		@CcpEntityCustomDecorator(value = JnEntityVersionablePurgeBuilder.class, priority = 5),
-		@CcpEntityCustomDecorator(value = JnEntityAsyncWriterBuilder.class, priority = 8),
-		@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserBeforeWriteBuilder.class, priority = 7),
-		@CcpEntityCustomDecorator(value = JnEntitySendMessageToUserAfterWriteBuilder.class, priority = 5),
-		@CcpEntityCustomDecorator(value = JnEntityGrouperChildBeforeWriteBuilder.class, priority = 7),
-		@CcpEntityCustomDecorator(value = JnEntityGrouperChildAfterWriteBuilder.class, priority = 5),
-		})
-@JnEntitySendMessageToUserWhenWrite({
-	@JnEntitySendMessageToUserWhenWriteOperation(
-			operationType = afterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning,
-			messageTemplate = VisMessages.VisNotifyUserAboutSavedResume.class
-			),
-	@JnEntitySendMessageToUserWhenWriteOperation(
-			operationType = afterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning,
-			messageTemplate = VisMessages.VisNotifyUserAboutDeactivatedResume.class
-			),
-	@JnEntitySendMessageToUserWhenWriteOperation(
-			operationType = afterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning,
-			messageTemplate = VisMessages.VisNotifyUserAboutReactivatedResume.class
-			),
-	@JnEntitySendMessageToUserWhenWriteOperation(
-			operationType = afterDeleteAnyWhereFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning,
-			messageTemplate = VisMessages.VisNotifyUserAboutDeletedResume.class
-			),
-})
+@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
+@CcpEntityVersionable(JnVersionableEntity.class)
+@CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
+@CcpEntityFieldsValidator(VisEntityResume.Fields.class)
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessResumeLinkedinOwner.class}, operationHandlers = {})
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpBeforeDeleteAnyWhereFromMainEntity(execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {})
+@CcpAfterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutSavedResume.class)
+@CcpAfterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutDeactivatedResume.class)
+@CcpAfterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutReactivatedResume.class)
+@CcpAfterDeleteAnyWhereFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutDeletedResume.class)
 @CcpEntityTwin(
 		twinEntityName = "vis_inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
-		) 
+		)
 // the e-mails that use each LinkedIn address, read by id on the save: an address already used by another e-mail
 // reaches the support operator (VisEntityResumeLinkedin)
-@CcpEntityOperations(value = {
-		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeSaveFromMainEntity, execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {}),
-		@CcpEntityOperation(operationType = CcpEntityOperationType.afterSaveFromMainEntity, execute = {VisBusinessResumeLinkedinOwner.class}, operationHandlers = {}),
-		@CcpEntityOperation(operationType = CcpEntityOperationType.beforeDeleteAnyWhereFromMainEntity, execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {}),
-})
-@JnEntityAsyncWriter(JnAsyncWriterEntity.class)
-@JnEntityVersionable(JnVersionableEntity.class)
-@JnEntityVersionablePurge(JnVersionablePurgeEntity.class)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResume.Fields.class)
+@CcpBeforeSaveFromMainEntity(execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {})
 // one group per hash (each search the resume satisfies): the entity that gives the id of each one (and names the
 // groups); the combinations of its values and the list where the save keeps those ids come from the field hash
-@JnEntityGrouperChild(VisEntityVirtualHashGrouper.class)
+@CcpEntityGrouperChild(value = VisEntityVirtualHashGrouper.class, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
 public class VisEntityResume implements CcpEntityConfigurator {
 	
 	/** The entity {@code vis_resume}, with every decorator of this configuration. */
@@ -287,11 +252,11 @@ public class VisEntityResume implements CcpEntityConfigurator {
 
 		/**
 		 * The {@code hash} field: list, validated as in {@code VisJsonCommonsFields}; filled on every save by the decorator
-		 * of {@code @JnEntityGrouperChild}, it holds the id of every search the resume satisfies: the groups the resume is
+		 * of {@code @CcpEntityGrouperChild}, it holds the id of every search the resume satisfies: the groups the resume is
 		 * in, one per combination of {@code VisResumeHashCombinations}.
 		 */
 		@CcpJsonFieldValidatorArray
-		@JnStoredParentIdsField(VisResumeHashCombinations.class)
+		@CcpStoredParentIdsField(VisResumeHashCombinations.class)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		hash,
 

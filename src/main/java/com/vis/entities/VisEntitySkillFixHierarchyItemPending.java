@@ -3,13 +3,11 @@ package com.vis.entities;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfer;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDataTransfers;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.transfers.CcpAfterTransferDataFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
-import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDataTransferType;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
@@ -30,17 +28,15 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * {@link VisBusinessSkillFixHierarchyItem} runs.
  * 1-hour cache.
  */
+@CcpEntityCache(3600)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntitySkillFixHierarchyItemPending.Fields.class)
+@CcpAfterTransferDataFromMainEntity(targetEntity = VisEntitySkillFixHierarchyItemApproved.class, execute = {VisBusinessSkillFixHierarchyItem.class}, transferHandlers = {})
 @CcpEntityTwin(
 		twinEntityName = "vis_skill_fix_hierarchy_item_rejected",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
-@CcpEntityDataTransfers({
-		@CcpEntityDataTransfer(operationType = CcpEntityDataTransferType.afterTransferDataFromMainEntity, targetEntity = VisEntitySkillFixHierarchyItemApproved.class, execute = {VisBusinessSkillFixHierarchyItem.class}, transferHandlers = {}),
-})
-@CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillFixHierarchyItemPending.Fields.class)
 public class VisEntitySkillFixHierarchyItemPending implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_skill_fix_hierarchy_item_pending}, with every decorator of this configuration. */

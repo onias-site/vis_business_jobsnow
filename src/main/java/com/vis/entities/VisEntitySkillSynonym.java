@@ -24,8 +24,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * suggesting the same skill again through one of its synonyms. 1-hour cache.
  */
 @CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntitySkillSynonym.Fields.class)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntitySkillSynonym.Fields.class)
 public class VisEntitySkillSynonym implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_skill_synonym}, with every decorator of this configuration. */

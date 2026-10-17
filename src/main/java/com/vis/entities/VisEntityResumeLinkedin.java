@@ -41,7 +41,7 @@ import com.vis.messages.VisMessages;
  * 24). Both writes are atomic scripts run by the database, as in the groupers, so resumes saving the same address at the
  * same time do not overwrite each other.
  */
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityResumeLinkedin.Fields.class)
+@CcpEntityFieldsValidator(VisEntityResumeLinkedin.Fields.class)
 public class VisEntityResumeLinkedin implements CcpEntityConfigurator {
 
 	/** The entity {@code vis_resume_linkedin}, with every decorator of this configuration. */

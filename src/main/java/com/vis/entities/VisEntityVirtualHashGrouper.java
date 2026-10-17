@@ -21,8 +21,8 @@ import com.vis.json.fields.validation.VisJsonHashCombinationFields;
  * number of regions, up to 48,720 groups for one resume. Cached for 1 hour.
  */
 @CcpEntityCache(3600)
-@CcpEntityFieldsTransformer(classReferenceWithTheFields = JnJsonTransformersFieldsEntityDefault.class)
-@CcpEntityFieldsValidator(classReferenceWithTheFields = VisEntityVirtualHashGrouper.Fields.class)
+@CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
+@CcpEntityFieldsValidator(VisEntityVirtualHashGrouper.Fields.class)
 public class VisEntityVirtualHashGrouper{
 
 	/** The entity {@code vis_virtual_hash_grouper}, with every decorator of this configuration. */
