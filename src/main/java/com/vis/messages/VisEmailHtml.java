@@ -7,7 +7,7 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
  * Text typed by a person (the candidate's justification, the operator's justification) that goes into the HTML body of
  * an email: escaped, so that a {@code <} typed by them shows up as text, and with the line breaks kept.
  */
-final class VisEmailHtml {
+public final class VisEmailHtml {
 
 	/** Utility class; not instantiable. */
 	private VisEmailHtml() {}
@@ -17,11 +17,14 @@ final class VisEmailHtml {
 	 * @param text the typed text
 	 * @return the escaped text
 	 */
-	static String escape(String text) {
+	public static String escape(String text) {
 		String withoutAmpersand = text.replace("&", "&amp;");
 		String withoutLessThan = withoutAmpersand.replace("<", "&lt;");
 		String withoutGreaterThan = withoutLessThan.replace(">", "&gt;");
-		String withLineBreaks = withoutGreaterThan.replace("\n", "<br>");
+		// the body is still a template: a {email} typed by someone would be filled by the sending
+		String withoutOpeningBrace = withoutGreaterThan.replace("{", "&#123;");
+		String withoutClosingBrace = withoutOpeningBrace.replace("}", "&#125;");
+		String withLineBreaks = withoutClosingBrace.replace("\n", "<br>");
 		return withLineBreaks;
 	}
 

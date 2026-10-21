@@ -275,4 +275,20 @@ public class VisMessages {
 			return jsonWithOriginalEmail;
 		}
 	}
+
+	/**
+	 * Sends a recruiter the table of the resumes added or changed in the last days. Not repeatable: the sending is
+	 * recorded per recruiter and day, so a second run on the same day does not send it again.
+	 */
+	public static class VisNotifyRecruiterAboutResumes implements JnMessageTemplate{
+
+		/**
+		 * The values of the template are already in the json (the readable e-mail of the recruiter, the table, the links).
+		 * @param json the values of the e-mail
+		 * @return the same json
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			return json;
+		}
+	}
 }
