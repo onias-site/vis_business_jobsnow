@@ -35,7 +35,8 @@ import com.vis.json.transformers.VisSeniorityType;
  *
  * <p>Input: the resume as stored in {@code vis_resume} (the e-mail already hashed, {@code experience} as the year the
  * experience began), {@code rankings} (each skill and its position in {@code vis_skill}, the lower the better),
- * {@code insertion} and {@code lastChange} (the oldest and the newest timestamps of the resume in the history) and
+ * {@code insertion} and {@code lastChange} (the oldest and the newest timestamps of the resume in the history; without
+ * them the row has no date lines) and
  * {@code language} (of the texts).
  */
 public class VisBusinessBuildResumeRow implements CcpBusiness {
@@ -118,11 +119,6 @@ public class VisBusinessBuildResumeRow implements CcpBusiness {
 		List<String> job = this.getJob(json, language);
 		List<String> otherInformation = this.getOtherInformation(json, language);
 
-		Long insertionTime = json.getAsLongNumber(VisRecruiterResumesFields.insertion);
-		Long lastChangeTime = json.getAsLongNumber(VisRecruiterResumesFields.lastChange);
-		String insertionLine = getDateLine(VisRecruiterResumesTexts.insertionDate, insertionTime, language);
-		String lastChangeLine = getDateLine(VisRecruiterResumesTexts.lastChangeDate, lastChangeTime, language);
-
 		CcpJsonRepresentation withDefaultAlias = VisBusinessDefaultResumeAlias.INSTANCE.execute(json);
 		String defaultAlias = withDefaultAlias.getAsString(VisRecruiterResumesFields.defaultAlias);
 		List<Object> sortKeys = getSortKeys(json);
@@ -133,11 +129,31 @@ public class VisBusinessBuildResumeRow implements CcpBusiness {
 		CcpJsonRepresentation rowWithLanguagesAndSkills = rowWithRegions.put(VisRecruiterResumesFields.languagesAndSkills, languagesAndSkills);
 		CcpJsonRepresentation rowWithJob = rowWithLanguagesAndSkills.put(VisRecruiterResumesFields.job, job);
 		CcpJsonRepresentation rowWithOtherInformation = rowWithJob.put(VisRecruiterResumesFields.otherInformation, otherInformation);
-		CcpJsonRepresentation rowWithInsertion = rowWithOtherInformation.put(VisRecruiterResumesFields.insertion, insertionLine);
-		CcpJsonRepresentation rowWithLastChange = rowWithInsertion.put(VisRecruiterResumesFields.lastChange, lastChangeLine);
-		CcpJsonRepresentation rowWithDefaultAlias = rowWithLastChange.put(VisRecruiterResumesFields.defaultAlias, defaultAlias);
-		CcpJsonRepresentation row = rowWithDefaultAlias.put(VisRecruiterResumesFields.sortKeys, sortKeys);
+		CcpJsonRepresentation rowWithDefaultAlias = rowWithOtherInformation.put(VisRecruiterResumesFields.defaultAlias, defaultAlias);
+		CcpJsonRepresentation rowWithSortKeys = rowWithDefaultAlias.put(VisRecruiterResumesFields.sortKeys, sortKeys);
+		CcpJsonRepresentation row = putDateLines(rowWithSortKeys, json, language);
 		return row;
+	}
+
+	/**
+	 * The lines of insertion and of last change, only when the input brings both timestamps: they come from the history
+	 * of the resume, which only a query reads (the e-mail of resumes reads it; the details of a viewed resume, an online
+	 * request, do not, OQL).
+	 */
+	private static CcpJsonRepresentation putDateLines(CcpJsonRepresentation row, CcpJsonRepresentation json, JnLanguage language) {
+		boolean noDates = false == json.containsAllFields(VisRecruiterResumesFields.insertion, VisRecruiterResumesFields.lastChange);
+
+		if(noDates) {
+			return row;
+		}
+
+		Long insertionTime = json.getAsLongNumber(VisRecruiterResumesFields.insertion);
+		Long lastChangeTime = json.getAsLongNumber(VisRecruiterResumesFields.lastChange);
+		String insertionLine = getDateLine(VisRecruiterResumesTexts.insertionDate, insertionTime, language);
+		String lastChangeLine = getDateLine(VisRecruiterResumesTexts.lastChangeDate, lastChangeTime, language);
+		CcpJsonRepresentation rowWithInsertion = row.put(VisRecruiterResumesFields.insertion, insertionLine);
+		CcpJsonRepresentation rowWithLastChange = rowWithInsertion.put(VisRecruiterResumesFields.lastChange, lastChangeLine);
+		return rowWithLastChange;
 	}
 
 	private List<String> getWhatMatters(CcpJsonRepresentation json, JnLanguage language) {

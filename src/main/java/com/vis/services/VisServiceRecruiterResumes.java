@@ -15,6 +15,8 @@ import com.jn.utils.JnLanguage;
 import com.vis.business.recruiter.resumes.VisBusinessDefaultResumeAlias;
 import com.vis.business.recruiter.resumes.VisBusinessLoadSkillRankings;
 import com.vis.business.recruiter.resumes.VisRecruiterLinks;
+import com.vis.business.recruiter.resumes.VisBusinessViewedResumeDetails;
+import com.vis.business.recruiter.resumes.VisBusinessViewedResumesOfTheMonth;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
@@ -110,6 +112,20 @@ public enum VisServiceRecruiterResumes implements JnService {
 			CcpJsonRepresentation recruiterResumes = VisEntityRecruiterResumes.ENTITY.getOneById(recruiter);
 			List<CcpJsonRepresentation> resumes = recruiterResumes.getAsJsonList(VisEntityRecruiterResumes.Fields.resumes);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterResumes.Fields.resumes, resumes);
+			return response;
+		}
+	},
+	/** The resumes the recruiter logged in viewed in a month (the views kept by every save of {@code vis_viewed_resume}). */
+	GetViewedResumesOfTheMonth{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessViewedResumesOfTheMonth.INSTANCE.execute(json);
+			return response;
+		}
+	},
+	/** The details of a resume the recruiter logged in viewed in a month, as a row of the e-mail of resumes. */
+	GetViewedResumeDetails{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessViewedResumeDetails.INSTANCE.execute(json);
 			return response;
 		}
 	},

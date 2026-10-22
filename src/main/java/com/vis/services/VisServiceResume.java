@@ -12,6 +12,7 @@ import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.process.CcpProcessStatusDefault;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.resume.VisBusinessResumeViewersOfTheMonth;
 import com.vis.entities.VisEntityResume;
 import com.vis.json.fields.validation.VisJsonFieldsResumeKey;
 
@@ -181,6 +182,26 @@ public enum VisServiceResume implements JnService {
 		 */
 		public Class<?> getJsonValidationClass() {
 			return VisEntityResume.Fields.class;
+		}
+	},
+	/** The domains of the recruiters who viewed the resume of the candidate logged in, in a month (the screen "Quem me viu"). */
+	GetViewersOfTheMonth{
+		/**
+		 * Counts the recruiters of each domain who viewed the resume in the month.
+		 * @param json the candidate and the month ({@code yyyyMM})
+		 * @return the month and the views of each domain
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessResumeViewersOfTheMonth.INSTANCE.execute(json);
+			return response;
+		}
+
+		/**
+		 * Validates the input with the fields of the business.
+		 * @return the validation class
+		 */
+		public Class<?> getJsonValidationClass() {
+			return VisBusinessResumeViewersOfTheMonth.Fields.class;
 		}
 	},
 	;

@@ -1,6 +1,7 @@
 package com.vis.json.transformers;
 
 import com.ccp.decorators.CcpHashDecorator;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.especifications.db.utils.entity.fields.CcpJsonTransformersDefaultEntityField;
@@ -9,13 +10,21 @@ import com.vis.entities.VisEntityViewedResume;
 
 /**
  * Field transformer applied to the {@code linkedin} of the VisEntityViewedResume entity: the LinkedIn address is
- * replaced by its SHA-1 hash, so the record does not keep it in a readable form (LGPD). The original is not kept. A
+ * replaced by its SHA-1 hash, so the record does not keep it in a readable form (LGPD). The original goes on, for the
+ * decorators inside the transformers (the {@code after} side effects), in {@code originalLinkedin}, which is not a field
+ * of the entity and so is never written. A
  * json with no LinkedIn is returned as is.
  */
 public class VisJsonTransformerLinkedinHash implements CcpJsonTransformersDefaultEntityField {
 
+	/** The field that carries the original address past the transformer. */
+	public static enum JsonFieldNames implements CcpJsonFieldName {
+		/** The LinkedIn address as it came, before the hash. */
+		originalLinkedin,
+	}
+
 	/**
-	 * Replaces the LinkedIn address with its SHA-1 hash.
+	 * Replaces the LinkedIn address with its SHA-1 hash, keeping the original in {@code originalLinkedin}.
 	 * @param json the record
 	 * @return the record with the hash in {@code linkedin}
 	 */
@@ -30,7 +39,8 @@ public class VisJsonTransformerLinkedinHash implements CcpJsonTransformersDefaul
 		CcpStringDecorator linkedinText = new CcpStringDecorator(linkedin);
 		CcpHashDecorator linkedinHash = linkedinText.hash();
 		String hash = linkedinHash.asString(CcpHashAlgorithm.SHA1);
-		CcpJsonRepresentation jsonWithHashedLinkedin = json.put(VisEntityViewedResume.Fields.linkedin, hash);
+		CcpJsonRepresentation jsonWithOriginalLinkedin = json.put(JsonFieldNames.originalLinkedin, linkedin);
+		CcpJsonRepresentation jsonWithHashedLinkedin = jsonWithOriginalLinkedin.put(VisEntityViewedResume.Fields.linkedin, hash);
 		return jsonWithHashedLinkedin;
 	}
 
