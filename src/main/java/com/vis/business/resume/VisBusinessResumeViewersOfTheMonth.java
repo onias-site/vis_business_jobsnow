@@ -3,25 +3,30 @@ package com.vis.business.resume;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.utils.JnGroupers;
 import com.vis.business.recruiter.resumes.VisBusinessViewedResumesOfTheMonth;
-import com.vis.entities.VisEntityResumeViewersOfTheMonth;
+import com.vis.entities.VisEntityResumeViewsOfTheMonth;
+import com.vis.entities.VisEntityViewedResume;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
  * The domains of the recruiters who viewed the resume of the candidate in a month (the screen "Quem me viu"), read by id
- * (OQL): the record of the resume in the month in {@code vis_resume_viewers_of_the_month}, its period given in
- * {@code disposablePeriod}. The record is read straight from the database: the copy that the disposable entities keep in
- * {@code jn_disposable_record} has only the last month written, and would answer a month with no view with another one.
+ * (OQL): the group of counters of the resume in the month in {@code jn_grouper} (parent
+ * {@code vis_resume_views_of_the_month}, from the e-mail of the candidate and the month; child {@code vis_viewed_resume}),
+ * whose only child holds one counter per domain, filled by {@code @CcpEntityGrouperChildCounter} of
+ * {@code vis_viewed_resume}.
  *
  * <p>Input: {@code email} (the candidate) and {@code month} ({@code yyyyMM}). Output: {@code month} and
  * {@code viewers}, one item per domain ({@code domain} and {@code views}, the recruiters of that domain who viewed the
@@ -61,39 +66,38 @@ public class VisBusinessResumeViewersOfTheMonth implements CcpBusiness {
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String month = json.getAsString(Fields.month);
-		CcpJsonRepresentation candidate = json.getJsonPiece(VisEntityResumeViewersOfTheMonth.Fields.email);
-		CcpJsonRepresentation candidateWithHashedEmail = VisEntityResumeViewersOfTheMonth.ENTITY.getJsonWithHandledPrimaryKey(candidate);
-		CcpEntityMetaData viewersDetails = VisEntityResumeViewersOfTheMonth.ENTITY.getEntityMetaData();
+		CcpJsonRepresentation candidate = json.getJsonPiece(VisEntityResumeViewsOfTheMonth.Fields.email);
+		CcpJsonRepresentation candidateInTheMonth = candidate.put(VisEntityResumeViewsOfTheMonth.Fields.monthYear, month);
+		CcpJsonRepresentation candidateWithHashedEmail = VisEntityResumeViewsOfTheMonth.ENTITY.getJsonWithHandledPrimaryKey(candidateInTheMonth);
+		CcpEntityMetaData viewsDetails = VisEntityResumeViewsOfTheMonth.ENTITY.getEntityMetaData();
 		// the transformer also keeps the original e-mail: only the hash calculates the id
-		CcpJsonRepresentation candidateKey = viewersDetails.getOnlyExistingFields(candidateWithHashedEmail);
-		CcpJsonRepresentation candidateKeyInTheMonth = candidateKey.put(JnJsonCommonsFields.disposablePeriod, month);
-		CcpJsonRepresentation viewersOfTheMonth = viewersDetails.getOneByIdOrHandleItIfThisIdWasNotFound(candidateKeyInTheMonth, notFound -> CcpOtherConstants.EMPTY_JSON);
-		List<String> domains = viewersOfTheMonth.getAsStringList(VisEntityResumeViewersOfTheMonth.Fields.domain);
-		List<CcpJsonRepresentation> viewers = countByDomain(domains);
+		CcpJsonRepresentation candidateKey = viewsDetails.getOnlyExistingFields(candidateWithHashedEmail);
+		String parentId = VisEntityResumeViewsOfTheMonth.ENTITY.calculateId(candidateKey);
+		CcpEntityMetaData viewDetails = VisEntityViewedResume.ENTITY.getEntityMetaData();
+		CcpJsonRepresentation viewsByDomain = JnGroupers.getCounters(viewsDetails.entityName, viewDetails.entityName, parentId);
+		List<CcpJsonRepresentation> viewers = sortByViews(viewsByDomain);
 		CcpJsonRepresentation responseWithMonth = CcpOtherConstants.EMPTY_JSON.put(Fields.month, month);
 		CcpJsonRepresentation response = responseWithMonth.put(ResponseFields.viewers, viewers);
 		return response;
 	}
 
 	/**
-	 * Counts the items of each domain.
-	 * @param domains one item per recruiter who viewed the resume
+	 * The domains and their counters, the most viewed first.
+	 * @param viewsByDomain the counter of each domain
 	 * @return {@code domain} and {@code views} of each domain, the most viewed first, ties by the domain
 	 */
-	private static List<CcpJsonRepresentation> countByDomain(List<String> domains) {
-		Map<String, Integer> viewsByDomain = new TreeMap<>();
-		for (String domain : domains) {
-			viewsByDomain.merge(domain, 1, Integer::sum);
-		}
+	private static List<CcpJsonRepresentation> sortByViews(CcpJsonRepresentation viewsByDomain) {
+		Set<String> unsortedDomains = viewsByDomain.fieldSet();
+		Set<String> domains = new TreeSet<>(unsortedDomains);
 		List<CcpJsonRepresentation> viewers = new ArrayList<>();
-		for (Map.Entry<String, Integer> domainViews : viewsByDomain.entrySet()) {
-			String domain = domainViews.getKey();
-			Integer views = domainViews.getValue();
-			CcpJsonRepresentation viewerWithDomain = CcpOtherConstants.EMPTY_JSON.put(VisEntityResumeViewersOfTheMonth.Fields.domain, domain);
+		for (String domain : domains) {
+			CcpFieldName domainField = new CcpFieldName(domain);
+			Integer views = viewsByDomain.getAsIntegerNumber(domainField);
+			CcpJsonRepresentation viewerWithDomain = CcpOtherConstants.EMPTY_JSON.put(VisJsonCommonsFields.domain, domain);
 			CcpJsonRepresentation viewer = viewerWithDomain.put(ResponseFields.views, views);
 			viewers.add(viewer);
 		}
-		// the sort is stable: the domains with the same count stay in the alphabetical order of the map
+		// the sort is stable: the domains with the same count stay in the alphabetical order of the set
 		Comparator<CcpJsonRepresentation> byViews = Comparator.comparing(viewer -> viewer.getAsIntegerNumber(ResponseFields.views));
 		Comparator<CcpJsonRepresentation> mostViewedFirst = byViews.reversed();
 		viewers.sort(mostViewedFirst);

@@ -71,6 +71,10 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 @CcpAfterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError(messageTemplate = VisNotifyUserAboutRejectedSkill.class, targetEntity = VisEntitySkillRejected.class)
 @CcpAfterTransferDataFromMainEntity(targetEntity = VisEntitySkillApproved.class, execute = {VisBusinessSkillSuggestionApply.class, VisBusinessSkillSuggestionShareApproval.class}, transferHandlers = {})
 public class VisEntitySkillPending implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillPending INSTANCE = new VisEntitySkillPending();
+
+	private VisEntitySkillPending() {}
 
 	/** The entity {@code vis_skill_pending}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillPending.class).entityInstance;

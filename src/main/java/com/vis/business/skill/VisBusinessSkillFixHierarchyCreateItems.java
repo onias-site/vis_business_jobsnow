@@ -24,6 +24,10 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
  * to a request already pending never became an item, and the support bot skipped it without asking the operator.
  */
 public class VisBusinessSkillFixHierarchyCreateItems implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessSkillFixHierarchyCreateItems INSTANCE = new VisBusinessSkillFixHierarchyCreateItems();
+
+	private VisBusinessSkillFixHierarchyCreateItems() {}
 
 	/**
 	 * Runs the business described in the class documentation.

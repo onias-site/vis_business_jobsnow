@@ -14,6 +14,10 @@ import com.vis.messages.VisMessages;
  * holds the readable address.
  */
 public class VisBusinessSkillFixHierarchyNotifyAlreadyReviewed implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessSkillFixHierarchyNotifyAlreadyReviewed INSTANCE = new VisBusinessSkillFixHierarchyNotifyAlreadyReviewed();
+
+	private VisBusinessSkillFixHierarchyNotifyAlreadyReviewed() {}
 
 	/**
 	 * Runs the business described in the class documentation.

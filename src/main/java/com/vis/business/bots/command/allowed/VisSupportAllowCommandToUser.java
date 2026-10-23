@@ -15,6 +15,10 @@ import com.vis.entities.VisEntityCommandNotAllowedToUser;
  * command has no other parameter (until 2026-10-08 it was {@code <command> <email>}).
  */
 public class VisSupportAllowCommandToUser implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportAllowCommandToUser INSTANCE = new VisSupportAllowCommandToUser();
+
+	private VisSupportAllowCommandToUser() {}
 
 	/**
 	 * Deletes the record of the ignored user.

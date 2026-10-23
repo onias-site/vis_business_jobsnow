@@ -23,6 +23,10 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkillFixHierarchyItemApproved.Fields.class)
 public class VisEntitySkillFixHierarchyItemApproved implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillFixHierarchyItemApproved INSTANCE = new VisEntitySkillFixHierarchyItemApproved();
+
+	private VisEntitySkillFixHierarchyItemApproved() {}
 
 	/** The entity {@code vis_skill_fix_hierarchy_item_approved}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyItemApproved.class).entityInstance;

@@ -27,6 +27,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkillSynonym.Fields.class)
 public class VisEntitySkillSynonym implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillSynonym INSTANCE = new VisEntitySkillSynonym();
+
+	private VisEntitySkillSynonym() {}
 
 	/** The entity {@code vis_skill_synonym}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillSynonym.class).entityInstance;

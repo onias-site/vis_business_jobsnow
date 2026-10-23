@@ -44,6 +44,10 @@ import com.ccp.decorators.CcpFileDecorator;
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityGroupPositionsBySkills.Fields.class)
 public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntityGroupPositionsBySkills INSTANCE = new VisEntityGroupPositionsBySkills();
+
+	private VisEntityGroupPositionsBySkills() {}
 
 	/** The entity {@code vis_group_positions_by_skills}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityGroupPositionsBySkills.class).entityInstance;
@@ -72,12 +76,13 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 	}
 	
 	/**
-	 * Adds the parents of the word: the parents of the first synonym record whose skill, or one of its synonyms, is the
-	 * word (one level only).
+	 * Adds the ancestors of the word: the parents of the first synonym record whose skill, or one of its synonyms, is the
+	 * word, then the parents of each of them, up to the top. Until 2026-10-22 it went one level only, so the
+	 * grandparents of a parent were lost. A parent already in the set is not visited again, which also stops a cycle.
 	 * @param synonyms the synonym records
 	 * @param word the word
 	 * @param allParents the parents found so far
-	 * @return the parents found so far plus the ones of the word
+	 * @return the parents found so far plus the ancestors of the word
 	 */
 	private Set<String> getAllParents(List<CcpJsonRepresentation>synonyms, String word, Set<String> allParents){
 		Stream<CcpJsonRepresentation> synonymsStream = synonyms.stream();
@@ -103,20 +108,37 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 			return allParents;
 		}
 		
-		List<String> parent = synonym.getAsStringList(VisJsonCommonsFields.parent);
-		allParents.addAll(parent);
-		
+		List<String> parents = synonym.getAsStringList(VisJsonCommonsFields.parent);
+
+		for (String parent : parents) {
+			boolean alreadyVisited = allParents.contains(parent);
+
+			if(alreadyVisited) {
+				continue;
+			}
+
+			allParents.add(parent);
+			this.getAllParents(synonyms, parent, allParents);
+		}
+
 		return allParents;
 	}
 	
 	
 	/**
 	 * Tells whether a word is a known skill, by the group of its first two letters (upper case).
-	 * @param word the word, with at least two characters
-	 * @return 0 when the word (or skill) is in the group, 1 when there is no group for its initials, 2 when the group exists
-	 * but does not have it
+	 * @param word the word
+	 * @return 0 when the word (or skill) is in the group, 1 when there is no group for its initials (a word shorter than
+	 * two characters has none), 2 when the group exists but does not have it
 	 */
 	public static int getWordStatus(String word) {
+		int wordLength = word.length();
+		boolean wordIsTooShort = wordLength < 2;
+
+		if(wordIsTooShort) {
+			return 1;
+		}
+
 		String upperCase = word.toUpperCase();
 		String firstTwoInitials = upperCase.substring(0,2);
 		CcpJsonRepresentation id = CcpOtherConstants.EMPTY_JSON.put(Fields.firstTwoInitials, firstTwoInitials);
@@ -157,7 +179,7 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 	 * @return the seed records
 	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		CcpStringDecorator synonymsFilePath = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json");
+		CcpStringDecorator synonymsFilePath = new CcpStringDecorator("../ccp_rest-api-tests_jobsnow/documentation/jn/skills/synonyms.json");
 		CcpFileDecorator synonymsFile = synonymsFilePath
 		.file();
 		var synonyms = synonymsFile
@@ -257,17 +279,7 @@ public class VisEntityGroupPositionsBySkills implements CcpEntityConfigurator {
 		Set<String> fieldSet = groupedSkills.fieldSet();
 		Stream<String> initialsStream = fieldSet.stream();
 		var groupedSkillsStream = initialsStream
-		.map(initials -> {
-			CcpFieldName initialsKey = new CcpFieldName(initials);
-			List<CcpJsonRepresentation> skill = groupedSkillsSnapshot.getAsJsonList(initialsKey);
-			CcpJsonRepresentation jsonWithSkills = CcpOtherConstants.EMPTY_JSON
-					.put(VisJsonCommonsFields.skill, skill);
-					CcpJsonRepresentation json = jsonWithSkills
-					.put(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials, initials)
-					;
-			return json
-		;
-		});
+		.map(new VisSkillsGroupOfTheInitials(groupedSkillsSnapshot));
 		var bulkItemsStream = groupedSkillsStream
 		.map(json -> new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, ENTITY.calculateId(json)));
 		List<CcpBulkItem> bulkItems = bulkItemsStream

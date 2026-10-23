@@ -14,6 +14,10 @@ import com.jn.utils.JnLanguage;
  * ({@code noIgnoredUser}).
  */
 public class VisSupportIgnoredUsersShow implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportIgnoredUsersShow INSTANCE = new VisSupportIgnoredUsersShow();
+
+	private VisSupportIgnoredUsersShow() {}
 
 	/**
 	 * Shows the count and the first ignored user.

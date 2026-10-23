@@ -2,6 +2,7 @@ package com.vis.entities;
 
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDisposable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
@@ -24,6 +25,7 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
  * view), read by id (OQL) by {@code VisBusinessViewedResumesOfTheMonth}, which calculates the id of a past month through
  * {@code disposablePeriod}.
  */
+@CcpEntityCache(3600)
 @CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.monthly)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityViewedResumesOfTheMonth.Fields.class)

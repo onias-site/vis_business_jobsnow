@@ -34,6 +34,10 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkillFixHierarchyDailyLimit.Fields.class)
 public class VisEntitySkillFixHierarchyDailyLimit implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillFixHierarchyDailyLimit INSTANCE = new VisEntitySkillFixHierarchyDailyLimit();
+
+	private VisEntitySkillFixHierarchyDailyLimit() {}
 
 	/** The entity {@code vis_skill_fix_hierarchy_daily_limit}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyDailyLimit.class).entityInstance;

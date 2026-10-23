@@ -21,6 +21,10 @@ import com.jn.utils.JnLanguage;
  * the meantime is not allowed twice; the operator is told so and sees the first one.
  */
 public class VisSupportIgnoredUsersChoose implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportIgnoredUsersChoose INSTANCE = new VisSupportIgnoredUsersChoose();
+
+	private VisSupportIgnoredUsersChoose() {}
 
 	/** The answer that stops ignoring the user shown. */
 	private static final String ALLOW = "1";

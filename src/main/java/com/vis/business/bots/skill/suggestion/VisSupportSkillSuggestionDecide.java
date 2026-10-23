@@ -22,6 +22,10 @@ import com.vis.entities.VisEntitySkillPending;
  * without a valid justification, is asked again ({@code invalidAnswer}).
  */
 public class VisSupportSkillSuggestionDecide implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportSkillSuggestionDecide INSTANCE = new VisSupportSkillSuggestionDecide();
+
+	private VisSupportSkillSuggestionDecide() {}
 
 	/**
 	 * Handles the answer of the operator.

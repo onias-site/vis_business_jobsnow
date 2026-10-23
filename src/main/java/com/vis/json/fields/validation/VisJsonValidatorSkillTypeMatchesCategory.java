@@ -13,6 +13,10 @@ import com.ccp.json.validations.global.interfaces.CcpJsonValidator;
  * of the enums, is left to the field rules, which already report it.
  */
 public class VisJsonValidatorSkillTypeMatchesCategory implements CcpJsonValidator {
+	/** The single instance: the class keeps no state. */
+	public final static VisJsonValidatorSkillTypeMatchesCategory INSTANCE = new VisJsonValidatorSkillTypeMatchesCategory();
+
+	private VisJsonValidatorSkillTypeMatchesCategory() {}
 
 	/**
 	 * Tells whether the type does not match the category.

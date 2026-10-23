@@ -20,6 +20,10 @@ import com.vis.entities.VisEntitySkillPending;
  * with {@code requestNotFound}.
  */
 public class VisSupportSkillSuggestionShowRequest implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportSkillSuggestionShowRequest INSTANCE = new VisSupportSkillSuggestionShowRequest();
+
+	private VisSupportSkillSuggestionShowRequest() {}
 
 	/**
 	 * Shows the suggestion.

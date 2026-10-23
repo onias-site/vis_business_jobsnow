@@ -38,6 +38,10 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
 public class VisEntitySkillFixHierarchyItemPending implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillFixHierarchyItemPending INSTANCE = new VisEntitySkillFixHierarchyItemPending();
+
+	private VisEntitySkillFixHierarchyItemPending() {}
 
 	/** The entity {@code vis_skill_fix_hierarchy_item_pending}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyItemPending.class).entityInstance;

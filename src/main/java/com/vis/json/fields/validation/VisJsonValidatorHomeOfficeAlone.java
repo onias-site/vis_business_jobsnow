@@ -13,6 +13,10 @@ import com.vis.entities.VisEntityResume;
  * build and showed with both marked. A resume without the field is left to the field rules, which already report it.
  */
 public class VisJsonValidatorHomeOfficeAlone implements CcpJsonValidator {
+	/** The single instance: the class keeps no state. */
+	public final static VisJsonValidatorHomeOfficeAlone INSTANCE = new VisJsonValidatorHomeOfficeAlone();
+
+	private VisJsonValidatorHomeOfficeAlone() {}
 
 	/** The ddd of the home office jobs. */
 	private static final double HOME_OFFICE = 10;

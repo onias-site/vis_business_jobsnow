@@ -33,6 +33,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkillFixHierarchyFulfiled.Fields.class)
 public class VisEntitySkillFixHierarchyFulfiled implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillFixHierarchyFulfiled INSTANCE = new VisEntitySkillFixHierarchyFulfiled();
+
+	private VisEntitySkillFixHierarchyFulfiled() {}
 
 	/** The entity {@code vis_skill_fix_hierarchy_fulfiled}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyFulfiled.class).entityInstance;

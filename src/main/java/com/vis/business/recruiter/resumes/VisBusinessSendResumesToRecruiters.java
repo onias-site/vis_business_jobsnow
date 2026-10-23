@@ -126,26 +126,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		List<String> restrictedTo = json.getOrDefault(VisRecruiterResumesFields.recruiters, () -> List.of());
 		int[] emailsSent = {0};
 
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = recruiter -> {
-			String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
-			boolean outOfThisRun = false == restrictedTo.isEmpty() && false == restrictedTo.contains(email);
-			if(outOfThisRun) {
-				return;
-			}
-			String emailHash = getEmailHash(email);
-			Long lastViewOfTheRecruiter = lastViewByRecruiter.get(emailHash);
-			boolean stoppedViewing = lastViewOfTheRecruiter != null && lastViewOfTheRecruiter < viewsSince;
-			if(stoppedViewing) {
-				return;
-			}
-			List<CcpJsonRepresentation> rows = getRowsOfTheRecruiter(recruiter, emailHash, resumesOfTheEmail, lastViewByPair, aliasByPair);
-			boolean nothingForTheRecruiter = rows.isEmpty();
-			if(nothingForTheRecruiter) {
-				return;
-			}
-			this.sendTheEmail(email, rows, frontendUrl);
-			emailsSent[0]++;
-		};
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, lastViewByRecruiter, viewsSince, resumesOfTheEmail, lastViewByPair, aliasByPair, frontendUrl, emailsSent);
 		CcpQueryOptions everyRecruiter = CcpQueryOptions.INSTANCE.matchAll();
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		everyRecruiter.selectFrom(VisEntityRecruiter.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, sendToTheRecruiter);
@@ -158,19 +139,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/** Type of resume, CLT, PJ and years of experience, the keys put by {@link VisBusinessBuildResumeRow}. */
-	static final Comparator<CcpJsonRepresentation> BY_SORT_KEYS = (first, second) -> {
-		List<Object> firstKeys = first.getAsObjectList(VisRecruiterResumesFields.sortKeys);
-		List<Object> secondKeys = second.getAsObjectList(VisRecruiterResumesFields.sortKeys);
-		for (int index = 0; index < firstKeys.size(); index++) {
-			double firstKey = ((Number) firstKeys.get(index)).doubleValue();
-			double secondKey = ((Number) secondKeys.get(index)).doubleValue();
-			int comparison = Double.compare(firstKey, secondKey);
-			if(comparison != 0) {
-				return comparison;
-			}
-		}
-		return 0;
-	};
+	static final Comparator<CcpJsonRepresentation> BY_SORT_KEYS = VisResumesBySortKeys.INSTANCE;
 
 	/**
 	 * The row of a resume, with what the choice of the rows of each recruiter needs and the e-mail does not show: the
@@ -198,7 +167,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	/**
 	 * Writes the whole list of the recruiter (read by the screen "see all") and sends the e-mail with the first 40.
 	 */
-	private void sendTheEmail(String email, List<CcpJsonRepresentation> rows, String frontendUrl) {
+	static void sendTheEmail(String email, List<CcpJsonRepresentation> rows, String frontendUrl) {
 		CcpJsonRepresentation recruiterResumes = CcpOtherConstants.EMPTY_JSON
 				.put(VisEntityRecruiterResumes.Fields.email, email)
 				.put(VisEntityRecruiterResumes.Fields.resumes, rows);
@@ -266,7 +235,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * The rows of a recruiter: every resume, but the ones that forbid the company of the recruiter, each one with the
 	 * last view of this recruiter, the alias they gave to it and the signed link.
 	 */
-	private static List<CcpJsonRepresentation> getRowsOfTheRecruiter(CcpJsonRepresentation recruiter, String emailHash, List<CcpJsonRepresentation> resumesOfTheEmail,
+	static List<CcpJsonRepresentation> getRowsOfTheRecruiter(CcpJsonRepresentation recruiter, String emailHash, List<CcpJsonRepresentation> resumesOfTheEmail,
 			Map<String, Long> lastViewByPair, Map<String, String> aliasByPair) {
 		String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
 		boolean professional = recruiter.getOrDefault(VisEntityRecruiter.Fields.professional, () -> false);
@@ -365,11 +334,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 					.endBoolAndBackToQuery()
 				.endQueryAndBackToRequest();
 		Set<String> keys = new LinkedHashSet<>();
-		Consumer<CcpJsonRepresentation> keepTheKey = historyRow -> {
-			CcpJsonRepresentation record = getRecordOfTheHistoryRow(historyRow);
-			String key = record.getAsString(keyField);
-			keys.add(key);
-		};
+		Consumer<CcpJsonRepresentation> keepTheKey = new VisHistoryKeyCollector(keys, keyField);
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		String jsonField = JnJsonCommonsFields.json.getValue();
 		query.selectFrom(JnEntityVersionable.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, keepTheKey, jsonField);
@@ -411,15 +376,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 					.endBoolAndBackToQuery()
 				.endQueryAndBackToRequest();
 		Map<String, long[]> dates = new HashMap<>();
-		Consumer<CcpJsonRepresentation> keepTheDates = historyRow -> {
-			CcpJsonRepresentation record = getRecordOfTheHistoryRow(historyRow);
-			String emailHash = record.getAsString(VisEntityResume.Fields.email);
-			Double timestampNumber = historyRow.getAsDoubleNumber(JnJsonCommonsFields.timestamp);
-			long timestamp = timestampNumber.longValue();
-			long[] oldestAndNewest = dates.computeIfAbsent(emailHash, x -> new long[] {Long.MAX_VALUE, Long.MIN_VALUE});
-			oldestAndNewest[0] = Math.min(oldestAndNewest[0], timestamp);
-			oldestAndNewest[1] = Math.max(oldestAndNewest[1], timestamp);
-		};
+		Consumer<CcpJsonRepresentation> keepTheDates = new VisHistoryResumeDatesCollector(dates);
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		String jsonField = JnJsonCommonsFields.json.getValue();
 		String timestampField = JnJsonCommonsFields.timestamp.getValue();
@@ -442,16 +399,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 					.endBoolAndBackToQuery()
 				.endQueryAndBackToRequest();
 		String separator = Constants.SEPARATOR.getValue();
-		Consumer<CcpJsonRepresentation> keepTheLastView = historyRow -> {
-			CcpJsonRepresentation record = getRecordOfTheHistoryRow(historyRow);
-			String emailHash = record.getAsString(VisEntityViewedResume.Fields.email);
-			String linkedinHash = record.getAsString(VisEntityViewedResume.Fields.linkedin);
-			Double timestampNumber = historyRow.getAsDoubleNumber(JnJsonCommonsFields.timestamp);
-			long timestamp = timestampNumber.longValue();
-			String pairKey = emailHash + separator + linkedinHash;
-			lastViewByPair.merge(pairKey, timestamp, Math::max);
-			lastViewByRecruiter.merge(emailHash, timestamp, Math::max);
-		};
+		Consumer<CcpJsonRepresentation> keepTheLastView = new VisHistoryLastViewCollector(lastViewByPair, lastViewByRecruiter, separator);
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		String jsonField = JnJsonCommonsFields.json.getValue();
 		String timestampField = JnJsonCommonsFields.timestamp.getValue();
@@ -462,13 +410,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	private static Map<String, String> getAliases() {
 		Map<String, String> aliasByPair = new HashMap<>();
 		String separator = Constants.SEPARATOR.getValue();
-		Consumer<CcpJsonRepresentation> keepTheAlias = viewedResume -> {
-			String emailHash = viewedResume.getAsString(VisEntityViewedResume.Fields.email);
-			String linkedinHash = viewedResume.getAsString(VisEntityViewedResume.Fields.linkedin);
-			String alias = viewedResume.getAsString(VisEntityViewedResume.Fields.alias);
-			String pairKey = emailHash + separator + linkedinHash;
-			aliasByPair.put(pairKey, alias);
-		};
+		Consumer<CcpJsonRepresentation> keepTheAlias = new VisViewedResumeAliasCollector(aliasByPair, separator);
 		CcpQueryOptions everyView = CcpQueryOptions.INSTANCE.matchAll();
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		everyView.selectFrom(VisEntityViewedResume.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, keepTheAlias);
@@ -496,12 +438,12 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	/** The hash of a LinkedIn address, as {@code vis_viewed_resume} keeps it. */
 	static String getLinkedinHash(String linkedinAddress) {
 		CcpJsonRepresentation linkedinJson = CcpOtherConstants.EMPTY_JSON.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress);
-		CcpJsonRepresentation hashedLinkedin = new VisJsonTransformerLinkedinHash().execute(linkedinJson);
+		CcpJsonRepresentation hashedLinkedin = VisJsonTransformerLinkedinHash.INSTANCE.execute(linkedinJson);
 		String linkedinHash = hashedLinkedin.getAsString(VisEntityViewedResume.Fields.linkedin);
 		return linkedinHash;
 	}
 
-	private static CcpJsonRepresentation getRecordOfTheHistoryRow(CcpJsonRepresentation historyRow) {
+	static CcpJsonRepresentation getRecordOfTheHistoryRow(CcpJsonRepresentation historyRow) {
 		String recordAsText = historyRow.getAsString(JnJsonCommonsFields.json);
 		CcpJsonRepresentation record = new CcpJsonRepresentation(recordAsText);
 		return record;

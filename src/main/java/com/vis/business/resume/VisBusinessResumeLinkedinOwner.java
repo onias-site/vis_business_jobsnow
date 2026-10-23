@@ -19,6 +19,10 @@ import com.vis.messages.VisMessages;
  * allowed to do.
  */
 public class VisBusinessResumeLinkedinOwner implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessResumeLinkedinOwner INSTANCE = new VisBusinessResumeLinkedinOwner();
+
+	private VisBusinessResumeLinkedinOwner() {}
 
 	/**
 	 * Runs the business described in the class documentation.

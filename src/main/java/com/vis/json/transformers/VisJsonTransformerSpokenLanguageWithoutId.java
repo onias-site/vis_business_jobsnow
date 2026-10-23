@@ -15,6 +15,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * write. A json with no spoken language is returned as is.
  */
 public class VisJsonTransformerSpokenLanguageWithoutId implements CcpJsonTransformersDefaultEntityField {
+	/** The single instance: the class keeps no state. */
+	public final static VisJsonTransformerSpokenLanguageWithoutId INSTANCE = new VisJsonTransformerSpokenLanguageWithoutId();
+
+	private VisJsonTransformerSpokenLanguageWithoutId() {}
 
 	/** Fields removed by the transformer. */
 	enum JsonFieldNames implements CcpJsonFieldName {

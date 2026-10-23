@@ -17,6 +17,7 @@ import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
 import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
@@ -68,6 +69,7 @@ import com.vis.json.transformers.VisJsonTransformerRecruiterProfessional;
  * Both go to the database in bulk, around the decorators of the entity, so the record is transformed and validated
  * beforehand by {@link VisBusinessPrepareRecruiter}.
  */
+@CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsValidator(VisEntityRecruiter.Fields.class)
@@ -78,6 +80,10 @@ import com.vis.json.transformers.VisJsonTransformerRecruiterProfessional;
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
 public class VisEntityRecruiter implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntityRecruiter INSTANCE = new VisEntityRecruiter();
+
+	private VisEntityRecruiter() {}
 
 	/** The entity {@code vis_recruiter}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityRecruiter.class).entityInstance;
@@ -162,10 +168,7 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 		String idField = VisJsonCommonsFields.id.getValue();
 
 		Set<String> legacyEmails = new LinkedHashSet<>();
-		Consumer<CcpJsonRepresentation> consumer = json -> {
-			String legacyEmail = json.getAsString(VisJsonCommonsFields.id);
-			legacyEmails.add(legacyEmail);
-		};
+		Consumer<CcpJsonRepresentation> consumer = new VisLegacyRecruiterEmailCollector(legacyEmails);
 		queryExecutor.consumeQueryResult(query, legacyIndices, scrollTime, 10000, consumer, idField);
 
 		// by the normalized e-mail: two legacy ids that differ only in accents or capital letters are one recruiter

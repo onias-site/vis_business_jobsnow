@@ -27,6 +27,10 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
  * creates items only for the skills not yet reviewed.
  */
 public class VisBusinessSkillFixHierarchyRefuseAlreadyReviewed implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessSkillFixHierarchyRefuseAlreadyReviewed INSTANCE = new VisBusinessSkillFixHierarchyRefuseAlreadyReviewed();
+
+	private VisBusinessSkillFixHierarchyRefuseAlreadyReviewed() {}
 
 	/**
 	 * Runs the business described in the class documentation.

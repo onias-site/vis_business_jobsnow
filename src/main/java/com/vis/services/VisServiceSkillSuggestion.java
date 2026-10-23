@@ -1,8 +1,6 @@
 package com.vis.services;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -10,18 +8,15 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.dependency.injection.CcpDependencyInjection;
-import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
-import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
 import com.ccp.process.CcpProcessStatusDefault;
-import com.jn.business.messages.JnBusinessCancelSupportPendingCommand;
-import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.skill.VisBusinessDeleteStoredSkillSuggestion;
+import com.vis.business.skill.VisBusinessSaveSkillSuggestionWithSynonyms;
 import com.vis.entities.VisEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntityGroupPositionsBySkills;
 import com.vis.entities.VisEntitySkill;
@@ -30,7 +25,6 @@ import com.vis.entities.VisEntitySkillRejected;
 import com.vis.entities.VisEntitySkillReviewed;
 import com.vis.entities.VisEntitySkillSuggestionDailyLimit;
 import com.vis.entities.VisEntitySkillSynonym;
-import com.vis.messages.VisMessages;
 import com.vis.status.VisProcessStatusSuggestSkill;
 
 /**
@@ -83,17 +77,7 @@ public enum VisServiceSkillSuggestion implements JnService {
 				VisProcessStatusSuggestSkill.suggestedThroughSynonym.throwException(json);
 			}
 
-			CcpBusiness saveAsPending = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillPending.ENTITY);
-			CcpBusiness saveWithSynonyms = suggestion -> {
-				CcpJsonRepresentation savedSuggestion = saveAsPending.execute(suggestion);
-				saveSynonyms(json);
-				// written here, and not by the pending entity, because that one writes through the messaging: the next
-				// request of the candidate must already find the day spent
-				String email = json.getAsString(VisEntitySkillPending.Fields.email);
-				CcpJsonRepresentation dailyLimit = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkillSuggestionDailyLimit.Fields.email, email);
-				VisEntitySkillSuggestionDailyLimit.ENTITY.save(dailyLimit);
-				return savedSuggestion;
-			};
+			CcpBusiness saveWithSynonyms = new VisBusinessSaveSkillSuggestionWithSynonyms(json);
 
 			// the daily limit is the last check: every refusal before it sends nothing, so it does not spend the day
 			new CcpGetEntityId(json)
@@ -132,26 +116,6 @@ public enum VisServiceSkillSuggestion implements JnService {
 			CcpSelectUnionAll unionAllOfSuggestedSkill = crud.unionAll(jsonWithSuggestedSkill, JnDeleteKeysFromCache.INSTANCE, suggestionEntities);
 			CcpJsonRepresentation ownSuggestion = getOwnSuggestion(unionAllOfSuggestedSkill, jsonWithSuggestedSkill);
 			return ownSuggestion;
-		}
-
-		/**
-		 * Records each synonym of the suggestion in {@link VisEntitySkillSynonym}, pointing to the suggested skill, in a
-		 * single bulk. A suggestion without synonyms writes nothing.
-		 * @param json the suggestion
-		 */
-		private void saveSynonyms(CcpJsonRepresentation json) {
-			String skill = json.getAsString(VisEntitySkillPending.Fields.skill);
-			List<String> synonyms = json.getAsStringList(VisEntitySkillPending.Fields.synonym);
-			List<CcpBulkItem> synonymItems = new ArrayList<>();
-			for (String synonym : synonyms) {
-				CcpJsonRepresentation synonymWithItsSkill = CcpOtherConstants.EMPTY_JSON
-						.put(VisEntitySkillSynonym.Fields.skill, synonym);
-				CcpJsonRepresentation synonymRecord = synonymWithItsSkill
-						.put(VisEntitySkillSynonym.Fields.synonym, skill);
-				List<CcpBulkItem> bulkItems = VisEntitySkillSynonym.ENTITY.toBulkItems(synonymRecord, CcpBulkEntityOperationType.create);
-				synonymItems.addAll(bulkItems);
-			}
-			JnExecuteBulkOperation.INSTANCE.executeBulk(synonymItems, JnDeleteKeysFromCache.INSTANCE);
 		}
 	},
 
@@ -250,15 +214,7 @@ public enum VisServiceSkillSuggestion implements JnService {
 		 * @return the same JSON
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpBusiness deleteTheStoredSuggestion = jsonWithTheStoredSuggestion -> {
-				CcpJsonRepresentation storedSuggestion = jsonWithTheStoredSuggestion.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillPending.ENTITY);
-				CcpJsonRepresentation completeSuggestion = storedSuggestion.mergeWithAnotherJson(json);
-				VisEntitySkillPending.ENTITY.delete(completeSuggestion);
-				// the operator's ticket of this suggestion leaves /pendingTickets
-				String noticeTemplateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillRequest.class.getName();
-				JnBusinessCancelSupportPendingCommand.INSTANCE.cancel(noticeTemplateId, completeSuggestion);
-				return jsonWithTheStoredSuggestion;
-			};
+			CcpBusiness deleteTheStoredSuggestion = new VisBusinessDeleteStoredSkillSuggestion(json);
 
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()

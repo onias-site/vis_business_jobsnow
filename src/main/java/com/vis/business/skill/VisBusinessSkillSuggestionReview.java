@@ -5,8 +5,6 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkillPending;
 
@@ -35,19 +33,7 @@ public class VisBusinessSkillSuggestionReview implements CcpBusiness {
 
 		CcpJsonRepresentation suggestionKey = json.getJsonPiece(VisEntitySkillPending.Fields.email, VisEntitySkillPending.Fields.skill);
 
-		CcpBusiness transferWithTheDecision = jsonWithTheStoredSuggestion -> {
-			// the pending entity writes through the messaging, which validates the whole record (description is
-			// required); the stored email is the hash, so the readable one from the key prevails
-			CcpJsonRepresentation storedSuggestion = jsonWithTheStoredSuggestion.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillPending.ENTITY);
-			CcpJsonRepresentation completeSuggestion = storedSuggestion.mergeWithAnotherJson(suggestionKey);
-			String explanation = json.getAsString(JnJsonCommonsFields.explanation);
-			CcpJsonRepresentation suggestionWithExplanation = completeSuggestion.put(JnJsonCommonsFields.explanation, explanation);
-
-			VisSkillSuggestionDecisions decision = json.getAsEnum(VisSkillSuggestionReviewFields.decision, VisSkillSuggestionDecisions.class);
-			CcpEntity targetEntity = decision.getTargetEntity();
-			VisEntitySkillPending.ENTITY.transferDataTo(suggestionWithExplanation, targetEntity);
-			return jsonWithTheStoredSuggestion;
-		};
+		CcpBusiness transferWithTheDecision = new VisBusinessTransferSkillSuggestionWithTheDecision(json, suggestionKey);
 
 		// a single read by id: the presence check and the stored suggestion come together (a suggestion no longer
 		// pending runs no action)

@@ -48,6 +48,10 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * before anything is read, and the operator is told how to stop ignoring the user.
  */
 public class VisSupportSkillFixHierarchyShowRequest implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportSkillFixHierarchyShowRequest INSTANCE = new VisSupportSkillFixHierarchyShowRequest();
+
+	private VisSupportSkillFixHierarchyShowRequest() {}
 
 	/**
 	 * Shows the request and its pending items.

@@ -20,6 +20,10 @@ import com.vis.entities.VisEntityRecruiter;
  * does not depend on the one of the {@code domain} field having run before. A json with no e-mail is returned as is.
  */
 public class VisJsonTransformerRecruiterProfessional implements CcpJsonTransformersDefaultEntityField {
+	/** The single instance: the class keeps no state. */
+	public final static VisJsonTransformerRecruiterProfessional INSTANCE = new VisJsonTransformerRecruiterProfessional();
+
+	private VisJsonTransformerRecruiterProfessional() {}
 
 	/**
 	 * Puts in {@code professional} whether the domain of the e-mail is out of the non-professional domains.

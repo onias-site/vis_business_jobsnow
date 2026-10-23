@@ -23,6 +23,10 @@ import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
  * to the operator ({@code requestWithdrawn}), before the answer is read.
  */
 public class VisSupportSkillFixHierarchyChooseMode implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportSkillFixHierarchyChooseMode INSTANCE = new VisSupportSkillFixHierarchyChooseMode();
+
+	private VisSupportSkillFixHierarchyChooseMode() {}
 
 	/**
 	 * Handles the choice of the operator.

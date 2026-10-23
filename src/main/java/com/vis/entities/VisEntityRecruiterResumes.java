@@ -8,6 +8,7 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDisposable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
@@ -38,10 +39,15 @@ import com.vis.messages.VisMessages;
  * <p>Its seeds are the texts of the table ({@link VisRecruiterResumesTexts}), the template of the e-mail in Portuguese
  * and English and its sending parameters, with the LinkedIn of who signs the e-mail and the address of the front end.
  */
+@CcpEntityCache(3600)
 @CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.daily)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityRecruiterResumes.Fields.class)
 public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntityRecruiterResumes INSTANCE = new VisEntityRecruiterResumes();
+
+	private VisEntityRecruiterResumes() {}
 
 	/** The entity {@code vis_recruiter_resumes}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityRecruiterResumes.class).entityInstance;

@@ -11,6 +11,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * server minus those years (17 years sent in 2026 are stored as 2009). A json with no experience is returned as is.
  */
 public class VisJsonTransformerExperienceStartYear implements CcpJsonTransformersDefaultEntityField {
+	/** The single instance: the class keeps no state. */
+	public final static VisJsonTransformerExperienceStartYear INSTANCE = new VisJsonTransformerExperienceStartYear();
+
+	private VisJsonTransformerExperienceStartYear() {}
 
 	/**
 	 * Replaces the years of experience with the year the experience started.

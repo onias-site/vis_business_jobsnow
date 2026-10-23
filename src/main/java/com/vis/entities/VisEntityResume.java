@@ -102,9 +102,13 @@ import com.vis.messages.VisMessages;
 @CcpBeforeSaveFromMainEntity(execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {})
 // one group per hash (each search the resume satisfies): the entity that gives the id of each one (and names the
 // groups); the combinations of its values and the list where the save keeps those ids come from the field hash
-@CcpEntityGrouperChild(value = VisEntityVirtualHashGrouper.class, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
+@CcpEntityGrouperChild(value = {VisEntityVirtualHashGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
 public class VisEntityResume implements CcpEntityConfigurator {
-	
+	/** The single instance: the class keeps no state. */
+	public final static VisEntityResume INSTANCE = new VisEntityResume();
+
+	private VisEntityResume() {}
+
 	/** The entity {@code vis_resume}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResume.class).entityInstance;
 
@@ -256,7 +260,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		 * in, one per combination of {@code VisResumeHashCombinations}.
 		 */
 		@CcpJsonFieldValidatorArray
-		@CcpStoredParentIdsField(VisResumeHashCombinations.class)
+		@CcpStoredParentIdsField(value = VisResumeHashCombinations.class, parent = VisEntityVirtualHashGrouper.class)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		hash,
 

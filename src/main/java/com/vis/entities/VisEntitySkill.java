@@ -35,6 +35,10 @@ import java.util.stream.Stream;
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkill.Fields.class)
 public class VisEntitySkill implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkill INSTANCE = new VisEntitySkill();
+
+	private VisEntitySkill() {}
 
 	/** The entity {@code vis_skill}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkill.class).entityInstance;
@@ -72,7 +76,7 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	 * @return the seed records
 	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		CcpStringDecorator synonymsFilePath = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\jn\\skills\\synonyms.json");
+		CcpStringDecorator synonymsFilePath = new CcpStringDecorator("../ccp_rest-api-tests_jobsnow/documentation/jn/skills/synonyms.json");
 		CcpFileDecorator synonymsFile = synonymsFilePath
 		.file();
 		var allSynonyms = synonymsFile
@@ -84,20 +88,13 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		var synonyms = synonymsWithValidSkillLength
 		.collect(Collectors.toList())
 		;
-		CcpStringDecorator countByWordsFilePath = new CcpStringDecorator("..\\ccp_rest-api-tests_jobsnow\\documentation\\vis\\database\\skills\\countByWords.txt");
+		CcpStringDecorator countByWordsFilePath = new CcpStringDecorator("../ccp_rest-api-tests_jobsnow/documentation/vis/database/skills/countByWords.txt");
 		CcpFileDecorator countByWordsFile = countByWordsFilePath
 				 .file();
 				 List<String> lines = countByWordsFile.getLines()
 				 ;
 				 var synonymsStream = synonyms.stream();
-				 var synonymsWithResumesCountStream = synonymsStream.map(json -> {
-			int resumesCount = this.getResumesCount(json, lines);
-
-			CcpJsonRepresentation jsonWithResumesCount = json.put(VisJsonCommonsFields.resumesCount, resumesCount);
-			
-			return jsonWithResumesCount;
-			
-			});
+				 var synonymsWithResumesCountStream = synonymsStream.map(new VisSkillWithResumesCount(lines));
 			var synonymsWithResumesCount = synonymsWithResumesCountStream.collect(Collectors.toList());
 
 			List<CcpJsonRepresentation> sortedSynonyms = new ArrayList<>(synonymsWithResumesCount);
@@ -112,10 +109,6 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		for (CcpJsonRepresentation json : sortedSynonyms) {
 			VisEntitySkill.Fields[] fieldsValues = Fields.values();
 			CcpJsonRepresentation jsonPiece = json.getJsonPiece(fieldsValues);
-			boolean isDebugRanking = ranking == 87;
-			if(isDebugRanking) {
-				System.out.println();
-			}
 			CcpJsonRepresentation skillRecord = jsonPiece.put(VisJsonCommonsFields.ranking, ranking++);
 			List<CcpJsonRepresentation> synonymsOfTheSkill = skillRecord.getAsJsonList(VisJsonCommonsFields.synonym);
 			Stream<CcpJsonRepresentation> synonymsOfTheSkillStream = synonymsOfTheSkill.stream();
@@ -142,9 +135,12 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	 * @param lines the lines of the count file
 	 * @return the number of resumes
 	 */
-	private int getResumesCount(CcpJsonRepresentation json, List<String> lines) {
+	static int getResumesCount(CcpJsonRepresentation json, List<String> lines) {
 		String skill = json.getAsString(VisJsonCommonsFields.skill);
-		List<String> synonym = json.getAsStringList(VisJsonCommonsFields.synonym);
+		List<CcpJsonRepresentation> synonymRecords = json.getAsJsonList(VisJsonCommonsFields.synonym);
+		Stream<CcpJsonRepresentation> synonymRecordsStream = synonymRecords.stream();
+		var synonymNamesStream = synonymRecordsStream.map(x -> x.getAsString(VisJsonCommonsFields.skill));
+		List<String> synonym = synonymNamesStream.collect(Collectors.toList());
 		Set<String> skills = new HashSet<>(synonym);
 		skills.add(skill);
 		

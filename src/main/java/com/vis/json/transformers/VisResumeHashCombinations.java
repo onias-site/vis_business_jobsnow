@@ -27,6 +27,10 @@ import com.vis.json.fields.validation.VisResumeSkillCategories;
  * and multiplied the combinations by the number of regions (up to 48,720 groups for one resume, saves of 230 s).
  */
 public class VisResumeHashCombinations implements Function<CcpJsonRepresentation, List<CcpJsonRepresentation>>{
+	/** The single instance: the class keeps no state. */
+	public final static VisResumeHashCombinations INSTANCE = new VisResumeHashCombinations();
+
+	private VisResumeHashCombinations() {}
 
 	/** Neutral values of the fields. */
 	enum JsonFieldValues implements CcpJsonFieldName {

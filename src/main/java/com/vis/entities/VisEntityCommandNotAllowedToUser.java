@@ -49,6 +49,10 @@ import com.vis.json.fields.validation.VisUserRequestCommands;
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
 public class VisEntityCommandNotAllowedToUser implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntityCommandNotAllowedToUser INSTANCE = new VisEntityCommandNotAllowedToUser();
+
+	private VisEntityCommandNotAllowedToUser() {}
 
 	/** The entity {@code vis_command_not_allowed_to_user}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityCommandNotAllowedToUser.class).entityInstance;

@@ -16,6 +16,10 @@ import com.vis.entities.VisEntityViewedResume;
  * json with no LinkedIn is returned as is.
  */
 public class VisJsonTransformerLinkedinHash implements CcpJsonTransformersDefaultEntityField {
+	/** The single instance: the class keeps no state. */
+	public final static VisJsonTransformerLinkedinHash INSTANCE = new VisJsonTransformerLinkedinHash();
+
+	private VisJsonTransformerLinkedinHash() {}
 
 	/** The field that carries the original address past the transformer. */
 	public static enum JsonFieldNames implements CcpJsonFieldName {

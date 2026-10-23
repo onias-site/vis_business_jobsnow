@@ -54,6 +54,10 @@ import com.vis.json.transformers.VisJsonTransformerPutEmailHashAndDomainRecruite
 		)
 
 public class VisEntityPosition implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntityPosition INSTANCE = new VisEntityPosition();
+
+	private VisEntityPosition() {}
 
 	/** The entity {@code vis_position}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityPosition.class).entityInstance;

@@ -5,6 +5,7 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
+import com.ccp.especifications.db.utils.entity.CcpBusinessDeleteStoredRecordFromEntity;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.utils.JnDeleteKeysFromCache;
@@ -24,6 +25,10 @@ import com.vis.entities.VisEntityRecruiter;
  * {@code goal}).
  */
 public class VisBusinessSaveRecruiterFromLoginAnswers implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessSaveRecruiterFromLoginAnswers INSTANCE = new VisBusinessSaveRecruiterFromLoginAnswers();
+
+	private VisBusinessSaveRecruiterFromLoginAnswers() {}
 
 	/**
 	 * Runs the business described in the class documentation.
@@ -50,20 +55,9 @@ public class VisBusinessSaveRecruiterFromLoginAnswers implements CcpBusiness {
 
 		CcpEntity twinEntity = VisEntityRecruiter.ENTITY.getTwinEntity();
 		// deleting from the twin moves the given record back to the recruiters: the stored one, so the source is kept
-		CcpBusiness reactivate = jsonWithTheStoredRecruiter -> {
-			CcpJsonRepresentation storedRecruiter = jsonWithTheStoredRecruiter.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, twinEntity);
-			twinEntity.delete(storedRecruiter);
-			return jsonWithTheStoredRecruiter;
-		};
+		CcpBusiness reactivate = new CcpBusinessDeleteStoredRecordFromEntity(twinEntity);
 		// a recruiter found in either entity is placed under _entities; with none, the recruiter is new
-		CcpBusiness insertWhenNotFound = jsonAfterTheSteps -> {
-			boolean found = jsonAfterTheSteps.containsField(CcpEntity.JsonFieldNames._entities);
-			if(found) {
-				return jsonAfterTheSteps;
-			}
-			VisEntityRecruiter.ENTITY.save(recruiter);
-			return jsonAfterTheSteps;
-		};
+		CcpBusiness insertWhenNotFound = new VisBusinessInsertRecruiterWhenNotFound(recruiter);
 
 		new CcpGetEntityId(recruiter)
 		.toBeginProcedureAnd()

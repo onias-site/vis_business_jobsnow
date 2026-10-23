@@ -20,6 +20,10 @@ import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
  * the operator ({@code requestWithdrawn}), before the answer is read.
  */
 public class VisSupportSkillFixHierarchyDecideItem implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportSkillFixHierarchyDecideItem INSTANCE = new VisSupportSkillFixHierarchyDecideItem();
+
+	private VisSupportSkillFixHierarchyDecideItem() {}
 
 	/**
 	 * Records the decision on the current item and asks for the next one, or finishes the review after the last.

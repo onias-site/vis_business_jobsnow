@@ -10,6 +10,10 @@ import com.ccp.decorators.CcpJsonRepresentation;
  * ticket reaches the operator.
  */
 public class VisBusinessSkillSuggestionShareRejection implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessSkillSuggestionShareRejection INSTANCE = new VisBusinessSkillSuggestionShareRejection();
+
+	private VisBusinessSkillSuggestionShareRejection() {}
 
 	/**
 	 * Runs the business described in the class documentation.

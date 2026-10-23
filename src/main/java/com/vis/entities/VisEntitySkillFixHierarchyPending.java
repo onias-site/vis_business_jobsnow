@@ -83,6 +83,10 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy;
 @CcpBeforeSaveFromMainEntity(execute = {VisBusinessSkillFixHierarchyRefuseAlreadyReviewed.class}, operationHandlers = {@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class})})
 @CcpAfterDeleteAnyWhereFromMainEntity(execute = {VisBusinessSkillFixHierarchyDeleteOrphanItems.class}, operationHandlers = {@CcpExceptionFlow(whenThrowing = VisErrorSkillFixHierarchyAlreadyReviewed.class, thenExecute = {VisBusinessSkillFixHierarchyNotifyAlreadyReviewed.class})})
 public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillFixHierarchyPending INSTANCE = new VisEntitySkillFixHierarchyPending();
+
+	private VisEntitySkillFixHierarchyPending() {}
 
 	/** The entity {@code vis_skill_fix_hierarchy_pending}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillFixHierarchyPending.class).entityInstance;

@@ -1,17 +1,12 @@
 package com.vis.business.skill;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
-import com.ccp.especifications.db.query.CcpQueryOptions;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillApproved;
@@ -31,6 +26,10 @@ import com.vis.entities.VisEntitySkillApproved;
  * <p>Runs in the review of the support bot, never in an online request, so counting the skills is allowed.
  */
 public class VisBusinessSkillSuggestionApply implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessSkillSuggestionApply INSTANCE = new VisBusinessSkillSuggestionApply();
+
+	private VisBusinessSkillSuggestionApply() {}
 
 	/**
 	 * Runs the business described in the class documentation.
@@ -61,28 +60,9 @@ public class VisBusinessSkillSuggestionApply implements CcpBusiness {
 
 		CcpJsonRepresentation skillKey = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkill.Fields.skill, skill);
 
-		CcpBusiness createTheSkill = skillNotFound -> {
-			long skillsCount = CcpQueryOptions.INSTANCE
-					.matchAll()
-					.selectFrom(VisEntitySkill.ENTITY)
-					.total();
-			long ranking = skillsCount + 1;
-			CcpJsonRepresentation newSkillWithSynonyms = skillKey.put(VisEntitySkill.Fields.synonym, suggestedSynonyms);
-			CcpJsonRepresentation newSkill = newSkillWithSynonyms.put(VisEntitySkill.Fields.ranking, ranking);
-			VisEntitySkill.ENTITY.save(newSkill);
-			return skillNotFound;
-		};
+		CcpBusiness createTheSkill = new VisBusinessCreateApprovedSkill(skillKey, suggestedSynonyms);
 
-		CcpBusiness addTheMissingSynonyms = jsonWithTheStoredSkill -> {
-			CcpJsonRepresentation skillRecord = jsonWithTheStoredSkill.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkill.ENTITY);
-			List<String> currentSynonyms = skillRecord.getAsStringList(VisEntitySkill.Fields.synonym);
-			Set<String> synonyms = new LinkedHashSet<>(currentSynonyms);
-			synonyms.addAll(suggestedSynonyms);
-			List<String> updatedSynonyms = new ArrayList<>(synonyms);
-			CcpJsonRepresentation skillRecordWithSynonyms = skillRecord.put(VisEntitySkill.Fields.synonym, updatedSynonyms);
-			VisEntitySkill.ENTITY.save(skillRecordWithSynonyms);
-			return jsonWithTheStoredSkill;
-		};
+		CcpBusiness addTheMissingSynonyms = new VisBusinessAddMissingSynonymsToSkill(suggestedSynonyms);
 
 		// a single read by id decides the branch and brings the stored skill
 		new CcpGetEntityId(skillKey)

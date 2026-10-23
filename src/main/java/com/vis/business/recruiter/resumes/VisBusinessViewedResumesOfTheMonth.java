@@ -10,6 +10,7 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaDa
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.jn.business.grouper.JnBusinessGetGroup;
 import com.jn.entities.JnEntityGrouper;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnGroupers;
@@ -71,10 +72,8 @@ public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String month = json.getAsString(Fields.month);
 		CcpJsonRepresentation groupKey = getGroupKeyOfTheMonth(json);
-		String parentName = groupKey.getAsString(JnEntityGrouper.Fields.parentName);
-		String childName = groupKey.getAsString(JnEntityGrouper.Fields.childName);
-		String parentId = groupKey.getAsString(JnEntityGrouper.Fields.parentId);
-		List<String> viewedResume = JnGroupers.getChildren(false, parentName, childName, parentId);
+		CcpJsonRepresentation group = JnBusinessGetGroup.INSTANCE.execute(groupKey);
+		List<String> viewedResume = group.getAsStringList(JnEntityGrouper.Fields.child);
 		CcpJsonRepresentation responseWithMonth = CcpOtherConstants.EMPTY_JSON.put(Fields.month, month);
 		CcpJsonRepresentation response = responseWithMonth.put(VisEntityViewedResumesOfTheMonth.Fields.viewedResume, viewedResume);
 		return response;

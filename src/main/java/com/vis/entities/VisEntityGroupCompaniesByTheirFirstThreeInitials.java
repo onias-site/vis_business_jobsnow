@@ -1,20 +1,18 @@
 
 package com.vis.entities;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import com.ccp.constants.CcpOtherConstants;
-import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonFieldName;
-import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
-import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.query.CcpQueryExecutor;
 import com.ccp.especifications.db.query.CcpQueryOptions;
@@ -31,7 +29,6 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.ccp.decorators.CcpTextDecorator;
 import java.util.stream.Stream;
 
 /**
@@ -42,10 +39,14 @@ import java.util.stream.Stream;
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.class)
 public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntityGroupCompaniesByTheirFirstThreeInitials INSTANCE = new VisEntityGroupCompaniesByTheirFirstThreeInitials();
+
+	private VisEntityGroupCompaniesByTheirFirstThreeInitials() {}
 
 	/** The entity {@code vis_group_companies_by_their_first_three_initials}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityGroupCompaniesByTheirFirstThreeInitials.class).entityInstance;
-	
+
 	/**
 	 * The fields of the entity, with their validation rules (this enum is the class named by
 	 * {@code @CcpEntityFieldsValidator}).
@@ -54,7 +55,7 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		/** The {@code firstThreeInitials} field: part of the primary key, text. */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(exactLength = 3)
-		firstThreeInitials, 
+		firstThreeInitials,
 		/** The {@code companies} field: text, list, required. */
 		@CcpJsonFieldTypeString(minLength = 3, maxLength = 30)
 		@CcpJsonFieldValidatorArray(minSize = 1)
@@ -67,89 +68,48 @@ public class VisEntityGroupCompaniesByTheirFirstThreeInitials implements CcpEnti
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		date,
 		;
-		
+
 	}
-	
+
 	/**
 	 * Seeds the groups from the legacy {@code old_recruiters} index: the company name is the first part of the domain of the
-	 * recruiter e-mail (capitalized, at least 3 letters), grouped by its first three letters. Any failure (for example, a
-	 * missing legacy index) results in no seed.
+	 * recruiter e-mail (capitalized, at least 3 letters), grouped by its first three letters. Until 2026-10-22 the groups
+	 * were kept in a static field, so a second call added its companies to the ones of the first, and any failure (a
+	 * missing legacy index included) was swallowed and resulted in no seed; now a failure reaches the caller, as in
+	 * {@link VisEntityRecruiter}.
 	 * @return the seed records
 	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		
-		try {
-			CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
-			CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
-			
-			Consumer<CcpJsonRepresentation> consumer = json -> {
-				String recruiterEmail = json.getAsString(VisJsonCommonsFields.id);
-					String[] emailParts = recruiterEmail.split("@");
-					boolean isNotAnEmail = emailParts.length != 2;
-					if(isNotAnEmail) {
-						return;
-					}
-					
-					
-				String domain = emailParts[1];
-				
-				String[] domainParts = domain.split("\\.");			
-				String upperCaseCompanyName = domainParts[0].toUpperCase();
+		CcpQueryExecutor queryExecutor = CcpDependencyInjection.getDependency(CcpQueryExecutor.class);
+		CcpQueryOptions query = CcpQueryOptions.INSTANCE.matchAll();
+		Map<String, Set<String>> groupedCompanies = new LinkedHashMap<>();
 
-				String companyName = upperCaseCompanyName.trim();
-				int companyNameLength = companyName.length();
-				boolean companyNameIsTooShort = companyNameLength < 3;
+		Consumer<CcpJsonRepresentation> consumer = new VisCompanyNameGrouperByInitials(groupedCompanies);
+		queryExecutor.consumeQueryResult(query, new String[] {"old_recruiters"}, "1s", 10000, consumer, "id");
+		Set<Entry<String, Set<String>>> groups = groupedCompanies.entrySet();
+		Stream<Entry<String, Set<String>>> groupsStream = groups.stream();
+		var bulkItemsStream = groupsStream.map(group -> this.toBulkItem(group.getKey(), group.getValue()));
 
-				if(companyNameIsTooShort) {
-					return;
-				}
-				CcpStringDecorator companyNameDecorator = new CcpStringDecorator(companyName);
-				CcpTextDecorator companyNameText = companyNameDecorator.text();
-				var capitalizedText = companyNameText.capitalize();
+		List<CcpBulkItem> bulkItems = bulkItemsStream.collect(Collectors.toList());
 
-				String capitalizedCompanyName = capitalizedText.content;
-				
-				String initials = companyName.substring(0, 3);
-				CcpFieldName initialsFieldName = new CcpFieldName(initials);
-
-				LinkedHashSet<String> companiesWithTheseInitials = groupedCompanies.getOrDefault(initialsFieldName, () -> new LinkedHashSet<>());
-				companiesWithTheseInitials.add(capitalizedCompanyName);
-				CcpFieldName sameInitialsFieldName = new CcpFieldName(initials);
-				groupedCompanies = groupedCompanies.put(sameInitialsFieldName, companiesWithTheseInitials);
-			};
-			queryExecutor.consumeQueryResult(query, new String[] {"old_recruiters"}, "1s", 10000, consumer, "id");
-			Set<String> allInitials = groupedCompanies.fieldSet();
-			Stream<String> initialsStream = allInitials.stream();
-			var bulkItemsStream = initialsStream.map(initials -> this.toBulkItem(initials));
-
-			List<CcpBulkItem> bulkItems = bulkItemsStream.collect(Collectors.toList());
-			
-			return bulkItems;
-		
-		} catch (Exception e) {
-			return new ArrayList<>();
-		}
-		
+		return bulkItems;
 	}
-	
+
 	/**
 	 * Builds the {@code create} item of one group.
 	 * @param initials the first three letters
+	 * @param companies the companies whose names start with them
 	 * @return the bulk item
 	 */
-	private CcpBulkItem toBulkItem(String initials) {
-		CcpFieldName groupFieldName = new CcpFieldName(initials);
-		Set<String> companies = groupedCompanies.getAsObject(groupFieldName);
+	private CcpBulkItem toBulkItem(String initials, Set<String> companies) {
 		CcpJsonRepresentation jsonWithInitials = CcpOtherConstants.EMPTY_JSON
 		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.firstThreeInitials, initials);
-	
+
 		CcpJsonRepresentation json = jsonWithInitials
 		.put(VisEntityGroupCompaniesByTheirFirstThreeInitials.Fields.companies, companies);
 		String recordId = ENTITY.calculateId(json);
 		CcpBulkItem item = new CcpBulkItem(json, CcpBulkEntityOperationType.create, ENTITY, recordId);
 		return item;
 	}
-	/** The companies grouped by initials while seeding (a static field, so it accumulates across calls). */
-	static CcpJsonRepresentation groupedCompanies = CcpOtherConstants.EMPTY_JSON;
 
 }

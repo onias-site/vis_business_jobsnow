@@ -15,6 +15,10 @@ import com.vis.entities.VisEntitySkillPending;
  * answer asks again ({@code invalidAnswer}).
  */
 public class VisSupportSkillSuggestionConfirmIgnore implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportSkillSuggestionConfirmIgnore INSTANCE = new VisSupportSkillSuggestionConfirmIgnore();
+
+	private VisSupportSkillSuggestionConfirmIgnore() {}
 
 	/**
 	 * Handles the confirmation.

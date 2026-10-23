@@ -12,6 +12,10 @@ import com.vis.entities.VisEntityRecruiter;
  * {@code empresa.com.br}). A json with no e-mail is returned as is.
  */
 public class VisJsonTransformerRecruiterDomain implements CcpJsonTransformersDefaultEntityField {
+	/** The single instance: the class keeps no state. */
+	public final static VisJsonTransformerRecruiterDomain INSTANCE = new VisJsonTransformerRecruiterDomain();
+
+	private VisJsonTransformerRecruiterDomain() {}
 
 	/**
 	 * Puts in {@code domain} the part of the e-mail after the {@code @}.

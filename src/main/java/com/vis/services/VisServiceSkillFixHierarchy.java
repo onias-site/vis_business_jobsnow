@@ -13,21 +13,20 @@ import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.process.CcpProcessStatusDefault;
-import com.jn.business.messages.JnBusinessCancelSupportPendingCommand;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.skill.VisBusinessDeleteStoredFixHierarchyRequest;
+import com.vis.business.skill.VisBusinessSaveFixHierarchyRequestAndSpendTheDay;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyRefuseAlreadyReviewed;
 import com.vis.entities.VisEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillFixHierarchyDailyLimit;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
-import com.vis.messages.VisMessages;
 import com.vis.status.VisProcessStatusFixSkillHierarchy;
 
 /**
@@ -53,16 +52,7 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 		 * @return the same JSON
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpBusiness saveAsPending = CcpEntityOperationType.save.getOperationCallback(VisEntitySkillFixHierarchyPending.ENTITY);
-			CcpBusiness saveAndSpendTheDay = request -> {
-				CcpJsonRepresentation savedRequest = saveAsPending.execute(request);
-				// written here, and not by the pending entity, because that one writes through the messaging: the next
-				// request of the candidate must already find the day spent
-				String email = json.getAsString(VisEntitySkillFixHierarchyPending.Fields.email);
-				CcpJsonRepresentation dailyLimit = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkillFixHierarchyDailyLimit.Fields.email, email);
-				VisEntitySkillFixHierarchyDailyLimit.ENTITY.save(dailyLimit);
-				return savedRequest;
-			};
+			CcpBusiness saveAndSpendTheDay = new VisBusinessSaveFixHierarchyRequestAndSpendTheDay(json);
 
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()
@@ -140,15 +130,7 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 		 * @return the same JSON
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpBusiness deleteTheStoredRequest = jsonWithTheStoredRequest -> {
-				CcpJsonRepresentation storedRequest = jsonWithTheStoredRequest.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillFixHierarchyPending.ENTITY);
-				CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(json);
-				VisEntitySkillFixHierarchyPending.ENTITY.delete(completeRequest);
-				// the operator's ticket of this request leaves /pendingTickets
-				String noticeTemplateId = VisMessages.VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.class.getName();
-				JnBusinessCancelSupportPendingCommand.INSTANCE.cancel(noticeTemplateId, completeRequest);
-				return jsonWithTheStoredRequest;
-			};
+			CcpBusiness deleteTheStoredRequest = new VisBusinessDeleteStoredFixHierarchyRequest(json);
 
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()

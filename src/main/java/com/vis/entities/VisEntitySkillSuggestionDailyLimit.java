@@ -33,6 +33,10 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkillSuggestionDailyLimit.Fields.class)
 public class VisEntitySkillSuggestionDailyLimit implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillSuggestionDailyLimit INSTANCE = new VisEntitySkillSuggestionDailyLimit();
+
+	private VisEntitySkillSuggestionDailyLimit() {}
 
 	/** The entity {@code vis_skill_suggestion_daily_limit}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillSuggestionDailyLimit.class).entityInstance;

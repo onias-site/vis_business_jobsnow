@@ -15,6 +15,10 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
  * other answer asks again ({@code invalidAnswer}).
  */
 public class VisSupportSkillFixHierarchyConfirmIgnore implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisSupportSkillFixHierarchyConfirmIgnore INSTANCE = new VisSupportSkillFixHierarchyConfirmIgnore();
+
+	private VisSupportSkillFixHierarchyConfirmIgnore() {}
 
 	/**
 	 * Handles the confirmation.

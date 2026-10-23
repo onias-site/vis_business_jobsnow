@@ -16,6 +16,10 @@ import com.vis.entities.VisEntityResume;
  * to use it would wrongly reach the support operator.
  */
 public class VisBusinessResumeLinkedinRelease implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessResumeLinkedinRelease INSTANCE = new VisBusinessResumeLinkedinRelease();
+
+	private VisBusinessResumeLinkedinRelease() {}
 
 	/**
 	 * Runs the business described in the class documentation.

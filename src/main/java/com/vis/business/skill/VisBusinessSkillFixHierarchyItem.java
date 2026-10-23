@@ -1,7 +1,6 @@
 package com.vis.business.skill;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -11,7 +10,6 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillFixHierarchyItemApproved;
@@ -32,6 +30,10 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * without its {@code ranking}; its own word in the lookup still changes.
  */
 public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessSkillFixHierarchyItem INSTANCE = new VisBusinessSkillFixHierarchyItem();
+
+	private VisBusinessSkillFixHierarchyItem() {}
 
 	/**
 	 * Runs the business described in the class documentation.
@@ -50,27 +52,9 @@ public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 
 		CcpJsonRepresentation skillKey = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkill.Fields.skill, skill);
 
-		CcpBusiness changeOnlyTheLookup = skillNotFound -> {
-			VisSkillWordsGroups.changeParents(skill, words, changeParents);
-			return skillNotFound;
-		};
+		CcpBusiness changeOnlyTheLookup = new VisBusinessChangeOnlyTheSkillLookup(skill, words, changeParents);
 
-		CcpBusiness changeTheSkillAndTheLookup = jsonWithTheStoredSkill -> {
-			CcpJsonRepresentation skillRecord = jsonWithTheStoredSkill.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkill.ENTITY);
-			List<String> currentParents = skillRecord.getAsStringList(VisEntitySkill.Fields.parent);
-			Set<String> parents = new LinkedHashSet<>(currentParents);
-
-			changeParents.accept(parents);
-
-			List<String> updatedParents = new ArrayList<>(parents);
-			CcpJsonRepresentation skillRecordWithUpdatedParents = skillRecord.put(VisEntitySkill.Fields.parent, updatedParents);
-			VisEntitySkill.ENTITY.save(skillRecordWithUpdatedParents);
-
-			List<String> synonyms = skillRecord.getAsStringList(VisEntitySkill.Fields.synonym);
-			words.addAll(synonyms);
-			VisSkillWordsGroups.changeParents(skill, words, changeParents);
-			return jsonWithTheStoredSkill;
-		};
+		CcpBusiness changeTheSkillAndTheLookup = new VisBusinessChangeTheSkillAndTheLookup(skill, words, changeParents);
 
 		// a single read by id decides the branch and brings the stored skill
 		new CcpGetEntityId(skillKey)

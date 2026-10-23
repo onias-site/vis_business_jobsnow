@@ -31,6 +31,10 @@ public class VisMessages {
 	 * support bot.
 	 */
 	public static class VisNotifyUserAboutFulfiledSkillHierarchy implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyUserAboutFulfiledSkillHierarchy INSTANCE = new VisNotifyUserAboutFulfiledSkillHierarchy();
+
+		private VisNotifyUserAboutFulfiledSkillHierarchy() {}
 
 		/**
 		 * Prepares the review summary (see {@code VisSkillFixHierarchyReviewMessage.prepare}).
@@ -53,6 +57,10 @@ public class VisMessages {
 	 * one today (the email) or the same parent within the hour (the command to the operator).
 	 */
 	public static class VisNotifySupportAndUserAboutPendingSkillHierarchyRequest  implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifySupportAndUserAboutPendingSkillHierarchyRequest INSTANCE = new VisNotifySupportAndUserAboutPendingSkillHierarchyRequest();
+
+		private VisNotifySupportAndUserAboutPendingSkillHierarchyRequest() {}
 
 		/**
 		 * Puts back the readable e-mail and adds {@code typeDescription}, {@code skillNames} and the user's
@@ -113,6 +121,10 @@ public class VisMessages {
 	 * {@code skillNames}). Repeatable: every refused request is a new fact.
 	 */
 	public static class VisNotifyUserAboutAlreadyReviewedSkillHierarchy implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyUserAboutAlreadyReviewedSkillHierarchy INSTANCE = new VisNotifyUserAboutAlreadyReviewedSkillHierarchy();
+
+		private VisNotifyUserAboutAlreadyReviewedSkillHierarchy() {}
 
 		/**
 		 * Prepares the same values as the pending request notice.
@@ -120,7 +132,7 @@ public class VisMessages {
 		 * @return the values of the template
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation preparedJson = new VisNotifySupportAndUserAboutPendingSkillHierarchyRequest().execute(json);
+			CcpJsonRepresentation preparedJson = VisNotifySupportAndUserAboutPendingSkillHierarchyRequest.INSTANCE.execute(json);
 			return preparedJson;
 		}
 	}
@@ -131,6 +143,10 @@ public class VisMessages {
 	 * new fact, so the notice goes out even if the same candidate already suggested another skill today.
 	 */
 	public static class VisNotifySupportAndUserAboutPendingSkillRequest implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifySupportAndUserAboutPendingSkillRequest INSTANCE = new VisNotifySupportAndUserAboutPendingSkillRequest();
+
+		private VisNotifySupportAndUserAboutPendingSkillRequest() {}
 
 		/**
 		 * Puts back the readable email and adds {@code synonymNames} and the candidate's justification escaped for the
@@ -159,6 +175,10 @@ public class VisMessages {
 	 * {@code VisEntitySkillApproved}. Repeatable: every review is a new fact.
 	 */
 	public static class VisNotifyUserAboutAprovedSkill implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyUserAboutAprovedSkill INSTANCE = new VisNotifyUserAboutAprovedSkill();
+
+		private VisNotifyUserAboutAprovedSkill() {}
 
 		/**
 		 * Prepares the review result (see {@code VisSkillSuggestionReviewMessage.prepare}).
@@ -175,6 +195,10 @@ public class VisMessages {
 	 * {@code VisEntitySkillRejected}. Repeatable: every review is a new fact.
 	 */
 	public static class VisNotifyUserAboutRejectedSkill implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyUserAboutRejectedSkill INSTANCE = new VisNotifyUserAboutRejectedSkill();
+
+		private VisNotifyUserAboutRejectedSkill() {}
 
 		/**
 		 * Prepares the review result (see {@code VisSkillSuggestionReviewMessage.prepare}).
@@ -191,6 +215,10 @@ public class VisMessages {
 	 * Tells the owner of the resume that it was saved. Repeatable: every save is a new fact.
 	 */
 	public static class VisNotifyUserAboutSavedResume implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyUserAboutSavedResume INSTANCE = new VisNotifyUserAboutSavedResume();
+
+		private VisNotifyUserAboutSavedResume() {}
 
 		/**
 		 * Puts the original e-mail of the owner in {@code email}.
@@ -208,6 +236,10 @@ public class VisMessages {
 	 * Tells the owner of the resume that it was deactivated (moved to the inactive resumes). Repeatable.
 	 */
 	public static class VisNotifyUserAboutDeactivatedResume implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyUserAboutDeactivatedResume INSTANCE = new VisNotifyUserAboutDeactivatedResume();
+
+		private VisNotifyUserAboutDeactivatedResume() {}
 
 		/**
 		 * Puts the original e-mail of the owner in {@code email}.
@@ -225,6 +257,10 @@ public class VisMessages {
 	 * Tells the owner of the resume that it was reactivated (moved back from the inactive resumes). Repeatable.
 	 */
 	public static class VisNotifyUserAboutReactivatedResume implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyUserAboutReactivatedResume INSTANCE = new VisNotifyUserAboutReactivatedResume();
+
+		private VisNotifyUserAboutReactivatedResume() {}
 
 		/**
 		 * Puts the original e-mail of the owner in {@code email}.
@@ -246,6 +282,10 @@ public class VisMessages {
 	 * and the bulk of that record ended in {@code JnErrorReprocessInfiniteLoopPrevented}.
 	 */
 	public static class VisNotifySupportAboutSharedLinkedin implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifySupportAboutSharedLinkedin INSTANCE = new VisNotifySupportAboutSharedLinkedin();
+
+		private VisNotifySupportAboutSharedLinkedin() {}
 
 		/**
 		 * Puts the original e-mail of the last resume that saved the address in {@code email}.
@@ -263,6 +303,10 @@ public class VisMessages {
 	 * Tells the owner of the resume that every data of it was deleted for good. Repeatable.
 	 */
 	public static class VisNotifyUserAboutDeletedResume implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyUserAboutDeletedResume INSTANCE = new VisNotifyUserAboutDeletedResume();
+
+		private VisNotifyUserAboutDeletedResume() {}
 
 		/**
 		 * Puts the original e-mail of the owner in {@code email}.
@@ -281,6 +325,10 @@ public class VisMessages {
 	 * recorded per recruiter and day, so a second run on the same day does not send it again.
 	 */
 	public static class VisNotifyRecruiterAboutResumes implements JnMessageTemplate{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyRecruiterAboutResumes INSTANCE = new VisNotifyRecruiterAboutResumes();
+
+		private VisNotifyRecruiterAboutResumes() {}
 
 		/**
 		 * The values of the template are already in the json (the readable e-mail of the recruiter, the table, the links).

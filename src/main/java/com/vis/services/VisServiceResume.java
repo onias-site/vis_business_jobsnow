@@ -6,12 +6,14 @@ import com.ccp.decorators.CcpErrorJsonFieldNotFound;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
+import com.ccp.especifications.db.utils.entity.CcpBusinessDeleteRecordFromEntity;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.process.CcpProcessStatusDefault;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.resume.VisBusinessRefuseResumeNotFound;
 import com.vis.business.resume.VisBusinessResumeViewersOfTheMonth;
 import com.vis.entities.VisEntityResume;
 import com.vis.json.fields.validation.VisJsonFieldsResumeKey;
@@ -62,23 +64,10 @@ public enum VisServiceResume implements JnService {
 		 */
 		private CcpJsonRepresentation toggle(CcpJsonRepresentation json) {
 			CcpEntity twinEntity = VisEntityResume.ENTITY.getTwinEntity();
-			CcpBusiness deactivate = jsonWithTheStoredResume -> {
-				VisEntityResume.ENTITY.delete(json);
-				return jsonWithTheStoredResume;
-			};
-			CcpBusiness reactivate = jsonWithTheStoredResume -> {
-				twinEntity.delete(json);
-				return jsonWithTheStoredResume;
-			};
+			CcpBusiness deactivate = new CcpBusinessDeleteRecordFromEntity(VisEntityResume.ENTITY, json);
+			CcpBusiness reactivate = new CcpBusinessDeleteRecordFromEntity(twinEntity, json);
 			// a record found in either entity is placed under _entities; with none, the resume does not exist
-			CcpBusiness refuseWhenNotFound = jsonAfterTheSteps -> {
-				boolean found = jsonAfterTheSteps.containsField(CcpEntity.JsonFieldNames._entities);
-				if(found) {
-					return jsonAfterTheSteps;
-				}
-				CcpErrorFlowDisturb notFound = new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
-				throw notFound;
-			};
+			CcpBusiness refuseWhenNotFound = new VisBusinessRefuseResumeNotFound(json);
 
 			new CcpGetEntityId(json)
 			.toBeginProcedureAnd()

@@ -22,6 +22,10 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
  * <p>Runs in the support bot, never in an online request, so querying the requests by email is allowed.
  */
 public class VisBusinessDiscardPendingRequestsOfIgnoredUser implements CcpBusiness {
+	/** The single instance: the class keeps no state. */
+	public final static VisBusinessDiscardPendingRequestsOfIgnoredUser INSTANCE = new VisBusinessDiscardPendingRequestsOfIgnoredUser();
+
+	private VisBusinessDiscardPendingRequestsOfIgnoredUser() {}
 
 	/**
 	 * Runs the business described in the class documentation.

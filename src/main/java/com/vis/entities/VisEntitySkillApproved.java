@@ -31,6 +31,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 @CcpEntityFieldsValidator(VisEntitySkillApproved.Fields.class)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 public class VisEntitySkillApproved implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntitySkillApproved INSTANCE = new VisEntitySkillApproved();
+
+	private VisEntitySkillApproved() {}
 
 	/** The entity {@code vis_skill_approved}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntitySkillApproved.class).entityInstance;

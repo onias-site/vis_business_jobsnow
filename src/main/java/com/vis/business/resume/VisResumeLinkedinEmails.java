@@ -19,7 +19,7 @@ import com.vis.entities.VisEntityResumeLinkedin;
  * by the database ({@code scriptedUpdate}), as in the groupers: two resumes adding or removing their e-mail of the same
  * address at the same time are applied one after the other, and none overwrites the other.
  */
-class VisResumeLinkedinEmails {
+public class VisResumeLinkedinEmails {
 
 	/** The scripts run over the record of an address, and their parameters. */
 	enum Scripts implements CcpJsonFieldName {
@@ -48,7 +48,7 @@ class VisResumeLinkedinEmails {
 	 * @param linkedinAddress the address
 	 * @return the key
 	 */
-	static CcpJsonRepresentation getAddressKey(String linkedinAddress) {
+	public static CcpJsonRepresentation getAddressKey(String linkedinAddress) {
 		CcpJsonRepresentation addressKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityResumeLinkedin.Fields.linkedinAddress, linkedinAddress);
 		return addressKey;
 	}
@@ -58,7 +58,7 @@ class VisResumeLinkedinEmails {
 	 * @param addressKey the key of the address
 	 * @return the hashes of the e-mails, empty when the address has no record
 	 */
-	static List<String> getEmails(CcpJsonRepresentation addressKey) {
+	public static List<String> getEmails(CcpJsonRepresentation addressKey) {
 		CcpEntityMetaData metaData = VisEntityResumeLinkedin.ENTITY.getEntityMetaData();
 		CcpJsonRepresentation addressRecord = metaData.getOneByIdOrHandleItIfThisIdWasNotFound(addressKey, notFound -> CcpOtherConstants.EMPTY_JSON);
 		List<String> emails = addressRecord.getAsStringList(VisEntityResumeLinkedin.Fields.emails);

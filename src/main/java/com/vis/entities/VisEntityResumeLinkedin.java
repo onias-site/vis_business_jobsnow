@@ -43,6 +43,10 @@ import com.vis.messages.VisMessages;
  */
 @CcpEntityFieldsValidator(VisEntityResumeLinkedin.Fields.class)
 public class VisEntityResumeLinkedin implements CcpEntityConfigurator {
+	/** The single instance: the class keeps no state. */
+	public final static VisEntityResumeLinkedin INSTANCE = new VisEntityResumeLinkedin();
+
+	private VisEntityResumeLinkedin() {}
 
 	/** The entity {@code vis_resume_linkedin}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityResumeLinkedin.class).entityInstance;

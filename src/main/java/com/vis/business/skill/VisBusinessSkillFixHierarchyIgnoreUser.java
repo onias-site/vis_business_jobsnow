@@ -8,7 +8,6 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
@@ -83,13 +82,7 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 		}
 
 		List<CcpJsonRepresentation> pendingRequests = new ArrayList<>();
-		CcpBusiness collectTheRequest = requestWithTheStoredRecord -> {
-			CcpJsonRepresentation storedRequest = requestWithTheStoredRecord.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntitySkillFixHierarchyPending.ENTITY);
-			CcpJsonRepresentation requestWithType = requestWithTheStoredRecord.getJsonPiece(VisEntitySkillFixHierarchyPending.Fields.email, VisEntitySkillFixHierarchyPending.Fields.parent, VisEntitySkillFixHierarchyPending.Fields.type);
-			CcpJsonRepresentation completeRequest = storedRequest.mergeWithAnotherJson(requestWithType);
-			pendingRequests.add(completeRequest);
-			return requestWithTheStoredRecord;
-		};
+		CcpBusiness collectTheRequest = new VisBusinessCollectPendingFixHierarchyRequest(pendingRequests);
 
 		// the action runs only for the types with a pending request
 		new CcpGetEntityId(requestKeys)
