@@ -9,6 +9,7 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.jn.messages.JnRepeatableMessage;
 import com.jn.utils.JnLanguage;
 import com.jn.utils.JnSystemProperties;
@@ -63,8 +64,9 @@ public class VisMessages {
 		private VisNotifySupportAndUserAboutPendingSkillHierarchyRequest() {}
 
 		/**
-		 * Puts back the readable e-mail and adds {@code typeDescription}, {@code skillNames} and the user's
-		 * justification escaped for the email ({@code escapedDescription}).
+		 * Puts back the readable e-mail and adds {@code typeDescription}, {@code skillNames}, the user's
+		 * justification escaped for the email ({@code escapedDescription}) and the priority of the ticket of the operator
+		 * ({@code /fixSkillHierarchy}: 3).
 		 * @param json the pending request
 		 * @return the values of the template
 		 */
@@ -82,7 +84,8 @@ public class VisMessages {
 			CcpJsonRepresentation jsonWithTypeDescription = jsonWithOriginalEmail.put(JsonFieldNames.typeDescription, typeDescription);
 			CcpJsonRepresentation jsonWithSkillNames = putSkillNames(jsonWithTypeDescription);
 			CcpJsonRepresentation jsonWithEscapedDescription = VisEmailHtml.putEscapedDescription(jsonWithSkillNames);
-			return jsonWithEscapedDescription;
+			CcpJsonRepresentation jsonWithPriority = jsonWithEscapedDescription.put(JnJsonInstantMessengerFields.priority, 3);
+			return jsonWithPriority;
 		}
 
 		/**
@@ -149,8 +152,8 @@ public class VisMessages {
 		private VisNotifySupportAndUserAboutPendingSkillRequest() {}
 
 		/**
-		 * Puts back the readable email and adds {@code synonymNames} and the candidate's justification escaped for the
-		 * email ({@code escapedDescription}).
+		 * Puts back the readable email and adds {@code synonymNames}, the candidate's justification escaped for the
+		 * email ({@code escapedDescription}) and the priority of the ticket of the operator ({@code /reviewSkillSuggestion}: 3).
 		 * @param json the suggestion
 		 * @return the values of the template
 		 */
@@ -161,7 +164,8 @@ public class VisMessages {
 			String synonymNames = String.join(", ", synonyms);
 			CcpJsonRepresentation jsonWithSynonymNames = jsonWithOriginalEmail.put(JsonFieldNames.synonymNames, synonymNames);
 			CcpJsonRepresentation jsonWithEscapedDescription = VisEmailHtml.putEscapedDescription(jsonWithSynonymNames);
-			return jsonWithEscapedDescription;
+			CcpJsonRepresentation jsonWithPriority = jsonWithEscapedDescription.put(JnJsonInstantMessengerFields.priority, 3);
+			return jsonWithPriority;
 		}
 
 		/** Placeholder of the templates that does not exist in the suggestion: the {@code synonym} array joined by commas. */

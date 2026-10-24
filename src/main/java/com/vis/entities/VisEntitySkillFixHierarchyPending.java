@@ -12,6 +12,8 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityA
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpExceptionFlow;
@@ -34,6 +36,10 @@ import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.JnEntityInstantMessengerParametersToSend;
 import com.jn.entities.JnEntityInstantMessengerTemplateMessage;
+import com.jn.entities.JnEntityLoginEmail;
+import com.jn.entities.decorators.engine.JnGrouperChildAsJsonEntityAfterWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildAsJsonOnBothSidesEntityBeforeWrite;
+import com.jn.json.transformers.JnLoginEmailParentCombinations;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
@@ -68,8 +74,14 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutFulfiledSkillHierarchy;
  * ({@code VisBusinessSkillFixHierarchyReview}) transfers the request to VisEntitySkillFixHierarchyFulfiled,
  * whatever the decisions were, which emails the user the approved and the rejected items with the operator's
  * justifications.
+ * Each request is a ticket of the user in the group of the e-mail ({@code jn_login_email}) of {@code jn_grouper}, as a
+ * JSON text, while it waits for the support; the review moves it to the same group of {@code jn_inactive_grouper},
+ * with the decision, and giving it up takes it out ({@link JnGrouperChildAsJsonOnBothSidesEntityBeforeWrite}): the
+ * screen of the tickets of the user reads both by id. Since 2026-10-23.
  * Versionable, with asynchronous writing and a 1-hour cache.
  */
+@CcpEntityGrouperChild(value = {JnEntityLoginEmail.class}, beforeDecoratorClass = JnGrouperChildAsJsonOnBothSidesEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildAsJsonEntityAfterWrite.class)
+@CcpEntityGrouperParentCombinations(parent = JnEntityLoginEmail.class, value = JnLoginEmailParentCombinations.class)
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
@@ -293,6 +305,13 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisSkillFixHierarchyTypes.class)
 		@CcpEntityFieldPrimaryKey
 		type,
+
+		/**
+		 * The {@code date} field: text, the date and time of the last save ({@code dd/MM/yyyy HH:mm:ss}), filled by the
+		 * decorator of {@code @CcpEntityGrouperChild}; it goes with the request to the tickets of the user. Since 2026-10-23.
+		 */
+		@CcpJsonFieldTypeString(exactLength = 19)
+		date,
 
 	}
 }

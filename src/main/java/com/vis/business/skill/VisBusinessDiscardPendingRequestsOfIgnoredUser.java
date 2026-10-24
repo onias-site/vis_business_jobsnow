@@ -12,14 +12,16 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
 /**
- * Runs after a user is saved in {@link VisEntityCommandNotAllowedToUser}, that is, when the support bot operator
- * decides to ignore the user: discards every request of the user still pending, of every kind
- * ({@link VisIgnoredUserPendingRequests}), as if it had never existed. Each request leaves the pending entity by
- * {@code deleteAnyWhere}, which also purges its versioned history, and its ticket leaves {@code /pendingTickets}.
- * Nothing is approved nor rejected and the user is not notified. The items of a skill hierarchy fix request that no
- * other user asks for go with it (the pending entity's own deletion rule).
+ * Subscriber of the save of {@link JnEntityCommandNotAllowedToUser} (seeded by {@code VisEntitySkillPending} in
+ * {@code jn_write_event_subscribers}), that is, of the decision of the support bot operator to ignore the user: discards
+ * every request of vis of the user still pending, of every kind ({@link VisIgnoredUserPendingRequests}), as if it had
+ * never existed. Each request leaves the pending entity by {@code deleteAnyWhere}, which also purges its versioned
+ * history and takes it out of the tickets of the user in {@code jn_grouper}, and its ticket leaves
+ * {@code /pendingTickets}. Nothing is approved nor rejected and the user is not notified. The items of a skill hierarchy
+ * fix request that no other user asks for go with it (the pending entity's own deletion rule). Until 2026-10-23 the
+ * entity of the ignored users belonged to vis and ran this business directly.
  *
- * <p>Runs in the support bot, never in an online request, so querying the requests by email is allowed.
+ * <p>Runs in the consumer of the messaging, never in an online request, so querying the requests by email is allowed.
  */
 public class VisBusinessDiscardPendingRequestsOfIgnoredUser implements CcpBusiness {
 	/** The single instance: the class keeps no state. */

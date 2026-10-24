@@ -6,7 +6,7 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.utils.JnLanguage;
-import com.vis.entities.VisEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillPending;
 
 /**
@@ -14,7 +14,7 @@ import com.vis.entities.VisEntitySkillPending;
  * operator the skill suggested by the user, its synonyms and the justification the user gave ({@code description}),
  * and asks for the decision. The skill is the last parameter, so it may have spaces.
  *
- * <p>A user ignored by the support (the ignoring is global, {@link VisEntityCommandNotAllowedToUser}) is not reviewed, even if the operator
+ * <p>A user ignored by the support (the ignoring is global, {@link JnEntityCommandNotAllowedToUser}) is not reviewed, even if the operator
  * runs the command for them by mistake or on purpose: the flow is diverted with {@code userNotAllowed} before
  * anything is read. Without a pending suggestion (withdrawn by the user or already reviewed) the flow is diverted
  * with {@code requestNotFound}.
@@ -34,8 +34,8 @@ public class VisSupportSkillSuggestionShowRequest implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		String email = json.getAsString(VisEntitySkillPending.Fields.email);
-		CcpJsonRepresentation ignoredUser = CcpOtherConstants.EMPTY_JSON.put(VisEntityCommandNotAllowedToUser.Fields.email, email);
-		boolean userIsIgnored = VisEntityCommandNotAllowedToUser.ENTITY.exists(ignoredUser);
+		CcpJsonRepresentation ignoredUser = CcpOtherConstants.EMPTY_JSON.put(JnEntityCommandNotAllowedToUser.Fields.email, email);
+		boolean userIsIgnored = JnEntityCommandNotAllowedToUser.ENTITY.exists(ignoredUser);
 
 		if(userIsIgnored) {
 			VisSupportSkillSuggestionStatus.userNotAllowed.throwException(json);

@@ -12,6 +12,8 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityA
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.transfer.CcpAfterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError;
@@ -23,12 +25,21 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.business.messages.JnInstantMessageType;
 import com.jn.business.messages.JnMessageType;
 import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.JnEntityInstantMessengerParametersToSend;
 import com.jn.entities.JnEntityInstantMessengerTemplateMessage;
+import com.jn.entities.JnEntityLoginEmail;
+import com.jn.entities.decorators.engine.JnGrouperChildAsJsonEntityAfterWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildAsJsonOnBothSidesEntityBeforeWrite;
+import com.jn.json.transformers.JnLoginEmailParentCombinations;
+import com.jn.entities.JnEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityWriteEventSubscribers;
+import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityDecoratorOperationType;
+import com.vis.business.skill.VisBusinessDiscardPendingRequestsOfIgnoredUser;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
@@ -57,8 +68,14 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
  * {@link VisEntitySkill} ({@code VisBusinessSkillSuggestionApply}). Both decisions are also recorded per skill in
  * {@link VisEntitySkillReviewed}, which every candidate who suggests the same skill afterwards gets instead of a new
  * review.
+ * Each request is a ticket of the user in the group of the e-mail ({@code jn_login_email}) of {@code jn_grouper}, as a
+ * JSON text, while it waits for the support; the review moves it to the same group of {@code jn_inactive_grouper},
+ * with the decision, and giving it up takes it out ({@link JnGrouperChildAsJsonOnBothSidesEntityBeforeWrite}): the
+ * screen of the tickets of the user reads both by id. Since 2026-10-23.
  * Versionable, with asynchronous writing and a 1-hour cache.
  */
+@CcpEntityGrouperChild(value = {JnEntityLoginEmail.class}, beforeDecoratorClass = JnGrouperChildAsJsonOnBothSidesEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildAsJsonEntityAfterWrite.class)
+@CcpEntityGrouperParentCombinations(parent = JnEntityLoginEmail.class, value = JnLoginEmailParentCombinations.class)
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
@@ -163,6 +180,9 @@ public class VisEntitySkillPending implements CcpEntityConfigurator {
 		// the command of the support bot that reviews these suggestions: since 2026-10-15 vis seeds it, and not jb
 		List<CcpBulkItem> reviewCommandItems = VisSupportSkillSuggestionBotConfiguration.getSeeds();
 		firstRecords.addAll(reviewCommandItems);
+		// the user ignored by the support (jn) discards the pending requests of vis, through the messaging
+		List<CcpBulkItem> ignoredUserSubscription = JnEntityWriteEventSubscribers.getSeeds(JnEntityCommandNotAllowedToUser.ENTITY, CcpEntityDecoratorOperationType.save, VisBusinessDiscardPendingRequestsOfIgnoredUser.class);
+		firstRecords.addAll(ignoredUserSubscription);
 		return firstRecords;
 	}
 
@@ -228,6 +248,13 @@ public class VisEntitySkillPending implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		@CcpJsonFieldValidatorRequired
 		description,
+
+		/**
+		 * The {@code date} field: text, the date and time of the last save ({@code dd/MM/yyyy HH:mm:ss}), filled by the
+		 * decorator of {@code @CcpEntityGrouperChild}; it goes with the suggestion to the tickets of the user. Since 2026-10-23.
+		 */
+		@CcpJsonFieldTypeString(exactLength = 19)
+		date,
 		;
 	}
 }

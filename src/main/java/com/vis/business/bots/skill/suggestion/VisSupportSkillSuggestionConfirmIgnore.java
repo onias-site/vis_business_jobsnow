@@ -10,7 +10,7 @@ import com.vis.entities.VisEntitySkillPending;
 
 /**
  * Step of the {@code reviewSkillSuggestion} command that confirms the intention of the operator to ignore the user.
- * Yes records the user in {@code VisEntityCommandNotAllowedToUser}, discards the suggestion without notifying the
+ * Yes records the user in {@code JnEntityCommandNotAllowedToUser}, discards the suggestion without notifying the
  * user and ends the session ({@code userIgnored}); no goes back to the decision ({@code ignoreCanceled}); any other
  * answer asks again ({@code invalidAnswer}).
  */

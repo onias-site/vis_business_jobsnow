@@ -12,13 +12,14 @@ import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkillPending;
-import com.vis.entities.VisEntitySkillSuggestionDailyLimit;
+import com.jn.entities.JnEntityTicketDailyLimit;
+import com.jn.json.fields.validation.JnTicketQuotaGroups;
 import com.vis.entities.VisEntitySkillSynonym;
 
 /**
  * Action of {@code VisServiceSkillSuggestion.SuggestSkill} once every check passed: saves the suggestion as pending,
  * records each of its synonyms in {@link VisEntitySkillSynonym} (pointing to the suggested skill, in a single bulk) and
- * spends the day of the candidate in {@link VisEntitySkillSuggestionDailyLimit}.
+ * spends the shared daily quota of the candidate ({@link JnEntityTicketDailyLimit}, {@code sharedTickets}).
  */
 public class VisBusinessSaveSkillSuggestionWithSynonyms implements CcpBusiness {
 
@@ -45,8 +46,8 @@ public class VisBusinessSaveSkillSuggestionWithSynonyms implements CcpBusiness {
 		// written here, and not by the pending entity, because that one writes through the messaging: the next
 		// request of the candidate must already find the day spent
 		String email = this.json.getAsString(VisEntitySkillPending.Fields.email);
-		CcpJsonRepresentation dailyLimit = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkillSuggestionDailyLimit.Fields.email, email);
-		VisEntitySkillSuggestionDailyLimit.ENTITY.save(dailyLimit);
+		CcpJsonRepresentation dailyLimit = JnEntityTicketDailyLimit.getKey(email, JnTicketQuotaGroups.sharedTickets);
+		JnEntityTicketDailyLimit.ENTITY.save(dailyLimit);
 		return savedSuggestion;
 	}
 

@@ -31,8 +31,9 @@ public enum VisProcessStatusSuggestSkill implements CcpProcessStatus{
 	 */
 	suggestedThroughSynonym(409),
 	/**
-	 * Status 429: the user suggested a skill in the last 24 hours ({@code VisEntitySkillSuggestionDailyLimit}); one suggestion
-	 * per 24 hours, because each one emails the user and opens a ticket to the support operator.
+	 * Status 429: the user opened, in the last 24 hours, a ticket of the shared daily quota ({@code JnEntityTicketDailyLimit}:
+	 * a skill suggestion, a skill hierarchy fix or a "contact us" that is neither a bug nor a question); one per 24 hours,
+	 * because each one emails the user and opens a ticket to the support operator.
 	 */
 	dailyLimitReached(429),
 	;

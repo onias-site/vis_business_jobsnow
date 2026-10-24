@@ -11,7 +11,7 @@ import com.jn.entities.JnEntityBotCommandStepEndMessage;
 import com.jn.utils.JnLanguage;
 import com.vis.business.bots.VisCommandNamesInPortuguese;
 import com.vis.business.bots.VisSupportBotCommands;
-import com.vis.business.bots.command.allowed.VisSupportAllowCommandToUserBotConfiguration;
+import com.jn.business.bots.command.allowed.JnSupportAllowCommandToUserBotConfiguration;
 import com.vis.entities.VisEntitySkillPending;
 
 /**
@@ -109,7 +109,7 @@ public final class VisSupportSkillSuggestionBotConfiguration {
 		CcpJsonRepresentation requestNotFoundFlow = JnEntityBotCommandStep.getStepFlow(requestNotFound, "", portuguese, english, spanish);
 
 		int userNotAllowed = VisSupportSkillSuggestionStatus.userNotAllowed.asNumber();
-		CcpJsonRepresentation userNotAllowedFlow = VisSupportAllowCommandToUserBotConfiguration.getUserNotAllowedFlow(userNotAllowed, email);
+		CcpJsonRepresentation userNotAllowedFlow = JnSupportAllowCommandToUserBotConfiguration.getUserNotAllowedFlow(userNotAllowed, email);
 
 		CcpJsonRepresentation step = JnEntityBotCommandStep.getBotCommandStep(commandName, VisSupportSkillSuggestionShowRequest.class, decide, requestNotFoundFlow, userNotAllowedFlow);
 		return step;

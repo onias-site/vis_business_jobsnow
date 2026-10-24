@@ -20,7 +20,7 @@ import com.jn.utils.JnLanguage;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyReview;
 import com.vis.business.skill.VisSkillFixHierarchyDecisions;
 import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
-import com.vis.entities.VisEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillFixHierarchyItemApproved;
 import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
@@ -43,7 +43,7 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * the review finishes right here ({@code reviewFinished}); without any item at all the flow is diverted with
  * {@code requestNotFound}.
  *
- * <p>A user ignored by the support (the ignoring is global, {@link VisEntityCommandNotAllowedToUser}) is not reviewed, even if the
+ * <p>A user ignored by the support (the ignoring is global, {@link JnEntityCommandNotAllowedToUser}) is not reviewed, even if the
  * operator runs the command for them by mistake or on purpose: the flow is diverted with {@code userNotAllowed}
  * before anything is read, and the operator is told how to stop ignoring the user.
  */
@@ -62,8 +62,8 @@ public class VisSupportSkillFixHierarchyShowRequest implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 
 		String email = json.getAsString(VisEntitySkillFixHierarchyPending.Fields.email);
-		CcpJsonRepresentation ignoredUser = CcpOtherConstants.EMPTY_JSON.put(VisEntityCommandNotAllowedToUser.Fields.email, email);
-		boolean userIsIgnored = VisEntityCommandNotAllowedToUser.ENTITY.exists(ignoredUser);
+		CcpJsonRepresentation ignoredUser = CcpOtherConstants.EMPTY_JSON.put(JnEntityCommandNotAllowedToUser.Fields.email, email);
+		boolean userIsIgnored = JnEntityCommandNotAllowedToUser.ENTITY.exists(ignoredUser);
 
 		if(userIsIgnored) {
 			VisSupportSkillFixHierarchyStatus.userNotAllowed.throwException(json);

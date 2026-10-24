@@ -17,8 +17,9 @@ public enum VisProcessStatusFixSkillHierarchy implements CcpProcessStatus{
 	 */
 	alreadyReviewed(208),
 	/**
-	 * Status 429: the user requested a skill hierarchy fix in the last 24 hours ({@code VisEntitySkillFixHierarchyDailyLimit});
-	 * one request per 24 hours, because each one emails the user and opens a ticket to the support operator.
+	 * Status 429: the user opened, in the last 24 hours, a ticket of the shared daily quota ({@code JnEntityTicketDailyLimit}:
+	 * a skill hierarchy fix, a skill suggestion or a "contact us" that is neither a bug nor a question); one per 24 hours,
+	 * because each one emails the user and opens a ticket to the support operator.
 	 */
 	dailyLimitReached(429),
 	;

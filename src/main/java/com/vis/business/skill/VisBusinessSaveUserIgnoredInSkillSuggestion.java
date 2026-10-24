@@ -4,12 +4,13 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.vis.entities.VisEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillPending;
-import com.vis.json.fields.validation.VisUserRequestCommands;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.json.fields.validation.JnUserRequestCommands;
 
 /**
- * Action of {@code VisBusinessSkillSuggestionIgnoreUser}: records the user in {@link VisEntityCommandNotAllowedToUser},
+ * Action of {@code VisBusinessSkillSuggestionIgnoreUser}: records the user in {@link JnEntityCommandNotAllowedToUser},
  * with the suggestion being reviewed ({@code skill}, {@code synonym} and {@code description}) in the {@code description}.
  */
 class VisBusinessSaveUserIgnoredInSkillSuggestion implements CcpBusiness {
@@ -38,12 +39,15 @@ class VisBusinessSaveUserIgnoredInSkillSuggestion implements CcpBusiness {
 
 		String email = this.suggestionKey.getAsString(VisEntitySkillPending.Fields.email);
 		// the email of the record is kept as hash; the readable one goes in the description, for the operator to list the ignored users
-		CcpJsonRepresentation description = requestDescription.put(VisEntitySkillPending.Fields.email, email);
-		CcpJsonRepresentation ignoredUserWithEmail = CcpOtherConstants.EMPTY_JSON.put(VisEntityCommandNotAllowedToUser.Fields.email, email);
-		CcpJsonRepresentation ignoredUserWithCommand = ignoredUserWithEmail.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.reviewSkillSuggestion);
-		CcpJsonRepresentation ignoredUser = ignoredUserWithCommand.put(VisEntityCommandNotAllowedToUser.Fields.description, description);
+		CcpJsonRepresentation descriptionWithEmail = requestDescription.put(VisEntitySkillPending.Fields.email, email);
+		// the summary of the request shown in the lists of ignored users (jn): the skill
+		String skill = this.suggestionKey.getAsString(VisEntitySkillPending.Fields.skill);
+		CcpJsonRepresentation description = descriptionWithEmail.put(JnJsonCommonsFields.request, skill);
+		CcpJsonRepresentation ignoredUserWithEmail = CcpOtherConstants.EMPTY_JSON.put(JnEntityCommandNotAllowedToUser.Fields.email, email);
+		CcpJsonRepresentation ignoredUserWithCommand = ignoredUserWithEmail.put(JnEntityCommandNotAllowedToUser.Fields.commandName, JnUserRequestCommands.reviewSkillSuggestion);
+		CcpJsonRepresentation ignoredUser = ignoredUserWithCommand.put(JnEntityCommandNotAllowedToUser.Fields.description, description);
 		// saving the user discards this suggestion and every other pending request of the user
-		VisEntityCommandNotAllowedToUser.ENTITY.save(ignoredUser);
+		JnEntityCommandNotAllowedToUser.ENTITY.save(ignoredUser);
 		return jsonWithTheStoredSuggestion;
 	}
 }

@@ -6,7 +6,7 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.jn.utils.JnDeleteKeysFromCache;
-import com.vis.entities.VisEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillPending;
 
 /**
@@ -14,7 +14,7 @@ import com.vis.entities.VisEntitySkillPending;
  * the ignoring is global), given the
  * {@code email} and the {@code skill} of the suggestion being reviewed.
  *
- * <p>Records the user in {@link VisEntityCommandNotAllowedToUser}, with the suggestion ({@code skill},
+ * <p>Records the user in {@link JnEntityCommandNotAllowedToUser}, with the suggestion ({@code skill},
  * {@code synonym} and {@code description}) in the {@code description}, so that the next suggestions of the user no
  * longer reach the operator. Saving the user discards this suggestion and every other request of the user still
  * pending, as if they had never existed ({@code VisBusinessDiscardPendingRequestsOfIgnoredUser}), without any decision

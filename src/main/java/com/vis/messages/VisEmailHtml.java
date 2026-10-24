@@ -2,8 +2,10 @@ package com.vis.messages;
 
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.messages.JnEmailHtml;
 
 /**
+ * Delegates the escaping to {@link JnEmailHtml} since 2026-10-23.
  * Text typed by a person (the candidate's justification, the operator's justification) that goes into the HTML body of
  * an email: escaped, so that a {@code <} typed by them shows up as text, and with the line breaks kept.
  */
@@ -18,14 +20,8 @@ public final class VisEmailHtml {
 	 * @return the escaped text
 	 */
 	public static String escape(String text) {
-		String withoutAmpersand = text.replace("&", "&amp;");
-		String withoutLessThan = withoutAmpersand.replace("<", "&lt;");
-		String withoutGreaterThan = withoutLessThan.replace(">", "&gt;");
-		// the body is still a template: a {email} typed by someone would be filled by the sending
-		String withoutOpeningBrace = withoutGreaterThan.replace("{", "&#123;");
-		String withoutClosingBrace = withoutOpeningBrace.replace("}", "&#125;");
-		String withLineBreaks = withoutClosingBrace.replace("\n", "<br>");
-		return withLineBreaks;
+		String escapedText = JnEmailHtml.escape(text);
+		return escapedText;
 	}
 
 	/**

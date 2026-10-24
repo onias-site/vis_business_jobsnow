@@ -10,7 +10,7 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
 
 /**
  * Step of the {@code fixSkillHierarchy} command that confirms the intention of the operator to ignore the user. Yes
- * records the user in {@code VisEntityCommandNotAllowedToUser}, discards the request without notifying the user and ends
+ * records the user in {@code JnEntityCommandNotAllowedToUser}, discards the request without notifying the user and ends
  * the session ({@code userIgnored}); no goes back to the choice of how to decide the items ({@code ignoreCanceled}); any
  * other answer asks again ({@code invalidAnswer}).
  */

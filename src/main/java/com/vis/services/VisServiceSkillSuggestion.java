@@ -17,13 +17,14 @@ import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.skill.VisBusinessDeleteStoredSkillSuggestion;
 import com.vis.business.skill.VisBusinessSaveSkillSuggestionWithSynonyms;
-import com.vis.entities.VisEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityTicketDailyLimit;
+import com.jn.json.fields.validation.JnTicketQuotaGroups;
 import com.vis.entities.VisEntityGroupPositionsBySkills;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
 import com.vis.entities.VisEntitySkillReviewed;
-import com.vis.entities.VisEntitySkillSuggestionDailyLimit;
 import com.vis.entities.VisEntitySkillSynonym;
 import com.vis.status.VisProcessStatusSuggestSkill;
 
@@ -37,7 +38,7 @@ public enum VisServiceSkillSuggestion implements JnService {
 
 	/**
 	 * Saves the suggestion as pending, which notifies the candidate and the support bot operator. A user that the
-	 * operator chose to ignore (in any command: the ignoring is global, {@link VisEntityCommandNotAllowedToUser})
+	 * operator chose to ignore (in any command: the ignoring is global, {@link JnEntityCommandNotAllowedToUser})
 	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified. A word already known,
 	 * as a skill or as a synonym of one ({@link VisEntityGroupPositionsBySkills}, {@link VisEntitySkill}), gets
 	 * {@code skillAlreadyExists} (412), a skill this candidate already had rejected gets {@code alreadyRejected} (410: the
@@ -45,8 +46,9 @@ public enum VisServiceSkillSuggestion implements JnService {
 	 * {@code alreadyReviewed} (410: the decision holds for everyone, so no new ticket reaches the operator), and a
 	 * suggestion of the same skill by the same candidate still pending gets 409. A skill that is a synonym given in a
 	 * suggestion this candidate already made ({@link VisEntitySkillSynonym}) gets {@code suggestedThroughSynonym} (409).
-	 * A candidate who suggested a skill in the last 24 hours ({@link VisEntitySkillSuggestionDailyLimit}, written at each saved
-	 * suggestion) gets {@code dailyLimitReached} (429): each suggestion emails the candidate and opens a ticket to the
+	 * A candidate who opened, in the last 24 hours, a ticket of the shared daily quota ({@link JnEntityTicketDailyLimit},
+	 * {@code sharedTickets}: a skill suggestion, a skill hierarchy fix or a "contact us" that is neither a bug nor a
+	 * question, written at each saved ticket) gets {@code dailyLimitReached} (429): each suggestion emails the candidate and opens a ticket to the
 	 * operator, so one per 24 hours. The refusals above send nothing and are checked first, so they do not spend the day.
 	 * <p>
 	 * Saving the suggestion also records each of its synonyms in {@link VisEntitySkillSynonym}, pointing to the
@@ -78,16 +80,18 @@ public enum VisServiceSkillSuggestion implements JnService {
 			}
 
 			CcpBusiness saveWithSynonyms = new VisBusinessSaveSkillSuggestionWithSynonyms(json);
+			// the quota group completes the key of the daily limit
+			CcpJsonRepresentation jsonWithQuotaGroup = json.put(JnEntityTicketDailyLimit.Fields.quotaGroup, JnTicketQuotaGroups.sharedTickets.name());
 
 			// the daily limit is the last check: every refusal before it sends nothing, so it does not spend the day
-			new CcpGetEntityId(json)
+			new CcpGetEntityId(jsonWithQuotaGroup)
 			.toBeginProcedureAnd()
-				.ifThisIdIsPresentInEntity(VisEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusSuggestSkill.userNotAllowed).and()
+				.ifThisIdIsPresentInEntity(JnEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusSuggestSkill.userNotAllowed).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).returnStatus(VisProcessStatusSuggestSkill.skillAlreadyExists).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillRejected.ENTITY).returnStatus(VisProcessStatusSuggestSkill.alreadyRejected).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillReviewed.ENTITY).returnStatus(VisProcessStatusSuggestSkill.alreadyReviewed).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillPending.ENTITY).returnStatus(CcpProcessStatusDefault.CONFLICT).and()
-				.ifThisIdIsPresentInEntity(VisEntitySkillSuggestionDailyLimit.ENTITY).returnStatus(VisProcessStatusSuggestSkill.dailyLimitReached).and()
+				.ifThisIdIsPresentInEntity(JnEntityTicketDailyLimit.ENTITY).returnStatus(VisProcessStatusSuggestSkill.dailyLimitReached).and()
 				.executeAction(saveWithSynonyms)
 				.andFinallyReturningTheseFields(VisSkillSuggestionResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)

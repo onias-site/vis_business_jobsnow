@@ -10,11 +10,7 @@ import com.ccp.decorators.CcpJsonFieldName;
 public enum VisCommandNamesInPortuguese implements CcpJsonFieldName{
 	/** {@code /ajustarHierarquiaDeHabilidades}. */
 	fixSkillHierarchy { public String getValue() { return "ajustarHierarquiaDeHabilidades"; } },
-	/** {@code /permitirComandoAoUsuario}. */
-	allowCommandToUser { public String getValue() { return "permitirComandoAoUsuario"; } },
 	/** {@code /avaliarSugestaoDeHabilidade}. */
 	reviewSkillSuggestion { public String getValue() { return "avaliarSugestaoDeHabilidade"; } },
-	/** {@code /listarUsuariosIgnorados}. */
-	ignoredUsers { public String getValue() { return "listarUsuariosIgnorados"; } },
 	;
 }

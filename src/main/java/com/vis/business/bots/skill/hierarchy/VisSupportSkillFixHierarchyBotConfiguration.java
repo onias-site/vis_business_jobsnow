@@ -11,7 +11,7 @@ import com.jn.entities.JnEntityBotCommandStepEndMessage;
 import com.jn.utils.JnLanguage;
 import com.vis.business.bots.VisCommandNamesInPortuguese;
 import com.vis.business.bots.VisSupportBotCommands;
-import com.vis.business.bots.command.allowed.VisSupportAllowCommandToUserBotConfiguration;
+import com.jn.business.bots.command.allowed.JnSupportAllowCommandToUserBotConfiguration;
 import com.vis.business.skill.VisSkillFixHierarchyDecisions;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
@@ -148,7 +148,7 @@ public final class VisSupportSkillFixHierarchyBotConfiguration {
 		CcpJsonRepresentation reviewFinishedFlow = JnEntityBotCommandStep.getStepFlow(reviewFinished, "", botReply);
 
 		int userNotAllowed = VisSupportSkillFixHierarchyStatus.userNotAllowed.asNumber();
-		CcpJsonRepresentation userNotAllowedFlow = VisSupportAllowCommandToUserBotConfiguration.getUserNotAllowedFlow(userNotAllowed, email);
+		CcpJsonRepresentation userNotAllowedFlow = JnSupportAllowCommandToUserBotConfiguration.getUserNotAllowedFlow(userNotAllowed, email);
 
 		CcpJsonRepresentation step = JnEntityBotCommandStep.getBotCommandStep(commandName, VisSupportSkillFixHierarchyShowRequest.class, chooseMode, requestNotFoundFlow, reviewFinishedFlow, userNotAllowedFlow);
 		return step;

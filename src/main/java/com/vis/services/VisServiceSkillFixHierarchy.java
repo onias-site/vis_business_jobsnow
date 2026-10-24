@@ -23,8 +23,9 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.skill.VisBusinessDeleteStoredFixHierarchyRequest;
 import com.vis.business.skill.VisBusinessSaveFixHierarchyRequestAndSpendTheDay;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyRefuseAlreadyReviewed;
-import com.vis.entities.VisEntityCommandNotAllowedToUser;
-import com.vis.entities.VisEntitySkillFixHierarchyDailyLimit;
+import com.jn.entities.JnEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityTicketDailyLimit;
+import com.jn.json.fields.validation.JnTicketQuotaGroups;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.status.VisProcessStatusFixSkillHierarchy;
@@ -38,12 +39,14 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 
 	/**
 	 * Saves the suggestion as pending, which notifies the user and the support bot operator. A user that the
-	 * operator chose to ignore (in any command: the ignoring is global, {@link VisEntityCommandNotAllowedToUser})
+	 * operator chose to ignore (in any command: the ignoring is global, {@link JnEntityCommandNotAllowedToUser})
 	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified. A request whose skills were
 	 * all reviewed before gets {@code alreadyReviewed} (208): nothing stays pending and the user is emailed. A candidate
-	 * who requested a fix in the last 24 hours ({@link VisEntitySkillFixHierarchyDailyLimit}, written at each saved request)
-	 * gets {@code dailyLimitReached} (429): each request emails the candidate and opens a ticket to the operator, so one
-	 * per 24 hours. The 409 of a request still pending is checked first and does not spend the day.
+	 * who opened, in the last 24 hours, a ticket of the shared daily quota ({@link JnEntityTicketDailyLimit},
+	 * {@code sharedTickets}: a skill hierarchy fix, a skill suggestion or a "contact us" that is neither a bug nor a
+	 * question, written at each saved ticket) gets {@code dailyLimitReached} (429): each request emails the candidate and
+	 * opens a ticket to the operator, so one per 24 hours. The 409 of a request still pending is checked first and does
+	 * not spend the day.
 	 */
 	FixSkillHierarchy{
 		/**
@@ -53,12 +56,14 @@ public enum VisServiceSkillFixHierarchy implements JnService {
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpBusiness saveAndSpendTheDay = new VisBusinessSaveFixHierarchyRequestAndSpendTheDay(json);
+			// the quota group completes the key of the daily limit
+			CcpJsonRepresentation jsonWithQuotaGroup = json.put(JnEntityTicketDailyLimit.Fields.quotaGroup, JnTicketQuotaGroups.sharedTickets.name());
 
-			new CcpGetEntityId(json)
+			new CcpGetEntityId(jsonWithQuotaGroup)
 			.toBeginProcedureAnd()
-				.ifThisIdIsPresentInEntity(VisEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.userNotAllowed).and()
+				.ifThisIdIsPresentInEntity(JnEntityCommandNotAllowedToUser.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.userNotAllowed).and()
 				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyPending.ENTITY).returnStatus(CcpProcessStatusDefault.CONFLICT).and()
-				.ifThisIdIsPresentInEntity(VisEntitySkillFixHierarchyDailyLimit.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.dailyLimitReached).and()
+				.ifThisIdIsPresentInEntity(JnEntityTicketDailyLimit.ENTITY).returnStatus(VisProcessStatusFixSkillHierarchy.dailyLimitReached).and()
 				.executeAction(saveAndSpendTheDay)
 				.andFinallyReturningTheseFields(FixSkillHierarchyResponse.inexistentField)
 			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)

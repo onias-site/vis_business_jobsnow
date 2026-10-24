@@ -1,15 +1,15 @@
 package com.vis.business.skill;
 
 import com.ccp.business.CcpBusiness;
-import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntityOperationType;
-import com.vis.entities.VisEntitySkillFixHierarchyDailyLimit;
+import com.jn.entities.JnEntityTicketDailyLimit;
+import com.jn.json.fields.validation.JnTicketQuotaGroups;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 
 /**
  * Action of {@code VisServiceSkillFixHierarchy.FixSkillHierarchy} once every check passed: saves the request as pending
- * and spends the day of the candidate in {@link VisEntitySkillFixHierarchyDailyLimit}.
+ * and spends the shared daily quota of the candidate ({@link JnEntityTicketDailyLimit}, {@code sharedTickets}).
  */
 public class VisBusinessSaveFixHierarchyRequestAndSpendTheDay implements CcpBusiness {
 
@@ -35,8 +35,8 @@ public class VisBusinessSaveFixHierarchyRequestAndSpendTheDay implements CcpBusi
 		// written here, and not by the pending entity, because that one writes through the messaging: the next
 		// request of the candidate must already find the day spent
 		String email = this.json.getAsString(VisEntitySkillFixHierarchyPending.Fields.email);
-		CcpJsonRepresentation dailyLimit = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkillFixHierarchyDailyLimit.Fields.email, email);
-		VisEntitySkillFixHierarchyDailyLimit.ENTITY.save(dailyLimit);
+		CcpJsonRepresentation dailyLimit = JnEntityTicketDailyLimit.getKey(email, JnTicketQuotaGroups.sharedTickets);
+		JnEntityTicketDailyLimit.ENTITY.save(dailyLimit);
 		return savedRequest;
 	}
 }

@@ -9,17 +9,18 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.jn.utils.JnDeleteKeysFromCache;
-import com.vis.entities.VisEntityCommandNotAllowedToUser;
+import com.jn.entities.JnEntityCommandNotAllowedToUser;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
-import com.vis.json.fields.validation.VisUserRequestCommands;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.json.fields.validation.JnUserRequestCommands;
 
 /**
  * The support bot operator, in the {@code fixSkillHierarchy} command, decided to ignore the user (in every command:
  * the ignoring is global), given the
  * {@code email} and the {@code parent} of the request being reviewed.
  *
- * <p>Records the user in {@link VisEntityCommandNotAllowedToUser}, with the pending requests for that parent
+ * <p>Records the user in {@link JnEntityCommandNotAllowedToUser}, with the pending requests for that parent
  * (both types) in the {@code description}, so that the next requests of the user no longer reach the operator.
  * Saving the user discards these requests and every other request of the user still pending, as if they had never
  * existed ({@code VisBusinessDiscardPendingRequestsOfIgnoredUser}), without any decision and without notifying the
@@ -56,12 +57,14 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 
 		String email = requestKey.getAsString(VisEntitySkillFixHierarchyPending.Fields.email);
 		// the email of the record is kept as hash; the readable one goes in the description, for the operator to list the ignored users
-		CcpJsonRepresentation description = descriptionWithRequests.put(VisEntitySkillFixHierarchyPending.Fields.email, email);
-		CcpJsonRepresentation ignoredUserWithEmail = CcpOtherConstants.EMPTY_JSON.put(VisEntityCommandNotAllowedToUser.Fields.email, email);
-		CcpJsonRepresentation ignoredUserWithCommand = ignoredUserWithEmail.put(VisEntityCommandNotAllowedToUser.Fields.commandName, VisUserRequestCommands.fixSkillHierarchy);
-		CcpJsonRepresentation ignoredUser = ignoredUserWithCommand.put(VisEntityCommandNotAllowedToUser.Fields.description, description);
+		CcpJsonRepresentation descriptionWithEmail = descriptionWithRequests.put(VisEntitySkillFixHierarchyPending.Fields.email, email);
+		// the summary of the request shown in the lists of ignored users (jn): the parent
+		CcpJsonRepresentation description = descriptionWithEmail.put(JnJsonCommonsFields.request, parent);
+		CcpJsonRepresentation ignoredUserWithEmail = CcpOtherConstants.EMPTY_JSON.put(JnEntityCommandNotAllowedToUser.Fields.email, email);
+		CcpJsonRepresentation ignoredUserWithCommand = ignoredUserWithEmail.put(JnEntityCommandNotAllowedToUser.Fields.commandName, JnUserRequestCommands.fixSkillHierarchy);
+		CcpJsonRepresentation ignoredUser = ignoredUserWithCommand.put(JnEntityCommandNotAllowedToUser.Fields.description, description);
 		// saving the user discards these requests and every other pending request of the user
-		VisEntityCommandNotAllowedToUser.ENTITY.save(ignoredUser);
+		JnEntityCommandNotAllowedToUser.ENTITY.save(ignoredUser);
 		return json;
 	}
 
@@ -96,7 +99,7 @@ public class VisBusinessSkillFixHierarchyIgnoreUser implements CcpBusiness {
 	}
 
 	/**
-	 * Field of the {@code description} of {@link VisEntityCommandNotAllowedToUser}: the ignored requests, each
+	 * Field of the {@code description} of {@link JnEntityCommandNotAllowedToUser}: the ignored requests, each
 	 * one with its {@code type}, the user's {@code description} and the {@code skill} array. Also holds the field
 	 * returned by the reading procedure, which answers nothing.
 	 */
