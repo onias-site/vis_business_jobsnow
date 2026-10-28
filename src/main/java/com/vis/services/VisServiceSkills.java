@@ -3,8 +3,6 @@ package com.vis.services;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,16 +14,13 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonFieldName;
-import com.ccp.especifications.cache.CcpCacheDecorator;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.services.JnService;
-import com.vis.entities.VisEntityGroupPositionsBySkills;
-import com.vis.entities.VisEntitySkill;
+import com.vis.business.skill.VisSkillWordsByInitials;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import java.util.stream.Stream;
 
@@ -59,22 +54,11 @@ public enum VisServiceSkills implements JnService {
 	/**
 	 * Finds the known skills in a free text (upper case): words of 7 characters or more are found anywhere, unless they are
 	 * part of a longer skill found; shorter words only as whole words. Excluded skills are ignored, and each skill is kept
-	 * once (the shortest label). The discarded ones come back with the reason.
+	 * once (the shortest label). The discarded ones come back with the reason. The known words come from the groups of
+	 * the initials of the words of the text ({@link VisSkillWordsByInitials}), each skill with its synonyms.
 	 */
 	GetSkillsFromText{
 
-		/**
-		 * Tells whether the group of the initials is in the cache.
-		 * @param json the group key
-		 * @return {@code true} when cached
-		 */
-		private boolean isAlreadyInCache(CcpJsonRepresentation json) {
-			String id = VisEntityGroupPositionsBySkills.ENTITY.calculateId(json);
-			CcpCacheDecorator cache = new CcpCacheDecorator(id);
-			boolean presentInTheCache = cache.isPresentInTheCache();
-			return presentInTheCache;
-		}
-		
 		/**
 		 * Finds the skills of the text.
 		 * @param json {@code text} and the {@code excludedSkill} list
@@ -92,61 +76,19 @@ public enum VisServiceSkills implements JnService {
 			}
 			
 			String[] phrases = text.split(CcpOtherConstants.DELIMITERS);
+			List<String> phrasesOfTheText = Arrays.asList(phrases);
 
-			Set<CcpJsonRepresentation> idsToSearch = new HashSet<>();
-			Map<String, CcpJsonRepresentation> allWordsGroups = new HashMap<>();
-		
-			for (String phrase : phrases) {
-				int phraseLength = phrase.length();
-			
-				boolean tooSmallPhrase = phraseLength < 2;
-				
-				if(tooSmallPhrase) {
-					continue;
-				}
-				
-				String firstTwoInitials = phrase.substring(0, 2);
-				CcpJsonRepresentation initialsGroupId = CcpOtherConstants.EMPTY_JSON.put(VisEntityGroupPositionsBySkills.Fields.firstTwoInitials, firstTwoInitials);
-				String id = VisEntityGroupPositionsBySkills.ENTITY.calculateId(initialsGroupId);
-				allWordsGroups.put(id, initialsGroupId);
-				
-				boolean alreadyInCache = this.isAlreadyInCache(initialsGroupId);
-				if(alreadyInCache) {
-					continue;
-				}
-				
-				idsToSearch.add(initialsGroupId);
-			}
-			
-			CcpEntityMetaData entityDetails = VisEntityGroupPositionsBySkills.ENTITY.getEntityMetaData();
+			// the skills whose words start like the words of the text, read by id from the groups of their initials
+			List<CcpJsonRepresentation> wordsOfTheSkills = VisSkillWordsByInitials.getItems(phrasesOfTheText);
 
-			CcpJsonRepresentation multipleByIds = entityDetails.getMultipleByIds(idsToSearch);
-			
-			List<CcpJsonRepresentation> allSkillsFoundInTheText = new ArrayList<>(); 
-			 
-			Set<String> ids = allWordsGroups.keySet();
-			
-			for (String id : ids) {
-				CcpCacheDecorator cache = new CcpCacheDecorator(id);
-				
-				CcpJsonRepresentation innerJson = cache.get(jsn -> multipleByIds.getInnerJson(new CcpFieldName(id)), 3600);
-				
-				boolean idNotFound = innerJson.isEmpty();
-				
-				if(idNotFound) {
+			List<CcpJsonRepresentation> allSkillsFoundInTheText = new ArrayList<>();
+
+			for (CcpJsonRepresentation skill : wordsOfTheSkills) {
+				String word = skill.getAsString(VisJsonCommonsFields.word);
+				boolean found = text.contains(word);
+				if(found) {
+					allSkillsFoundInTheText.add(skill);
 					continue;
-				}
-				
-				List<CcpJsonRepresentation> skills = innerJson.getAsJsonList(VisJsonCommonsFields.skill);
-				
-				for (CcpJsonRepresentation skill : skills) {
-					String foundSkillWord = skill.getAsString(VisJsonCommonsFields.word);
-					String word = foundSkillWord.toUpperCase();
-					boolean found = text.contains(word);
-					if(found) {
-						allSkillsFoundInTheText.add(skill);
-						continue;
-					}
 				}
 			}
 			
@@ -252,7 +194,7 @@ public enum VisServiceSkills implements JnService {
 			}
 			
 			Collection<CcpJsonRepresentation> chosenSkills = chosenSkillsByName.values();
-			List<CcpJsonRepresentation> skills = this.putSynonyms(chosenSkills);
+			List<CcpJsonRepresentation> skills = new ArrayList<>(chosenSkills);
 			CcpJsonRepresentation jsonWithDiscardedSkills = CcpOtherConstants.EMPTY_JSON
 					.put(Fields.discardedSkills, discardedSkills);
 					CcpJsonRepresentation jsonWithExcludedSkills = jsonWithDiscardedSkills
@@ -264,32 +206,6 @@ public enum VisServiceSkills implements JnService {
 			return response;
 		}
 		
-		/**
-		 * Puts in each skill its synonyms ({@code synonym}, empty when it has none), read from {@link VisEntitySkill} by
-		 * id, all in a single round trip. The screen needs them to refuse the suggestion of a skill that is already in the
-		 * resume under another name: the resume says PICK BY LIGHT and the candidate suggests PTL, one of its synonyms.
-		 * @param chosenSkills the skills found in the text
-		 * @return the same skills, each one with its synonyms
-		 */
-		private List<CcpJsonRepresentation> putSynonyms(Collection<CcpJsonRepresentation> chosenSkills) {
-			Stream<CcpJsonRepresentation> chosenSkillsStream = chosenSkills.stream();
-			Stream<CcpJsonRepresentation> skillKeysStream = chosenSkillsStream.map(skill -> skill.getJsonPiece(VisJsonCommonsFields.skill));
-			Set<CcpJsonRepresentation> skillKeys = skillKeysStream.collect(Collectors.toSet());
-			CcpEntityMetaData skillEntityDetails = VisEntitySkill.ENTITY.getEntityMetaData();
-			CcpJsonRepresentation storedSkillsById = skillEntityDetails.getMultipleByIds(skillKeys);
-
-			List<CcpJsonRepresentation> skillsWithSynonyms = new ArrayList<>();
-			for (CcpJsonRepresentation skill : chosenSkills) {
-				String id = VisEntitySkill.ENTITY.calculateId(skill);
-				CcpFieldName idFieldName = new CcpFieldName(id);
-				CcpJsonRepresentation storedSkill = storedSkillsById.getInnerJson(idFieldName);
-				List<String> synonyms = storedSkill.getAsStringList(VisJsonCommonsFields.synonym);
-				CcpJsonRepresentation skillWithSynonyms = skill.put(VisJsonCommonsFields.synonym, synonyms);
-				skillsWithSynonyms.add(skillWithSynonyms);
-			}
-			return skillsWithSynonyms;
-		}
-
 		/**
 		 * Puts the label of the skill: the skill itself, or {@code word (skill)} when found by another word.
 		 * @param json the skill found

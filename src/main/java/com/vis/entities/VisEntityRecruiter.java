@@ -20,6 +20,8 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
@@ -35,6 +37,8 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.JnEntityWriteEventSubscribers;
+import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -44,9 +48,11 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.recruiter.VisBusinessLoadRecruitersFromHtmlFolder;
 import com.vis.business.recruiter.VisBusinessPrepareRecruiter;
 import com.vis.business.recruiter.VisBusinessSaveRecruiterFromLoginAnswers;
+import com.vis.business.recruiter.VisRecruiterDomainGroups;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerRecruiterDomain;
 import com.vis.json.transformers.VisJsonTransformerRecruiterProfessional;
+import com.vis.json.transformers.VisRecruiterDomainInitialsCombinations;
 
 /**
  * The recruiters: one record per e-mail, kept as typed (no hash), because it is reused to send messages to the
@@ -68,6 +74,12 @@ import com.vis.json.transformers.VisJsonTransformerRecruiterProfessional;
  * {@code js_login_answers} in {@code jn_write_event_subscribers}, so js never imports vis.
  * Both go to the database in bulk, around the decorators of the entity, so the record is transformed and validated
  * beforehand by {@link VisBusinessPrepareRecruiter}.
+ *
+ * <p>Each professional recruiter is a child, in {@code jn_grouper}, of the group of the first three letters of its domain
+ * ({@link VisEntityVirtualRecruiterDomainInitialsGrouper}); a non-professional domain puts it in no group. The search of
+ * companies by name reads these groups. The writes by bulk keep the groups through {@link VisRecruiterDomainGroups}.
+ * Until 2026-10-27 the entity {@code vis_group_companies_by_their_first_three_initials} kept the company names, read from
+ * the legacy index {@code old_recruiters} only.
  */
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
@@ -79,6 +91,8 @@ import com.vis.json.transformers.VisJsonTransformerRecruiterProfessional;
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
+@CcpEntityGrouperChild(value = {VisEntityVirtualRecruiterDomainInitialsGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualRecruiterDomainInitialsGrouper.class, value = VisRecruiterDomainInitialsCombinations.class)
 public class VisEntityRecruiter implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntityRecruiter INSTANCE = new VisEntityRecruiter();
@@ -154,7 +168,8 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 	/**
 	 * The first load: the e-mail of every document of the legacy indices {@code recruiters} and {@code old_recruiters}
 	 * (the id of the document), normalized by {@link VisBusinessPrepareRecruiter}, once each (an e-mail in both indices
-	 * is written once), with the source {@code legacy}. An e-mail that is not a valid address is left out. Plus the
+	 * is written once), with the source {@code legacy}. An e-mail that is not a valid address is left out. Plus the groups
+	 * of the initials of the domains in {@code jn_grouper} (the seed is a bulk, which the decorator does not see) and the
 	 * subscription of {@link VisBusinessSaveRecruiterFromLoginAnswers} to the save of {@code js_login_answers}.
 	 * @return the seed records
 	 */
@@ -189,7 +204,10 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 		CcpJsonRepresentation[] recruitersArray = recruiters.toArray(CcpJsonRepresentation[]::new);
 		List<CcpBulkItem> legacyRecruiters = CcpEntityConfigurator.super.toCreateBulkItems(ENTITY, recruitersArray);
 		List<CcpBulkItem> loginAnswersSubscription = JnEntityWriteEventSubscribers.getSeeds(ListenedEntities.js_login_answers, CcpEntityDecoratorOperationType.save, VisBusinessSaveRecruiterFromLoginAnswers.class);
+		VisRecruiterDomainGroups domainGroups = new VisRecruiterDomainGroups(recruiters);
+		List<CcpBulkItem> groups = domainGroups.getItemsToCreateGroups();
 		List<CcpBulkItem> firstRecords = new ArrayList<>(legacyRecruiters);
+		firstRecords.addAll(groups);
 		firstRecords.addAll(loginAnswersSubscription);
 		return firstRecords;
 	}

@@ -1,7 +1,5 @@
 package com.vis.business.skill;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -22,12 +20,11 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * record of its {@code skill}, adds its {@code parent} to the {@code parent} array (association, {@code add}) or
  * removes it from there (dissociation, {@code remove}).
  *
- * <p>Applies the same change to the items of the skill in the lookup the resume screen reads
- * ({@link VisSkillWordsGroups}), in the groups of the skill and of each synonym: up to 2026-10-08 only
- * {@link VisEntitySkill} changed, and the implicit knowledge of the resume screen never showed an approved fix.
+ * <p>The lookup the resume screen reads ({@link VisSkillWordsByInitials}) takes the parents from the record itself, so
+ * the implicit knowledge of the resume screen shows the approved fix with no other write.
  *
  * <p>A skill that has no {@link VisEntitySkill} record is not created there, because the record cannot be created
- * without its {@code ranking}; its own word in the lookup still changes.
+ * without its {@code ranking}, and nothing changes: since 2026-10-27 the lookup keeps no word apart from the records.
  */
 public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 	/** The single instance: the class keeps no state. */
@@ -47,20 +44,14 @@ public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 		VisSkillFixHierarchyTypes type = json.getAsEnum(VisEntitySkillFixHierarchyItemApproved.Fields.type, VisSkillFixHierarchyTypes.class);
 		Consumer<Set<String>> changeParents = parents -> type.execute(parents, parent);
 
-		List<String> words = new ArrayList<>();
-		words.add(skill);
-
 		CcpJsonRepresentation skillKey = CcpOtherConstants.EMPTY_JSON.put(VisEntitySkill.Fields.skill, skill);
 
-		CcpBusiness changeOnlyTheLookup = new VisBusinessChangeOnlyTheSkillLookup(skill, words, changeParents);
+		CcpBusiness changeTheSkillParents = new VisBusinessChangeTheSkillParents(changeParents);
 
-		CcpBusiness changeTheSkillAndTheLookup = new VisBusinessChangeTheSkillAndTheLookup(skill, words, changeParents);
-
-		// a single read by id decides the branch and brings the stored skill
+		// a single read by id brings the stored skill
 		new CcpGetEntityId(skillKey)
 		.toBeginProcedureAnd()
-			.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(changeOnlyTheLookup).and()
-			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).executeAction(changeTheSkillAndTheLookup)
+			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).executeAction(changeTheSkillParents)
 			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
 		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
 		;

@@ -23,10 +23,11 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
  * {@code viewedResume} list is the {@code child} of that group, filled by {@code @CcpEntityGrouperChild} of
  * {@code vis_viewed_resume}: one JSON text per resume ({@code linkedin}, {@code alias} and {@code date} of the last
  * view), read by id (OQL) by {@code VisBusinessViewedResumesOfTheMonth}, which calculates the id of a past month through
- * {@code disposablePeriod}.
+ * {@code disposablePeriod}. The past months are read on purpose, so the daily purge never removes them
+ * ({@code removeCompletely = false}).
  */
 @CcpEntityCache(3600)
-@CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.monthly)
+@CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.monthly, removeCompletely = false)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityViewedResumesOfTheMonth.Fields.class)
 public class VisEntityViewedResumesOfTheMonth {

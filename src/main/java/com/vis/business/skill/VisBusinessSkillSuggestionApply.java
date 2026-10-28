@@ -18,10 +18,10 @@ import com.vis.entities.VisEntitySkillApproved;
  * number of skills plus one, since the ranking goes from the most to the least frequent in the resumes); a skill that
  * is already there (approved meanwhile from another candidate's suggestion) only gets the synonyms it did not have.
  *
- * <p>Also puts the skill and each synonym in {@code VisEntityGroupPositionsBySkills} ({@link VisSkillWordsGroups}), the lookup by the first two
- * letters that the reading of skills from a resume uses: without it the approved skill would never be found in a
- * resume, and a new suggestion of one of its synonyms would not be refused. The cache of each changed group is
- * dropped, since that reading keeps the group in the cache for an hour.
+ * <p>Saving the skill also puts it in the groups of the initials of the skill and of each synonym
+ * ({@link VisSkillWordsByInitials}), the lookup the reading of skills from a resume uses: the decorator of
+ * {@code @CcpEntityGrouperChild} of {@link VisEntitySkill} does it. Without it the approved skill would never be found
+ * in a resume, and a new suggestion of one of its synonyms would not be refused.
  *
  * <p>Runs in the review of the support bot, never in an online request, so counting the skills is allowed.
  */
@@ -41,12 +41,6 @@ public class VisBusinessSkillSuggestionApply implements CcpBusiness {
 		String skill = json.getAsString(VisEntitySkillApproved.Fields.skill);
 		List<String> suggestedSynonyms = json.getAsStringList(VisEntitySkillApproved.Fields.synonym);
 		this.saveSkill(skill, suggestedSynonyms);
-
-		VisSkillWordsGroups.addWord(skill, skill);
-
-		for (String synonym : suggestedSynonyms) {
-			VisSkillWordsGroups.addWord(skill, synonym);
-		}
 
 		return json;
 	}

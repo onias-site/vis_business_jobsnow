@@ -20,7 +20,7 @@ import com.vis.business.skill.VisBusinessSaveSkillSuggestionWithSynonyms;
 import com.jn.entities.JnEntityCommandNotAllowedToUser;
 import com.jn.entities.JnEntityTicketDailyLimit;
 import com.jn.json.fields.validation.JnTicketQuotaGroups;
-import com.vis.entities.VisEntityGroupPositionsBySkills;
+import com.vis.business.skill.VisSkillWordsByInitials;
 import com.vis.entities.VisEntitySkill;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntitySkillRejected;
@@ -40,7 +40,7 @@ public enum VisServiceSkillSuggestion implements JnService {
 	 * Saves the suggestion as pending, which notifies the candidate and the support bot operator. A user that the
 	 * operator chose to ignore (in any command: the ignoring is global, {@link JnEntityCommandNotAllowedToUser})
 	 * gets {@code userNotAllowed} (403): the suggestion is not saved and nobody is notified. A word already known,
-	 * as a skill or as a synonym of one ({@link VisEntityGroupPositionsBySkills}, {@link VisEntitySkill}), gets
+	 * as a skill or as a synonym of one ({@link VisSkillWordsByInitials}, {@link VisEntitySkill}), gets
 	 * {@code skillAlreadyExists} (412), a skill this candidate already had rejected gets {@code alreadyRejected} (410: the
 	 * rejection is final), a skill the support already reviewed from another candidate's suggestion gets
 	 * {@code alreadyReviewed} (410: the decision holds for everyone, so no new ticket reaches the operator), and a
@@ -64,7 +64,7 @@ public enum VisServiceSkillSuggestion implements JnService {
 			// a synonym of a known skill (WEM, synonym of VCM) is not a skill by its own name, so the lookup by
 			// the id of VisEntitySkill does not see it: the group of its first two letters, read by id, does
 			String skill = json.getAsString(VisEntitySkillPending.Fields.skill);
-			int wordStatus = VisEntityGroupPositionsBySkills.getWordStatus(skill);
+			int wordStatus = VisSkillWordsByInitials.getWordStatus(skill);
 			boolean isKnownWord = wordStatus == 0;
 
 			if(isKnownWord) {

@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.ccp.business.CcpBusiness;
@@ -30,7 +31,8 @@ import com.vis.entities.VisEntityRecruiter;
  * folder becomes a recruiter of {@link VisEntityRecruiter} with the source {@code telegram}. The e-mails lose their
  * accents and go to lower case; an e-mail already in the entity or in its twin ({@code vis_inactive_recruiter}) is not
  * written again. The writes go in bulk, a batch of e-mails at a time: one union all checks the batch in both entities
- * and one bulk creates what is new.
+ * and one bulk creates what is new. The recruiters created enter the groups of the initials of their domains
+ * ({@link VisRecruiterDomainGroups}), which the bulk does not do.
  *
  * <p>It is a batch process run by hand, not an online request.
  *
@@ -158,7 +160,12 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 			List<JnBulkCreateResult> results = JnExecuteBulkOperation.INSTANCE.executeCreateBulk(VisEntityRecruiter.ENTITY, entitiesThatPreventCreation, JnDeleteKeysFromCache.INSTANCE, batchArray);
 			Stream<JnBulkCreateResult> resultsStream = results.stream();
 			Stream<JnBulkCreateResult> createdResultsStream = resultsStream.filter(result -> result.created);
-			long batchCreatedCount = createdResultsStream.count();
+			Stream<CcpJsonRepresentation> createdRecruitersStream = createdResultsStream.map(result -> result.json);
+			List<CcpJsonRepresentation> createdRecruiters = createdRecruitersStream.collect(Collectors.toList());
+			// the bulk goes around the decorator of @CcpEntityGrouperChild: the new recruiters enter their groups here
+			VisRecruiterDomainGroups domainGroups = new VisRecruiterDomainGroups(createdRecruiters);
+			domainGroups.addToTheGroups();
+			int batchCreatedCount = createdRecruiters.size();
 			createdCount += batchCreatedCount;
 		}
 		return createdCount;
