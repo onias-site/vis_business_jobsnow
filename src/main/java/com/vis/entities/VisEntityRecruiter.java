@@ -37,8 +37,8 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.JnEntityWriteEventSubscribers;
-import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
-import com.jn.entities.decorators.engine.JnGrouperChildEntityBeforeWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildFieldEntityAfterWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildFieldEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -72,14 +72,16 @@ import com.vis.json.transformers.VisRecruiterDomainInitialsCombinations;
  * The sign-up of a user whose goal is recruiting also writes here, with the source {@code login}, or brings back the
  * inactive recruiter: the seed subscribes {@link VisBusinessSaveRecruiterFromLoginAnswers} to the save of
  * {@code js_login_answers} in {@code jn_write_event_subscribers}, so js never imports vis.
- * Both go to the database in bulk, around the decorators of the entity, so the record is transformed and validated
- * beforehand by {@link VisBusinessPrepareRecruiter}.
+ * Both go to the database in bulk, around the transformers and the groups of the entity, so the record is transformed
+ * and validated beforehand by {@link VisBusinessPrepareRecruiter}. The history of {@code @CcpEntityVersionable} is
+ * written all the same, since it enters the bulk items of the record.
  *
- * <p>Each professional recruiter is a child, in {@code jn_grouper}, of the group of the first three letters of its domain
- * ({@link VisEntityVirtualRecruiterDomainInitialsGrouper}); a non-professional domain puts it in no group. The search of
- * companies by name reads these groups. The writes by bulk keep the groups through {@link VisRecruiterDomainGroups}.
+ * <p>The domain of each professional recruiter is a child, in {@code jn_grouper}, of the group of its first three letters
+ * ({@link VisEntityVirtualRecruiterDomainInitialsGrouper}), once however many recruiters have it; a non-professional
+ * domain enters no group. A domain stays in its group after its recruiters are deleted. The search of companies by name
+ * reads only these groups. The writes by bulk keep the groups through {@link VisRecruiterDomainGroups}.
  * Until 2026-10-27 the entity {@code vis_group_companies_by_their_first_three_initials} kept the company names, read from
- * the legacy index {@code old_recruiters} only.
+ * the legacy index {@code old_recruiters} only; until 2026-10-31 the children were the ids of the recruiters.
  */
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
@@ -91,7 +93,7 @@ import com.vis.json.transformers.VisRecruiterDomainInitialsCombinations;
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
-@CcpEntityGrouperChild(value = {VisEntityVirtualRecruiterDomainInitialsGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
+@CcpEntityGrouperChild(value = {VisEntityVirtualRecruiterDomainInitialsGrouper.class}, beforeDecoratorClass = JnGrouperChildFieldEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildFieldEntityAfterWrite.class, childField = "domain")
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualRecruiterDomainInitialsGrouper.class, value = VisRecruiterDomainInitialsCombinations.class)
 public class VisEntityRecruiter implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */

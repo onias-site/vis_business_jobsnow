@@ -27,8 +27,8 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityRecruiter;
 
 /**
- * The loads of recruiters after the first one: every e-mail found in the HTML files ({@code .html} or {@code .htm}) of a
- * folder becomes a recruiter of {@link VisEntityRecruiter} with the source {@code telegram}. The e-mails lose their
+ * The loads of recruiters after the first one: every e-mail found in the HTML files ({@code .html} or {@code .htm}) and
+ * in the text files exported from WhatsApp ({@code .txt}) of a folder becomes a recruiter of {@link VisEntityRecruiter} with the source {@code telegram}. The e-mails lose their
  * accents and go to lower case; an e-mail already in the entity or in its twin ({@code vis_inactive_recruiter}) is not
  * written again. The writes go in bulk, a batch of e-mails at a time: one union all checks the batch in both entities
  * and one bulk creates what is new. The recruiters created enter the groups of the initials of their domains
@@ -61,6 +61,8 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 		HTML_EXTENSION { public String getValue() { return ".html"; } },
 		/** Short extension of the HTML files. */
 		HTM_EXTENSION { public String getValue() { return ".htm"; } },
+		/** Extension of the text files exported from WhatsApp. */
+		TXT_EXTENSION { public String getValue() { return ".txt"; } },
 	}
 
 	/** How many e-mails go in each union all and bulk. */
@@ -117,20 +119,21 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 	}
 
 	/**
-	 * Adds the e-mails of the file to the found ones, when it is an HTML file.
+	 * Adds the e-mails of the file to the found ones, when it is an HTML or text file.
 	 * @param file an entry of the folder
 	 * @param foundEmails the e-mails found so far
-	 * @param filesRead the HTML files read so far
+	 * @param filesRead the files read so far
 	 */
 	private void readEmails(CcpFileDecorator file, Set<String> foundEmails, List<String> filesRead) {
 		String fileName = file.getName();
 		String lowerFileName = fileName.toLowerCase();
 		String htmlExtension = JsonFieldNames.HTML_EXTENSION.getValue();
 		String htmExtension = JsonFieldNames.HTM_EXTENSION.getValue();
-		boolean htmlFile = file.isFile() && (lowerFileName.endsWith(htmlExtension) || lowerFileName.endsWith(htmExtension));
-		boolean notAnHtmlFile = false == htmlFile;
+		String txtExtension = JsonFieldNames.TXT_EXTENSION.getValue();
+		boolean fileToRead = file.isFile() && (lowerFileName.endsWith(htmlExtension) || lowerFileName.endsWith(htmExtension) || lowerFileName.endsWith(txtExtension));
+		boolean notAFileToRead = false == fileToRead;
 
-		if(notAnHtmlFile) {
+		if(notAFileToRead) {
 			return;
 		}
 

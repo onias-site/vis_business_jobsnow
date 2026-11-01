@@ -10,7 +10,9 @@ import java.util.Set;
 
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.jn.utils.JnGroupers;
 import com.vis.entities.VisEntitySkill;
@@ -28,6 +30,15 @@ import com.vis.json.transformers.VisSkillInitialsCombinations;
  * Until 2026-10-27 the entity {@code vis_group_positions_by_skills} kept the items, written by {@code VisSkillWordsGroups}.
  */
 public final class VisSkillWordsByInitials {
+
+	/** The texts of the reading of every skill. */
+	enum Constants implements CcpJsonFieldName {
+		/** How long each page of the reading of every skill stays open. */
+		SCROLL_TIME { public String getValue() { return "1m"; } },
+	}
+
+	/** How many skills each page of the reading of every skill brings. */
+	private static final int PAGE_SIZE = 1_000;
 
 	/** Utility class; not instantiable. */
 	private VisSkillWordsByInitials() {}
@@ -54,7 +65,47 @@ public final class VisSkillWordsByInitials {
 		}
 
 		List<CcpJsonRepresentation> skills = getSkillsOfTheGroups(parentIds);
+		List<CcpJsonRepresentation> items = getItemsOfTheSkills(skills, parentIds);
+		return items;
+	}
 
+	/**
+	 * The items of every word of every skill, for a batch process that would otherwise read them again for each text.
+	 * @return the items: {@code skill}, {@code word} (upper case), {@code parent} and {@code synonym}
+	 */
+	public static List<CcpJsonRepresentation> getAllItems() {
+		List<CcpJsonRepresentation> skills = new ArrayList<>();
+		CcpQueryOptions everySkill = CcpQueryOptions.INSTANCE.matchAll();
+		String scrollTime = Constants.SCROLL_TIME.getValue();
+		everySkill.selectFrom(VisEntitySkill.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, skills::add);
+
+		Set<String> parentIds = new LinkedHashSet<>();
+		for (CcpJsonRepresentation skill : skills) {
+			List<String> wordsOfTheSkill = VisSkillInitialsCombinations.getWords(skill);
+			for (String word : wordsOfTheSkill) {
+				int wordLength = word.length();
+				boolean wordIsTooShort = wordLength < VisEntityVirtualSkillInitialsGrouper.SHORTEST_WORD;
+
+				if(wordIsTooShort) {
+					continue;
+				}
+
+				String parentId = VisEntityVirtualSkillInitialsGrouper.getParentId(word);
+				parentIds.add(parentId);
+			}
+		}
+
+		List<CcpJsonRepresentation> items = getItemsOfTheSkills(skills, parentIds);
+		return items;
+	}
+
+	/**
+	 * The items of the words of the skills whose initials are among the given groups.
+	 * @param skills the skills
+	 * @param parentIds the parent ids of the groups
+	 * @return the items
+	 */
+	private static List<CcpJsonRepresentation> getItemsOfTheSkills(List<CcpJsonRepresentation> skills, Set<String> parentIds) {
 		Set<String> skillNames = new LinkedHashSet<>();
 		for (CcpJsonRepresentation skill : skills) {
 			String skillName = skill.getAsString(VisEntitySkill.Fields.skill);

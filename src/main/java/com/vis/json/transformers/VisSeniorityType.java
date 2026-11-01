@@ -10,7 +10,9 @@ public enum VisSeniorityType {
 	pleno(3,5),
 	senior(5,10),
 	// the upper bound is exclusive: 71 keeps the 70 years accepted by the validation of the experience field
-	especialista(10, 71)
+	especialista(10, 71),
+	// a seniority that could not be told, as in the positions read from Telegram: an empty range, so no experience matches it
+	unknown(0, 0)
 	;
 	
 	private final int min;

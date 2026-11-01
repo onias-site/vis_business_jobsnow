@@ -15,12 +15,11 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 
 /**
- * Virtual entity whose id identifies a group of recruiters of {@code JnEntityGrouper}: the first three letters, in upper
- * case, of the domain of the e-mail of the recruiter. A professional {@link VisEntityRecruiter} is a child of the group
- * of the initials of its domain (a non-professional domain, a public webmail provider, puts the recruiter in no group),
- * so the search of companies by name reads, by id, the recruiters whose company starts like the typed text. Until
- * 2026-10-27 the entity {@code vis_group_companies_by_their_first_three_initials} kept the company names of each group.
- * Cached for 1 hour.
+ * Virtual entity whose id identifies a group of domains of {@code JnEntityGrouper}: the first three letters, in upper
+ * case, of the domain of the e-mail of the recruiter. The domain of a professional {@link VisEntityRecruiter} is a child
+ * of the group of its initials (a non-professional domain, a public webmail provider, enters no group), so the search of
+ * companies by name reads, by id, the domains that may start like the typed text. Until 2026-10-27 the entity
+ * {@code vis_group_companies_by_their_first_three_initials} kept the company names of each group. Cached for 1 hour.
  */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)

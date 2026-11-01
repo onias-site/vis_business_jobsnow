@@ -26,6 +26,7 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberInteger;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.decorators.engine.JnEntityGrouperParents;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
@@ -38,10 +39,10 @@ import com.ccp.decorators.CcpFileDecorator;
 import java.util.stream.Stream;
 
 /**
- * Represents a skill approved in the system, with its relevance ranking (based on the number of
- * resumes that have it), its parent skills in the hierarchy and its synonyms.
- * Cached for 1 hour. Includes the initial load logic, which reads synonyms.json and a file with
- * the word count per resume to calculate the ranking.
+ * Represents a skill approved in the system, with its relevance ranking, its parent skills in the hierarchy and its
+ * synonyms. Cached for 1 hour. Includes the initial load logic, which reads synonyms.json and a file with the word count
+ * per resume to calculate the first ranking; from the first load of the positions of Telegram on, the ranking comes from
+ * {@code VisBusinessRecalculateSkillRanking}.
  *
  * <p>Each skill is a child, in {@code JnEntityGrouper}, of the group of the first two letters of each of its words (the
  * skill itself, each synonym and each parent, {@link VisEntityVirtualSkillInitialsGrouper}): the lookup the reading of
@@ -75,6 +76,14 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ranking,
+
+		/**
+		 * The {@code childOcurrences} field: how many times the skills below this one in the hierarchy were found in the
+		 * records of {@code vis_telegram_position}, recalculated from them on every load; it breaks the ties of
+		 * {@code ranking}, and no value means 0.
+		 */
+		@CcpJsonFieldTypeNumberInteger(minValue = 0)
+		childOcurrences,
 
 		/** The {@code skill} field: validated as in {@code VisJsonCommonsFields}, part of the primary key. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)

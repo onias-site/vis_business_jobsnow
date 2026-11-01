@@ -9,7 +9,7 @@ import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityVirtualRecruiterDomainInitialsGrouper;
 
 /**
- * Produces the group of {@code VisEntityVirtualRecruiterDomainInitialsGrouper} a recruiter belongs to: the first three
+ * Produces the group of {@code VisEntityVirtualRecruiterDomainInitialsGrouper} the domain of a recruiter belongs to: the first three
  * letters (upper case) of the domain of its e-mail. A recruiter whose domain is non-professional (the {@code professional}
  * flag, calculated from the {@code NONPROFESSIONALDOMAINS} record of {@code jn_system_message}, is {@code false}) belongs
  * to no group.

@@ -24,7 +24,7 @@ import com.vis.entities.VisEntityVirtualRecruiterDomainInitialsGrouper;
  */
 public class VisRecruiterDomainGroups {
 
-	/** The ids of the recruiters of each parent, in the order the recruiters came. */
+	/** The domains of the recruiters of each parent, each one once, in the order the recruiters came. */
 	private final Map<String, List<String>> childrenByParentId;
 
 	/** The values each parent id came from. */
@@ -39,19 +39,19 @@ public class VisRecruiterDomainGroups {
 		Map<String, List<String>> children = new LinkedHashMap<>();
 		Map<String, CcpJsonRepresentation> parentJsons = new LinkedHashMap<>();
 		for (CcpJsonRepresentation recruiter : recruiters) {
-			String recruiterId = VisEntityRecruiter.ENTITY.calculateId(recruiter);
+			String domain = recruiter.getAsString(VisEntityRecruiter.Fields.domain);
 			Map<String, CcpJsonRepresentation> recruiterParents = parents.getParents(recruiter);
 			parentJsons.putAll(recruiterParents);
 			Set<String> parentIds = recruiterParents.keySet();
 			for (String parentId : parentIds) {
 				List<String> childrenOfTheParent = children.computeIfAbsent(parentId, key -> new ArrayList<>());
-				boolean alreadyAChild = childrenOfTheParent.contains(recruiterId);
+				boolean alreadyAChild = childrenOfTheParent.contains(domain);
 
 				if(alreadyAChild) {
 					continue;
 				}
 
-				childrenOfTheParent.add(recruiterId);
+				childrenOfTheParent.add(domain);
 			}
 		}
 		this.childrenByParentId = Collections.unmodifiableMap(children);
@@ -70,7 +70,7 @@ public class VisRecruiterDomainGroups {
 		return items;
 	}
 
-	/** Adds the recruiters to their groups on the main side of the grouper, keeping the children already there. */
+	/** Adds the domains to their groups on the main side of the grouper, keeping the children already there. */
 	public void addToTheGroups() {
 		String parentName = getParentName();
 		String childName = getChildName();
