@@ -16,9 +16,8 @@ import com.vis.messages.VisEmailHtml;
 
 /**
  * Renders the table of resumes of the e-mail of a recruiter: one row per resume, five columns, each value of a column
- * in a line of its own. The regions after the third one are folded under "+N regions"; a resume the recruiter never
- * viewed has its last view in red (as in the legacy e-mail); the link of the last column opens the resume in the front
- * end, signed for this recruiter.
+ * in a line of its own. The regions after the third one are folded under "+N regions"; the link of the last column
+ * opens the resume in the front end, signed for this recruiter.
  *
  * <p>Input: {@code resumes} (the rows, with the fields of the recruiter: {@code lastView}, {@code viewed},
  * {@code viewLabel} and {@code token}), {@code email} (the recruiter), {@code frontendUrl} and {@code language}.
@@ -38,7 +37,6 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 		ROW { public String getValue() { return "<tr>{value}</tr>"; } },
 		CELL { public String getValue() { return "<td>{value}</td>"; } },
 		LINE { public String getValue() { return "<p>{value}</p>"; } },
-		NOT_VIEWED_LINE { public String getValue() { return "<p><strong style=\"color: white; background-color: red;\">{value}</strong></p>"; } },
 		FOLDED_LINES { public String getValue() { return "<details><summary>{count}</summary>{value}</details>"; } },
 		LINK { public String getValue() { return "<p><a href=\"{link}\" target=\"_blank\">{value}</a></p>"; } },
 		VIEW_PATH { public String getValue() { return "{frontendUrl}/recrutador/ver-curriculo?email={email}&resume={resumeId}&token={token}"; } },
@@ -138,13 +136,28 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 		return visibleLines + folded;
 	}
 
-	/** Last view (in red when never viewed), link to the resume, date added and date of the last change. */
+	/** Last view, link to the resume, date added and date of the last change. */
 	private String getDatesAndViewsCell(CcpJsonRepresentation resume, String email, String frontendUrl) {
 		String lastView = resume.getAsString(VisRecruiterResumesFields.lastView);
-		boolean viewed = resume.getAsBoolean(VisRecruiterResumesFields.viewed);
-		Html lastViewPiece = viewed ? Html.LINE : Html.NOT_VIEWED_LINE;
-		String lastViewLine = piece(lastViewPiece, lastView);
+		String lastViewLine = piece(Html.LINE, lastView);
+		String viewLine = getViewLine(resume, email, frontendUrl);
 
+		String insertion = resume.getAsString(VisRecruiterResumesFields.insertion);
+		String lastChange = resume.getAsString(VisRecruiterResumesFields.lastChange);
+		String insertionLine = piece(Html.LINE, insertion);
+		String lastChangeLine = piece(Html.LINE, lastChange);
+
+		String datesCell = cell(lastViewLine + viewLine + insertionLine + lastChangeLine);
+		return datesCell;
+	}
+
+	/** The link to the resume; a row with no token is a preview for the candidate, so its label is only a text. */
+	private static String getViewLine(CcpJsonRepresentation resume, String email, String frontendUrl) {
+		String viewLabel = resume.getAsString(VisRecruiterResumesFields.viewLabel);
+		boolean preview = false == resume.containsAllFields(VisRecruiterResumesFields.token);
+		if(preview) {
+			return piece(Html.LINE, viewLabel);
+		}
 		String resumeId = resume.getAsString(VisRecruiterResumesFields.resumeId);
 		String token = resume.getAsString(VisRecruiterResumesFields.token);
 		CcpStringDecorator emailDecorator = new CcpStringDecorator(email);
@@ -156,20 +169,12 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 				.put(VisRecruiterResumesFields.resumeId, resumeId)
 				.put(VisRecruiterResumesFields.token, token);
 		String link = resolve(Html.VIEW_PATH, linkValues);
-		String viewLabel = resume.getAsString(VisRecruiterResumesFields.viewLabel);
 		String escapedViewLabel = VisEmailHtml.escape(viewLabel);
 		CcpJsonRepresentation anchorValues = CcpOtherConstants.EMPTY_JSON
 				.put(HtmlFields.link, link)
 				.put(CcpJsonCommonsFields.value, escapedViewLabel);
 		String viewLine = resolve(Html.LINK, anchorValues);
-
-		String insertion = resume.getAsString(VisRecruiterResumesFields.insertion);
-		String lastChange = resume.getAsString(VisRecruiterResumesFields.lastChange);
-		String insertionLine = piece(Html.LINE, insertion);
-		String lastChangeLine = piece(Html.LINE, lastChange);
-
-		String datesCell = cell(lastViewLine + viewLine + insertionLine + lastChangeLine);
-		return datesCell;
+		return viewLine;
 	}
 
 	private static String lines(List<String> texts) {

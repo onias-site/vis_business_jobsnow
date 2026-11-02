@@ -45,6 +45,7 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDoNothing;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.recruiter.VisBusinessInactivateSuppressedRecruiter;
 import com.vis.business.recruiter.VisBusinessLoadRecruitersFromHtmlFolder;
 import com.vis.business.recruiter.VisBusinessPrepareRecruiter;
 import com.vis.business.recruiter.VisBusinessSaveRecruiterFromLoginAnswers;
@@ -71,7 +72,11 @@ import com.vis.json.transformers.VisRecruiterDomainInitialsCombinations;
  * </ul>
  * The sign-up of a user whose goal is recruiting also writes here, with the source {@code login}, or brings back the
  * inactive recruiter: the seed subscribes {@link VisBusinessSaveRecruiterFromLoginAnswers} to the save of
- * {@code js_login_answers} in {@code jn_write_event_subscribers}, so js never imports vis.
+ * {@code js_login_answers} in {@code jn_write_event_subscribers}, so js never imports vis. An address that becomes
+ * suppressed by the e-mail provider ({@code jn_email_suppressed}) inactivates the recruiter the same way
+ * ({@link VisBusinessInactivateSuppressedRecruiter}). The daily e-mail of resumes inactivates the recruiter whose last view
+ * of a resume is more than 35 days old, and any view brings an inactive recruiter back
+ * ({@link com.vis.business.recruiter.VisBusinessReactivateRecruiterWhoViewed}).
  * Both go to the database in bulk, around the transformers and the groups of the entity, so the record is transformed
  * and validated beforehand by {@link VisBusinessPrepareRecruiter}. The history of {@code @CcpEntityVersionable} is
  * written all the same, since it enters the bulk items of the record.
@@ -165,6 +170,8 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 	static enum ListenedEntities implements CcpJsonFieldName{
 		/** The sign-up answers, of js. */
 		js_login_answers,
+		/** The addresses the e-mail provider keeps suppressing, of jn. */
+		jn_email_suppressed,
 	}
 
 	/**
@@ -206,11 +213,13 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 		CcpJsonRepresentation[] recruitersArray = recruiters.toArray(CcpJsonRepresentation[]::new);
 		List<CcpBulkItem> legacyRecruiters = CcpEntityConfigurator.super.toCreateBulkItems(ENTITY, recruitersArray);
 		List<CcpBulkItem> loginAnswersSubscription = JnEntityWriteEventSubscribers.getSeeds(ListenedEntities.js_login_answers, CcpEntityDecoratorOperationType.save, VisBusinessSaveRecruiterFromLoginAnswers.class);
+		List<CcpBulkItem> emailSuppressedSubscription = JnEntityWriteEventSubscribers.getSeeds(ListenedEntities.jn_email_suppressed, CcpEntityDecoratorOperationType.insert, VisBusinessInactivateSuppressedRecruiter.class);
 		VisRecruiterDomainGroups domainGroups = new VisRecruiterDomainGroups(recruiters);
 		List<CcpBulkItem> groups = domainGroups.getItemsToCreateGroups();
 		List<CcpBulkItem> firstRecords = new ArrayList<>(legacyRecruiters);
 		firstRecords.addAll(groups);
 		firstRecords.addAll(loginAnswersSubscription);
+		firstRecords.addAll(emailSuppressedSubscription);
 		return firstRecords;
 	}
 }

@@ -4,6 +4,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.services.JnService;
 import com.vis.business.statistics.VisBusinessMonthsOfTheSkill;
 import com.vis.business.statistics.VisBusinessSkillsOfTheMonth;
+import com.vis.business.telegram.VisBusinessTelegramGroups;
 
 /**
  * The statistics of the skills, calculated from the positions of Telegram. They are public and read by id (OQL).
@@ -29,6 +30,17 @@ public enum VisServiceSkillStatistics implements JnService {
 
 		public Class<?> getJsonValidationClass() {
 			return VisBusinessMonthsOfTheSkill.Fields.class;
+		}
+	},
+	/** The links of the Telegram groups read by the load. */
+	GetTelegramGroups{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessTelegramGroups.INSTANCE.execute(json);
+			return response;
+		}
+
+		public Class<?> getJsonValidationClass() {
+			return VisBusinessTelegramGroups.Fields.class;
 		}
 	},
 	;

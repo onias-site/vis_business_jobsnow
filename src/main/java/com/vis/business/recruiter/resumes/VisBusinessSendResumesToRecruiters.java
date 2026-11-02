@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpHashDecorator;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpStringDecorator;
@@ -18,6 +19,8 @@ import com.ccp.decorators.CcpTextDecorator;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.decorators.CcpUrlDecorator;
 import com.ccp.especifications.db.query.CcpQueryOptions;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
+import com.ccp.hash.CcpHashAlgorithm;
 import com.ccp.json.fields.validation.CcpJsonCommonsFields;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.business.messages.JnMessageType;
@@ -27,7 +30,10 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.messages.JnSendMessageToUser;
 import com.jn.utils.JnLanguage;
 import com.vis.entities.VisEntityRecruiter;
+import com.vis.entities.VisEntityRecruiterFirstEmail;
+import com.vis.entities.VisEntityRecruiterQueueCursor;
 import com.vis.entities.VisEntityRecruiterResumes;
+import com.vis.entities.VisEntityRecruiterSignUpReturn;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.json.transformers.VisJsonTransformerLinkedinHash;
@@ -39,10 +45,19 @@ import com.vis.messages.VisMessages;
  *
  * <ul>
  * <li>Who receives: the recruiters who never viewed a resume of these e-mails and the ones whose last view is less than
- * 35 days old; who stopped viewing for longer stops receiving.</li>
+ * 35 days old; who stopped viewing for longer is inactivated by this process (moved to {@code vis_inactive_recruiter}) and
+ * comes back on viewing a resume again; signing up again counts as a view ({@code vis_recruiter_sign_up_return}). Each day, only
+ * {@value #RECRUITERS_PER_DAY} of them: first the ones who viewed a resume in these 35 days, the most recent view first.
+ * The places left go first to the recruiters of the sign-up (source {@code login}) who never received this e-mail
+ * ({@code vis_recruiter_first_email}), and then to the queue of the ones who never viewed: the sign-up and then the others,
+ * each group in the order of the SHA-1 of the e-mails, which favors no name or domain. The queue goes on from where the last run
+ * stopped ({@code vis_recruiter_queue_cursor}) and starts over at its end, so whoever received the e-mail and viewed
+ * nothing gives their place to the next one; a run restricted to some recruiters does not move it.</li>
  * <li>Which resumes: every resume added or changed in the last 7 days, except, for a recruiter of a professional
  * domain, the ones whose {@code notAllowedCompany} names the company of the domain.</li>
- * <li>In which order: type of resume, CLT, PJ, years of experience.</li>
+ * <li>In which order: first the ones with at least {@value #MINIMUM_SKILLS} skills; then the ones viewed by more
+ * recruiters; then the lowest average of the rankings of the skills; then type of resume, CLT, PJ, years of
+ * experience.</li>
  * <li>The e-mail shows the first 40; the whole list goes, before the e-mail, to {@code vis_recruiter_resumes}, read by
  * id by the screen "see all" of the front end (OQL).</li>
  * </ul>
@@ -66,6 +81,12 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	/** How many resumes the e-mail shows; the others are in the screen "see all". */
 	public static final int RESUMES_IN_THE_EMAIL = 40;
 
+	/** How many recruiters receive the e-mail each day. */
+	public static final int RECRUITERS_PER_DAY = 2000;
+
+	/** The skills from which a resume goes before the ones that have fewer. */
+	static final int MINIMUM_SKILLS = 10;
+
 	/** The shortest company name compared with a part of the domain of the recruiter. */
 	static final int SHORTEST_COMPANY_NAME = 4;
 
@@ -80,6 +101,13 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		DOMAIN_PARTS_SEPARATORS { public String getValue() { return "[.\\-]"; } },
 		LINK { public String getValue() { return "<a href=\"{frontendUrl}/meu-recrutamento/curriculos-da-semana\" target=\"_blank\">{value}</a>"; } },
 		UNSUBSCRIBE_PATH { public String getValue() { return "{frontendUrl}/recrutador/descadastrar?email={email}&token={token}"; } },
+		LIST_UNSUBSCRIBE { public String getValue() { return "List-Unsubscribe"; } },
+		LIST_UNSUBSCRIBE_POST { public String getValue() { return "List-Unsubscribe-Post"; } },
+		LIST_UNSUBSCRIBE_VALUE { public String getValue() { return "<{visApiUrl}/recruiter-email-link/one-click-unsubscribe?email={email}&token={token}>"; } },
+		LIST_UNSUBSCRIBE_POST_VALUE { public String getValue() { return "List-Unsubscribe=One-Click"; } },
+		QUEUE_GROUP_OF_THE_SIGN_UP { public String getValue() { return "0"; } },
+		QUEUE_GROUP_OF_THE_OTHERS { public String getValue() { return "1"; } },
+		NO_QUEUE_POSITION { public String getValue() { return ""; } },
 	}
 
 	/** The size of each page of the readings. */
@@ -109,43 +137,315 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		CcpJsonRepresentation rankings = withRankings.getInnerJson(VisRecruiterResumesFields.rankings);
 		Map<String, long[]> resumeDates = getResumeDates(changedResumes);
 
-		List<CcpJsonRepresentation> resumesOfTheEmail = new ArrayList<>();
-		for (CcpJsonRepresentation resume : resumes) {
-			CcpJsonRepresentation resumeOfTheEmail = getResumeOfTheEmail(resume, rankings, resumeDates);
-			resumesOfTheEmail.add(resumeOfTheEmail);
-		}
-		resumesOfTheEmail.sort(BY_SORT_KEYS);
-
 		long viewsSince = now.getDaysAgo(DAYS_WITHOUT_VIEWS);
 		Map<String, Long> lastViewByPair = new HashMap<>();
 		Map<String, Long> lastViewByRecruiter = new HashMap<>();
 		loadViews(lastViewByPair, lastViewByRecruiter);
+		Map<String, Long> signUpReturns = getSignUpReturns();
+		countTheSignUpReturnsAsViews(lastViewByRecruiter, signUpReturns);
 		Map<String, String> aliasByPair = getAliases();
 
-		String frontendUrl = getFrontendUrl();
+		Map<String, Long> viewsByResume = getViewsByResume(lastViewByPair);
+		List<CcpJsonRepresentation> resumesOfTheEmail = getResumesOfTheEmail(resumes, rankings, resumeDates, viewsByResume);
+
+		CcpJsonRepresentation linkAddresses = getLinkAddresses();
+		String frontendUrl = linkAddresses.getAsString(VisRecruiterResumesFields.frontendUrl);
+		String visApiUrl = linkAddresses.getAsString(VisRecruiterResumesFields.visApiUrl);
 		List<String> restrictedTo = json.getOrDefault(VisRecruiterResumesFields.recruiters, () -> List.of());
 		int[] emailsSent = {0};
+		String lastPositionOfTheLastRun = getLastQueuePosition();
+		String[] lastQueuePosition = {lastPositionOfTheLastRun};
 
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, lastViewByRecruiter, viewsSince, resumesOfTheEmail, lastViewByPair, aliasByPair, frontendUrl, emailsSent);
-		CcpQueryOptions everyRecruiter = CcpQueryOptions.INSTANCE.matchAll();
-		String scrollTime = Constants.SCROLL_TIME.getValue();
-		everyRecruiter.selectFrom(VisEntityRecruiter.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, sendToTheRecruiter);
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, frontendUrl, visApiUrl, emailsSent, lastQueuePosition);
+		List<CcpJsonRepresentation> recruiters = getRecruiters();
+		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
+		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail);
+		recruitersInOrder.forEach(sendToTheRecruiter);
+		saveLastQueuePosition(restrictedTo, lastPositionOfTheLastRun, lastQueuePosition[0]);
+		List<CcpJsonRepresentation> recruitersWhoStoppedViewing = getRecruitersWhoStoppedViewing(recruiters, lastViewByRecruiter, viewsSince, restrictedTo);
+		// deleting from the recruiters moves the given record to the twin, the inactive recruiters
+		recruitersWhoStoppedViewing.forEach(recruiter -> VisEntityRecruiter.ENTITY.delete(recruiter));
 
 		int resumesFound = resumes.size();
+		int recruitersInactivated = recruitersWhoStoppedViewing.size();
 		CcpJsonRepresentation counters = json
 				.put(VisRecruiterResumesFields.resumesFound, resumesFound)
-				.put(VisRecruiterResumesFields.emailsSent, emailsSent[0]);
+				.put(VisRecruiterResumesFields.emailsSent, emailsSent[0])
+				.put(VisRecruiterResumesFields.recruitersInactivated, recruitersInactivated);
 		return counters;
 	}
 
-	/** Type of resume, CLT, PJ and years of experience, the keys put by {@link VisBusinessBuildResumeRow}. */
+	/**
+	 * The recruiters to inactivate: the ones whose last view is older than {@code viewsSince}. A recruiter who never viewed
+	 * is not one of them, and a run restricted to some recruiters touches only these.
+	 * @param recruiters every recruiter
+	 * @param lastViewByRecruiter the last view of each recruiter, by the hash of their e-mail
+	 * @param viewsSince the time before which a last view means the recruiter stopped viewing
+	 * @param restrictedTo the e-mails the run is restricted to; empty for every recruiter
+	 * @return the records of the recruiters to inactivate
+	 */
+	static List<CcpJsonRepresentation> getRecruitersWhoStoppedViewing(List<CcpJsonRepresentation> recruiters, Map<String, Long> lastViewByRecruiter, long viewsSince, List<String> restrictedTo) {
+		List<CcpJsonRepresentation> recruitersWhoStoppedViewing = new ArrayList<>();
+		for (CcpJsonRepresentation recruiter : recruiters) {
+			String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
+			String emailHash = getSha1OfTheEmail(email);
+			Long lastView = lastViewByRecruiter.get(emailHash);
+			boolean stillViewing = lastView == null || lastView >= viewsSince;
+			if(stillViewing) {
+				continue;
+			}
+			boolean outOfThisRun = false == restrictedTo.isEmpty() && false == restrictedTo.contains(email);
+			if(outOfThisRun) {
+				continue;
+			}
+			recruitersWhoStoppedViewing.add(recruiter);
+		}
+		return recruitersWhoStoppedViewing;
+	}
+
+	/** The SHA-1 of an e-mail, which does not refuse an address that is not valid, as {@link #getEmailHash(String)} does. */
+	private static String getSha1OfTheEmail(String email) {
+		CcpStringDecorator emailDecorator = new CcpStringDecorator(email);
+		CcpHashDecorator emailHashDecorator = emailDecorator.hash();
+		String emailHash = emailHashDecorator.asString(CcpHashAlgorithm.SHA1);
+		return emailHash;
+	}
+
+	/**
+	 * Every recruiter, read before the first e-mail goes out: sending while reading would hold the scroll open for as long
+	 * as the e-mails of a page take.
+	 */
+	static List<CcpJsonRepresentation> getRecruiters() {
+		CcpQueryOptions everyRecruiter = CcpQueryOptions.INSTANCE.matchAll();
+		List<CcpJsonRepresentation> recruiters = new ArrayList<>();
+		String scrollTime = Constants.SCROLL_TIME.getValue();
+		everyRecruiter.selectFrom(VisEntityRecruiter.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, recruiter -> recruiters.add(recruiter));
+		return recruiters;
+	}
+
+	/** The hashes of the e-mails of the recruiters of the sign-up who already received their first e-mail. */
+	private static Set<String> getRecruitersWithFirstEmail() {
+		CcpQueryOptions everyRecord = CcpQueryOptions.INSTANCE.matchAll();
+		Set<String> recruitersWithFirstEmail = new LinkedHashSet<>();
+		String scrollTime = Constants.SCROLL_TIME.getValue();
+		everyRecord.selectFrom(VisEntityRecruiterFirstEmail.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, record -> recruitersWithFirstEmail.add(record.getAsString(VisEntityRecruiterFirstEmail.Fields.email)));
+		return recruitersWithFirstEmail;
+	}
+
+	/** When each inactive recruiter came back by signing up again, by the hash of their e-mail. */
+	private static Map<String, Long> getSignUpReturns() {
+		CcpQueryOptions everyRecord = CcpQueryOptions.INSTANCE.matchAll();
+		Map<String, Long> signUpReturns = new HashMap<>();
+		String scrollTime = Constants.SCROLL_TIME.getValue();
+		everyRecord.selectFrom(VisEntityRecruiterSignUpReturn.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, record -> signUpReturns.put(record.getAsString(VisEntityRecruiterSignUpReturn.Fields.email), record.getAsLongNumber(VisEntityRecruiterSignUpReturn.Fields.returnedAt)));
+		return signUpReturns;
+	}
+
+	/**
+	 * Takes a return by the sign-up as the last view of a recruiter, when it is more recent, so that signing up again gives
+	 * the recruiter another 35 days. Who never viewed stays without a view: they are in the queue, and no one inactivates them.
+	 * @param lastViewByRecruiter the last view of each recruiter, by the hash of their e-mail; receives the returns
+	 * @param signUpReturns when each recruiter came back, by the hash of their e-mail
+	 */
+	static void countTheSignUpReturnsAsViews(Map<String, Long> lastViewByRecruiter, Map<String, Long> signUpReturns) {
+		for (Map.Entry<String, Long> signUpReturn : signUpReturns.entrySet()) {
+			String emailHash = signUpReturn.getKey();
+			Long lastView = lastViewByRecruiter.get(emailHash);
+			boolean neverViewed = lastView == null;
+			if(neverViewed) {
+				continue;
+			}
+			Long returnedAt = signUpReturn.getValue();
+			long mostRecent = Math.max(lastView, returnedAt);
+			lastViewByRecruiter.put(emailHash, mostRecent);
+		}
+	}
+
+	/** Where the last run stopped in the queue, or nothing when no run moved it yet. */
+	static String getLastQueuePosition() {
+		CcpJsonRepresentation cursorKey = getCursorKey();
+		CcpEntityMetaData cursorMetaData = VisEntityRecruiterQueueCursor.ENTITY.getEntityMetaData();
+		CcpJsonRepresentation cursor = cursorMetaData.getOneByIdOrHandleItIfThisIdWasNotFound(cursorKey, notFound -> CcpOtherConstants.EMPTY_JSON);
+		String lastPosition = cursor.getOrDefault(VisEntityRecruiterQueueCursor.Fields.lastPosition, () -> Constants.NO_QUEUE_POSITION.getValue());
+		return lastPosition;
+	}
+
+	/** Keeps where this run stopped in the queue, unless it was restricted to some recruiters or the queue did not move. */
+	static void saveLastQueuePosition(List<String> restrictedTo, String lastPositionOfTheLastRun, String lastPosition) {
+		boolean restrictedRun = false == restrictedTo.isEmpty();
+		boolean queueDidNotMove = lastPosition.equals(lastPositionOfTheLastRun);
+		if(restrictedRun || queueDidNotMove) {
+			return;
+		}
+		CcpJsonRepresentation cursor = getCursorKey().put(VisEntityRecruiterQueueCursor.Fields.lastPosition, lastPosition);
+		VisEntityRecruiterQueueCursor.ENTITY.save(cursor);
+	}
+
+	private static CcpJsonRepresentation getCursorKey() {
+		String cursorName = VisEntityRecruiterQueueCursor.CursorNames.resumesToRecruiters.getValue();
+		CcpJsonRepresentation cursorKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterQueueCursor.Fields.cursorName, cursorName);
+		return cursorKey;
+	}
+
+	/**
+	 * The order in which the places of the day are given: the recruiters who viewed a resume since {@code viewsSince}, the
+	 * most recent view first, the ones of the sign-up waiting for their first e-mail, by the hash, and then the queue of the
+	 * ones who never viewed, right after {@code lastQueuePosition} and going back to the beginning at its end. Who viewed before
+	 * {@code viewsSince} stopped viewing and is left out: the process inactivates them after the sending. The hash is
+	 * calculated here and not read from an entity: {@link #getEmailHash(String)} refuses an address that is not valid, and one
+	 * such record would stop the whole run.
+	 * @param recruiters every recruiter
+	 * @param lastViewByRecruiter the last view of each recruiter, by the hash of their e-mail
+	 * @param viewsSince the time before which a last view means the recruiter stopped viewing
+	 * @param lastQueuePosition where the last run stopped in the queue
+	 * @param recruitersWithFirstEmail the hashes of the e-mails of the recruiters of the sign-up who already received the first e-mail
+	 * @return the recruiters in order, each one with {@code emailHash}; the ones of the queue with {@code queuePosition}, the
+	 * ones waiting for their first e-mail with {@code firstEmail}
+	 */
+	static List<CcpJsonRepresentation> getRecruitersInOrder(List<CcpJsonRepresentation> recruiters, Map<String, Long> lastViewByRecruiter, long viewsSince, String lastQueuePosition, Set<String> recruitersWithFirstEmail) {
+		String loginSource = VisEntityRecruiter.Sources.login.getValue();
+		String signUpGroup = Constants.QUEUE_GROUP_OF_THE_SIGN_UP.getValue();
+		String othersGroup = Constants.QUEUE_GROUP_OF_THE_OTHERS.getValue();
+		List<CcpJsonRepresentation> viewers = new ArrayList<>();
+		List<CcpJsonRepresentation> waitingForTheFirstEmail = new ArrayList<>();
+		List<CcpJsonRepresentation> queue = new ArrayList<>();
+		for (CcpJsonRepresentation recruiter : recruiters) {
+			String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
+			String emailHash = getSha1OfTheEmail(email);
+			CcpJsonRepresentation recruiterWithHash = recruiter.put(VisRecruiterResumesFields.emailHash, emailHash);
+			Long lastView = lastViewByRecruiter.get(emailHash);
+			boolean viewedRecently = lastView != null && lastView >= viewsSince;
+			if(viewedRecently) {
+				viewers.add(recruiterWithHash);
+				continue;
+			}
+			boolean stoppedViewing = lastView != null;
+			if(stoppedViewing) {
+				continue;
+			}
+			String source = recruiter.getOrDefault(VisEntityRecruiter.Fields.source, () -> "");
+			boolean cameFromTheSignUp = loginSource.equals(source);
+			boolean waitsForTheFirstEmail = cameFromTheSignUp && false == recruitersWithFirstEmail.contains(emailHash);
+			if(waitsForTheFirstEmail) {
+				CcpJsonRepresentation recruiterOfTheFirstEmail = recruiterWithHash.put(VisRecruiterResumesFields.firstEmail, true);
+				waitingForTheFirstEmail.add(recruiterOfTheFirstEmail);
+				continue;
+			}
+			String group = cameFromTheSignUp ? signUpGroup : othersGroup;
+			String queuePosition = group + emailHash;
+			CcpJsonRepresentation recruiterInTheQueue = recruiterWithHash.put(VisRecruiterResumesFields.queuePosition, queuePosition);
+			queue.add(recruiterInTheQueue);
+		}
+		Comparator<CcpJsonRepresentation> byEmailHash = Comparator.comparing(recruiter -> recruiter.getAsString(VisRecruiterResumesFields.emailHash));
+		Comparator<CcpJsonRepresentation> byMostRecentView = Comparator.comparing(recruiter -> -lastViewByRecruiter.get(recruiter.getAsString(VisRecruiterResumesFields.emailHash)));
+		Comparator<CcpJsonRepresentation> byQueuePosition = Comparator.comparing(recruiter -> recruiter.getAsString(VisRecruiterResumesFields.queuePosition));
+		viewers.sort(byMostRecentView.thenComparing(byEmailHash));
+		waitingForTheFirstEmail.sort(byEmailHash);
+		queue.sort(byQueuePosition);
+
+		List<CcpJsonRepresentation> afterTheLastPosition = new ArrayList<>();
+		List<CcpJsonRepresentation> upToTheLastPosition = new ArrayList<>();
+		for (CcpJsonRepresentation recruiter : queue) {
+			String queuePosition = recruiter.getAsString(VisRecruiterResumesFields.queuePosition);
+			boolean alreadyHadItsTurn = queuePosition.compareTo(lastQueuePosition) <= 0;
+			if(alreadyHadItsTurn) {
+				upToTheLastPosition.add(recruiter);
+				continue;
+			}
+			afterTheLastPosition.add(recruiter);
+		}
+		List<CcpJsonRepresentation> recruitersInOrder = new ArrayList<>(viewers);
+		recruitersInOrder.addAll(waitingForTheFirstEmail);
+		recruitersInOrder.addAll(afterTheLastPosition);
+		recruitersInOrder.addAll(upToTheLastPosition);
+		return recruitersInOrder;
+	}
+
+	/** The numbers of {@code sortKeys}, the first ones put by {@link #getPriorityKeys(List, CcpJsonRepresentation, long)}. */
 	static final Comparator<CcpJsonRepresentation> BY_SORT_KEYS = VisResumesBySortKeys.INSTANCE;
+
+	/**
+	 * How many recruiters viewed each resume: a recruiter counts once per resume, however many times they open it.
+	 * @param lastViewByPair the last view of each pair recruiter + resume
+	 * @return the number of recruiters, by the hash of the LinkedIn of the resume
+	 */
+	static Map<String, Long> getViewsByResume(Map<String, Long> lastViewByPair) {
+		String separator = Constants.SEPARATOR.getValue();
+		Map<String, Long> viewsByResume = new HashMap<>();
+		for (String pairKey : lastViewByPair.keySet()) {
+			int separatorPosition = pairKey.indexOf(separator);
+			String linkedinHash = pairKey.substring(separatorPosition + 1);
+			viewsByResume.merge(linkedinHash, 1L, Long::sum);
+		}
+		return viewsByResume;
+	}
+
+	/**
+	 * The rows of every resume, in the order of the e-mail.
+	 * @param resumes the stored resumes
+	 * @param rankings each skill and its position in {@code vis_skill}
+	 * @param resumeDates the oldest and the newest times of each resume, by the hash of its e-mail
+	 * @param viewsByResume how many recruiters viewed each resume, by the hash of its LinkedIn
+	 * @return the rows in order
+	 */
+	static List<CcpJsonRepresentation> getResumesOfTheEmail(List<CcpJsonRepresentation> resumes, CcpJsonRepresentation rankings, Map<String, long[]> resumeDates, Map<String, Long> viewsByResume) {
+		List<CcpJsonRepresentation> resumesOfTheEmail = new ArrayList<>();
+		for (CcpJsonRepresentation resume : resumes) {
+			CcpJsonRepresentation resumeOfTheEmail = getResumeOfTheEmail(resume, rankings, resumeDates, viewsByResume);
+			resumesOfTheEmail.add(resumeOfTheEmail);
+		}
+		resumesOfTheEmail.sort(BY_SORT_KEYS);
+		return resumesOfTheEmail;
+	}
+
+	/**
+	 * The first keys of the order of the resumes, all ascending: 0 for the resume with at least {@value #MINIMUM_SKILLS}
+	 * skills and 1 for the others; the number of views, negative because more views go first; the average of the rankings.
+	 * @param skills the skills of the resume
+	 * @param rankings each skill and its position in {@code vis_skill}
+	 * @param views how many recruiters viewed the resume
+	 * @return the keys
+	 */
+	static List<Object> getPriorityKeys(List<String> skills, CcpJsonRepresentation rankings, long views) {
+		boolean enoughSkills = skills.size() >= MINIMUM_SKILLS;
+		int skillsKey = enoughSkills ? 0 : 1;
+		double averageRanking = getAverageRanking(skills, rankings);
+		List<Object> priorityKeys = List.of(skillsKey, -views, averageRanking);
+		return priorityKeys;
+	}
+
+	/**
+	 * The sum of the rankings of the skills divided by how many they are. A skill unknown to {@code vis_skill} has no number
+	 * to add, so it stays out of both sides: dividing by it too would improve the resume for having an unknown skill.
+	 * @param skills the skills of the resume
+	 * @param rankings each skill and its position in {@code vis_skill}
+	 * @return the average, or {@link VisBusinessBuildResumeRow#NO_RANKING} when no skill has a ranking
+	 */
+	static double getAverageRanking(List<String> skills, CcpJsonRepresentation rankings) {
+		double sumOfRankings = 0;
+		int rankedSkills = 0;
+		for (String skill : skills) {
+			double ranking = VisBusinessBuildResumeRow.getRanking(rankings, skill);
+			boolean noRanking = ranking == VisBusinessBuildResumeRow.NO_RANKING;
+			if(noRanking) {
+				continue;
+			}
+			sumOfRankings += ranking;
+			rankedSkills++;
+		}
+		boolean nothingRanked = rankedSkills == 0;
+		if(nothingRanked) {
+			return VisBusinessBuildResumeRow.NO_RANKING;
+		}
+		double averageRanking = sumOfRankings / rankedSkills;
+		return averageRanking;
+	}
 
 	/**
 	 * The row of a resume, with what the choice of the rows of each recruiter needs and the e-mail does not show: the
 	 * hash of its LinkedIn (the key of the views) and the companies it forbids.
 	 */
-	private static CcpJsonRepresentation getResumeOfTheEmail(CcpJsonRepresentation resume, CcpJsonRepresentation rankings, Map<String, long[]> resumeDates) {
+	private static CcpJsonRepresentation getResumeOfTheEmail(CcpJsonRepresentation resume, CcpJsonRepresentation rankings, Map<String, long[]> resumeDates, Map<String, Long> viewsByResume) {
 		String emailHash = resume.getAsString(VisEntityResume.Fields.email);
 		long now = System.currentTimeMillis();
 		long[] oldestAndNewest = resumeDates.getOrDefault(emailHash, new long[] {now, now});
@@ -158,7 +458,14 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
 		String linkedinHash = getLinkedinHash(linkedinAddress);
 		List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
+		List<String> skills = VisBusinessBuildResumeRow.getSkillsByRanking(rowInput);
+		long views = viewsByResume.getOrDefault(linkedinHash, 0L);
+		List<Object> priorityKeys = getPriorityKeys(skills, rankings, views);
+		List<Object> rowSortKeys = row.getAsObjectList(VisRecruiterResumesFields.sortKeys);
+		List<Object> sortKeys = new ArrayList<>(priorityKeys);
+		sortKeys.addAll(rowSortKeys);
 		CcpJsonRepresentation resumeOfTheEmail = row
+				.put(VisRecruiterResumesFields.sortKeys, sortKeys)
 				.put(VisEntityViewedResume.Fields.linkedin, linkedinHash)
 				.put(VisEntityResume.Fields.notAllowedCompany, notAllowedCompanies);
 		return resumeOfTheEmail;
@@ -167,7 +474,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	/**
 	 * Writes the whole list of the recruiter (read by the screen "see all") and sends the e-mail with the first 40.
 	 */
-	static void sendTheEmail(String email, List<CcpJsonRepresentation> rows, String frontendUrl) {
+	static void sendTheEmail(String email, List<CcpJsonRepresentation> rows, String frontendUrl, String visApiUrl) {
 		CcpJsonRepresentation recruiterResumes = CcpOtherConstants.EMPTY_JSON
 				.put(VisEntityRecruiterResumes.Fields.email, email)
 				.put(VisEntityRecruiterResumes.Fields.resumes, rows);
@@ -186,6 +493,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 
 		String seeAll = getSeeAll(shown, total, frontendUrl);
 		String unsubscribeLink = getUnsubscribeLink(email, frontendUrl);
+		CcpJsonRepresentation emailHeaders = getEmailHeaders(email, visApiUrl);
 
 		CcpJsonRepresentation message = CcpOtherConstants.EMPTY_JSON
 				.put(JnJsonCommonsFields.email, email)
@@ -193,8 +501,9 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 				.put(VisRecruiterResumesFields.resumesTable, resumesTable)
 				.put(VisRecruiterResumesFields.seeAll, seeAll)
 				.put(VisRecruiterResumesFields.unsubscribeLink, unsubscribeLink)
-				.put(VisRecruiterResumesFields.totalOfResumes, total);
-		String topic = VisMessages.VisNotifyRecruiterAboutResumes.class.getName();
+				.put(VisRecruiterResumesFields.totalOfResumes, total)
+				.put(JnJsonCommonsFields.emailHeaders, emailHeaders);
+		String topic =VisMessages.VisNotifyRecruiterAboutResumes.class.getName();
 		JnMessageType[] messageTypes = {JnMessageType.email};
 		new JnSendMessageToUser().sendAllMessages(message, topic, messageTypes, JnMessageSenderExceptionHandler.LENIENT);
 	}
@@ -219,16 +528,36 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	private static String getUnsubscribeLink(String email, String frontendUrl) {
+		CcpJsonRepresentation linkValues = getUnsubscribeValues(email).put(VisRecruiterResumesFields.frontendUrl, frontendUrl);
+		String unsubscribeLink = resolve(Constants.UNSUBSCRIBE_PATH, linkValues);
+		return unsubscribeLink;
+	}
+
+	/**
+	 * The headers of the one-click unsubscribe (RFC 8058), which the mailbox providers demand from who sends in bulk: the
+	 * provider calls the API with a POST, without the person leaving the mailbox. The URL goes to the API and not to the
+	 * front end because a page of the front end does not answer a POST.
+	 */
+	static CcpJsonRepresentation getEmailHeaders(String email, String visApiUrl) {
+		CcpJsonRepresentation linkValues = getUnsubscribeValues(email).put(VisRecruiterResumesFields.visApiUrl, visApiUrl);
+		String listUnsubscribe = resolve(Constants.LIST_UNSUBSCRIBE_VALUE, linkValues);
+		String listUnsubscribePost = Constants.LIST_UNSUBSCRIBE_POST_VALUE.getValue();
+		CcpJsonRepresentation emailHeaders = CcpOtherConstants.EMPTY_JSON
+				.put(Constants.LIST_UNSUBSCRIBE, listUnsubscribe)
+				.put(Constants.LIST_UNSUBSCRIBE_POST, listUnsubscribePost);
+		return emailHeaders;
+	}
+
+	/** The e-mail, ready for a URL, and the signature of the links that stop the e-mails to the recruiter. */
+	private static CcpJsonRepresentation getUnsubscribeValues(String email) {
 		String token = VisRecruiterLinks.unsubscribe.sign(email);
 		CcpStringDecorator emailDecorator = new CcpStringDecorator(email);
 		CcpUrlDecorator emailUrl = emailDecorator.url();
 		String encodedEmail = emailUrl.asEnconded();
-		CcpJsonRepresentation linkValues = CcpOtherConstants.EMPTY_JSON
-				.put(VisRecruiterResumesFields.frontendUrl, frontendUrl)
+		CcpJsonRepresentation unsubscribeValues = CcpOtherConstants.EMPTY_JSON
 				.put(JnJsonCommonsFields.email, encodedEmail)
 				.put(VisRecruiterResumesFields.token, token);
-		String unsubscribeLink = resolve(Constants.UNSUBSCRIBE_PATH, linkValues);
-		return unsubscribeLink;
+		return unsubscribeValues;
 	}
 
 	/**
@@ -241,7 +570,6 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		boolean professional = recruiter.getOrDefault(VisEntityRecruiter.Fields.professional, () -> false);
 		String domain = recruiter.getOrDefault(VisEntityRecruiter.Fields.domain, () -> "");
 		String separator = Constants.SEPARATOR.getValue();
-		String neverViewed = VisRecruiterResumesTexts.neverViewed.getMessage(LANGUAGE);
 		String viewResume = VisRecruiterResumesTexts.viewResume.getMessage(LANGUAGE);
 
 		List<CcpJsonRepresentation> rows = new ArrayList<>();
@@ -255,9 +583,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 			String pairKey = emailHash + separator + linkedinHash;
 			Long lastView = lastViewByPair.get(pairKey);
 			boolean viewed = lastView != null;
-			String lastViewDate = viewed ? formatDate(lastView) : neverViewed;
-			CcpJsonRepresentation lastViewValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.date, lastViewDate);
-			String lastViewLine = VisRecruiterResumesTexts.lastView.getMessage(LANGUAGE, lastViewValues);
+			String lastViewLine = viewed ? getLastViewLine(lastView) : VisRecruiterResumesTexts.neverViewed.getMessage(LANGUAGE);
 			String alias = aliasByPair.get(pairKey);
 			String viewLabel = alias == null ? viewResume : alias;
 			String resumeId = resumeOfTheEmail.getAsString(VisRecruiterResumesFields.resumeId);
@@ -271,6 +597,14 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 			rows.add(row);
 		}
 		return rows;
+	}
+
+	/** The line with the date of the last view of the resume by the recruiter. */
+	private static String getLastViewLine(Long lastView) {
+		String lastViewDate = formatDate(lastView);
+		CcpJsonRepresentation lastViewValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.date, lastViewDate);
+		String lastViewLine = VisRecruiterResumesTexts.lastView.getMessage(LANGUAGE, lastViewValues);
+		return lastViewLine;
 	}
 
 	/**
@@ -417,14 +751,13 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		return aliasByPair;
 	}
 
-	/** The address of the front end, kept in the sending parameters of the e-mail. */
-	private static String getFrontendUrl() {
+	/** The addresses of the front end and of the API of vis, kept in the sending parameters of the e-mail. */
+	private static CcpJsonRepresentation getLinkAddresses() {
 		String templateId = VisMessages.VisNotifyRecruiterAboutResumes.class.getName();
 		CcpJsonRepresentation parametersId = CcpOtherConstants.EMPTY_JSON.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation parameters = JnEntityEmailParametersToSend.ENTITY.getOneById(parametersId);
 		CcpJsonRepresentation moreParameters = parameters.getInnerJson(JnJsonCommonsFields.moreParameters);
-		String frontendUrl = moreParameters.getAsString(VisRecruiterResumesFields.frontendUrl);
-		return frontendUrl;
+		return moreParameters;
 	}
 
 	/** The hash of the e-mail, as the entities keep it. */
@@ -456,7 +789,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		return formattedDate;
 	}
 
-	private static String resolve(CcpJsonFieldName template, CcpJsonRepresentation values) {
+	static String resolve(CcpJsonFieldName template, CcpJsonRepresentation values) {
 		String templateText = template.getValue();
 		CcpStringDecorator templateDecorator = new CcpStringDecorator(templateText);
 		CcpTextDecorator templateTextDecorator = templateDecorator.text();

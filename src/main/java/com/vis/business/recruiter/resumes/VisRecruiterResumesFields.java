@@ -47,6 +47,8 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	unsubscribeLink,
 	/** The address of the front end, where the links of the e-mail go. */
 	frontendUrl,
+	/** The address of the API of vis, called by the e-mail providers on a one-click unsubscribe. */
+	visApiUrl,
 	/** The LinkedIn of the person who signs the e-mail. */
 	oniasLinkedin,
 	/** The skills and their positions in the ranking of {@code vis_skill}. */
@@ -71,8 +73,20 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	total,
 	/** The e-mails of the recruiters a run is restricted to (support and tests); every recruiter when absent. */
 	recruiters,
+	/** The SHA-1 of the e-mail of a recruiter, the order of the places of the day. */
+	emailHash,
+	/** The position of a recruiter in the queue of who did not view a resume lately: the digit of the group + the SHA-1 of the e-mail. */
+	queuePosition,
+	/** Marks the recruiter of the sign-up who is about to receive their first e-mail. */
+	firstEmail,
+	/** A document of the legacy index of candidates. */
+	legacyCandidate,
+	/** The link of the invitation to the form of the resume. */
+	resumeFormLink,
 	/** How many recruiters received the e-mail. */
 	emailsSent,
+	/** How many recruiters the run inactivated for not viewing a resume for too long. */
+	recruitersInactivated,
 	/** How many resumes were added or changed in the last days. */
 	resumesFound,
 	/** The run was skipped: the e-mails go out only from Monday to Friday. */

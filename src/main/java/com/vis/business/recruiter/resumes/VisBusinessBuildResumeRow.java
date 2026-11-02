@@ -67,6 +67,9 @@ public class VisBusinessBuildResumeRow implements CcpBusiness {
 	/** A missing salary expectation goes after every informed one in the sorting. */
 	static final double MISSING_SALARY = Double.MAX_VALUE;
 
+	/** A skill unknown to {@code vis_skill}, and a resume with no known skill, go after every ranked one. */
+	static final double NO_RANKING = Double.MAX_VALUE;
+
 	/** The texts that are not messages. */
 	static enum Constants implements CcpJsonFieldName {
 		DATE_PATTERN { public String getValue() { return "dd/MM/yyyy HH:mm"; } },
@@ -284,11 +287,11 @@ public class VisBusinessBuildResumeRow implements CcpBusiness {
 		return sortedSkills;
 	}
 
-	private static Double getRanking(CcpJsonRepresentation rankings, String skill) {
+	static Double getRanking(CcpJsonRepresentation rankings, String skill) {
 		CcpFieldName skillField = new CcpFieldName(skill);
 		boolean noRanking = false == rankings.containsAllFields(skillField);
 		if(noRanking) {
-			return Double.MAX_VALUE;
+			return NO_RANKING;
 		}
 		Double ranking = rankings.getAsDoubleNumber(skillField);
 		return ranking;

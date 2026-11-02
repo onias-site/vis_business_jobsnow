@@ -1,6 +1,9 @@
 package com.vis.entities;
 
+import java.util.List;
+
 import com.ccp.decorators.CcpJsonFieldName;
+import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
@@ -11,6 +14,7 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
+import com.vis.business.telegram.VisTelegramSystemMessages;
 import com.vis.json.fields.validation.VisJsonSkillStatisticsFields;
 
 /**
@@ -58,5 +62,14 @@ public class VisEntityStatisSkillPieChart implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(VisJsonSkillStatisticsFields.class)
 		total,
 		;
+	}
+
+	/**
+	 * The links of the Telegram groups shown on the screen of this chart.
+	 * @return the seed records
+	 */
+	public List<CcpBulkItem> getFirstRecordsToInsert() {
+		List<CcpBulkItem> seeds = VisTelegramSystemMessages.getSeeds();
+		return seeds;
 	}
 }

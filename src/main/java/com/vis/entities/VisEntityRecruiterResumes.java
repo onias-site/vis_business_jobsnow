@@ -37,7 +37,8 @@ import com.vis.messages.VisMessages;
  * day: the next e-mail writes it again.
  *
  * <p>Its seeds are the texts of the table ({@link VisRecruiterResumesTexts}), the template of the e-mail in Portuguese
- * and English and its sending parameters, with the LinkedIn of who signs the e-mail and the address of the front end.
+ * and English and its sending parameters, with the LinkedIn of who signs the e-mail and the addresses of the front end
+ * and of the API of vis.
  */
 @CcpEntityCache(3600)
 @CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.daily)
@@ -74,6 +75,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		SENDER { public String getValue() { return "devs.jobsnow@gmail.com"; } },
 		ONIAS_LINKEDIN { public String getValue() { return "https://www.linkedin.com/in/onias85/"; } },
 		FRONTEND_URL { public String getValue() { return "http://localhost:3000"; } },
+		VIS_API_URL { public String getValue() { return "http://localhost:8081"; } },
 	}
 
 	/** The style of the e-mail, the same of the legacy e-mail to the recruiters ({@code vaga.html}). */
@@ -110,6 +112,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "<p>" + seeAll + "</p>"
 				+ "<p>Dica para sucesso em abordagem a candidatos: ao abordar o dono do currículo que te interessou, por favor, dê preferência a meios menos invasivos "
 				+ "de comunicação do que chamada telefônica ou chamada de WhatsApp. Exemplo: envie mensagem por WhatsApp, LinkedIn ou e-mail e espere o candidato responder.</p>"
+				+ "<p>Caso haja problemas em abrir o LinkedIn do candidato, nos avise.</p>"
 				+ "</body></html>";
 		String englishMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Hello, in case you do not know me or do not remember me, I am <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
@@ -119,6 +122,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "<p>" + seeAll + "</p>"
 				+ "<p>A tip for approaching candidates: when you contact the owner of a resume you liked, please prefer less invasive ways of communication than "
 				+ "a phone call or a WhatsApp call. For example: send a message by WhatsApp, LinkedIn or e-mail and wait for the candidate to answer.</p>"
+				+ "<p>If you have any trouble opening the candidate's LinkedIn, please let us know.</p>"
 				+ "</body></html>";
 
 		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
@@ -135,20 +139,83 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		String sender = Parameters.SENDER.getValue();
 		String oniasLinkedinAddress = Parameters.ONIAS_LINKEDIN.getValue();
 		String frontendUrl = Parameters.FRONTEND_URL.getValue();
+		String visApiUrl = Parameters.VIS_API_URL.getValue();
 		CcpJsonRepresentation parameters = CcpOtherConstants.EMPTY_JSON
 				.put(JnJsonCommonsFields.sender, sender)
 				.put(JnJsonCommonsFields.subjectType, templateId)
 				.put(JnJsonCommonsFields.templateId, templateId)
 				.addToItem(JnJsonCommonsFields.moreParameters, VisRecruiterResumesFields.oniasLinkedin, oniasLinkedinAddress)
-				.addToItem(JnJsonCommonsFields.moreParameters, VisRecruiterResumesFields.frontendUrl, frontendUrl);
+				.addToItem(JnJsonCommonsFields.moreParameters, VisRecruiterResumesFields.frontendUrl, frontendUrl)
+				.addToItem(JnJsonCommonsFields.moreParameters, VisRecruiterResumesFields.visApiUrl, visApiUrl);
 
 		List<CcpBulkItem> templateItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailTemplateMessage.ENTITY, portugueseTemplate, englishTemplate);
 		List<CcpBulkItem> parametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailParametersToSend.ENTITY, parameters);
 		List<CcpBulkItem> textItems = VisRecruiterResumesTexts.getSeeds();
+		List<CcpBulkItem> invitationSeeds = this.getInvitationSeeds();
 
 		List<CcpBulkItem> firstRecords = new ArrayList<>(templateItems);
 		firstRecords.addAll(parametersItems);
 		firstRecords.addAll(textItems);
+		firstRecords.addAll(invitationSeeds);
 		return firstRecords;
+	}
+
+	/**
+	 * The template and the sending parameters of the invitation to the candidates of the legacy index. Apart from the other
+	 * seeds because the process of the invitation writes only these: the others hold the addresses of the deploy.
+	 * @return the seed records
+	 */
+	public List<CcpBulkItem> getInvitationSeeds() {
+		String templateId = VisMessages.VisInviteLegacyCandidate.class.getName();
+		String css = Style.CSS.getValue();
+		String oniasLinkedin = "{" + VisRecruiterResumesFields.oniasLinkedin + "}";
+		String resumeFormLink = "{" + VisRecruiterResumesFields.resumeFormLink + "}";
+		String resumesTable = "{" + VisRecruiterResumesFields.resumesTable + "}";
+
+		String portugueseMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Olá, aqui é o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, do JobsNow. Você cadastrou o seu currículo conosco há algum tempo.</p>"
+				+ "<p>O JobsNow foi refeito, e o seu cadastro antigo não aparece para os recrutadores do novo sistema. Eles recebem por e-mail os currículos inseridos ou alterados "
+				+ "nos últimos 7 dias. Para entrar nesta lista, cadastre o seu currículo no novo formulário:</p>"
+				+ "<p><strong><a href=\"" + resumeFormLink + "\" target=\"_blank\">Cadastrar meu currículo</a></strong></p>"
+				+ "<h4>Como o recrutador verá o seu currículo</h4>"
+				+ "<p>Esta é uma prévia feita com os dados do seu cadastro antigo, que podem estar desatualizados. No formulário, você confere e corrige cada um deles, e completa o que faltar.</p>"
+				+ resumesTable
+				+ "<p>Este convite é único: se você não se cadastrar, não enviaremos outro e-mail sobre este assunto.</p>"
+				+ "</body></html>";
+		String englishMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Hello, this is <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, from JobsNow. You registered your resume with us some time ago.</p>"
+				+ "<p>JobsNow was rebuilt, and your old registration does not reach the recruiters of the new system. They receive by e-mail the resumes added or changed "
+				+ "in the last 7 days. To join this list, register your resume in the new form:</p>"
+				+ "<p><strong><a href=\"" + resumeFormLink + "\" target=\"_blank\">Register my resume</a></strong></p>"
+				+ "<h4>How the recruiter will see your resume</h4>"
+				+ "<p>This is a preview made with the data of your old registration, which may be out of date. In the form, you check and correct each of them, and fill in what is missing.</p>"
+				+ resumesTable
+				+ "<p>This invitation is a one-off: if you do not register, we will not send another e-mail about it.</p>"
+				+ "</body></html>";
+
+		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.templateId, templateId);
+		CcpJsonRepresentation portugueseTemplate = templateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.portuguese)
+				.put(JnJsonCommonsFields.subject, "Veja como os recrutadores verão o seu currículo no novo JobsNow")
+				.put(JnJsonCommonsFields.message, portugueseMessage);
+		CcpJsonRepresentation englishTemplate = templateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.english)
+				.put(JnJsonCommonsFields.subject, "See how recruiters will see your resume on the new JobsNow")
+				.put(JnJsonCommonsFields.message, englishMessage);
+
+		String sender = Parameters.SENDER.getValue();
+		String oniasLinkedinAddress = Parameters.ONIAS_LINKEDIN.getValue();
+		CcpJsonRepresentation parameters = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.sender, sender)
+				.put(JnJsonCommonsFields.subjectType, templateId)
+				.put(JnJsonCommonsFields.templateId, templateId)
+				.addToItem(JnJsonCommonsFields.moreParameters, VisRecruiterResumesFields.oniasLinkedin, oniasLinkedinAddress);
+
+		List<CcpBulkItem> templateItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailTemplateMessage.ENTITY, portugueseTemplate, englishTemplate);
+		List<CcpBulkItem> parametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailParametersToSend.ENTITY, parameters);
+		List<CcpBulkItem> invitationSeeds = new ArrayList<>(templateItems);
+		invitationSeeds.addAll(parametersItems);
+		return invitationSeeds;
 	}
 }

@@ -5,7 +5,6 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
-import com.ccp.especifications.db.utils.entity.CcpBusinessDeleteStoredRecordFromEntity;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.utils.JnDeleteKeysFromCache;
@@ -17,7 +16,8 @@ import com.vis.entities.VisEntityRecruiter;
  * are written.
  * <ul>
  * <li>already a recruiter: nothing changes (the record keeps its {@code source});</li>
- * <li>an inactive recruiter (in {@code vis_inactive_recruiter}): goes back to the recruiters, with the record it had;</li>
+ * <li>an inactive recruiter (in {@code vis_inactive_recruiter}): goes back to the recruiters, with the record it had,
+ * and the return is kept in {@code vis_recruiter_sign_up_return};</li>
  * <li>neither: a new recruiter with the source {@code login}.</li>
  * </ul>
  * Both entities are read in a single union all. Another goal changes nothing.
@@ -55,7 +55,8 @@ public class VisBusinessSaveRecruiterFromLoginAnswers implements CcpBusiness {
 
 		CcpEntity twinEntity = VisEntityRecruiter.ENTITY.getTwinEntity();
 		// deleting from the twin moves the given record back to the recruiters: the stored one, so the source is kept
-		CcpBusiness reactivate = new CcpBusinessDeleteStoredRecordFromEntity(twinEntity);
+		String preparedEmail = recruiter.getAsString(VisEntityRecruiter.Fields.email);
+		CcpBusiness reactivate = new VisBusinessReactivateRecruiterFromSignUp(twinEntity, preparedEmail);
 		// a recruiter found in either entity is placed under _entities; with none, the recruiter is new
 		CcpBusiness insertWhenNotFound = new VisBusinessInsertRecruiterWhenNotFound(recruiter);
 

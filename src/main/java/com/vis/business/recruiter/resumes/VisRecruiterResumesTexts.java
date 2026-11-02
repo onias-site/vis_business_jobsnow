@@ -49,7 +49,7 @@ public enum VisRecruiterResumesTexts implements JnSystemMessage {
 	languageFluent("{language} fluente", "{language}, fluent"),
 	languageIntermediate("{language} intermediário", "{language}, intermediate"),
 	lastView("Sua última visualização: {date}", "Your last view: {date}"),
-	neverViewed("nunca", "never"),
+	neverViewed("Você nunca visualizou este currículo", "You have never viewed this resume"),
 	viewResume("Ver currículo", "View resume"),
 	insertionDate("Data de inserção: {date}", "Added on: {date}"),
 	lastChangeDate("Última alteração: {date}", "Last changed on: {date}"),

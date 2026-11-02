@@ -8,6 +8,7 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
@@ -41,6 +42,7 @@ import com.vis.messages.VisMessages;
  * 24). Both writes are atomic scripts run by the database, as in the groupers, so resumes saving the same address at the
  * same time do not overwrite each other.
  */
+@CcpEntityCache(3600)
 @CcpEntityFieldsValidator(VisEntityResumeLinkedin.Fields.class)
 public class VisEntityResumeLinkedin implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */

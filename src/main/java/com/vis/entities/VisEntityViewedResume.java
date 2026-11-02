@@ -10,6 +10,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityG
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -24,6 +25,7 @@ import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.business.recruiter.VisBusinessReactivateRecruiterWhoViewed;
 import com.vis.json.transformers.VisJsonTransformerLinkedinHash;
 import com.vis.json.transformers.VisResumeViewsOfTheMonthCombinations;
 import com.vis.json.transformers.VisViewedResumeMonthCombinations;
@@ -46,7 +48,10 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
  * <p>
  * Both relationships are oneToMany (a view has one recruiter and one resume), so the parents are declared by
  * {@code @CcpEntityGrouperParentCombinations} and no field keeps their ids.
+ * <p>
+ * A view makes an inactive recruiter active again ({@link VisBusinessReactivateRecruiterWhoViewed}).
  */
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessReactivateRecruiterWhoViewed.class}, operationHandlers = {})
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)

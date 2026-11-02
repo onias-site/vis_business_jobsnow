@@ -6,7 +6,10 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.query.CcpQueryExecutorDecorator;
 import com.ccp.especifications.db.query.CcpQueryOptions;
+import com.ccp.dependency.injection.CcpDependencyInjection;
+import com.ccp.especifications.db.utils.CcpDbRequester;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.jn.business.messages.JnBusinessCancelSupportPendingCommand;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
@@ -61,6 +64,11 @@ public class VisBusinessDiscardPendingRequestsOfIgnoredUser implements CcpBusine
 	private void discardPendingRequests(VisIgnoredUserPendingRequests kind, String hashedEmail, String readableEmail) {
 
 		CcpEntity pendingEntity = kind.getPendingEntity();
+		// the search sees only what was refreshed, and a request may have been written moments ago
+		CcpEntityMetaData pendingEntityDetails = pendingEntity.getEntityMetaData();
+		CcpDbRequester dbRequester = CcpDependencyInjection.getDependency(CcpDbRequester.class);
+		dbRequester.refresh(pendingEntityDetails.entityName);
+
 		CcpQueryOptions requestsOfTheUser = CcpQueryOptions.INSTANCE
 				.startQuery()
 				.startBool()

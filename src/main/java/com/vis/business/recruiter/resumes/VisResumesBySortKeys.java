@@ -6,8 +6,8 @@ import java.util.List;
 import com.ccp.decorators.CcpJsonRepresentation;
 
 /**
- * Order of the resumes of the e-mail to the recruiters: type of resume, CLT, PJ and years of experience, the keys put by
- * {@link VisBusinessBuildResumeRow}.
+ * Order of the resumes of the e-mail to the recruiters: compares the numbers of {@code sortKeys}, in ascending order and
+ * from the first one on.
  */
 class VisResumesBySortKeys implements Comparator<CcpJsonRepresentation> {
 

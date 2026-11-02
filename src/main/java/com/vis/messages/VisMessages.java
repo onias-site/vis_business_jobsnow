@@ -343,4 +343,25 @@ public class VisMessages {
 			return json;
 		}
 	}
+
+	/**
+	 * Invites a candidate of the legacy index to register the resume in the new form, with a preview of how the recruiters
+	 * will see it. Sent once to each candidate, by a process that runs only at the deploy. Repeatable for the "already sent"
+	 * rule, which lasts a day: what keeps it once is the record of that process, and a simulation must not refuse the sending.
+	 */
+	public static class VisInviteLegacyCandidate implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisInviteLegacyCandidate INSTANCE = new VisInviteLegacyCandidate();
+
+		private VisInviteLegacyCandidate() {}
+
+		/**
+		 * The values of the template are already in the json (the e-mail of the candidate, the table, the link of the form).
+		 * @param json the values of the e-mail
+		 * @return the same json
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			return json;
+		}
+	}
 }
