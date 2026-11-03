@@ -180,7 +180,7 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 				.put(JnJsonCommonsFields.message, englishEmailMessage);
 
 		CcpJsonRepresentation emailParametersWithSender = CcpOtherConstants.EMPTY_JSON
-				.put(JnJsonCommonsFields.sender, "devs.jobsnow@gmail.com");
+				.put(JnJsonCommonsFields.sender, "curriculos@onias.site");
 		CcpJsonRepresentation emailParametersWithSubjectType = emailParametersWithSender
 				.put(JnJsonCommonsFields.subjectType, templateId);
 		CcpJsonRepresentation emailParameters = emailParametersWithSubjectType
@@ -261,7 +261,7 @@ public class VisEntitySkillFixHierarchyPending implements CcpEntityConfigurator 
 				.put(JnJsonCommonsFields.message, englishMessage);
 
 		CcpJsonRepresentation parametersWithSender = CcpOtherConstants.EMPTY_JSON
-				.put(JnJsonCommonsFields.sender, "devs.jobsnow@gmail.com");
+				.put(JnJsonCommonsFields.sender, "curriculos@onias.site");
 		CcpJsonRepresentation parametersWithSubjectType = parametersWithSender
 				.put(JnJsonCommonsFields.subjectType, templateId);
 		CcpJsonRepresentation parameters = parametersWithSubjectType

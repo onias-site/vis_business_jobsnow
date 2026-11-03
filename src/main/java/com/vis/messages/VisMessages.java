@@ -66,7 +66,7 @@ public class VisMessages {
 		/**
 		 * Puts back the readable e-mail and adds {@code typeDescription}, {@code skillNames}, the user's
 		 * justification escaped for the email ({@code escapedDescription}) and the priority of the ticket of the operator
-		 * ({@code /fixSkillHierarchy}: 3).
+		 * ({@code /fixSkillHierarchy}: 4).
 		 * @param json the pending request
 		 * @return the values of the template
 		 */
@@ -84,7 +84,7 @@ public class VisMessages {
 			CcpJsonRepresentation jsonWithTypeDescription = jsonWithOriginalEmail.put(JsonFieldNames.typeDescription, typeDescription);
 			CcpJsonRepresentation jsonWithSkillNames = putSkillNames(jsonWithTypeDescription);
 			CcpJsonRepresentation jsonWithEscapedDescription = VisEmailHtml.putEscapedDescription(jsonWithSkillNames);
-			CcpJsonRepresentation jsonWithPriority = jsonWithEscapedDescription.put(JnJsonInstantMessengerFields.priority, 3);
+			CcpJsonRepresentation jsonWithPriority = jsonWithEscapedDescription.put(JnJsonInstantMessengerFields.priority, 4);
 			return jsonWithPriority;
 		}
 
@@ -153,7 +153,7 @@ public class VisMessages {
 
 		/**
 		 * Puts back the readable email and adds {@code synonymNames}, the candidate's justification escaped for the
-		 * email ({@code escapedDescription}) and the priority of the ticket of the operator ({@code /reviewSkillSuggestion}: 3).
+		 * email ({@code escapedDescription}) and the priority of the ticket of the operator ({@code /reviewSkillSuggestion}: 4).
 		 * @param json the suggestion
 		 * @return the values of the template
 		 */
@@ -164,7 +164,7 @@ public class VisMessages {
 			String synonymNames = String.join(", ", synonyms);
 			CcpJsonRepresentation jsonWithSynonymNames = jsonWithOriginalEmail.put(JsonFieldNames.synonymNames, synonymNames);
 			CcpJsonRepresentation jsonWithEscapedDescription = VisEmailHtml.putEscapedDescription(jsonWithSynonymNames);
-			CcpJsonRepresentation jsonWithPriority = jsonWithEscapedDescription.put(JnJsonInstantMessengerFields.priority, 3);
+			CcpJsonRepresentation jsonWithPriority = jsonWithEscapedDescription.put(JnJsonInstantMessengerFields.priority, 4);
 			return jsonWithPriority;
 		}
 

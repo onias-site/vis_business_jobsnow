@@ -19,6 +19,7 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.jn.business.messages.JnEmailFooter;
 import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.decorators.engine.JnDisposableEntity;
@@ -72,7 +73,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 
 	/** The values of the sending parameters of the e-mail. */
 	static enum Parameters implements CcpJsonFieldName {
-		SENDER { public String getValue() { return "devs.jobsnow@gmail.com"; } },
+		SENDER { public String getValue() { return "curriculos@onias.site"; } },
 		ONIAS_LINKEDIN { public String getValue() { return "https://www.linkedin.com/in/onias85/"; } },
 		FRONTEND_URL { public String getValue() { return "http://localhost:3000"; } },
 		VIS_API_URL { public String getValue() { return "http://localhost:8081"; } },
@@ -113,6 +114,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "<p>Dica para sucesso em abordagem a candidatos: ao abordar o dono do currículo que te interessou, por favor, dê preferência a meios menos invasivos "
 				+ "de comunicação do que chamada telefônica ou chamada de WhatsApp. Exemplo: envie mensagem por WhatsApp, LinkedIn ou e-mail e espere o candidato responder.</p>"
 				+ "<p>Caso haja problemas em abrir o LinkedIn do candidato, nos avise.</p>"
+				+ JnEmailFooter.portuguese.getValue()
 				+ "</body></html>";
 		String englishMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Hello, in case you do not know me or do not remember me, I am <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
@@ -123,6 +125,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "<p>A tip for approaching candidates: when you contact the owner of a resume you liked, please prefer less invasive ways of communication than "
 				+ "a phone call or a WhatsApp call. For example: send a message by WhatsApp, LinkedIn or e-mail and wait for the candidate to answer.</p>"
 				+ "<p>If you have any trouble opening the candidate's LinkedIn, please let us know.</p>"
+				+ JnEmailFooter.english.getValue()
 				+ "</body></html>";
 
 		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
@@ -181,6 +184,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "<p>Esta é uma prévia feita com os dados do seu cadastro antigo, que podem estar desatualizados. No formulário, você confere e corrige cada um deles, e completa o que faltar.</p>"
 				+ resumesTable
 				+ "<p>Este convite é único: se você não se cadastrar, não enviaremos outro e-mail sobre este assunto.</p>"
+				+ JnEmailFooter.portuguese.getValue()
 				+ "</body></html>";
 		String englishMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Hello, this is <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, from JobsNow. You registered your resume with us some time ago.</p>"
@@ -191,6 +195,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "<p>This is a preview made with the data of your old registration, which may be out of date. In the form, you check and correct each of them, and fill in what is missing.</p>"
 				+ resumesTable
 				+ "<p>This invitation is a one-off: if you do not register, we will not send another e-mail about it.</p>"
+				+ JnEmailFooter.english.getValue()
 				+ "</body></html>";
 
 		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON

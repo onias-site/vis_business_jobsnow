@@ -182,7 +182,7 @@ public class VisEntityResume implements CcpEntityConfigurator {
 				.put(JnJsonCommonsFields.message, englishMessage);
 
 		CcpJsonRepresentation parametersWithSender = CcpOtherConstants.EMPTY_JSON
-				.put(JnJsonCommonsFields.sender, "devs.jobsnow@gmail.com");
+				.put(JnJsonCommonsFields.sender, "curriculos@onias.site");
 		CcpJsonRepresentation parametersWithSubjectType = parametersWithSender
 				.put(JnJsonCommonsFields.subjectType, templateId);
 		CcpJsonRepresentation parameters = parametersWithSubjectType
