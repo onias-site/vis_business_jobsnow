@@ -16,7 +16,8 @@ import com.vis.messages.VisEmailHtml;
 
 /**
  * Renders the table of resumes of the e-mail of a recruiter: one row per resume, five columns, each value of a column
- * in a line of its own. The regions after the third one are folded under "+N regions"; the link of the last column
+ * in a line of its own. The regions after the third one are folded under "+N regions", the column of languages and
+ * skills shows only its first {@value #VISIBLE_LANGUAGES_AND_SKILLS} lines; the link of the last column
  * opens the resume in the front end, signed for this recruiter.
  *
  * <p>Input: {@code resumes} (the rows, with the fields of the recruiter: {@code lastView}, {@code viewed},
@@ -29,6 +30,12 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 	public static final VisBusinessRenderResumesTable INSTANCE = new VisBusinessRenderResumesTable();
 
 	private VisBusinessRenderResumesTable() {}
+
+	/**
+	 * How many lines the column of languages and skills shows: the first ones, already in the order of the row (fluent
+	 * English and Spanish, the skills by ranking, the other languages). The whole list stays in the row.
+	 */
+	static final int VISIBLE_LANGUAGES_AND_SKILLS = 15;
 
 	/** The pieces of HTML of the table; {@code {value}} is the escaped text. */
 	static enum Html implements CcpJsonFieldName {
@@ -93,7 +100,10 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 		String whatMattersCell = cell(whatMattersLines + regionsLines);
 
 		List<String> languagesAndSkills = resume.getAsStringList(VisRecruiterResumesFields.languagesAndSkills);
-		String languagesAndSkillsLines = lines(languagesAndSkills);
+		int languagesAndSkillsCount = languagesAndSkills.size();
+		int visibleLanguagesAndSkillsCount = Math.min(VISIBLE_LANGUAGES_AND_SKILLS, languagesAndSkillsCount);
+		List<String> visibleLanguagesAndSkills = languagesAndSkills.subList(0, visibleLanguagesAndSkillsCount);
+		String languagesAndSkillsLines = lines(visibleLanguagesAndSkills);
 		String languagesAndSkillsCell = cell(languagesAndSkillsLines);
 
 		List<String> job = resume.getAsStringList(VisRecruiterResumesFields.job);

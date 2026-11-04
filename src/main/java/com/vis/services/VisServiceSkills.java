@@ -1,8 +1,5 @@
 package com.vis.services;
 
-import java.util.Set;
-
-import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
@@ -11,7 +8,8 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.services.JnService;
-import com.vis.business.skill.VisSkillWordsByInitials;
+import com.vis.business.skill.VisSkillDictionary;
+import com.vis.business.telegram.VisSkillWordsInMemory;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /** Fields of the skills services. */
@@ -45,7 +43,7 @@ public enum VisServiceSkills implements JnService {
 	 * Finds the known skills in a free text (upper case): words of 7 characters or more are found anywhere, unless they are
 	 * part of a longer skill found; shorter words only as whole words. Excluded skills are ignored, and each skill is kept
 	 * once (the shortest label). The discarded ones come back with the reason. The known words come from the groups of
-	 * the initials of the words of the text ({@link VisSkillWordsByInitials}), each skill with its synonyms.
+	 * the dictionary of skills kept in memory ({@link VisSkillDictionary}, renewed by version), each skill with its synonyms.
 	 */
 	GetSkillsFromText{
 
@@ -55,37 +53,12 @@ public enum VisServiceSkills implements JnService {
 		 * @return {@code skill} (the chosen skills), {@code discardedSkills} and {@code excludedSkill}
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation skillsOfTheText = VisSkillsInText.find(json, VisSkillWordsByInitials::getItems);
+			VisSkillWordsInMemory words = VisSkillDictionary.getWords();
+			CcpJsonRepresentation skillsOfTheText = VisSkillsInText.find(json, words);
 			return skillsOfTheText;
 		}
 	}
 	;
-	
-	/**
-	 * Tells whether a word is in the group of its first two letters.
-	 * @param group the words by initials
-	 * @param word the word
-	 * @return 0 when present, 1 when there is no group, 2 when the group does not have the word
-	 */
-	static int getWordStatus(CcpJsonRepresentation group, String word) {
-		String initials = word.substring(0,2);
-		CcpFieldName initialsFieldName = new CcpFieldName(initials);
-		boolean containsInitials = group.containsAllFields(initialsFieldName);
-		boolean notContainsInitials = false == containsInitials;
-
-		if(notContainsInitials) {
-			return 1;
-		}
-		CcpFieldName sameInitialsFieldName = new CcpFieldName(initials);
-		Set<String> wordsWithTheseInitials = group.getAsObject(sameInitialsFieldName);
-		boolean containsWord = wordsWithTheseInitials.contains(word);
-		boolean notContains = false == containsWord;
-		if(notContains) {
-			return 2;
-		}
-		
-		return 0;
-	}
 
 }
 

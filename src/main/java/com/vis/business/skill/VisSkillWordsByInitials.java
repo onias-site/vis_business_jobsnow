@@ -79,6 +79,23 @@ public final class VisSkillWordsByInitials {
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		everySkill.selectFrom(VisEntitySkill.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, skills::add);
 
+		List<CcpJsonRepresentation> items = getItemsOfEverySkill(skills);
+		return items;
+	}
+
+	/**
+	 * The items of the given skills, read by their ids (MGIE): every word of each skill, as {@link #getAllItems()} gives,
+	 * without the query. The dictionary in memory ({@code VisSkillDictionary}) reads the skills this way.
+	 * @param skillIds the ids of the skills
+	 * @return the items
+	 */
+	public static List<CcpJsonRepresentation> getItemsOfTheSkillIds(Collection<String> skillIds) {
+		List<CcpJsonRepresentation> skills = getSkills(skillIds);
+		List<CcpJsonRepresentation> items = getItemsOfEverySkill(skills);
+		return items;
+	}
+
+	private static List<CcpJsonRepresentation> getItemsOfEverySkill(List<CcpJsonRepresentation> skills) {
 		Set<String> parentIds = new LinkedHashSet<>();
 		for (CcpJsonRepresentation skill : skills) {
 			List<String> wordsOfTheSkill = VisSkillInitialsCombinations.getWords(skill);

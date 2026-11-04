@@ -19,6 +19,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityF
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpStoredParentIdsField;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
@@ -33,6 +34,8 @@ import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityBeforeWrite;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.utils.JnGroupers;
+import com.vis.business.skill.VisBusinessUpdateSkillDictionary;
+import com.ccp.decorators.CcpTimeDecorator;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisSkillInitialsCombinations;
 import com.ccp.decorators.CcpFileDecorator;
@@ -52,6 +55,7 @@ import java.util.stream.Stream;
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkill.Fields.class)
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessUpdateSkillDictionary.class}, operationHandlers = {})
 @CcpEntityGrouperChild(value = {VisEntityVirtualSkillInitialsGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
 public class VisEntitySkill implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
@@ -111,7 +115,8 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 	 * Seeds the skills from {@code documentation/jn/skills/synonyms.json} (skills and synonyms of at most 50 characters),
 	 * ranked by how many resumes mention them, as counted in {@code documentation/vis/database/skills/countByWords.txt}.
 	 * The seed is written by bulk, which the decorator of {@code @CcpEntityGrouperChild} does not see, so it also brings
-	 * each group of initials whole, with the ids of all its skills, and each skill brings the ids of its groups.
+	 * each group of initials whole, with the ids of all its skills, and each skill brings the ids of its groups; for the same
+	 * reason it brings the dictionary of skills ({@link VisEntitySkillDictionary}) with the ids of every skill.
 	 * @return the seed records
 	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
@@ -147,6 +152,7 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		JnEntityGrouperParents initialsGroups = new JnEntityGrouperParents(VisEntityVirtualSkillInitialsGrouper.class, VisEntitySkill.class);
 		Map<String, CcpJsonRepresentation> parentJsonByParentId = new LinkedHashMap<>();
 		Map<String, Set<String>> skillIdsByParentId = new LinkedHashMap<>();
+		List<String> allSkillIds = new ArrayList<>();
 
 		for (CcpJsonRepresentation json : sortedSynonyms) {
 			VisEntitySkill.Fields[] fieldsValues = Fields.values();
@@ -167,6 +173,7 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 			Map<String, CcpJsonRepresentation> skillParents = initialsGroups.getParents(skillRecord);
 			CcpJsonRepresentation skillRecordWithGroups = initialsGroups.putParentIds(skillRecord, skillParents);
 			String skillId = ENTITY.calculateId(skillRecord);
+			allSkillIds.add(skillId);
 			parentJsonByParentId.putAll(skillParents);
 			Set<String> parentIds = skillParents.keySet();
 			for (String parentId : parentIds) {
@@ -189,6 +196,14 @@ public class VisEntitySkill implements CcpEntityConfigurator {
 		CcpEntityMetaData entityDetails = ENTITY.getEntityMetaData();
 		List<CcpBulkItem> groupItems = JnGroupers.getItemsToCreateGroups(parentName, entityDetails.entityName, parentJsonByParentId, childrenByParentId);
 		response.addAll(groupItems);
+
+		CcpJsonRepresentation dictionaryKey = VisEntitySkillDictionary.getKeyOfTheSkills();
+		CcpJsonRepresentation dictionaryWithSkillIds = dictionaryKey.put(VisEntitySkillDictionary.Fields.skillIds, allSkillIds);
+		CcpTimeDecorator now = new CcpTimeDecorator();
+		Long version = now.getContent();
+		CcpJsonRepresentation dictionary = dictionaryWithSkillIds.put(VisEntitySkillDictionary.Fields.version, version);
+		List<CcpBulkItem> dictionaryItems = VisEntitySkillDictionary.ENTITY.toBulkItems(dictionary, CcpBulkEntityOperationType.create);
+		response.addAll(dictionaryItems);
 
 		return response;
 	}

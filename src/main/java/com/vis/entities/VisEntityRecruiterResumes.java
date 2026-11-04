@@ -79,6 +79,16 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		VIS_API_URL { public String getValue() { return "http://localhost:8081"; } },
 	}
 
+	/** The highlighted notice of the third line of the e-mail: inline styles, which the e-mail clients keep. */
+	static enum Notice implements CcpJsonFieldName {
+		PORTUGUESE { public String getValue() { return "<p style=\"background-color: #FFF4CC; border-left: 6px solid #F5A623; padding: 12px 16px; "
+				+ "font-size: 17px; font-weight: bold; color: #333333;\">&#128226; Ainda este ano você poderá, <span style=\"color: #D35400;\">gratuitamente</span>, "
+				+ "cadastrar vagas e receber apenas currículos consistentes!</p>"; } },
+		ENGLISH { public String getValue() { return "<p style=\"background-color: #FFF4CC; border-left: 6px solid #F5A623; padding: 12px 16px; "
+				+ "font-size: 17px; font-weight: bold; color: #333333;\">&#128226; Later this year you will be able, <span style=\"color: #D35400;\">for free</span>, "
+				+ "to post positions and receive only consistent resumes!</p>"; } },
+	}
+
 	/** The style of the e-mail, the same of the legacy e-mail to the recruiters ({@code vaga.html}). */
 	static enum Style implements CcpJsonFieldName {
 		CSS { public String getValue() { return "<style>"
@@ -108,6 +118,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		String portugueseMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Olá, caso você não me conheça ou não se lembre de mim, sou o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
 				+ "<p>Seguem os currículos inseridos ou alterados no JobsNow nos últimos 7 dias (" + totalOfResumes + " no total).</p>"
+				+ Notice.PORTUGUESE.getValue()
 				+ "<p><strong>Caso não queira mais receber este tipo de e-mail, favor <a href=\"" + unsubscribeLink + "\" target=\"_blank\">clicar aqui</a></strong>.</p>"
 				+ resumesTable
 				+ "<p>" + seeAll + "</p>"
@@ -119,6 +130,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		String englishMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Hello, in case you do not know me or do not remember me, I am <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
 				+ "<p>Here are the resumes added or changed on JobsNow in the last 7 days (" + totalOfResumes + " in total).</p>"
+				+ Notice.ENGLISH.getValue()
 				+ "<p><strong>If you no longer want to receive this kind of e-mail, please <a href=\"" + unsubscribeLink + "\" target=\"_blank\">click here</a></strong>.</p>"
 				+ resumesTable
 				+ "<p>" + seeAll + "</p>"

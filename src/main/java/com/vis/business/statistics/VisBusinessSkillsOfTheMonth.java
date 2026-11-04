@@ -9,11 +9,13 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeCustom;
 import com.jn.entities.JnEntityGrouper;
 import com.jn.utils.JnGroupers;
 import com.vis.entities.VisEntityStatisSkillLineChart;
 import com.vis.entities.VisEntityStatisSkillPieChart;
 import com.vis.json.fields.validation.VisJsonSkillStatisticsFields;
+import com.vis.json.fields.validation.VisYearMonthFieldType;
 
 /**
  * The skills of the positions of a month, region and seniority, each one as a JSON text with its {@code skill} and
@@ -24,8 +26,8 @@ public class VisBusinessSkillsOfTheMonth implements CcpBusiness {
 
 	/** The input and the output of this business, with the validation rules of the input. */
 	public static enum Fields implements CcpJsonFieldName {
-		/** The month. */
-		@CcpJsonCopyFieldValidationsFrom(VisJsonSkillStatisticsFields.class)
+		/** The month, as {@code yyyyMM}: from 2015 up to the current year, months 01 to 12. */
+		@CcpJsonFieldTypeCustom(VisYearMonthFieldType.class)
 		@CcpJsonFieldValidatorRequired
 		yearMonth,
 
