@@ -48,6 +48,8 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
+import com.jn.business.messages.JnEmailFooter;
+import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
 import com.vis.business.resume.VisBusinessResumeLinkedinOwner;
 import com.vis.business.resume.VisBusinessResumeLinkedinRelease;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -120,35 +122,93 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		List<CcpBulkItem> items = new ArrayList<>();
 
 		String savedTemplateId = VisMessages.VisNotifyUserAboutSavedResume.class.getName();
+		// a save is an insertion or a change made right now by the owner: the e-mail confirms it, says what happens next
+		// (the weekly e-mail to the recruiters) and shows the resume as the recruiter will see it, with the link to fix it
+		String css = VisEntityRecruiterResumes.Style.CSS.getValue();
+		String oniasLinkedin = "{" + VisRecruiterResumesFields.oniasLinkedin + "}";
+		String resumeFormLink = "{" + VisRecruiterResumesFields.frontendUrl + "}/meus-dados/sobre-mim";
+		String resumesTable = "{" + VisRecruiterResumesFields.resumesTable + "}";
+		String savedPortugueseMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Olá, aqui é o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, do Onias.Site. Os dados do seu currículo foram salvos.</p>"
+				+ "<p>A partir de agora, o seu currículo entra no e-mail que os recrutadores recebem com os currículos inseridos ou alterados nos últimos 7 dias. "
+				+ "Cada vez que você atualizar os seus dados, ele volta a aparecer nesse e-mail por mais 7 dias.</p>"
+				+ "<h4>Como o recrutador verá o seu currículo</h4>"
+				+ "<p>Confira abaixo, com os dados que você acabou de salvar. Se algo estiver errado ou faltando, "
+				+ "<a href=\"" + resumeFormLink + "\" target=\"_blank\">corrija no formulário</a>. "
+				+ "Lá você também pode informar as empresas para as quais não quer que o seu currículo seja enviado.</p>"
+				+ resumesTable
+				+ JnEmailFooter.portuguese.getValue()
+				+ "</body></html>";
+		String savedEnglishMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Hello, this is <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, from Onias.Site. The data of your resume was saved.</p>"
+				+ "<p>From now on, your resume is part of the e-mail the recruiters receive with the resumes added or changed in the last 7 days. "
+				+ "Every time you update your data, it shows up in that e-mail for 7 more days.</p>"
+				+ "<h4>How the recruiter will see your resume</h4>"
+				+ "<p>Check it below, with the data you have just saved. If anything is wrong or missing, "
+				+ "<a href=\"" + resumeFormLink + "\" target=\"_blank\">fix it in the form</a>. "
+				+ "There you can also list the companies you do not want your resume to be sent to.</p>"
+				+ resumesTable
+				+ JnEmailFooter.english.getValue()
+				+ "</body></html>";
+		String oniasLinkedinAddress = VisEntityRecruiterResumes.Parameters.ONIAS_LINKEDIN.getValue();
+		String frontendUrl = VisEntityRecruiterResumes.Parameters.FRONTEND_URL.getValue();
+		CcpJsonRepresentation savedMoreParameters = CcpOtherConstants.EMPTY_JSON
+				.put(VisRecruiterResumesFields.oniasLinkedin, oniasLinkedinAddress)
+				.put(VisRecruiterResumesFields.frontendUrl, frontendUrl);
 		List<CcpBulkItem> savedItems = this.getEmailTemplateAndParameters(savedTemplateId,
 				"O seu currículo foi salvo",
-				"<html><body><p>Olá, o seu currículo foi salvo no JobsNow e já está disponível para os recrutadores.</p></body></html>",
+				savedPortugueseMessage,
 				"Your resume was saved",
-				"<html><body><p>Hello, your resume was saved on JobsNow and is now available to the recruiters.</p></body></html>");
+				savedEnglishMessage,
+				savedMoreParameters);
 		items.addAll(savedItems);
 
 		String deactivatedTemplateId = VisMessages.VisNotifyUserAboutDeactivatedResume.class.getName();
 		List<CcpBulkItem> deactivatedItems = this.getEmailTemplateAndParameters(deactivatedTemplateId,
 				"O seu currículo foi desativado",
-				"<html><body><p>Olá, o seu currículo foi desativado no JobsNow e deixou de aparecer para os recrutadores. Você pode reativá-lo quando quiser.</p></body></html>",
+				"<html><body><p>Olá, o seu currículo foi desativado no Onias.Site e deixou de aparecer para os recrutadores. Você pode reativá-lo quando quiser.</p></body></html>",
 				"Your resume was deactivated",
-				"<html><body><p>Hello, your resume was deactivated on JobsNow and no longer shows up to the recruiters. You can reactivate it whenever you want.</p></body></html>");
+				"<html><body><p>Hello, your resume was deactivated on Onias.Site and no longer shows up to the recruiters. You can reactivate it whenever you want.</p></body></html>");
 		items.addAll(deactivatedItems);
 
+		// the reactivation shows the same preview of the save: the candidate sees the resume as the recruiter will see it
 		String reactivatedTemplateId = VisMessages.VisNotifyUserAboutReactivatedResume.class.getName();
+		String reactivatedPortugueseMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Olá, aqui é o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, do Onias.Site. Você reativou seus dados.</p>"
+				+ "<p>O seu currículo voltou a aparecer para os recrutadores. Ele entra no e-mail que os recrutadores recebem com os currículos inseridos ou alterados nos últimos 7 dias: "
+				+ "cada vez que você atualizar os seus dados, ele aparece nesse e-mail por mais 7 dias.</p>"
+				+ "<h4>Como o recrutador verá o seu currículo</h4>"
+				+ "<p>Confira abaixo, com os dados do seu currículo. Se algo estiver errado ou faltando, "
+				+ "<a href=\"" + resumeFormLink + "\" target=\"_blank\">corrija no formulário</a>. "
+				+ "Lá você também pode informar as empresas para as quais não quer que o seu currículo seja enviado.</p>"
+				+ resumesTable
+				+ JnEmailFooter.portuguese.getValue()
+				+ "</body></html>";
+		String reactivatedEnglishMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Hello, this is <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, from Onias.Site. You reactivated your data.</p>"
+				+ "<p>Your resume shows up to the recruiters again. It is part of the e-mail the recruiters receive with the resumes added or changed in the last 7 days: "
+				+ "every time you update your data, it shows up in that e-mail for 7 more days.</p>"
+				+ "<h4>How the recruiter will see your resume</h4>"
+				+ "<p>Check it below, with the data of your resume. If anything is wrong or missing, "
+				+ "<a href=\"" + resumeFormLink + "\" target=\"_blank\">fix it in the form</a>. "
+				+ "There you can also list the companies you do not want your resume to be sent to.</p>"
+				+ resumesTable
+				+ JnEmailFooter.english.getValue()
+				+ "</body></html>";
 		List<CcpBulkItem> reactivatedItems = this.getEmailTemplateAndParameters(reactivatedTemplateId,
 				"O seu currículo foi reativado",
-				"<html><body><p>Olá, o seu currículo foi reativado no JobsNow e voltou a aparecer para os recrutadores.</p></body></html>",
+				reactivatedPortugueseMessage,
 				"Your resume was reactivated",
-				"<html><body><p>Hello, your resume was reactivated on JobsNow and shows up to the recruiters again.</p></body></html>");
+				reactivatedEnglishMessage,
+				savedMoreParameters);
 		items.addAll(reactivatedItems);
 
 		String deletedTemplateId = VisMessages.VisNotifyUserAboutDeletedResume.class.getName();
 		List<CcpBulkItem> deletedItems = this.getEmailTemplateAndParameters(deletedTemplateId,
 				"Os dados do seu currículo foram excluídos",
-				"<html><body><p>Olá, todos os dados do seu currículo foram excluídos do JobsNow de forma permanente.</p></body></html>",
+				"<html><body><p>Olá, todos os dados do seu currículo foram excluídos do Onias.Site de forma permanente.</p></body></html>",
 				"Your resume data was deleted",
-				"<html><body><p>Hello, every data of your resume was permanently deleted from JobsNow.</p></body></html>");
+				"<html><body><p>Hello, every data of your resume was permanently deleted from Onias.Site.</p></body></html>");
 		items.addAll(deletedItems);
 
 		return items;
@@ -164,6 +224,22 @@ public class VisEntityResume implements CcpEntityConfigurator {
 	 * @return the bulk items of the templates and of the parameters
 	 */
 	private List<CcpBulkItem> getEmailTemplateAndParameters(String templateId, String portugueseSubject, String portugueseMessage, String englishSubject, String englishMessage) {
+		List<CcpBulkItem> templateAndParameters = this.getEmailTemplateAndParameters(templateId, portugueseSubject, portugueseMessage, englishSubject, englishMessage, CcpOtherConstants.EMPTY_JSON);
+		return templateAndParameters;
+	}
+
+	/**
+	 * The same of {@link #getEmailTemplateAndParameters(String, String, String, String, String)}, with the
+	 * {@code moreParameters} of the sending (the addresses of the environment), when not empty.
+	 * @param templateId the class name of the message
+	 * @param portugueseSubject the subject in Portuguese
+	 * @param portugueseMessage the message in Portuguese
+	 * @param englishSubject the subject in English
+	 * @param englishMessage the message in English
+	 * @param moreParameters the values of the environment merged into the message
+	 * @return the bulk items of the templates and of the parameters
+	 */
+	private List<CcpBulkItem> getEmailTemplateAndParameters(String templateId, String portugueseSubject, String portugueseMessage, String englishSubject, String englishMessage, CcpJsonRepresentation moreParameters) {
 		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
 				.put(JnJsonCommonsFields.templateId, templateId);
 
@@ -185,8 +261,10 @@ public class VisEntityResume implements CcpEntityConfigurator {
 				.put(JnJsonCommonsFields.sender, "curriculos@onias.site");
 		CcpJsonRepresentation parametersWithSubjectType = parametersWithSender
 				.put(JnJsonCommonsFields.subjectType, templateId);
-		CcpJsonRepresentation parameters = parametersWithSubjectType
+		CcpJsonRepresentation parametersWithTemplateId = parametersWithSubjectType
 				.put(JnJsonCommonsFields.templateId, templateId);
+		boolean noMoreParameters = moreParameters.isEmpty();
+		CcpJsonRepresentation parameters = noMoreParameters ? parametersWithTemplateId : parametersWithTemplateId.put(JnJsonCommonsFields.moreParameters, moreParameters);
 
 		List<CcpBulkItem> templateItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailTemplateMessage.ENTITY, portugueseTemplate, englishTemplate);
 		List<CcpBulkItem> parametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailParametersToSend.ENTITY, parameters);

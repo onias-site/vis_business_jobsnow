@@ -16,9 +16,11 @@ import com.vis.messages.VisEmailHtml;
 
 /**
  * Renders the table of resumes of the e-mail of a recruiter: one row per resume, five columns, each value of a column
- * in a line of its own. The regions after the third one are folded under "+N regions", the column of languages and
- * skills shows only its first {@value #VISIBLE_LANGUAGES_AND_SKILLS} lines; the link of the last column
- * opens the resume in the front end, signed for this recruiter.
+ * in a line of its own. The regions after the third one and the languages and skills after the first
+ * {@value #VISIBLE_LANGUAGES_AND_SKILLS} stay out, counted by a link ("+N regions", "see the other N skills") whose
+ * {@code title} lists them (shown when the mouse rests on it) and that goes
+ * where "View resume" goes: the resume in the front end, signed for this recruiter, or the form of the resume in the
+ * preview of the candidate.
  *
  * <p>Input: {@code resumes} (the rows, with the fields of the recruiter: {@code lastView}, {@code viewed},
  * {@code viewLabel} and {@code token}), {@code email} (the recruiter), {@code frontendUrl} and {@code language}.
@@ -44,15 +46,21 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 		ROW { public String getValue() { return "<tr>{value}</tr>"; } },
 		CELL { public String getValue() { return "<td>{value}</td>"; } },
 		LINE { public String getValue() { return "<p>{value}</p>"; } },
-		FOLDED_LINES { public String getValue() { return "<details><summary>{count}</summary>{value}</details>"; } },
 		LINK { public String getValue() { return "<p><a href=\"{link}\" target=\"_blank\">{value}</a></p>"; } },
+		TITLED_LINK { public String getValue() { return "<p><a href=\"{link}\" title=\"{title}\" target=\"_blank\">{value}</a></p>"; } },
+		NO_LINES { public String getValue() { return ""; } },
+		TITLE_SEPARATOR { public String getValue() { return ", "; } },
+		QUOTE { public String getValue() { return "\""; } },
+		ESCAPED_QUOTE { public String getValue() { return "&quot;"; } },
 		VIEW_PATH { public String getValue() { return "{frontendUrl}/recrutador/ver-curriculo?email={email}&resume={resumeId}&token={token}"; } },
+		FORM_PATH { public String getValue() { return "{frontendUrl}/meus-dados/sobre-mim"; } },
 	}
 
 	/** The fields of the pieces of HTML. */
 	static enum HtmlFields implements CcpJsonFieldName {
 		rows,
 		link,
+		title,
 	}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
@@ -93,17 +101,16 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 	}
 
 	private String getRow(CcpJsonRepresentation resume, JnLanguage language, String email, String frontendUrl) {
+		String resumeLink = getResumeLink(resume, email, frontendUrl);
+
 		List<String> whatMatters = resume.getAsStringList(VisRecruiterResumesFields.whatMatters);
 		List<String> regions = resume.getAsStringList(VisRecruiterResumesFields.regions);
 		String whatMattersLines = lines(whatMatters);
-		String regionsLines = getRegionsLines(regions, language);
+		String regionsLines = getFirstLines(regions, VisBusinessBuildResumeRow.VISIBLE_REGIONS, VisRecruiterResumesTexts.moreRegions, language, resumeLink);
 		String whatMattersCell = cell(whatMattersLines + regionsLines);
 
 		List<String> languagesAndSkills = resume.getAsStringList(VisRecruiterResumesFields.languagesAndSkills);
-		int languagesAndSkillsCount = languagesAndSkills.size();
-		int visibleLanguagesAndSkillsCount = Math.min(VISIBLE_LANGUAGES_AND_SKILLS, languagesAndSkillsCount);
-		List<String> visibleLanguagesAndSkills = languagesAndSkills.subList(0, visibleLanguagesAndSkillsCount);
-		String languagesAndSkillsLines = lines(visibleLanguagesAndSkills);
+		String languagesAndSkillsLines = getFirstLines(languagesAndSkills, VISIBLE_LANGUAGES_AND_SKILLS, VisRecruiterResumesTexts.moreSkills, language, resumeLink);
 		String languagesAndSkillsCell = cell(languagesAndSkillsLines);
 
 		List<String> job = resume.getAsStringList(VisRecruiterResumesFields.job);
@@ -114,77 +121,136 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 		String otherInformationLines = lines(otherInformation);
 		String otherInformationCell = cell(otherInformationLines);
 
-		String datesCell = this.getDatesAndViewsCell(resume, email, frontendUrl);
+		String datesCell = getDatesAndViewsCell(resume, resumeLink);
 
 		String cells = whatMattersCell + languagesAndSkillsCell + jobCell + otherInformationCell + datesCell;
 		String row = resolveRaw(Html.ROW, cells);
 		return row;
 	}
 
-	/** The three first regions; the others folded under "+N regions". */
-	private static String getRegionsLines(List<String> regions, JnLanguage language) {
-		int visibleCount = Math.min(VisBusinessBuildResumeRow.VISIBLE_REGIONS, regions.size());
-		List<String> visibleRegions = regions.subList(0, visibleCount);
-		String visibleLines = lines(visibleRegions);
-		boolean nothingFolded = regions.size() <= VisBusinessBuildResumeRow.VISIBLE_REGIONS;
+	/**
+	 * The first lines of a list and, when there are more, a link that counts the others ("+N regions", "see the other N
+	 * skills"). The others stay out of the e-mail: the providers (Gmail among them) drop {@code <details>}, so a folded
+	 * list would show open.
+	 * @param texts the whole list, already in its order
+	 * @param visibleLimit how many lines are shown
+	 * @param moreText the text of the link, with {@code {count}}
+	 * @param language the language of the text
+	 * @param resumeLink where the link goes, the same address of "View resume"
+	 * @return the HTML of the lines
+	 */
+	static String getFirstLines(List<String> texts, int visibleLimit, VisRecruiterResumesTexts moreText, JnLanguage language, String resumeLink) {
+		int textsCount = texts.size();
+		int visibleCount = Math.min(visibleLimit, textsCount);
+		List<String> visibleTexts = texts.subList(0, visibleCount);
+		String visibleLines = lines(visibleTexts);
+		boolean nothingLeftOut = textsCount <= visibleLimit;
 
-		if(nothingFolded) {
+		if(nothingLeftOut) {
 			return visibleLines;
 		}
 
-		int regionsCount = regions.size();
-		List<String> foldedRegions = regions.subList(visibleCount, regionsCount);
-		String foldedLines = lines(foldedRegions);
-		int foldedCount = foldedRegions.size();
-		CcpJsonRepresentation countValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.count, foldedCount);
-		String moreRegions = VisRecruiterResumesTexts.moreRegions.getMessage(language, countValues);
-		String escapedMoreRegions = VisEmailHtml.escape(moreRegions);
-		CcpJsonRepresentation foldedValues = CcpOtherConstants.EMPTY_JSON
-				.put(VisRecruiterResumesFields.count, escapedMoreRegions)
-				.put(CcpJsonCommonsFields.value, foldedLines);
-		String folded = resolve(Html.FOLDED_LINES, foldedValues);
-		return visibleLines + folded;
+		List<String> leftOutTexts = texts.subList(visibleCount, textsCount);
+		int leftOutCount = leftOutTexts.size();
+		CcpJsonRepresentation countValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.count, leftOutCount);
+		String more = moreText.getMessage(language, countValues);
+		String separator = Html.TITLE_SEPARATOR.getValue();
+		String leftOutList = String.join(separator, leftOutTexts);
+		String moreLink = titledLink(resumeLink, more, leftOutList);
+		return visibleLines + moreLink;
+	}
+
+	/**
+	 * A line with a link whose {@code title} holds the texts left out of the e-mail: the e-mail runs no script, but the
+	 * reader of a computer sees the title when the mouse rests on the link.
+	 * @param address where the link goes
+	 * @param text the text of the link
+	 * @param title the texts left out, already joined
+	 * @return the HTML of the line
+	 */
+	private static String titledLink(String address, String text, String title) {
+		String escapedText = VisEmailHtml.escape(text);
+		String escapedTitle = VisEmailHtml.escape(title);
+		String quote = Html.QUOTE.getValue();
+		String escapedQuote = Html.ESCAPED_QUOTE.getValue();
+		String attributeTitle = escapedTitle.replace(quote, escapedQuote);
+		CcpJsonRepresentation anchorValues = CcpOtherConstants.EMPTY_JSON
+				.put(HtmlFields.link, address)
+				.put(HtmlFields.title, attributeTitle)
+				.put(CcpJsonCommonsFields.value, escapedText);
+		String linkLine = resolve(Html.TITLED_LINK, anchorValues);
+		return linkLine;
 	}
 
 	/** Last view, link to the resume, date added and date of the last change. */
-	private String getDatesAndViewsCell(CcpJsonRepresentation resume, String email, String frontendUrl) {
+	private static String getDatesAndViewsCell(CcpJsonRepresentation resume, String resumeLink) {
 		String lastView = resume.getAsString(VisRecruiterResumesFields.lastView);
 		String lastViewLine = piece(Html.LINE, lastView);
-		String viewLine = getViewLine(resume, email, frontendUrl);
+		String viewLine = getViewLine(resume, resumeLink);
 
+		String dateLines = getDateLines(resume);
+		String datesCell = cell(lastViewLine + viewLine + dateLines);
+		return datesCell;
+	}
+
+	/**
+	 * The lines of the date added and of the last change, when the row has them: they come from the history of the
+	 * resume, which only a query reads, so the e-mail of the saved resume has none.
+	 */
+	private static String getDateLines(CcpJsonRepresentation resume) {
+		boolean noDates = false == resume.containsAllFields(VisRecruiterResumesFields.insertion, VisRecruiterResumesFields.lastChange);
+		if(noDates) {
+			return Html.NO_LINES.getValue();
+		}
 		String insertion = resume.getAsString(VisRecruiterResumesFields.insertion);
 		String lastChange = resume.getAsString(VisRecruiterResumesFields.lastChange);
 		String insertionLine = piece(Html.LINE, insertion);
 		String lastChangeLine = piece(Html.LINE, lastChange);
-
-		String datesCell = cell(lastViewLine + viewLine + insertionLine + lastChangeLine);
-		return datesCell;
+		return insertionLine + lastChangeLine;
 	}
 
 	/** The link to the resume; a row with no token is a preview for the candidate, so its label is only a text. */
-	private static String getViewLine(CcpJsonRepresentation resume, String email, String frontendUrl) {
+	private static String getViewLine(CcpJsonRepresentation resume, String resumeLink) {
 		String viewLabel = resume.getAsString(VisRecruiterResumesFields.viewLabel);
 		boolean preview = false == resume.containsAllFields(VisRecruiterResumesFields.token);
 		if(preview) {
 			return piece(Html.LINE, viewLabel);
+		}
+		String viewLine = link(resumeLink, viewLabel);
+		return viewLine;
+	}
+
+	/**
+	 * Where the links of the row go: the resume signed for this recruiter; a row with no token is a preview for the
+	 * candidate, whose links go to the form of the resume.
+	 */
+	private static String getResumeLink(CcpJsonRepresentation resume, String email, String frontendUrl) {
+		boolean preview = false == resume.containsAllFields(VisRecruiterResumesFields.token);
+		CcpJsonRepresentation frontendValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.frontendUrl, frontendUrl);
+		if(preview) {
+			return resolve(Html.FORM_PATH, frontendValues);
 		}
 		String resumeId = resume.getAsString(VisRecruiterResumesFields.resumeId);
 		String token = resume.getAsString(VisRecruiterResumesFields.token);
 		CcpStringDecorator emailDecorator = new CcpStringDecorator(email);
 		CcpUrlDecorator emailUrl = emailDecorator.url();
 		String encodedEmail = emailUrl.asEnconded();
-		CcpJsonRepresentation linkValues = CcpOtherConstants.EMPTY_JSON
-				.put(VisRecruiterResumesFields.frontendUrl, frontendUrl)
+		CcpJsonRepresentation linkValues = frontendValues
 				.put(JnJsonCommonsFields.email, encodedEmail)
 				.put(VisRecruiterResumesFields.resumeId, resumeId)
 				.put(VisRecruiterResumesFields.token, token);
 		String link = resolve(Html.VIEW_PATH, linkValues);
-		String escapedViewLabel = VisEmailHtml.escape(viewLabel);
+		return link;
+	}
+
+	/** A line with a link; the text is escaped. */
+	private static String link(String address, String text) {
+		String escapedText = VisEmailHtml.escape(text);
 		CcpJsonRepresentation anchorValues = CcpOtherConstants.EMPTY_JSON
-				.put(HtmlFields.link, link)
-				.put(CcpJsonCommonsFields.value, escapedViewLabel);
-		String viewLine = resolve(Html.LINK, anchorValues);
-		return viewLine;
+				.put(HtmlFields.link, address)
+				.put(CcpJsonCommonsFields.value, escapedText);
+		String linkLine = resolve(Html.LINK, anchorValues);
+		return linkLine;
 	}
 
 	private static String lines(List<String> texts) {

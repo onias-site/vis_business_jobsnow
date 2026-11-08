@@ -6,17 +6,23 @@ import com.ccp.decorators.CcpErrorJsonFieldNotFound;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
-import com.ccp.especifications.db.utils.entity.CcpBusinessDeleteRecordFromEntity;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.process.CcpProcessStatusDefault;
 import com.jn.services.JnService;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.resume.VisBusinessChangeResumeStatusOncePerDay;
+import com.vis.business.resume.VisBusinessDeleteResumeAndSpendTheDay;
 import com.vis.business.resume.VisBusinessRefuseResumeNotFound;
+import com.vis.business.resume.VisBusinessRefuseResumeUpdateAlreadyRunToday;
 import com.vis.business.resume.VisBusinessResumeViewersOfTheMonth;
+import com.vis.business.resume.VisBusinessSaveResumeAndSpendTheUpdate;
 import com.vis.entities.VisEntityResume;
+import com.vis.entities.VisEntityResumeDailyAction;
 import com.vis.json.fields.validation.VisJsonFieldsResumeKey;
+import com.vis.json.fields.validation.VisResumeDailyActions;
+import com.vis.status.VisProcessStatusResumeDailyAction;
 
 
 /**
@@ -25,7 +31,8 @@ import com.vis.json.fields.validation.VisJsonFieldsResumeKey;
 public enum VisServiceResume implements JnService {
 	/**
 	 * Toggles the resume between active and inactive: an active resume is deactivated (the delete moves it to the twin,
-	 * {@code vis_inactive_resume}) and an inactive one is reactivated (the delete on the twin moves it back).
+	 * {@code vis_inactive_resume}) and an inactive one is reactivated (the delete on the twin moves it back). Each of the
+	 * two runs once a day ({@link VisEntityResumeDailyAction}): the second of the day gets {@code dailyLimitReached} (429).
 	 */
 	ChangeStatus{
 		/**
@@ -64,8 +71,9 @@ public enum VisServiceResume implements JnService {
 		 */
 		private CcpJsonRepresentation toggle(CcpJsonRepresentation json) {
 			CcpEntity twinEntity = VisEntityResume.ENTITY.getTwinEntity();
-			CcpBusiness deactivate = new CcpBusinessDeleteRecordFromEntity(VisEntityResume.ENTITY, json);
-			CcpBusiness reactivate = new CcpBusinessDeleteRecordFromEntity(twinEntity, json);
+			// once a day each (VisEntityResumeDailyAction): the second of the day gets dailyLimitReached (429)
+			CcpBusiness deactivate = new VisBusinessChangeResumeStatusOncePerDay(VisEntityResume.ENTITY, VisResumeDailyActions.inactivation, json);
+			CcpBusiness reactivate = new VisBusinessChangeResumeStatusOncePerDay(twinEntity, VisResumeDailyActions.reactivation, json);
 			// a record found in either entity is placed under _entities; with none, the resume does not exist
 			CcpBusiness refuseWhenNotFound = new VisBusinessRefuseResumeNotFound(json);
 
@@ -88,16 +96,28 @@ public enum VisServiceResume implements JnService {
 			return VisJsonFieldsResumeKey.class;
 		}
 	},
-	/** Deletes every data of the resume for good, wherever it is (active or inactive). */
+	/**
+	 * Deletes every data of the resume for good, wherever it is (active or inactive), once a day: the candidate who
+	 * already deleted a resume in the last 24 hours ({@link VisEntityResumeDailyAction}) gets {@code dailyLimitReached}
+	 * (429), so deleting, inserting and deleting again in the same day is refused at the second deletion.
+	 */
 	Delete{
 		/**
-		 * Deletes the resume everywhere.
+		 * Deletes the resume everywhere, or refuses the second deletion of the day.
 		 * @param sessionValues the resume key, from the session
 		 * @return the fields of the resume in the JSON, without the session values
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation sessionValues) {
-			VisEntityResume.ENTITY.deleteAnyWhere(sessionValues);
+			CcpJsonRepresentation jsonWithAction = sessionValues.put(VisEntityResumeDailyAction.Fields.action, VisResumeDailyActions.exclusion.name());
+			CcpBusiness deleteAndSpendTheDay = new VisBusinessDeleteResumeAndSpendTheDay(sessionValues);
 
+			new CcpGetEntityId(jsonWithAction)
+			.toBeginProcedureAnd()
+				.ifThisIdIsPresentInEntity(VisEntityResumeDailyAction.ENTITY).returnStatus(VisProcessStatusResumeDailyAction.dailyLimitReached).and()
+				.executeAction(deleteAndSpendTheDay)
+				.andFinallyReturningTheseFields(ResumeResponse.inexistentField)
+			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+			;
 			return withoutSessionValues(sessionValues);
 		}
 
@@ -151,17 +171,32 @@ public enum VisServiceResume implements JnService {
 			return VisJsonFieldsResumeKey.class;
 		}
 	},
-	/** Saves the resume. */
+	/**
+	 * Saves the resume. Inserting (no resume, active or inactive) has no limit; updating an existing one runs once a day:
+	 * the candidate who already updated the resume in the last 24 hours ({@link VisEntityResumeDailyAction}) gets
+	 * {@code dailyLimitReached} (429) and nothing is saved. The resume (both entities) and the update of the day are read
+	 * in one union all.
+	 */
 	Save{
 		/**
-		 * Saves the resume.
+		 * Saves the resume, or refuses the second update of the day.
 		 * @param sessionValues the resume, with the session values
 		 * @return the fields of the resume in the JSON, without the session values
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation sessionValues) {
-			
-			VisEntityResume.ENTITY.save(sessionValues);
+			CcpJsonRepresentation jsonWithAction = sessionValues.put(VisEntityResumeDailyAction.Fields.action, VisResumeDailyActions.update.name());
+			CcpEntity twinEntity = VisEntityResume.ENTITY.getTwinEntity();
+			CcpBusiness saveAndSpendTheUpdate = new VisBusinessSaveResumeAndSpendTheUpdate(sessionValues);
 
+			new CcpGetEntityId(jsonWithAction)
+			.toBeginProcedureAnd()
+				.loadThisIdFromEntity(VisEntityResumeDailyAction.ENTITY).and()
+				.ifThisIdIsPresentInEntity(VisEntityResume.ENTITY).executeAction(VisBusinessRefuseResumeUpdateAlreadyRunToday.INSTANCE).and()
+				.ifThisIdIsPresentInEntity(twinEntity).executeAction(VisBusinessRefuseResumeUpdateAlreadyRunToday.INSTANCE).and()
+				.executeAction(saveAndSpendTheUpdate)
+				.andFinallyReturningTheseFields(ResumeResponse.inexistentField)
+			.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
+			;
 			return withoutSessionValues(sessionValues);
 		}
 		

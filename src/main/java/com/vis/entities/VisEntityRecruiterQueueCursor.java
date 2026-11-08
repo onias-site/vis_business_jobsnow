@@ -40,11 +40,15 @@ public class VisEntityRecruiterQueueCursor implements CcpEntityConfigurator {
 		cursorName,
 
 		/**
-		 * The {@code lastPosition} field: required, the digit of the group of the recruiter (sign-up first, then the
-		 * others) followed by the SHA-1 of their e-mail.
+		 * The {@code lastPosition} field: required; in the queue {@code resumesToRecruiters}, the digit of the group of the
+		 * recruiter (sign-up first, then the others) followed by the SHA-1 of their e-mail; in the queue
+		 * {@code legacyViewersOfResumesToRecruiters}, 13 digits that put the most recent legacy view first followed by the
+		 * SHA-1. The SHA-1 is the signed hexadecimal of {@code CcpHashDecorator}: up to 40 digits, without the zeros on the
+		 * left, and a minus sign when negative, so its length varies (until 2026-11-07 the field demanded exactly 41
+		 * characters and refused the position of many recruiters).
 		 */
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldTypeString(exactLength = 41)
+		@CcpJsonFieldTypeString(minLength = 1, maxLength = 60)
 		lastPosition,
 	}
 
@@ -52,5 +56,7 @@ public class VisEntityRecruiterQueueCursor implements CcpEntityConfigurator {
 	public static enum CursorNames implements CcpJsonFieldName{
 		/** The queue of the e-mail of resumes to the recruiters. */
 		resumesToRecruiters,
+		/** The queue of the recruiters who viewed a resume in the legacy JobsNow, in the same e-mail. */
+		legacyViewersOfResumesToRecruiters,
 	}
 }

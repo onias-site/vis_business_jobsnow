@@ -47,7 +47,10 @@ import com.vis.messages.VisMessages;
  * <li>Who receives: the recruiters who never viewed a resume of these e-mails and the ones whose last view is less than
  * 35 days old; who stopped viewing for longer is inactivated by this process (moved to {@code vis_inactive_recruiter}) and
  * comes back on viewing a resume again; signing up again counts as a view ({@code vis_recruiter_sign_up_return}). Each day, only
- * {@value #RECRUITERS_PER_DAY} of them: first the ones who viewed a resume in these 35 days, the most recent view first.
+ * {@value #RECRUITERS_PER_DAY} of them: first the ones who appeared on Telegram in the last six months
+ * ({@code lastTelegramAppearance}), the most recent appearance first; then, in turns, the ones who viewed a resume in the
+ * legacy JobsNow ({@code lastLegacyView}), the most recent view first, a queue of its own that goes on from where the last
+ * run stopped and starts over at its end; then the ones who viewed a resume in these 35 days, the most recent view first.
  * The places left go first to the recruiters of the sign-up (source {@code login}) who never received this e-mail
  * ({@code vis_recruiter_first_email}), and then to the queue of the ones who never viewed: the sign-up and then the others,
  * each group in the order of the SHA-1 of the e-mails, which favors no name or domain. The queue goes on from where the last run
@@ -108,7 +111,14 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		QUEUE_GROUP_OF_THE_SIGN_UP { public String getValue() { return "0"; } },
 		QUEUE_GROUP_OF_THE_OTHERS { public String getValue() { return "1"; } },
 		NO_QUEUE_POSITION { public String getValue() { return ""; } },
+		LEGACY_QUEUE_POSITION { public String getValue() { return "%013d%s"; } },
 	}
+
+	/**
+	 * The greatest moment, in milliseconds, of 13 digits: the position of a recruiter in the queue of the legacy views is
+	 * this number minus their last view, so the most recent view comes first in the order of the text.
+	 */
+	static final long GREATEST_MOMENT_OF_13_DIGITS = 9_999_999_999_999L;
 
 	/** The size of each page of the readings. */
 	static final int PAGE_SIZE = 1000;
@@ -153,15 +163,21 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String visApiUrl = linkAddresses.getAsString(VisRecruiterResumesFields.visApiUrl);
 		List<String> restrictedTo = json.getOrDefault(VisRecruiterResumesFields.recruiters, () -> List.of());
 		int[] emailsSent = {0};
-		String lastPositionOfTheLastRun = getLastQueuePosition();
+		VisEntityRecruiterQueueCursor.CursorNames generalQueue = VisEntityRecruiterQueueCursor.CursorNames.resumesToRecruiters;
+		VisEntityRecruiterQueueCursor.CursorNames legacyQueue = VisEntityRecruiterQueueCursor.CursorNames.legacyViewersOfResumesToRecruiters;
+		String lastPositionOfTheLastRun = getLastQueuePosition(generalQueue);
+		String lastLegacyPositionOfTheLastRun = getLastQueuePosition(legacyQueue);
 		String[] lastQueuePosition = {lastPositionOfTheLastRun};
+		String[] lastLegacyQueuePosition = {lastLegacyPositionOfTheLastRun};
+		long telegramSince = now.getDaysAgo(VisEntityRecruiter.DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE);
 
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, frontendUrl, visApiUrl, emailsSent, lastQueuePosition);
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, frontendUrl, visApiUrl, emailsSent, lastQueuePosition, lastLegacyQueuePosition);
 		List<CcpJsonRepresentation> recruiters = getRecruiters();
 		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
-		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail);
+		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun);
 		recruitersInOrder.forEach(sendToTheRecruiter);
-		saveLastQueuePosition(restrictedTo, lastPositionOfTheLastRun, lastQueuePosition[0]);
+		saveLastQueuePosition(generalQueue, restrictedTo, lastPositionOfTheLastRun, lastQueuePosition[0]);
+		saveLastQueuePosition(legacyQueue, restrictedTo, lastLegacyPositionOfTheLastRun, lastLegacyQueuePosition[0]);
 		List<CcpJsonRepresentation> recruitersWhoStoppedViewing = getRecruitersWhoStoppedViewing(recruiters, lastViewByRecruiter, viewsSince, restrictedTo);
 		// deleting from the recruiters moves the given record to the twin, the inactive recruiters
 		recruitersWhoStoppedViewing.forEach(recruiter -> VisEntityRecruiter.ENTITY.delete(recruiter));
@@ -262,8 +278,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/** Where the last run stopped in the queue, or nothing when no run moved it yet. */
-	static String getLastQueuePosition() {
-		CcpJsonRepresentation cursorKey = getCursorKey();
+	static String getLastQueuePosition(VisEntityRecruiterQueueCursor.CursorNames queue) {
+		CcpJsonRepresentation cursorKey = getCursorKey(queue);
 		CcpEntityMetaData cursorMetaData = VisEntityRecruiterQueueCursor.ENTITY.getEntityMetaData();
 		CcpJsonRepresentation cursor = cursorMetaData.getOneByIdOrHandleItIfThisIdWasNotFound(cursorKey, notFound -> CcpOtherConstants.EMPTY_JSON);
 		String lastPosition = cursor.getOrDefault(VisEntityRecruiterQueueCursor.Fields.lastPosition, () -> Constants.NO_QUEUE_POSITION.getValue());
@@ -271,41 +287,55 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/** Keeps where this run stopped in the queue, unless it was restricted to some recruiters or the queue did not move. */
-	static void saveLastQueuePosition(List<String> restrictedTo, String lastPositionOfTheLastRun, String lastPosition) {
+	static void saveLastQueuePosition(VisEntityRecruiterQueueCursor.CursorNames queue, List<String> restrictedTo, String lastPositionOfTheLastRun, String lastPosition) {
 		boolean restrictedRun = false == restrictedTo.isEmpty();
 		boolean queueDidNotMove = lastPosition.equals(lastPositionOfTheLastRun);
 		if(restrictedRun || queueDidNotMove) {
 			return;
 		}
-		CcpJsonRepresentation cursor = getCursorKey().put(VisEntityRecruiterQueueCursor.Fields.lastPosition, lastPosition);
+		CcpJsonRepresentation cursorKey = getCursorKey(queue);
+		CcpJsonRepresentation cursor = cursorKey.put(VisEntityRecruiterQueueCursor.Fields.lastPosition, lastPosition);
 		VisEntityRecruiterQueueCursor.ENTITY.save(cursor);
 	}
 
-	private static CcpJsonRepresentation getCursorKey() {
-		String cursorName = VisEntityRecruiterQueueCursor.CursorNames.resumesToRecruiters.getValue();
+	private static CcpJsonRepresentation getCursorKey(VisEntityRecruiterQueueCursor.CursorNames queue) {
+		String cursorName = queue.getValue();
 		CcpJsonRepresentation cursorKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterQueueCursor.Fields.cursorName, cursorName);
 		return cursorKey;
 	}
 
 	/**
-	 * The order in which the places of the day are given: the recruiters who viewed a resume since {@code viewsSince}, the
-	 * most recent view first, the ones of the sign-up waiting for their first e-mail, by the hash, and then the queue of the
-	 * ones who never viewed, right after {@code lastQueuePosition} and going back to the beginning at its end. Who viewed before
-	 * {@code viewsSince} stopped viewing and is left out: the process inactivates them after the sending. The hash is
-	 * calculated here and not read from an entity: {@link #getEmailHash(String)} refuses an address that is not valid, and one
-	 * such record would stop the whole run.
+	 * The order in which the places of the day are given:
+	 * <ol>
+	 * <li>the recruiters who appeared on Telegram since {@code telegramSince}, the most recent appearance first;</li>
+	 * <li>the ones who viewed a resume in the legacy JobsNow, the most recent view first, right after
+	 * {@code lastLegacyQueuePosition} and going back to the beginning at its end;</li>
+	 * <li>the ones who viewed a resume since {@code viewsSince}, the most recent view first;</li>
+	 * <li>the ones of the sign-up waiting for their first e-mail, by the hash;</li>
+	 * <li>the queue of the ones who never viewed, right after {@code lastQueuePosition} and going back to the beginning at
+	 * its end.</li>
+	 * </ol>
+	 * Each recruiter goes to the first group they fit. Who viewed before {@code viewsSince} stopped viewing and is left out,
+	 * whatever group they would fit: the process inactivates them after the sending. The hash is calculated here and not
+	 * read from an entity: {@link #getEmailHash(String)} refuses an address that is not valid, and one such record would stop
+	 * the whole run.
 	 * @param recruiters every recruiter
 	 * @param lastViewByRecruiter the last view of each recruiter, by the hash of their e-mail
 	 * @param viewsSince the time before which a last view means the recruiter stopped viewing
-	 * @param lastQueuePosition where the last run stopped in the queue
+	 * @param lastQueuePosition where the last run stopped in the queue of the ones who never viewed
 	 * @param recruitersWithFirstEmail the hashes of the e-mails of the recruiters of the sign-up who already received the first e-mail
+	 * @param telegramSince the time before which an appearance on Telegram is no longer recent
+	 * @param lastLegacyQueuePosition where the last run stopped in the queue of the legacy views
 	 * @return the recruiters in order, each one with {@code emailHash}; the ones of the queue with {@code queuePosition}, the
-	 * ones waiting for their first e-mail with {@code firstEmail}
+	 * ones of the legacy views with {@code legacyQueuePosition}, the ones waiting for their first e-mail with {@code firstEmail}
 	 */
-	static List<CcpJsonRepresentation> getRecruitersInOrder(List<CcpJsonRepresentation> recruiters, Map<String, Long> lastViewByRecruiter, long viewsSince, String lastQueuePosition, Set<String> recruitersWithFirstEmail) {
+	static List<CcpJsonRepresentation> getRecruitersInOrder(List<CcpJsonRepresentation> recruiters, Map<String, Long> lastViewByRecruiter, long viewsSince, String lastQueuePosition, Set<String> recruitersWithFirstEmail, long telegramSince, String lastLegacyQueuePosition) {
 		String loginSource = VisEntityRecruiter.Sources.login.getValue();
 		String signUpGroup = Constants.QUEUE_GROUP_OF_THE_SIGN_UP.getValue();
 		String othersGroup = Constants.QUEUE_GROUP_OF_THE_OTHERS.getValue();
+		String legacyPositionFormat = Constants.LEGACY_QUEUE_POSITION.getValue();
+		List<CcpJsonRepresentation> recentInTelegram = new ArrayList<>();
+		List<CcpJsonRepresentation> legacyViewers = new ArrayList<>();
 		List<CcpJsonRepresentation> viewers = new ArrayList<>();
 		List<CcpJsonRepresentation> waitingForTheFirstEmail = new ArrayList<>();
 		List<CcpJsonRepresentation> queue = new ArrayList<>();
@@ -314,13 +344,30 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 			String emailHash = getSha1OfTheEmail(email);
 			CcpJsonRepresentation recruiterWithHash = recruiter.put(VisRecruiterResumesFields.emailHash, emailHash);
 			Long lastView = lastViewByRecruiter.get(emailHash);
-			boolean viewedRecently = lastView != null && lastView >= viewsSince;
-			if(viewedRecently) {
-				viewers.add(recruiterWithHash);
+			boolean stoppedViewing = lastView != null && lastView < viewsSince;
+			if(stoppedViewing) {
 				continue;
 			}
-			boolean stoppedViewing = lastView != null;
-			if(stoppedViewing) {
+			boolean appearedOnTelegram = recruiter.containsAllFields(VisEntityRecruiter.Fields.lastTelegramAppearance);
+			long telegramAppearance = appearedOnTelegram ? recruiter.getAsLongNumber(VisEntityRecruiter.Fields.lastTelegramAppearance) : 0L;
+			boolean appearedRecentlyOnTelegram = appearedOnTelegram && telegramAppearance >= telegramSince;
+			if(appearedRecentlyOnTelegram) {
+				CcpJsonRepresentation recruiterOfTelegram = recruiterWithHash.put(VisEntityRecruiter.Fields.lastTelegramAppearance, telegramAppearance);
+				recentInTelegram.add(recruiterOfTelegram);
+				continue;
+			}
+			boolean viewedOnTheLegacy = recruiter.containsAllFields(VisEntityRecruiter.Fields.lastLegacyView);
+			if(viewedOnTheLegacy) {
+				Long lastLegacyView = recruiter.getAsLongNumber(VisEntityRecruiter.Fields.lastLegacyView);
+				long timeToTheGreatestMoment = GREATEST_MOMENT_OF_13_DIGITS - lastLegacyView;
+				String legacyQueuePosition = String.format(legacyPositionFormat, timeToTheGreatestMoment, emailHash);
+				CcpJsonRepresentation legacyViewer = recruiterWithHash.put(VisRecruiterResumesFields.legacyQueuePosition, legacyQueuePosition);
+				legacyViewers.add(legacyViewer);
+				continue;
+			}
+			boolean viewedRecently = lastView != null;
+			if(viewedRecently) {
+				viewers.add(recruiterWithHash);
 				continue;
 			}
 			String source = recruiter.getOrDefault(VisEntityRecruiter.Fields.source, () -> "");
@@ -337,28 +384,48 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 			queue.add(recruiterInTheQueue);
 		}
 		Comparator<CcpJsonRepresentation> byEmailHash = Comparator.comparing(recruiter -> recruiter.getAsString(VisRecruiterResumesFields.emailHash));
+		Comparator<CcpJsonRepresentation> byMostRecentTelegramAppearance = Comparator.comparing(recruiter -> -recruiter.getAsLongNumber(VisEntityRecruiter.Fields.lastTelegramAppearance));
 		Comparator<CcpJsonRepresentation> byMostRecentView = Comparator.comparing(recruiter -> -lastViewByRecruiter.get(recruiter.getAsString(VisRecruiterResumesFields.emailHash)));
-		Comparator<CcpJsonRepresentation> byQueuePosition = Comparator.comparing(recruiter -> recruiter.getAsString(VisRecruiterResumesFields.queuePosition));
+		recentInTelegram.sort(byMostRecentTelegramAppearance.thenComparing(byEmailHash));
 		viewers.sort(byMostRecentView.thenComparing(byEmailHash));
 		waitingForTheFirstEmail.sort(byEmailHash);
-		queue.sort(byQueuePosition);
+		List<CcpJsonRepresentation> legacyViewersInTurn = getInTurn(legacyViewers, VisRecruiterResumesFields.legacyQueuePosition, lastLegacyQueuePosition);
+		List<CcpJsonRepresentation> queueInTurn = getInTurn(queue, VisRecruiterResumesFields.queuePosition, lastQueuePosition);
 
+		List<CcpJsonRepresentation> recruitersInOrder = new ArrayList<>(recentInTelegram);
+		recruitersInOrder.addAll(legacyViewersInTurn);
+		recruitersInOrder.addAll(viewers);
+		recruitersInOrder.addAll(waitingForTheFirstEmail);
+		recruitersInOrder.addAll(queueInTurn);
+		return recruitersInOrder;
+	}
+
+	/**
+	 * A queue in turns: by the position, first the ones right after the last position that had its turn, then the ones up
+	 * to it, so a queue that reached its end starts over.
+	 * @param queue the recruiters of the queue
+	 * @param positionField the field with the position of each recruiter
+	 * @param lastPosition the last position that had its turn; empty when none had
+	 * @return the recruiters in turn
+	 */
+	static List<CcpJsonRepresentation> getInTurn(List<CcpJsonRepresentation> queue, CcpJsonFieldName positionField, String lastPosition) {
+		Comparator<CcpJsonRepresentation> byPosition = Comparator.comparing(recruiter -> recruiter.getAsString(positionField));
+		List<CcpJsonRepresentation> sortedQueue = new ArrayList<>(queue);
+		sortedQueue.sort(byPosition);
 		List<CcpJsonRepresentation> afterTheLastPosition = new ArrayList<>();
 		List<CcpJsonRepresentation> upToTheLastPosition = new ArrayList<>();
-		for (CcpJsonRepresentation recruiter : queue) {
-			String queuePosition = recruiter.getAsString(VisRecruiterResumesFields.queuePosition);
-			boolean alreadyHadItsTurn = queuePosition.compareTo(lastQueuePosition) <= 0;
+		for (CcpJsonRepresentation recruiter : sortedQueue) {
+			String position = recruiter.getAsString(positionField);
+			boolean alreadyHadItsTurn = position.compareTo(lastPosition) <= 0;
 			if(alreadyHadItsTurn) {
 				upToTheLastPosition.add(recruiter);
 				continue;
 			}
 			afterTheLastPosition.add(recruiter);
 		}
-		List<CcpJsonRepresentation> recruitersInOrder = new ArrayList<>(viewers);
-		recruitersInOrder.addAll(waitingForTheFirstEmail);
-		recruitersInOrder.addAll(afterTheLastPosition);
-		recruitersInOrder.addAll(upToTheLastPosition);
-		return recruitersInOrder;
+		List<CcpJsonRepresentation> inTurn = new ArrayList<>(afterTheLastPosition);
+		inTurn.addAll(upToTheLastPosition);
+		return inTurn;
 	}
 
 	/** The numbers of {@code sortKeys}, the first ones put by {@link #getPriorityKeys(List, CcpJsonRepresentation, long)}. */

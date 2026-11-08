@@ -33,6 +33,7 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.jn.db.bulk.JnExecuteBulkOperation;
@@ -144,7 +145,28 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeString(minLength = 1, maxLength = 20)
 		source,
+
+		/**
+		 * The {@code lastTelegramAppearance} field: the midnight (milliseconds) of the day of the most recent message of
+		 * Telegram or WhatsApp with the e-mail of the recruiter, written by {@link VisBusinessLoadRecruitersFromHtmlFolder}
+		 * only when the message is at most {@value VisEntityRecruiter#DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE} days old. The
+		 * daily e-mail of resumes sends first to the recruiters whose appearance is that recent.
+		 */
+		@CcpJsonFieldTypeNumberUnsigned
+		lastTelegramAppearance,
+
+		/**
+		 * The {@code lastLegacyView} field: the moment (milliseconds) of the most recent view of a resume by the recruiter
+		 * in the legacy JobsNow (index {@code visualizacao_de_curriculo}), written by
+		 * {@link com.vis.business.recruiter.VisBusinessLoadRecruitersLegacyViews}. The daily e-mail of resumes gives the
+		 * second places, in turns, to the recruiters who have it.
+		 */
+		@CcpJsonFieldTypeNumberUnsigned
+		lastLegacyView,
 	}
+
+	/** How old, in days (six months), a message of Telegram can be to count as a recent appearance of the recruiter. */
+	public static final int DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE = 183;
 
 	/** The values of the {@code source} field. */
 	public static enum Sources implements CcpJsonFieldName{

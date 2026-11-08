@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.jn.business.messages.JnMessageTemplate;
+import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -13,6 +14,9 @@ import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.jn.messages.JnRepeatableMessage;
 import com.jn.utils.JnLanguage;
 import com.jn.utils.JnSystemProperties;
+import com.ccp.business.CcpBusiness;
+import com.vis.business.recruiter.resumes.VisBusinessPutResumePreviewInTheEmail;
+import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.entities.VisEntitySkillPending;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
@@ -216,7 +220,8 @@ public class VisMessages {
 	}
 
 	/**
-	 * Tells the owner of the resume that it was saved. Repeatable: every save is a new fact.
+	 * Tells the owner of the resume that it was saved, with the preview of how the recruiter will see it (the table of the
+	 * invitation to the legacy candidates). Repeatable: every save is a new fact.
 	 */
 	public static class VisNotifyUserAboutSavedResume implements JnMessageTemplate, JnRepeatableMessage{
 		/** The single instance: the class keeps no state. */
@@ -225,14 +230,15 @@ public class VisMessages {
 		private VisNotifyUserAboutSavedResume() {}
 
 		/**
-		 * Puts the original e-mail of the owner in {@code email}.
+		 * Puts the table of the resume in {@code resumesTable} and the original e-mail of the owner in {@code email}
+		 * ({@link VisBusinessPutResumePreviewInTheEmail}).
 		 * @param json the saved resume
 		 * @return the values of the template
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation jsonWithOriginalEmail = json
-					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
-			return jsonWithOriginalEmail;
+			CcpBusiness preview = new VisBusinessPutResumePreviewInTheEmail(VisNotifyUserAboutSavedResume.class);
+			CcpJsonRepresentation jsonWithPreview = preview.execute(json);
+			return jsonWithPreview;
 		}
 	}
 
@@ -258,7 +264,8 @@ public class VisMessages {
 	}
 
 	/**
-	 * Tells the owner of the resume that it was reactivated (moved back from the inactive resumes). Repeatable.
+	 * Tells the owner of the resume that it was reactivated (moved back from the inactive resumes), with the same preview
+	 * of the e-mail of the saved resume: how the recruiter will see it. Repeatable.
 	 */
 	public static class VisNotifyUserAboutReactivatedResume implements JnMessageTemplate, JnRepeatableMessage{
 		/** The single instance: the class keeps no state. */
@@ -267,14 +274,23 @@ public class VisMessages {
 		private VisNotifyUserAboutReactivatedResume() {}
 
 		/**
-		 * Puts the original e-mail of the owner in {@code email}.
-		 * @param json the key of the resume
+		 * Reads the reactivated resume by id (the delete on the twin hands over only its key, and the record is back in
+		 * the main entity) and puts its table in {@code resumesTable} and the original e-mail of the owner in
+		 * {@code email} ({@link VisBusinessPutResumePreviewInTheEmail}).
+		 * @param json the key of the resume, with {@code originalEmail}
 		 * @return the values of the template
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation jsonWithOriginalEmail = json
-					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
-			return jsonWithOriginalEmail;
+			String originalEmail = json.getAsString(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail);
+			CcpJsonRepresentation resumeKey = CcpOtherConstants.EMPTY_JSON.put(JnJsonCommonsFields.email, originalEmail);
+			CcpJsonRepresentation resume = VisEntityResume.ENTITY.getOneById(resumeKey);
+			// what came with the key (the language of the e-mail, among others) stays: the resume only adds its fields
+			CcpJsonRepresentation jsonWithResume = json.mergeWithAnotherJson(resume);
+			CcpJsonRepresentation resumeWithOriginalEmail = jsonWithResume
+					.put(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, originalEmail);
+			CcpBusiness preview = new VisBusinessPutResumePreviewInTheEmail(VisNotifyUserAboutReactivatedResume.class);
+			CcpJsonRepresentation jsonWithPreview = preview.execute(resumeWithOriginalEmail);
+			return jsonWithPreview;
 		}
 	}
 

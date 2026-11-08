@@ -1,6 +1,7 @@
 package com.vis.business.recruiter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -12,18 +13,24 @@ import java.util.stream.Stream;
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpEmailDecorator;
+import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpFileDecorator;
 import com.ccp.decorators.CcpFolderDecorator;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpStringDecorator;
+import com.ccp.decorators.CcpTimeDecorator;
+import com.ccp.json.fields.validation.CcpJsonCommonsFields;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.jn.db.bulk.JnBulkCreateResult;
 import com.jn.db.bulk.JnExecuteBulkOperation;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.telegram.VisTelegramMessages;
+import com.vis.business.telegram.VisWhatsAppMessages;
 import com.vis.entities.VisEntityRecruiter;
 
 /**
@@ -34,10 +41,14 @@ import com.vis.entities.VisEntityRecruiter;
  * and one bulk creates what is new. The recruiters created enter the groups of the initials of their domains
  * ({@link VisRecruiterDomainGroups}), which the bulk does not do.
  *
+ * <p>The day of the most recent message with each e-mail goes to {@code lastTelegramAppearance} when the message is at
+ * most {@value VisEntityRecruiter#DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE} days old: on the recruiters created and, by
+ * {@link VisBusinessSaveRecruitersActivity}, on the active ones whose stored day is older. An older message writes no date.
+ *
  * <p>It is a batch process run by hand, not an online request.
  *
  * <p>Input: {@code folderPath}. Output: the input plus {@code filesRead}, {@code emailsFound}, {@code invalidEmails},
- * {@code created} and {@code alreadyExisting}.
+ * {@code created}, {@code alreadyExisting} and {@code appearancesUpdated}.
  */
 public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 
@@ -57,6 +68,10 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 		created,
 		/** How many e-mails were already in the entity or in its twin. */
 		alreadyExisting,
+		/** How many recruiters already in the entity got a more recent appearance. */
+		appearancesUpdated,
+		/** The format of the day of a message. */
+		DAY_OF_THE_MESSAGE { public String getValue() { return "ddMMyyyy"; } },
 		/** Extension of the HTML files. */
 		HTML_EXTENSION { public String getValue() { return ".html"; } },
 		/** Short extension of the HTML files. */
@@ -85,7 +100,14 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 
 		Set<String> foundEmails = new LinkedHashSet<>();
 		List<String> filesRead = new ArrayList<>();
-		folder.readFiles(file -> this.readEmails(file, foundEmails, filesRead));
+		Map<String, Long> appearancesByFoundEmail = new HashMap<>();
+		folder.readFiles(file -> this.readEmails(file, foundEmails, filesRead, appearancesByFoundEmail));
+
+		CcpTimeDecorator now = new CcpTimeDecorator();
+		long recentSince = now.getDaysAgo(VisEntityRecruiter.DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE);
+		Map<String, Long> recentAppearancesByFoundEmail = new HashMap<>(appearancesByFoundEmail);
+		recentAppearancesByFoundEmail.values().removeIf(appearance -> appearance < recentSince);
+		CcpJsonRepresentation recentAppearances = VisBusinessSaveRecruitersActivity.getDatesByNormalizedEmail(recentAppearancesByFoundEmail, VisEntityRecruiter.Sources.telegram);
 
 		// by the normalized e-mail, which is the id of the recruiter
 		Map<String, CcpJsonRepresentation> recruitersByEmail = new LinkedHashMap<>();
@@ -95,8 +117,11 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 			CcpJsonRepresentation recruiterEmail = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiter.Fields.email, foundEmail);
 			CcpJsonRepresentation recruiterInput = recruiterEmail.put(VisEntityRecruiter.Fields.source, telegramSource);
 			try {
-				CcpJsonRepresentation recruiter = VisBusinessPrepareRecruiter.INSTANCE.execute(recruiterInput);
-				String normalizedEmail = recruiter.getAsString(VisEntityRecruiter.Fields.email);
+				CcpJsonRepresentation preparedRecruiter = VisBusinessPrepareRecruiter.INSTANCE.execute(recruiterInput);
+				String normalizedEmail = preparedRecruiter.getAsString(VisEntityRecruiter.Fields.email);
+				CcpFieldName emailField = new CcpFieldName(normalizedEmail);
+				boolean appearedRecently = recentAppearances.containsAllFields(emailField);
+				CcpJsonRepresentation recruiter = appearedRecently ? preparedRecruiter.put(VisEntityRecruiter.Fields.lastTelegramAppearance, recentAppearances.getAsLongNumber(emailField)) : preparedRecruiter;
 				recruitersByEmail.put(normalizedEmail, recruiter);
 			} catch (CcpJsonValidationError e) {
 				invalidEmails.add(foundEmail);
@@ -105,6 +130,9 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 
 		List<CcpJsonRepresentation> recruiters = new ArrayList<>(recruitersByEmail.values());
 		int createdCount = this.createNewRecruiters(recruiters);
+		CcpJsonRepresentation appearancesInput = VisBusinessSaveRecruitersActivity.input(VisEntityRecruiter.Fields.lastTelegramAppearance, recentAppearances);
+		CcpJsonRepresentation appearancesSaved = VisBusinessSaveRecruitersActivity.INSTANCE.execute(appearancesInput);
+		Integer appearancesUpdatedCount = appearancesSaved.getAsIntegerNumber(VisBusinessSaveRecruitersActivity.JsonFieldNames.updated);
 		int recruitersCount = recruiters.size();
 		int alreadyExistingCount = recruitersCount - createdCount;
 		int filesReadCount = filesRead.size();
@@ -115,16 +143,19 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 		CcpJsonRepresentation jsonWithInvalidEmails = jsonWithEmailsFound.put(JsonFieldNames.invalidEmails, invalidEmails);
 		CcpJsonRepresentation jsonWithCreated = jsonWithInvalidEmails.put(JsonFieldNames.created, createdCount);
 		CcpJsonRepresentation jsonWithAlreadyExisting = jsonWithCreated.put(JsonFieldNames.alreadyExisting, alreadyExistingCount);
-		return jsonWithAlreadyExisting;
+		CcpJsonRepresentation jsonWithAppearances = jsonWithAlreadyExisting.put(JsonFieldNames.appearancesUpdated, appearancesUpdatedCount);
+		return jsonWithAppearances;
 	}
 
 	/**
-	 * Adds the e-mails of the file to the found ones, when it is an HTML or text file.
+	 * Adds the e-mails of the file to the found ones, when it is an HTML or text file, and keeps the day of the most recent
+	 * message of each e-mail.
 	 * @param file an entry of the folder
 	 * @param foundEmails the e-mails found so far
 	 * @param filesRead the files read so far
+	 * @param appearancesByFoundEmail the midnight of the day of the most recent message of each e-mail, as found
 	 */
-	private void readEmails(CcpFileDecorator file, Set<String> foundEmails, List<String> filesRead) {
+	private void readEmails(CcpFileDecorator file, Set<String> foundEmails, List<String> filesRead, Map<String, Long> appearancesByFoundEmail) {
 		String fileName = file.getName();
 		String lowerFileName = fileName.toLowerCase();
 		String htmlExtension = JsonFieldNames.HTML_EXTENSION.getValue();
@@ -143,6 +174,26 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 		Set<String> fileEmails = contentEmails.findAllInText();
 		foundEmails.addAll(fileEmails);
 		filesRead.add(fileName);
+
+		boolean exportedFromWhatsApp = lowerFileName.endsWith(txtExtension);
+		List<CcpJsonRepresentation> messages = exportedFromWhatsApp ? VisWhatsAppMessages.read(content) : VisTelegramMessages.read(content);
+		String dayPattern = JsonFieldNames.DAY_OF_THE_MESSAGE.getValue();
+		for (CcpJsonRepresentation message : messages) {
+			String text = message.getAsString(CcpJsonCommonsFields.text);
+			CcpStringDecorator messageText = new CcpStringDecorator(text);
+			CcpEmailDecorator messageEmails = messageText.email();
+			Set<String> emailsOfTheMessage = messageEmails.findAllInText();
+			boolean noEmail = emailsOfTheMessage.isEmpty();
+			if(noEmail) {
+				continue;
+			}
+			String dayOfTheMessage = message.getAsString(JnJsonCommonsFields.disposablePeriod);
+			CcpTimeDecorator day = new CcpTimeDecorator(dayOfTheMessage, dayPattern);
+			Long appearance = day.getContent();
+			for (String email : emailsOfTheMessage) {
+				appearancesByFoundEmail.merge(email, appearance, Math::max);
+			}
+		}
 	}
 
 	/**

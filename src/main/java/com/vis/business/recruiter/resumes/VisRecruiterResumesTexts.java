@@ -33,6 +33,7 @@ public enum VisRecruiterResumesTexts implements JnSystemMessage {
 	seniority_estag("Trainee/Estágio", "Trainee/Intern"),
 	homeOfficeOnly("Aceita somente homeoffice", "Accepts home office only"),
 	moreRegions("+{count} regiões", "+{count} regions"),
+	moreSkills("ver as outras {count} habilidades", "see the other {count} skills"),
 	resumeType("Tipo do currículo: {value}", "Type of resume: {value}"),
 	resumeType_1("Tecnologia da Informação", "Information Technology"),
 	resumeType_2("Recrutamento e seleção", "Recruitment and selection"),

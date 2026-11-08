@@ -89,6 +89,20 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "to post positions and receive only consistent resumes!</p>"; } },
 	}
 
+	/** The pieces of the invitation to the legacy candidates: the greeting and the preview of the resume, with the table. */
+	static enum PreviewPieces implements CcpJsonFieldName {
+		GREETING_PORTUGUESE { public String getValue() { return "<p>Olá, aqui é o <a href=\"{oniasLinkedin}\" target=\"_blank\">Onias</a>, do Onias.Site. "
+				+ "Você cadastrou o seu currículo conosco há algum tempo.</p>"; } },
+		GREETING_ENGLISH { public String getValue() { return "<p>Hello, this is <a href=\"{oniasLinkedin}\" target=\"_blank\">Onias</a>, from Onias.Site. "
+				+ "You registered your resume with us some time ago.</p>"; } },
+		PREVIEW_PORTUGUESE { public String getValue() { return "<h4>Como o recrutador verá o seu currículo</h4>"
+				+ "<p>Esta é uma prévia feita com os dados do seu cadastro antigo, que podem estar desatualizados. No formulário, você confere e corrige cada um deles, e completa o que faltar.</p>"
+				+ "{resumesTable}"; } },
+		PREVIEW_ENGLISH { public String getValue() { return "<h4>How the recruiter will see your resume</h4>"
+				+ "<p>This is a preview made with the data of your old registration, which may be out of date. In the form, you check and correct each of them, and fill in what is missing.</p>"
+				+ "{resumesTable}"; } },
+	}
+
 	/** The style of the e-mail, the same of the legacy e-mail to the recruiters ({@code vaga.html}). */
 	static enum Style implements CcpJsonFieldName {
 		CSS { public String getValue() { return "<style>"
@@ -117,7 +131,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 
 		String portugueseMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Olá, caso você não me conheça ou não se lembre de mim, sou o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
-				+ "<p>Seguem os currículos inseridos ou alterados no JobsNow nos últimos 7 dias (" + totalOfResumes + " no total).</p>"
+				+ "<p>Seguem os currículos inseridos ou alterados no Onias.Site nos últimos 7 dias (" + totalOfResumes + " no total).</p>"
 				+ Notice.PORTUGUESE.getValue()
 				+ "<p><strong>Caso não queira mais receber este tipo de e-mail, favor <a href=\"" + unsubscribeLink + "\" target=\"_blank\">clicar aqui</a></strong>.</p>"
 				+ resumesTable
@@ -129,7 +143,7 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "</body></html>";
 		String englishMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Hello, in case you do not know me or do not remember me, I am <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
-				+ "<p>Here are the resumes added or changed on JobsNow in the last 7 days (" + totalOfResumes + " in total).</p>"
+				+ "<p>Here are the resumes added or changed on Onias.Site in the last 7 days (" + totalOfResumes + " in total).</p>"
 				+ Notice.ENGLISH.getValue()
 				+ "<p><strong>If you no longer want to receive this kind of e-mail, please <a href=\"" + unsubscribeLink + "\" target=\"_blank\">click here</a></strong>.</p>"
 				+ resumesTable
@@ -183,29 +197,25 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 	public List<CcpBulkItem> getInvitationSeeds() {
 		String templateId = VisMessages.VisInviteLegacyCandidate.class.getName();
 		String css = Style.CSS.getValue();
-		String oniasLinkedin = "{" + VisRecruiterResumesFields.oniasLinkedin + "}";
 		String resumeFormLink = "{" + VisRecruiterResumesFields.resumeFormLink + "}";
-		String resumesTable = "{" + VisRecruiterResumesFields.resumesTable + "}";
 
 		String portugueseMessage = "<html><head>" + css + "</head><body>"
-				+ "<p>Olá, aqui é o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, do JobsNow. Você cadastrou o seu currículo conosco há algum tempo.</p>"
-				+ "<p>O JobsNow foi refeito, e o seu cadastro antigo não aparece para os recrutadores do novo sistema. Eles recebem por e-mail os currículos inseridos ou alterados "
+				+ PreviewPieces.GREETING_PORTUGUESE.getValue()
+				+ "<p>O JobsNow foi refeito e agora se chama Onias.Site. O seu cadastro antigo não aparece para os recrutadores do novo sistema. Eles recebem por e-mail os currículos inseridos ou alterados "
 				+ "nos últimos 7 dias. Para entrar nesta lista, cadastre o seu currículo no novo formulário:</p>"
 				+ "<p><strong><a href=\"" + resumeFormLink + "\" target=\"_blank\">Cadastrar meu currículo</a></strong></p>"
-				+ "<h4>Como o recrutador verá o seu currículo</h4>"
-				+ "<p>Esta é uma prévia feita com os dados do seu cadastro antigo, que podem estar desatualizados. No formulário, você confere e corrige cada um deles, e completa o que faltar.</p>"
-				+ resumesTable
+				+ "<p>No cadastro, você também pode informar as empresas para as quais não quer que o seu currículo seja enviado.</p>"
+				+ PreviewPieces.PREVIEW_PORTUGUESE.getValue()
 				+ "<p>Este convite é único: se você não se cadastrar, não enviaremos outro e-mail sobre este assunto.</p>"
 				+ JnEmailFooter.portuguese.getValue()
 				+ "</body></html>";
 		String englishMessage = "<html><head>" + css + "</head><body>"
-				+ "<p>Hello, this is <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, from JobsNow. You registered your resume with us some time ago.</p>"
-				+ "<p>JobsNow was rebuilt, and your old registration does not reach the recruiters of the new system. They receive by e-mail the resumes added or changed "
+				+ PreviewPieces.GREETING_ENGLISH.getValue()
+				+ "<p>JobsNow was rebuilt and is now called Onias.Site. Your old registration does not reach the recruiters of the new system. They receive by e-mail the resumes added or changed "
 				+ "in the last 7 days. To join this list, register your resume in the new form:</p>"
 				+ "<p><strong><a href=\"" + resumeFormLink + "\" target=\"_blank\">Register my resume</a></strong></p>"
-				+ "<h4>How the recruiter will see your resume</h4>"
-				+ "<p>This is a preview made with the data of your old registration, which may be out of date. In the form, you check and correct each of them, and fill in what is missing.</p>"
-				+ resumesTable
+				+ "<p>In the form, you can also list the companies you do not want your resume to be sent to.</p>"
+				+ PreviewPieces.PREVIEW_ENGLISH.getValue()
 				+ "<p>This invitation is a one-off: if you do not register, we will not send another e-mail about it.</p>"
 				+ JnEmailFooter.english.getValue()
 				+ "</body></html>";
@@ -214,11 +224,11 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation portugueseTemplate = templateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.portuguese)
-				.put(JnJsonCommonsFields.subject, "Veja como os recrutadores verão o seu currículo no novo JobsNow")
+				.put(JnJsonCommonsFields.subject, "Envie seu currículo para 2.000 recrutadores gratuitamente")
 				.put(JnJsonCommonsFields.message, portugueseMessage);
 		CcpJsonRepresentation englishTemplate = templateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.english)
-				.put(JnJsonCommonsFields.subject, "See how recruiters will see your resume on the new JobsNow")
+				.put(JnJsonCommonsFields.subject, "Send your resume to 2,000 recruiters for free")
 				.put(JnJsonCommonsFields.message, englishMessage);
 
 		String sender = Parameters.SENDER.getValue();

@@ -15,7 +15,8 @@ import com.vis.entities.VisEntityRecruiterFirstEmail;
  * Consumer of the recruiters of {@code VisBusinessSendResumesToRecruiters}: sends each recruiter the e-mail with their
  * rows, unless the limit of the day was reached, the run is restricted to other recruiters, the address is not valid or
  * no resume is left for them. Only the e-mails sent count for the limit, so a recruiter who is skipped gives their place to
- * the next one. Keeps the last position of the queue that had its turn, skipped or not.
+ * the next one. Keeps the last position of each queue (the general one and the one of the legacy views) that had its turn,
+ * skipped or not.
  */
 class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> {
 
@@ -43,6 +44,9 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	/** Keeps, in its only position, the last position of the queue that had its turn. */
 	private final String[] lastQueuePosition;
 
+	/** Keeps, in its only position, the last position of the queue of the legacy views that had its turn. */
+	private final String[] lastLegacyQueuePosition;
+
 	/**
 	 * Keeps what the e-mail of each recruiter needs.
 	 * @param restrictedTo the e-mails the run is restricted to; empty for every recruiter
@@ -53,9 +57,11 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * @param visApiUrl the address of the API of vis
 	 * @param emailsSent counts the e-mails sent, in its only position
 	 * @param lastQueuePosition keeps, in its only position, the last position of the queue that had its turn
+	 * @param lastLegacyQueuePosition keeps, in its only position, the last position of the queue of the legacy views that
+	 * had its turn
 	 */
 	VisResumesToTheRecruiterSender(List<String> restrictedTo, List<CcpJsonRepresentation> resumesOfTheEmail, Map<String, Long> lastViewByPair,
-			Map<String, String> aliasByPair, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition) {
+			Map<String, String> aliasByPair, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition) {
 		this.restrictedTo = restrictedTo;
 		this.resumesOfTheEmail = resumesOfTheEmail;
 		this.lastViewByPair = lastViewByPair;
@@ -64,6 +70,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 		this.visApiUrl = visApiUrl;
 		this.emailsSent = emailsSent;
 		this.lastQueuePosition = lastQueuePosition;
+		this.lastLegacyQueuePosition = lastLegacyQueuePosition;
 	}
 
 	/**
@@ -80,8 +87,9 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 		if(outOfThisRun) {
 			return;
 		}
-		// a recent viewer has no position: the queue stays where it was
+		// who is not in a queue has no position in it: that queue stays where it was
 		this.lastQueuePosition[0] = recruiter.getOrDefault(VisRecruiterResumesFields.queuePosition, () -> this.lastQueuePosition[0]);
+		this.lastLegacyQueuePosition[0] = recruiter.getOrDefault(VisRecruiterResumesFields.legacyQueuePosition, () -> this.lastLegacyQueuePosition[0]);
 		CcpStringDecorator emailText = new CcpStringDecorator(email);
 		CcpEmailDecorator emailDecorator = emailText.email();
 		boolean invalidAddress = false == emailDecorator.isValid();

@@ -77,6 +77,11 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	emailHash,
 	/** The position of a recruiter in the queue of who did not view a resume lately: the digit of the group + the SHA-1 of the e-mail. */
 	queuePosition,
+	/**
+	 * The position of a recruiter in the queue of the legacy views: 13 digits, the greatest moment of 13 digits minus their
+	 * last view (the most recent first), + the SHA-1 of the e-mail (signed hexadecimal, of varying length).
+	 */
+	legacyQueuePosition,
 	/** Marks the recruiter of the sign-up who is about to receive their first e-mail. */
 	firstEmail,
 	/** A document of the legacy index of candidates. */
