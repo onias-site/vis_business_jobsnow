@@ -312,22 +312,52 @@ public class VisBusinessBuildResumeRow implements CcpBusiness {
 		return job;
 	}
 
+	/**
+	 * The line of the availability: immediate, in 1 day (singular) or in N days. Until 2026-11-10 one day came out as
+	 * "em 1 dias" (defect R11-1).
+	 * @param disponibility the days until the candidate is available
+	 * @param language the language of the text
+	 * @return the line
+	 */
+	private String getDisponibilityLine(int disponibility, JnLanguage language) {
+		if(disponibility <= 0) {
+			return VisRecruiterResumesTexts.immediateDisponibility.getMessage(language);
+		}
+		if(disponibility == 1) {
+			return VisRecruiterResumesTexts.disponibilityInOneDay.getMessage(language);
+		}
+		CcpJsonRepresentation disponibilityValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.days, disponibility);
+		String line = getLine(VisRecruiterResumesTexts.disponibilityInDays, language, disponibilityValues);
+		return line;
+	}
+
+	/**
+	 * The line of the minimum project length: no temporary jobs, 1 month (singular) or N months.
+	 * @param temporallyJobTime the minimum months of a project
+	 * @param language the language of the text
+	 * @return the line
+	 */
+	private String getTemporaryJobLine(int temporallyJobTime, JnLanguage language) {
+		boolean noTemporaryJobs = temporallyJobTime <= 0 || temporallyJobTime >= MONTHS_OF_A_PERMANENT_JOB;
+		if(noTemporaryJobs) {
+			return VisRecruiterResumesTexts.noTemporaryJobs.getMessage(language);
+		}
+		if(temporallyJobTime == 1) {
+			return VisRecruiterResumesTexts.temporaryJobMinimumOneMonth.getMessage(language);
+		}
+		CcpJsonRepresentation temporaryJobValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.months, temporallyJobTime);
+		String line = getLine(VisRecruiterResumesTexts.temporaryJobMinimum, language, temporaryJobValues);
+		return line;
+	}
+
 	private List<String> getOtherInformation(CcpJsonRepresentation json, JnLanguage language) {
 		Double disponibilityNumber = getNumberOrZero(json, VisEntityResume.Fields.disponibility);
 		int disponibility = disponibilityNumber.intValue();
-		boolean immediate = disponibility <= 0;
-		CcpJsonRepresentation disponibilityValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.days, disponibility);
-		String disponibilityLine = immediate
-				? VisRecruiterResumesTexts.immediateDisponibility.getMessage(language)
-				: getLine(VisRecruiterResumesTexts.disponibilityInDays, language, disponibilityValues);
+		String disponibilityLine = getDisponibilityLine(disponibility, language);
 
 		Double temporallyJobTimeNumber = getNumberOrZero(json, VisEntityResume.Fields.temporallyJobTime);
 		int temporallyJobTime = temporallyJobTimeNumber.intValue();
-		boolean noTemporaryJobs = temporallyJobTime <= 0 || temporallyJobTime >= MONTHS_OF_A_PERMANENT_JOB;
-		CcpJsonRepresentation temporaryJobValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.months, temporallyJobTime);
-		String temporaryJobLine = noTemporaryJobs
-				? VisRecruiterResumesTexts.noTemporaryJobs.getMessage(language)
-				: getLine(VisRecruiterResumesTexts.temporaryJobMinimum, language, temporaryJobValues);
+		String temporaryJobLine = getTemporaryJobLine(temporallyJobTime, language);
 
 		String travel = getYesOrNo(json, VisEntityResume.Fields.travel, language);
 		String travelLine = getLine(VisRecruiterResumesTexts.travel, language, withValue(travel));

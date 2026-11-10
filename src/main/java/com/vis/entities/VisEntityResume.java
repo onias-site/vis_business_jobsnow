@@ -10,6 +10,7 @@ import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityReplacedOnSave;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
@@ -83,6 +84,7 @@ import com.vis.messages.VisMessages;
  * A notice that fails to go out saves a warning instead of undoing the write.
  */
 @CcpEntityCache(3600)
+@CcpEntityReplacedOnSave
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
@@ -163,12 +165,38 @@ public class VisEntityResume implements CcpEntityConfigurator {
 				savedMoreParameters);
 		items.addAll(savedItems);
 
+		// the deactivation shows the same preview of the save: the candidate sees what the recruiters stop seeing
 		String deactivatedTemplateId = VisMessages.VisNotifyUserAboutDeactivatedResume.class.getName();
+		String deactivatedPortugueseMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Olá, aqui é o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, do Onias.Site. Você inativou seus dados.</p>"
+				+ "<p>O seu currículo deixou de ser visto pelos recrutadores. A partir de agora, ele não entra mais no e-mail que os recrutadores recebem "
+				+ "com os currículos inseridos ou alterados nos últimos 7 dias.</p>"
+				+ "<p>Os seus dados continuam guardados. Quando quiser voltar a ser visto, "
+				+ "<a href=\"" + resumeFormLink + "\" target=\"_blank\">reative o seu currículo</a>: "
+				+ "ele volta a aparecer para os recrutadores com os mesmos dados.</p>"
+				+ "<h4>Como os recrutadores viam o seu currículo</h4>"
+				+ "<p>Confira abaixo, com os dados guardados do seu currículo.</p>"
+				+ resumesTable
+				+ JnEmailFooter.portuguese.getValue()
+				+ "</body></html>";
+		String deactivatedEnglishMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Hello, this is <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, from Onias.Site. You deactivated your data.</p>"
+				+ "<p>Your resume is no longer seen by the recruiters. From now on, it is no longer part of the e-mail the recruiters receive "
+				+ "with the resumes added or changed in the last 7 days.</p>"
+				+ "<p>Your data is still kept. Whenever you want to be seen again, "
+				+ "<a href=\"" + resumeFormLink + "\" target=\"_blank\">reactivate your resume</a>: "
+				+ "it shows up to the recruiters again with the same data.</p>"
+				+ "<h4>How the recruiters saw your resume</h4>"
+				+ "<p>Check it below, with the kept data of your resume.</p>"
+				+ resumesTable
+				+ JnEmailFooter.english.getValue()
+				+ "</body></html>";
 		List<CcpBulkItem> deactivatedItems = this.getEmailTemplateAndParameters(deactivatedTemplateId,
-				"O seu currículo foi desativado",
-				"<html><body><p>Olá, o seu currículo foi desativado no Onias.Site e deixou de aparecer para os recrutadores. Você pode reativá-lo quando quiser.</p></body></html>",
+				"O seu currículo foi inativado",
+				deactivatedPortugueseMessage,
 				"Your resume was deactivated",
-				"<html><body><p>Hello, your resume was deactivated on Onias.Site and no longer shows up to the recruiters. You can reactivate it whenever you want.</p></body></html>");
+				deactivatedEnglishMessage,
+				savedMoreParameters);
 		items.addAll(deactivatedItems);
 
 		// the reactivation shows the same preview of the save: the candidate sees the resume as the recruiter will see it
@@ -206,9 +234,18 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		String deletedTemplateId = VisMessages.VisNotifyUserAboutDeletedResume.class.getName();
 		List<CcpBulkItem> deletedItems = this.getEmailTemplateAndParameters(deletedTemplateId,
 				"Os dados do seu currículo foram excluídos",
-				"<html><body><p>Olá, todos os dados do seu currículo foram excluídos do Onias.Site de forma permanente.</p></body></html>",
+				"<html><head>" + css + "</head><body>"
+						+ "<p>Olá, aqui é o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, do Onias.Site. "
+						+ "Todos os dados do seu currículo foram excluídos do Onias.Site de forma permanente.</p>"
+						+ JnEmailFooter.portuguese.getValue()
+						+ "</body></html>",
 				"Your resume data was deleted",
-				"<html><body><p>Hello, every data of your resume was permanently deleted from Onias.Site.</p></body></html>");
+				"<html><head>" + css + "</head><body>"
+						+ "<p>Hello, this is <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>, from Onias.Site. "
+						+ "Every data of your resume was permanently deleted from Onias.Site.</p>"
+						+ JnEmailFooter.english.getValue()
+						+ "</body></html>",
+				savedMoreParameters);
 		items.addAll(deletedItems);
 
 		return items;

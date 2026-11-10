@@ -10,7 +10,7 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 /**
  * Prepares the values of an e-mail to the owner of the resume that shows the resume as the recruiter will see it: the
  * table of {@link VisBusinessBuildSavedResumeTable} in {@code resumesTable} and the original e-mail of the owner in
- * {@code email}. Shared by the e-mails of the saved and of the reactivated resume. The address of the front end of the
+ * {@code email}. Shared by the e-mails of the saved, of the deactivated and of the reactivated resume. The address of the front end of the
  * links of the table comes from the sending parameters of the message, read by id.
  *
  * <p>Input: the resume, as {@code vis_resume} stores it, with {@code originalEmail}. Output: the values of the template.

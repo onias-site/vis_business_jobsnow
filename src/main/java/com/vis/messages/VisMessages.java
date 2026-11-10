@@ -8,6 +8,7 @@ import com.jn.business.messages.JnMessageTemplate;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
@@ -243,7 +244,9 @@ public class VisMessages {
 	}
 
 	/**
-	 * Tells the owner of the resume that it was deactivated (moved to the inactive resumes). Repeatable.
+	 * Tells the owner of the resume that it was deactivated (moved to the inactive resumes) and no longer shows up to
+	 * the recruiters, with the same preview of the e-mails of the saved and of the reactivated resume: how the recruiters
+	 * saw it until now. Repeatable.
 	 */
 	public static class VisNotifyUserAboutDeactivatedResume implements JnMessageTemplate, JnRepeatableMessage{
 		/** The single instance: the class keeps no state. */
@@ -252,14 +255,24 @@ public class VisMessages {
 		private VisNotifyUserAboutDeactivatedResume() {}
 
 		/**
-		 * Puts the original e-mail of the owner in {@code email}.
-		 * @param json the key of the resume
+		 * Reads the deactivated resume by id (the delete on the main entity hands over only its key, and the record is now
+		 * in the twin) and puts its table in {@code resumesTable} and the original e-mail of the owner in {@code email}
+		 * ({@link VisBusinessPutResumePreviewInTheEmail}).
+		 * @param json the key of the resume, with {@code originalEmail}
 		 * @return the values of the template
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation jsonWithOriginalEmail = json
-					.renameField(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, JnJsonCommonsFields.email);
-			return jsonWithOriginalEmail;
+			String originalEmail = json.getAsString(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail);
+			CcpJsonRepresentation resumeKey = CcpOtherConstants.EMPTY_JSON.put(JnJsonCommonsFields.email, originalEmail);
+			CcpEntity inactiveResume = VisEntityResume.ENTITY.getTwinEntity();
+			CcpJsonRepresentation resume = inactiveResume.getOneById(resumeKey);
+			// what came with the key (the language of the e-mail, among others) stays: the resume only adds its fields
+			CcpJsonRepresentation jsonWithResume = json.mergeWithAnotherJson(resume);
+			CcpJsonRepresentation resumeWithOriginalEmail = jsonWithResume
+					.put(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail, originalEmail);
+			CcpBusiness preview = new VisBusinessPutResumePreviewInTheEmail(VisNotifyUserAboutDeactivatedResume.class);
+			CcpJsonRepresentation jsonWithPreview = preview.execute(resumeWithOriginalEmail);
+			return jsonWithPreview;
 		}
 	}
 
