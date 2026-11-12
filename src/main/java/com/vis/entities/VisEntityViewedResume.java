@@ -8,6 +8,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityF
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChildCounter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
@@ -19,6 +20,8 @@ import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFr
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.jn.db.bulk.JnExecuteBulkOperation;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.entities.decorators.engine.JnGrouperChildAsJsonEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildAsJsonEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildCounterEntityBeforeWrite;
@@ -67,8 +70,17 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
  * the groups the view leaves. A save again (a new view or a new alias) replaces the child.
  * <p>
  * A view makes an inactive recruiter active again ({@link VisBusinessReactivateRecruiterWhoViewed}).
+ * <p>
+ * Since 2026-11-12 the entity has the twin {@code vis_inactive_viewed_resume}: the delete moves the view there, and the
+ * daily e-mail of resumes ({@code VisBusinessSendResumesToRecruiters}) no longer sends the recruiter a resume whose view
+ * of theirs is in the twin. A new save of the view brings it back from the twin.
  */
 @CcpAfterSaveFromMainEntity(execute = {VisBusinessReactivateRecruiterWhoViewed.class}, operationHandlers = {})
+@CcpEntityTwin(
+		twinEntityName = "vis_inactive_viewed_resume",
+		bulkExecutorClass = JnExecuteBulkOperation.class,
+		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
+		)
 @CcpEntityCache(3600)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)

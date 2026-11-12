@@ -20,6 +20,7 @@ import com.ccp.decorators.CcpTextDecorator;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.decorators.CcpUrlDecorator;
 import com.ccp.especifications.db.query.CcpQueryOptions;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.hash.CcpHashAlgorithm;
 import com.ccp.json.fields.validation.CcpJsonCommonsFields;
@@ -60,7 +61,8 @@ import com.vis.messages.VisMessages;
  * stopped ({@code vis_recruiter_queue_cursor}) and starts over at its end, so whoever received the e-mail and viewed
  * nothing gives their place to the next one; a run restricted to some recruiters does not move it.</li>
  * <li>Which resumes: every resume added or changed in the last 7 days, except, for a recruiter of a professional
- * domain, the ones whose {@code notAllowedCompany} names the company of the domain.</li>
+ * domain, the ones whose {@code notAllowedCompany} names the company of the domain, and, since 2026-11-12, the ones whose
+ * view by this recruiter is in {@code vis_inactive_viewed_resume}, the twin of {@code vis_viewed_resume}.</li>
  * <li>In which order: first the ones with at least {@value #MINIMUM_SKILLS} skills; then the ones viewed by more
  * recruiters; then the lowest average of the rankings of the skills; then type of resume, CLT, PJ, years of
  * experience.</li>
@@ -171,6 +173,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		Map<String, Long> signUpReturns = getSignUpReturns();
 		countTheSignUpReturnsAsViews(lastViewByRecruiter, signUpReturns);
 		Map<String, String> aliasByPair = getAliases();
+		Set<String> inactivePairs = getInactivePairs();
 
 		Map<String, Long> viewsByResume = getViewsByResume(lastViewByPair);
 		List<CcpJsonRepresentation> resumesOfTheEmail = getResumesOfTheEmail(resumes, rankings, resumeDates, viewsByResume);
@@ -188,7 +191,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String[] lastLegacyQueuePosition = {lastLegacyPositionOfTheLastRun};
 		long telegramSince = now.getDaysAgo(VisEntityRecruiter.DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE);
 
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, frontendUrl, visApiUrl, emailsSent, lastQueuePosition, lastLegacyQueuePosition);
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, emailsSent, lastQueuePosition, lastLegacyQueuePosition);
 		List<CcpJsonRepresentation> recruiters = getRecruiters();
 		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
 		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun);
@@ -747,11 +750,12 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/**
-	 * The rows of a recruiter: every resume, but the ones that forbid the company of the recruiter, each one with the
-	 * last view of this recruiter, the alias they gave to it and the signed link.
+	 * The rows of a recruiter: every resume, but the ones that forbid the company of the recruiter and the ones whose view
+	 * by this recruiter is in the twin {@code vis_inactive_viewed_resume}, each one with the last view of this recruiter,
+	 * the alias they gave to it and the signed link.
 	 */
 	static List<CcpJsonRepresentation> getRowsOfTheRecruiter(CcpJsonRepresentation recruiter, String emailHash, List<CcpJsonRepresentation> resumesOfTheEmail,
-			Map<String, Long> lastViewByPair, Map<String, String> aliasByPair) {
+			Map<String, Long> lastViewByPair, Map<String, String> aliasByPair, Set<String> inactivePairs) {
 		String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
 		boolean professional = recruiter.getOrDefault(VisEntityRecruiter.Fields.professional, () -> false);
 		String domain = recruiter.getOrDefault(VisEntityRecruiter.Fields.domain, () -> "");
@@ -767,6 +771,10 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 			}
 			String linkedinHash = resumeOfTheEmail.getAsString(VisEntityViewedResume.Fields.linkedin);
 			String pairKey = emailHash + separator + linkedinHash;
+			boolean inactiveView = inactivePairs.contains(pairKey);
+			if(inactiveView) {
+				continue;
+			}
 			Long lastView = lastViewByPair.get(pairKey);
 			boolean viewed = lastView != null;
 			String lastViewLine = viewed ? getLastViewLine(lastView) : VisRecruiterResumesTexts.neverViewed.getMessage(LANGUAGE);
@@ -963,6 +971,21 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		everyView.selectFrom(VisEntityViewedResume.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, keepTheAlias);
 		return aliasByPair;
+	}
+
+	/**
+	 * The pairs recruiter + resume of the twin {@code vis_inactive_viewed_resume}, by the same key of
+	 * {@link #loadViews(Map, Map)}: the resumes that no longer go to each recruiter.
+	 */
+	private static Set<String> getInactivePairs() {
+		Set<String> inactivePairs = new LinkedHashSet<>();
+		String separator = Constants.SEPARATOR.getValue();
+		Consumer<CcpJsonRepresentation> keepThePair = new VisInactiveViewedResumePairCollector(inactivePairs, separator);
+		CcpQueryOptions everyInactiveView = CcpQueryOptions.INSTANCE.matchAll();
+		CcpEntity inactiveViewedResume = VisEntityViewedResume.ENTITY.getTwinEntity();
+		String scrollTime = Constants.SCROLL_TIME.getValue();
+		everyInactiveView.selectFrom(inactiveViewedResume).consumeQueryResult(scrollTime, PAGE_SIZE, keepThePair);
+		return inactivePairs;
 	}
 
 	/** The addresses of the front end and of the API of vis, kept in the sending parameters of the e-mail. */

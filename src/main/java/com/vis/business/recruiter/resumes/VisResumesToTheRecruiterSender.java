@@ -2,6 +2,7 @@ package com.vis.business.recruiter.resumes;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import com.ccp.constants.CcpOtherConstants;
@@ -32,6 +33,9 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	/** The alias of each pair recruiter + resume. */
 	private final Map<String, String> aliasByPair;
 
+	/** The pairs recruiter + resume of {@code vis_inactive_viewed_resume}: the resumes that no longer go to each recruiter. */
+	private final Set<String> inactivePairs;
+
 	/** The address of the front end. */
 	private final String frontendUrl;
 
@@ -53,6 +57,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * @param resumesOfTheEmail the rows of every resume of the e-mail, in order
 	 * @param lastViewByPair the last view of each pair recruiter + resume
 	 * @param aliasByPair the alias of each pair recruiter + resume
+	 * @param inactivePairs the pairs recruiter + resume of {@code vis_inactive_viewed_resume}
 	 * @param frontendUrl the address of the front end
 	 * @param visApiUrl the address of the API of vis
 	 * @param emailsSent counts the e-mails sent, in its only position
@@ -61,11 +66,12 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * had its turn
 	 */
 	VisResumesToTheRecruiterSender(List<String> restrictedTo, List<CcpJsonRepresentation> resumesOfTheEmail, Map<String, Long> lastViewByPair,
-			Map<String, String> aliasByPair, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition) {
+			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition) {
 		this.restrictedTo = restrictedTo;
 		this.resumesOfTheEmail = resumesOfTheEmail;
 		this.lastViewByPair = lastViewByPair;
 		this.aliasByPair = aliasByPair;
+		this.inactivePairs = inactivePairs;
 		this.frontendUrl = frontendUrl;
 		this.visApiUrl = visApiUrl;
 		this.emailsSent = emailsSent;
@@ -97,7 +103,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 			return;
 		}
 		String emailHash = VisBusinessSendResumesToRecruiters.getEmailHash(email);
-		List<CcpJsonRepresentation> rows = VisBusinessSendResumesToRecruiters.getRowsOfTheRecruiter(recruiter, emailHash, this.resumesOfTheEmail, this.lastViewByPair, this.aliasByPair);
+		List<CcpJsonRepresentation> rows = VisBusinessSendResumesToRecruiters.getRowsOfTheRecruiter(recruiter, emailHash, this.resumesOfTheEmail, this.lastViewByPair, this.aliasByPair, this.inactivePairs);
 		boolean nothingForTheRecruiter = rows.isEmpty();
 		if(nothingForTheRecruiter) {
 			return;
