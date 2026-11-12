@@ -897,7 +897,10 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		return keys;
 	}
 
-	/** The stored resumes of the given e-mails (hashes); the inactive ones are not in {@code vis_resume}. */
+	/**
+	 * The stored resumes of the given e-mails (hashes); the inactive ones are not in {@code vis_resume}, and the ones with
+	 * {@code invalidLinkedinAddress} are left out.
+	 */
 	private static List<CcpJsonRepresentation> getResumes(Set<String> emailHashes) {
 		CcpQueryOptions query = CcpQueryOptions.INSTANCE
 				.startQuery()
@@ -910,6 +913,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		List<CcpJsonRepresentation> resumes = new ArrayList<>();
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		query.selectFrom(VisEntityResume.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, resume -> resumes.add(resume));
+		// the support confirmed that the LinkedIn address does not open (since 2026-11-12): the resume goes to no recruiter
+		resumes.removeIf(resume -> resume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false));
 		return resumes;
 	}
 

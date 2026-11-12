@@ -166,5 +166,13 @@ public class VisEntityViewedResume implements CcpEntityConfigurator {
 		 */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		insertionDate,
+
+		/**
+		 * The {@code comment} field: text of 10 to 500 characters, not required (since 2026-11-12), why the view went to
+		 * the twin; written by {@code /verifyLinkedinAddress} when the support operator finds that the LinkedIn of the
+		 * resume exists and only this recruiter could not open it.
+		 */
+		@CcpJsonFieldTypeString(minLength = 10, maxLength = 500)
+		comment,
 	}
 }

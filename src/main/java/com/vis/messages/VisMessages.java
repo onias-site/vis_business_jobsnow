@@ -11,6 +11,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.business.messages.JnMessageType;
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.jn.messages.JnRepeatableMessage;
 import com.jn.utils.JnLanguage;
@@ -386,6 +387,83 @@ public class VisMessages {
 
 		/**
 		 * The values of the template are already in the json (the e-mail of the candidate, the table, the link of the form).
+		 * @param json the values of the e-mail
+		 * @return the same json
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			return json;
+		}
+	}
+
+	/**
+	 * Tells the owner of a resume, through the user bot, that the support confirmed as invalid the LinkedIn address
+	 * reported by a recruiter (since 2026-11-12). Sent by the save of {@code vis_resume_message}, whose {@code message}
+	 * already holds the text of this template in the language of the owner and prevails over the template. Repeatable: the
+	 * owner who fixes the address and has it reported again gets the message again.
+	 */
+	public static class VisInvalidLinkedinAddress implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisInvalidLinkedinAddress INSTANCE = new VisInvalidLinkedinAddress();
+
+		private VisInvalidLinkedinAddress() {}
+
+		/**
+		 * Puts the user bot, which sends to the owner (the parameters of the sending are found by bot and template, and a
+		 * message without bot goes through the support one), and the language of the template, Portuguese while the resumes
+		 * keep no language.
+		 * @param json the record of {@code vis_resume_message}
+		 * @return the values of the template
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			String userBot = JnMessageType.JnBotType.user.name();
+			CcpJsonRepresentation jsonWithBot = json.put(JnJsonInstantMessengerFields.botName, userBot);
+			boolean languageInformed = json.containsField(JnJsonCommonsFields.language);
+			if(languageInformed) {
+				return jsonWithBot;
+			}
+			CcpJsonRepresentation jsonWithLanguage = jsonWithBot.put(JnJsonCommonsFields.language, JnLanguage.portuguese);
+			return jsonWithLanguage;
+		}
+	}
+
+	/**
+	 * The ticket of a LinkedIn address reported by a recruiter as not opening, sent to the support operator as the command
+	 * {@code /verifyLinkedinAddress <linkedinAddress> <resumeEmailSha1> <recruiterEmail>} (since 2026-11-12), with the
+	 * priority {@value #PRIORITY}, the one of the reviews of the data of vis (skill and hierarchy). Not repeatable: the same
+	 * recruiter reporting the same resume again on the same day does not open a second ticket.
+	 */
+	public static class VisNotifySupportAboutInvalidLinkedinTicket implements JnMessageTemplate{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifySupportAboutInvalidLinkedinTicket INSTANCE = new VisNotifySupportAboutInvalidLinkedinTicket();
+
+		/** The priority of the ticket in {@code /pendingTickets}. */
+		public static final int PRIORITY = 4;
+
+		private VisNotifySupportAboutInvalidLinkedinTicket() {}
+
+		/**
+		 * Puts the priority of the ticket.
+		 * @param json the address, the id of the resume and the e-mail of the recruiter
+		 * @return the values of the command
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation jsonWithPriority = json.put(JnJsonInstantMessengerFields.priority, PRIORITY);
+			return jsonWithPriority;
+		}
+	}
+
+	/**
+	 * Tells a recruiter who reported a LinkedIn address as not opening that the support found that the profile exists:
+	 * maybe only they cannot see it (since 2026-11-12). Repeatable.
+	 */
+	public static class VisNotifyRecruiterAboutUnreachableLinkedin implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyRecruiterAboutUnreachableLinkedin INSTANCE = new VisNotifyRecruiterAboutUnreachableLinkedin();
+
+		private VisNotifyRecruiterAboutUnreachableLinkedin() {}
+
+		/**
+		 * The values of the template are already in the json (the e-mail of the recruiter and the address).
 		 * @param json the values of the e-mail
 		 * @return the same json
 		 */

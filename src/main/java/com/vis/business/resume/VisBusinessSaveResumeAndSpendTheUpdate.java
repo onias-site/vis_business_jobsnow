@@ -1,6 +1,7 @@
 package com.vis.business.resume;
 
 import com.ccp.business.CcpBusiness;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.vis.entities.VisEntityResume;
@@ -31,10 +32,14 @@ public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 	 * @return the json of the procedure
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation jsonAfterTheSteps) {
-		VisEntityResume.ENTITY.save(this.resume);
 		CcpJsonRepresentation foundRecords = jsonAfterTheSteps.getInnerJson(CcpEntity.JsonFieldNames._entities);
 		CcpEntity twinEntity = VisEntityResume.ENTITY.getTwinEntity();
-		boolean isUpdate = foundRecords.containsField(VisEntityResume.ENTITY) || foundRecords.containsField(twinEntity);
+		boolean active = foundRecords.containsField(VisEntityResume.ENTITY);
+		CcpJsonFieldName sideOfTheStoredResume = active ? VisEntityResume.ENTITY : twinEntity;
+		CcpJsonRepresentation storedResume = foundRecords.getInnerJson(sideOfTheStoredResume);
+		CcpJsonRepresentation resumeWithKeptFields = getResumeWithKeptFields(this.resume, storedResume);
+		VisEntityResume.ENTITY.save(resumeWithKeptFields);
+		boolean isUpdate = active || foundRecords.containsField(twinEntity);
 		boolean isInsertion = false == isUpdate;
 		if(isInsertion) {
 			return jsonAfterTheSteps;
@@ -45,5 +50,30 @@ public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 		CcpJsonRepresentation dailyActionKey = VisEntityResumeDailyAction.getKey(email, VisResumeDailyActions.update);
 		VisEntityResumeDailyAction.ENTITY.save(dailyActionKey);
 		return jsonAfterTheSteps;
+	}
+
+	/**
+	 * The resume of the owner with the fields the form does not send (since 2026-11-12): the save replaces the whole
+	 * record, so without this a save of the owner would erase them. {@code chatId} stays as stored;
+	 * {@code invalidLinkedinAddress} stays {@code true} while the LinkedIn address is the same, and is {@code false} for a
+	 * new resume or a new address (the owner fixed the address the support confirmed as invalid).
+	 * @param resume the resume, as it came
+	 * @param storedResume the stored resume, active or inactive; empty for a new resume
+	 * @return the resume to save
+	 */
+	public static CcpJsonRepresentation getResumeWithKeptFields(CcpJsonRepresentation resume, CcpJsonRepresentation storedResume) {
+		String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
+		String storedLinkedinAddress = storedResume.getOrDefault(VisEntityResume.Fields.linkedinAddress, () -> "");
+		boolean sameLinkedinAddress = linkedinAddress.equals(storedLinkedinAddress);
+		boolean storedAsInvalid = storedResume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false);
+		boolean invalidLinkedinAddress = sameLinkedinAddress && storedAsInvalid;
+		CcpJsonRepresentation resumeWithTheFlag = resume.put(VisEntityResume.Fields.invalidLinkedinAddress, invalidLinkedinAddress);
+		boolean noChat = false == storedResume.containsField(VisEntityResume.Fields.chatId);
+		if(noChat) {
+			return resumeWithTheFlag;
+		}
+		Long chatId = storedResume.getAsLongNumber(VisEntityResume.Fields.chatId);
+		CcpJsonRepresentation resumeWithTheChat = resumeWithTheFlag.put(VisEntityResume.Fields.chatId, chatId);
+		return resumeWithTheChat;
 	}
 }

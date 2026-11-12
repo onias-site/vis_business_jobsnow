@@ -10,7 +10,10 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.process.CcpProcessStatusDefault;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.services.JnService;
+import com.jn.utils.JnLanguage;
+import com.vis.business.bots.linkedin.VisSupportVerifyLinkedinConfirmInvalid;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.resume.VisBusinessChangeResumeStatusOncePerDay;
 import com.vis.business.resume.VisBusinessDeleteResumeAndSpendTheDay;
@@ -139,8 +142,12 @@ public enum VisServiceResume implements JnService {
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation resumeData = VisEntityResume.ENTITY.getOneByIdAnyWhere(json);
 			CcpEntity twinEntity = VisEntityResume.ENTITY.getTwinEntity();
-			CcpJsonRepresentation withoutInternalFieldsOfTheActive = withoutInternalFields(resumeData, VisEntityResume.ENTITY);
-			CcpJsonRepresentation withoutInternalFields = withoutInternalFields(withoutInternalFieldsOfTheActive, twinEntity);
+			// the language of the screen: the warning has texts only in English and Portuguese, the default for any other value
+			String languageName = json.getOrDefault(JnJsonCommonsFields.language, () -> JnLanguage.portuguese.name());
+			String english = JnLanguage.english.name();
+			JnLanguage language = english.equals(languageName) ? JnLanguage.english : JnLanguage.portuguese;
+			CcpJsonRepresentation withoutInternalFieldsOfTheActive = withoutInternalFields(resumeData, VisEntityResume.ENTITY, language);
+			CcpJsonRepresentation withoutInternalFields = withoutInternalFields(withoutInternalFieldsOfTheActive, twinEntity, language);
 			return withoutInternalFields;
 		}
 
@@ -150,17 +157,39 @@ public enum VisServiceResume implements JnService {
 		 * 2026-10-15 they went to the browser (R05-2).
 		 * @param resumeData the records by entity
 		 * @param entity the entity whose record is cleaned
+		 * @param language the language of the screen
 		 * @return the records by entity, with the record of the entity cleaned
 		 */
-		private CcpJsonRepresentation withoutInternalFields(CcpJsonRepresentation resumeData, CcpEntity entity) {
+		private CcpJsonRepresentation withoutInternalFields(CcpJsonRepresentation resumeData, CcpEntity entity, JnLanguage language) {
 			boolean notFound = false == resumeData.containsField(entity);
 			if(notFound) {
 				return resumeData;
 			}
 			CcpJsonRepresentation storedRecord = resumeData.getInnerJson(entity);
 			CcpJsonRepresentation fieldsOfTheScreen = storedRecord.removeFields(VisEntityResume.Fields.hash, VisEntityResume.Fields.email);
-			CcpJsonRepresentation cleanedResumeData = resumeData.put(entity, fieldsOfTheScreen);
+			CcpJsonRepresentation fieldsWithTheWarning = withTheInvalidLinkedinWarning(fieldsOfTheScreen, language);
+			CcpJsonRepresentation cleanedResumeData = resumeData.put(entity, fieldsWithTheWarning);
 			return cleanedResumeData;
+		}
+
+		/**
+		 * Puts {@code invalidLinkedinAddressMessage}, shown at the top of the form, when the support confirmed that the
+		 * LinkedIn address of the resume is invalid (since 2026-11-12): the text of {@code VisInvalidLinkedinAddress}, the
+		 * same the owner gets through the user bot, in the language of the screen.
+		 * @param resume the record of the screen
+		 * @param language the language of the screen
+		 * @return the record, with the warning when the address is invalid
+		 */
+		private CcpJsonRepresentation withTheInvalidLinkedinWarning(CcpJsonRepresentation resume, JnLanguage language) {
+			boolean invalidLinkedinAddress = resume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false);
+			boolean validAddress = false == invalidLinkedinAddress;
+			if(validAddress) {
+				return resume;
+			}
+			String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
+			String warning = VisSupportVerifyLinkedinConfirmInvalid.getMessageToTheOwner(linkedinAddress, language);
+			CcpJsonRepresentation resumeWithWarning = resume.put(ResumeResponse.invalidLinkedinAddressMessage, warning);
+			return resumeWithWarning;
 		}
 
 		/**
@@ -233,7 +262,9 @@ public enum VisServiceResume implements JnService {
 	/** Fields of the search procedures: {@link #ChangeStatus} answers with the json it received, so it returns no field. */
 	enum ResumeResponse implements CcpJsonFieldName {
 		/** The {@code inexistentField} field. */
-		inexistentField
+		inexistentField,
+		/** The warning of the form about the LinkedIn address confirmed as invalid. */
+		invalidLinkedinAddressMessage,
 	}
 
 	/**

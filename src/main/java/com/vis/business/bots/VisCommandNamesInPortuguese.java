@@ -12,5 +12,7 @@ public enum VisCommandNamesInPortuguese implements CcpJsonFieldName{
 	fixSkillHierarchy { public String getValue() { return "ajustarHierarquiaDeHabilidades"; } },
 	/** {@code /avaliarSugestaoDeHabilidade}. */
 	reviewSkillSuggestion { public String getValue() { return "avaliarSugestaoDeHabilidade"; } },
+	/** {@code /verificarEnderecoDoLinkedin}. */
+	verifyLinkedinAddress { public String getValue() { return "verificarEnderecoDoLinkedin"; } },
 	;
 }

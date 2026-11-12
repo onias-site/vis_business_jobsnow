@@ -23,6 +23,13 @@ import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityViewedResume;
+import com.jn.business.messages.JnMessageSenderExceptionHandler;
+import com.jn.business.messages.JnMessageType;
+import com.jn.messages.JnSendMessageToUser;
+import com.vis.business.bots.linkedin.VisSupportVerifyLinkedinFields;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.vis.messages.VisMessages;
+import com.vis.status.VisProcessStatusInvalidLinkedin;
 
 /**
  * The actions of the recruiter that come from the e-mail of resumes: open a resume (and save the view), give it an
@@ -86,6 +93,28 @@ public enum VisServiceRecruiterResumes implements JnService {
 			CcpJsonRepresentation viewWithTheResume = putTheViewedResume(viewWithAlias, resume);
 			VisEntityViewedResume.ENTITY.save(viewWithTheResume);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityViewedResume.Fields.alias, alias);
+			return response;
+		}
+	},
+	/**
+	 * Reports that the LinkedIn address of a resume of the e-mail does not open (since 2026-11-12): opens the ticket
+	 * {@code /verifyLinkedinAddress <linkedinAddress> <resumeEmailSha1> <recruiterEmail>} in {@code /pendingTickets} of
+	 * the support operator, who tells whether the recruiter is right. The link must be valid, as to open the resume.
+	 */
+	ReportInvalidLinkedinFromEmail{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation resume = getResumeOfTheLink(json);
+			String email = json.getAsString(JnJsonCommonsFields.email);
+			String resumeId = json.getAsString(VisRecruiterResumesFields.resumeId);
+			String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
+			CcpJsonRepresentation ticket = CcpOtherConstants.EMPTY_JSON
+					.put(VisJsonCommonsFields.linkedinAddress, linkedinAddress)
+					.put(VisSupportVerifyLinkedinFields.resumeEmailSha1, resumeId)
+					.put(VisSupportVerifyLinkedinFields.recruiterEmail, email);
+			String topic = VisMessages.VisNotifySupportAboutInvalidLinkedinTicket.class.getName();
+			JnMessageType[] messageTypes = {JnMessageType.instantMessenger};
+			new JnSendMessageToUser().sendAllMessages(ticket, topic, messageTypes, JnMessageSenderExceptionHandler.LENIENT);
+			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityResume.Fields.linkedinAddress, linkedinAddress);
 			return response;
 		}
 	},
@@ -156,7 +185,8 @@ public enum VisServiceRecruiterResumes implements JnService {
 	 * only when the e-mail went out: a candidate who forbids the company of the recruiter after the e-mail closes the
 	 * link. The answer is the same of a resume no longer active, so the recruiter does not learn they were forbidden.
 	 * @throws CcpErrorFlowDisturb {@code 401} when the link was not signed for this recruiter and resume; {@code 404}
-	 * when the resume is no longer active or now forbids the company of the recruiter
+	 * when the resume is no longer active or now forbids the company of the recruiter; {@code 410} when the support
+	 * confirmed that its LinkedIn address is invalid
 	 */
 	private static CcpJsonRepresentation getResumeOfTheLink(CcpJsonRepresentation json) {
 		String email = json.getAsString(JnJsonCommonsFields.email);
@@ -167,6 +197,11 @@ public enum VisServiceRecruiterResumes implements JnService {
 			throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.UNHAUTHORIZED);
 		}
 		CcpJsonRepresentation resume = getActiveResume(json, resumeId);
+		// the support confirmed that the LinkedIn address does not open (since 2026-11-12): no view is saved or counted
+		boolean invalidLinkedinAddress = resume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false);
+		if(invalidLinkedinAddress) {
+			return VisProcessStatusInvalidLinkedin.invalidLinkedinAddress.throwException(json);
+		}
 		List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
 		boolean forbiddenCompany = VisBusinessSendResumesToRecruiters.isTheCompanyOfTheRecruiterForbidden(email, notAllowedCompanies);
 		if(forbiddenCompany) {

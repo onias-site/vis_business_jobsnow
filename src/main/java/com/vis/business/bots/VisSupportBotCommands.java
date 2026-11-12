@@ -13,5 +13,7 @@ public enum VisSupportBotCommands {
 	fixSkillHierarchy,
 	/** Reviews the skills suggested by the users. */
 	reviewSkillSuggestion,
+	/** Checks whether the LinkedIn address of a resume, reported by a recruiter as not opening, is really invalid (since 2026-11-12). */
+	verifyLinkedinAddress,
 	;
 }

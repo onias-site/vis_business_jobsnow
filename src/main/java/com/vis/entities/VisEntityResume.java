@@ -33,8 +33,10 @@ import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityCo
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldTransformer;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
+import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
@@ -488,7 +490,25 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		 */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		insertionDate,
+
+		/**
+		 * The {@code invalidLinkedinAddress} field: boolean, {@code false} by default (since 2026-11-12). {@code true}
+		 * when a recruiter reported that the LinkedIn address does not open and the support operator confirmed it
+		 * ({@code /verifyLinkedinAddress}): the resume is no longer sent to the recruiters and its link no longer opens.
+		 * The save of the owner keeps it while the address stays the same ({@code VisBusinessSaveResumeAndSpendTheUpdate}); a new address
+		 * takes it back to {@code false}.
+		 */
+		@CcpJsonFieldTypeBoolean
+		invalidLinkedinAddress,
+
+		/**
+		 * The {@code chatId} field: a number, as the chat of the bots, not required (since 2026-11-12), the chat of the owner of the resume in the
+		 * user bot, where the instant messages to the owner go ({@code vis_resume_message}). The save of the owner keeps it
+		 * ({@code VisBusinessSaveResumeAndSpendTheUpdate}).
+		 */
+		@CcpJsonCopyFieldValidationsFrom(JnJsonInstantMessengerFields.class)
+		chatId,
 		;
-	}	
+	}
 }
 
