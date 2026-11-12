@@ -14,7 +14,10 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityR
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChildCounter;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpStoredParentIdsField;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityRecordsCounter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
@@ -41,8 +44,14 @@ import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.jn.entities.decorators.engine.JnGrouperChildCurrentCounterEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityBeforeWrite;
+import com.jn.entities.decorators.engine.JnInsertionDateEntity;
+import com.jn.entities.fields.counters.JnInsertionYearMonthCounterKeys;
+import com.vis.json.transformers.VisInsertionMonthCounterCombinations;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityInsertionDate;
+import com.jn.entities.decorators.engine.JnRecordsCounterEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -58,7 +67,13 @@ import com.vis.json.fields.validation.VisJsonFieldsSkills;
 import com.vis.json.fields.validation.VisJsonValidatorHomeOfficeAlone;
 import com.vis.json.transformers.VisJsonTransformerExperienceStartYear;
 import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
+import com.vis.json.transformers.VisResumeDddCombinations;
+import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
+import com.vis.json.transformers.VisResumeExcludedSkillCombinations;
+import com.vis.json.transformers.VisResumeExcludedSkillCounterKeys;
 import com.vis.json.transformers.VisResumeHashCombinations;
+import com.vis.json.transformers.VisResumeNotAllowedCompanyCounterCombinations;
+import com.vis.json.transformers.VisResumeNotAllowedCompanyCounterKeys;
 import com.vis.messages.VisMessages;
 
 /**
@@ -72,10 +87,15 @@ import com.vis.messages.VisMessages;
  * back, which is the reactivation):
  * <ul>
  * <li>the save fills the {@code hash} list with every search the resume satisfies;</li>
+ * <li>a second {@code @CcpEntityGrouperChild} keeps, in the group of each ddd of the resume ({@link VisEntityVirtualDddGrouper}),
+ * a JSON text with btc, clt, disponibility, experience, spokenLanguage, pcd, pj, resumeType, temporallyJobTime, travel and
+ * the id of the resume, moved between the sides as the groups of the hashes are;</li>
  * <li>{@code @CcpEntityGrouperChild} keeps the id of the resume in the groups of {@code JnEntityGrouper} of its hashes:
  * the active resumes in the main groups, the inactive ones in the twin groups ({@code jn_inactive_grouper}); the save
  * moves it to the groups of its new hashes, the deactivation and the reactivation move it between the sides, and the
  * delete everywhere takes it out of both;</li>
+ * <li>a second {@code @CcpEntityGrouperChildCounter} counts, in the group of each skill the owner excluded
+ * ({@link VisEntityVirtualExcludedSkillCounter}), how many active resumes exclude it now: the most avoided skills;</li>
  * <li>the owner is told by e-mail after the save, the deactivation, the reactivation and the delete everywhere;</li>
  * <li>{@link VisEntityResumeLinkedin} keeps the e-mails that use each LinkedIn address: saving an address that is in
  * the resume of another e-mail saves the resume anyway and tells the support operator; a new address or the delete
@@ -96,6 +116,9 @@ import com.vis.messages.VisMessages;
 @CcpAfterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutDeactivatedResume.class)
 @CcpAfterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutReactivatedResume.class)
 @CcpAfterDeleteAnyWhereFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutDeletedResume.class)
+// how many active (vis_resume) and inactive (vis_inactive_resume) resumes there are now, in jn_records_count, counted
+// again after each insertion, deactivation, reactivation and delete
+@CcpEntityRecordsCounter(JnRecordsCounterEntity.class)
 @CcpEntityTwin(
 		twinEntityName = "vis_inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
@@ -107,6 +130,27 @@ import com.vis.messages.VisMessages;
 // one group per hash (each search the resume satisfies): the entity that gives the id of each one (and names the
 // groups); the combinations of its values and the list where the save keeps those ids come from the field hash
 @CcpEntityGrouperChild(value = {VisEntityVirtualHashGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
+// one group per ddd of the resume (a resume with several ddds is a child of several groups): the child is a JSON text with
+// these fields of the resume, as stored, and its id; it follows the resume between the main and the twin groups as the
+// groups of the hashes do
+@CcpEntityGrouperChild(value = {VisEntityVirtualDddGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
+		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
+		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class})
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddGrouper.class, value = VisResumeDddCombinations.class)
+// a single group counts, for each domain of notAllowedCompany, how many active resumes forbid it now: the key dropped
+// by a save, the deactivation and the delete everywhere subtract 1, the reactivation adds it back
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualNotAllowedCompanyCounter.class}, counterKeyClass = VisResumeNotAllowedCompanyCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualNotAllowedCompanyCounter.class, value = VisResumeNotAllowedCompanyCounterCombinations.class)
+// one group per skill the owner excluded (the items of skill whose category is excludedSkills), each counting how many
+// active resumes exclude it now: the most avoided skills
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualExcludedSkillCounter.class}, counterKeyClass = VisResumeExcludedSkillCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualExcludedSkillCounter.class, value = VisResumeExcludedSkillCombinations.class)
+// the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
+@CcpEntityInsertionDate(JnInsertionDateEntity.class)
+// a single group (its childName tells the entity apart) counts, for each month of insertion (yyyyMM), how many records
+// inserted in that month are active now: the insertion and the reactivation add 1, the deactivation and the delete subtract 1
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualInsertionMonthCounter.class}, counterKeyClass = JnInsertionYearMonthCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualInsertionMonthCounter.class, value = VisInsertionMonthCounterCombinations.class)
 public class VisEntityResume implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntityResume INSTANCE = new VisEntityResume();
@@ -406,9 +450,14 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		negotiableClaim,
 
-		/** The {@code notAllowedCompany} field: list, text. */
+		/**
+		 * The {@code notAllowedCompany} field: list, text; each item is the domain of a consultancy the resume must not
+		 * reach ({@code consultoria.com.br}): labels of letters, digits and hyphens (no hyphen at either end) separated by
+		 * dots, ending in a top level domain of letters only (since 2026-11-11; before it took any text, such as company
+		 * names).
+		 */
 		@CcpJsonFieldValidatorArray
-		@CcpJsonFieldTypeString(minLength = 2, maxLength = 50)
+		@CcpJsonFieldTypeString(minLength = 4, maxLength = 50, regexValidation = "^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,63}$")
 		notAllowedCompany,
 
 		/** The {@code pcd} field: validated as in {@code VisJsonCommonsFields}. */
@@ -432,6 +481,13 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		/** The {@code travel} field: validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		travel,
+
+		/**
+		 * The {@code insertionDate} field: the moment the record was inserted, kept by {@code @CcpEntityInsertionDate}
+		 * (the value of the input is ignored), validated as in {@code JnJsonCommonsFields}.
+		 */
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		insertionDate,
 		;
 	}	
 }

@@ -14,6 +14,7 @@ import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.process.CcpProcessStatusDefault;
 import com.jn.entities.JnEntityGrouper;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
@@ -29,11 +30,13 @@ import com.vis.entities.VisEntityViewedResume;
  * resumes of those e-mails ({@code vis_resume}) and the rankings of their skills. The row has no lines of insertion and
  * last change: they come from the history of the resume, which only a query reads.
  *
- * <p>Input: {@code email} (the recruiter), {@code month} ({@code yyyyMM}) and {@code linkedin} (as the list of the views
- * shows it). Output: {@code linkedin} and {@code resumes}, one row per active resume that uses the LinkedIn (usually one;
- * more when the LinkedIn is in the resume of more than one e-mail), empty when none is active anymore.
+ * <p>Input: {@code email} (the recruiter), {@code month} ({@code yyyyMM}) and {@code linkedinHash} (as the list of the
+ * views shows it; the list never carries the LinkedIn). Output: {@code linkedinHash}, {@code resumes}, one row per active
+ * resume that uses the LinkedIn, and {@code linkedin}, only when there is a row to show (usually one;
+ * more when the LinkedIn is in the resume of more than one e-mail), empty when none is active anymore. A resume that now
+ * forbids the company of the recruiter ({@code notAllowedCompany}) has no row, as if it were no longer active.
  *
- * @throws CcpErrorFlowDisturb {@code 404} when the LinkedIn is not among the views of the recruiter in the month: the
+ * @throws CcpErrorFlowDisturb {@code 404} when no view of the recruiter in the month has a LinkedIn of this hash: the
  * details are only of resumes the recruiter viewed
  */
 public class VisBusinessViewedResumeDetails implements CcpBusiness {
@@ -48,10 +51,10 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 		@CcpJsonCopyFieldValidationsFrom(VisBusinessViewedResumesOfTheMonth.Fields.class)
 		month,
 
-		/** The LinkedIn of the viewed resume. */
-		@CcpJsonCopyFieldValidationsFrom(VisEntityViewedResume.Fields.class)
+		/** The hash of the LinkedIn of the viewed resume, as the list of the views shows it. */
+		@CcpJsonFieldTypeString(minLength = 1, maxLength = 100)
 		@CcpJsonFieldValidatorRequired
-		linkedin,
+		linkedinHash,
 	}
 
 	/** The single instance. */
@@ -64,57 +67,68 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 	}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		String linkedin = json.getAsString(Fields.linkedin);
+		String linkedinHash = json.getAsString(Fields.linkedinHash);
 		CcpJsonRepresentation groupKey = VisBusinessViewedResumesOfTheMonth.getGroupKeyOfTheMonth(json);
-		CcpJsonRepresentation groupAndLinkedinKey = groupKey.put(VisEntityResumeLinkedin.Fields.linkedinAddress, linkedin);
 		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
-		CcpSelectUnionAll groupAndLinkedin = crud.unionAll(groupAndLinkedinKey, JnDeleteKeysFromCache.INSTANCE, JnEntityGrouper.ENTITY, VisEntityResumeLinkedin.ENTITY);
-
+		// the LinkedIn comes from the view found in the group: the second read depends on it
+		CcpSelectUnionAll groupById = crud.unionAll(groupKey, JnDeleteKeysFromCache.INSTANCE, JnEntityGrouper.ENTITY);
 		Supplier<CcpJsonRepresentation> groupKeySupplier = groupKey.getJsonSupplier();
-		CcpJsonRepresentation group = JnEntityGrouper.ENTITY.getRecordFromUnionAll(groupAndLinkedin, groupKeySupplier);
+		CcpJsonRepresentation group = JnEntityGrouper.ENTITY.getRecordFromUnionAll(groupById, groupKeySupplier);
 		List<String> views = group.getOrDefault(JnEntityGrouper.Fields.child, () -> List.of());
-		boolean notViewed = false == wasViewed(views, linkedin);
+		String linkedin = getViewedLinkedin(views, linkedinHash, json);
 
-		if(notViewed) {
-			throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
-		}
-
-		Supplier<CcpJsonRepresentation> linkedinKeySupplier = groupAndLinkedinKey.getJsonSupplier();
-		CcpJsonRepresentation linkedinRecord = VisEntityResumeLinkedin.ENTITY.getRecordFromUnionAll(groupAndLinkedin, linkedinKeySupplier);
+		CcpJsonRepresentation linkedinKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityResumeLinkedin.Fields.linkedinAddress, linkedin);
+		CcpSelectUnionAll linkedinById = crud.unionAll(linkedinKey, JnDeleteKeysFromCache.INSTANCE, VisEntityResumeLinkedin.ENTITY);
+		Supplier<CcpJsonRepresentation> linkedinKeySupplier = linkedinKey.getJsonSupplier();
+		CcpJsonRepresentation linkedinRecord = VisEntityResumeLinkedin.ENTITY.getRecordFromUnionAll(linkedinById, linkedinKeySupplier);
 		List<String> emailHashes = linkedinRecord.getOrDefault(VisEntityResumeLinkedin.Fields.emails, () -> List.of());
-		List<CcpJsonRepresentation> resumes = getActiveResumes(crud, emailHashes);
+		String recruiterEmail = json.getAsString(Fields.email);
+		List<CcpJsonRepresentation> resumes = getActiveResumes(crud, emailHashes, recruiterEmail);
 		List<CcpJsonRepresentation> rows = getRows(resumes);
-		CcpJsonRepresentation responseWithLinkedin = CcpOtherConstants.EMPTY_JSON.put(Fields.linkedin, linkedin);
-		CcpJsonRepresentation response = responseWithLinkedin.put(VisRecruiterResumesFields.resumes, rows);
+		CcpJsonRepresentation responseWithHash = CcpOtherConstants.EMPTY_JSON.put(Fields.linkedinHash, linkedinHash);
+		CcpJsonRepresentation responseWithRows = responseWithHash.put(VisRecruiterResumesFields.resumes, rows);
+		// no resume to show (none active, or every one forbids the company of the recruiter): the LinkedIn stays here
+		boolean noResumeToShow = rows.isEmpty();
+		if(noResumeToShow) {
+			return responseWithRows;
+		}
+		CcpJsonRepresentation response = responseWithRows.put(VisEntityViewedResume.Fields.linkedin, linkedin);
 		return response;
 	}
 
 	/**
-	 * Whether one of the views of the month (each a JSON text) is of the LinkedIn.
+	 * The LinkedIn of the view of the month (each a JSON text) whose hash is the given one.
 	 * @param views the views of the month
-	 * @param linkedin the LinkedIn
-	 * @return {@code true} when the recruiter viewed it in the month
+	 * @param linkedinHash the hash of the LinkedIn
+	 * @param json the input, for the error
+	 * @return the LinkedIn
+	 * @throws CcpErrorFlowDisturb {@code 404} when no view has a LinkedIn of this hash
 	 */
-	private static boolean wasViewed(List<String> views, String linkedin) {
+	private static String getViewedLinkedin(List<String> views, String linkedinHash, CcpJsonRepresentation json) {
 		for (String viewText : views) {
 			CcpJsonRepresentation view = new CcpJsonRepresentation(viewText);
 			String viewedLinkedin = view.getOrDefault(VisEntityViewedResume.Fields.linkedin, () -> "");
-			boolean sameLinkedin = linkedin.equals(viewedLinkedin);
-
+			boolean noLinkedin = viewedLinkedin.isEmpty();
+			if(noLinkedin) {
+				continue;
+			}
+			String viewedLinkedinHash = VisBusinessSendResumesToRecruiters.getLinkedinHash(viewedLinkedin);
+			boolean sameLinkedin = linkedinHash.equals(viewedLinkedinHash);
 			if(sameLinkedin) {
-				return true;
+				return viewedLinkedin;
 			}
 		}
-		return false;
+		throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
 	}
 
 	/**
-	 * The active resumes of the e-mails, in a single read.
+	 * The active resumes of the e-mails that do not forbid the company of the recruiter, in a single read.
 	 * @param crud the crud
 	 * @param emailHashes the hashes of the e-mails that use the LinkedIn
+	 * @param recruiterEmail the e-mail of the recruiter
 	 * @return the resumes found
 	 */
-	private static List<CcpJsonRepresentation> getActiveResumes(CcpCrud crud, List<String> emailHashes) {
+	private static List<CcpJsonRepresentation> getActiveResumes(CcpCrud crud, List<String> emailHashes, String recruiterEmail) {
 		List<CcpJsonRepresentation> resumes = new ArrayList<>();
 		boolean noEmail = emailHashes.isEmpty();
 
@@ -139,6 +153,13 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 
 			Supplier<CcpJsonRepresentation> resumeKeySupplier = resumeKey.getJsonSupplier();
 			CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(resumesById, resumeKeySupplier);
+			List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
+			boolean forbiddenCompany = VisBusinessSendResumesToRecruiters.isTheCompanyOfTheRecruiterForbidden(recruiterEmail, notAllowedCompanies);
+
+			if(forbiddenCompany) {
+				continue;
+			}
+
 			resumes.add(resume);
 		}
 		return resumes;

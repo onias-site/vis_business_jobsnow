@@ -24,10 +24,11 @@ import com.vis.entities.VisEntityVirtualRecruiterDomainInitialsGrouper;
 public enum VisServiceCompany implements JnService {
 
 	/**
-	 * Suggests company names for the typed text: reads, in {@code jn_grouper}, the group of the domains that start with
-	 * the first three letters of the text and keeps the company names (the first part of the domain, capitalized) that
-	 * start with the text (case insensitive), in alphabetical order; when nothing matches, the text itself is the only
-	 * suggestion. Until 2026-10-27 the names came from the entity
+	 * Suggests company domains for the typed text: reads, in {@code jn_grouper}, the group of the domains that start with
+	 * the first three letters of the text and keeps the domains that start with the text (case insensitive), in
+	 * alphabetical order; when nothing matches, the text itself is the only suggestion. Since 2026-11-11 the suggestion
+	 * is the domain, because the companies a resume forbids ({@code notAllowedCompany}) must be domains; until then it
+	 * was the company name (the first part of the domain, capitalized). Until 2026-10-27 the names came from the entity
 	 * {@code vis_group_companies_by_their_first_three_initials}.
 	 */
 	SearchCompaniesByTheirFirstThreeInitials{
@@ -40,20 +41,19 @@ public enum VisServiceCompany implements JnService {
 		@Override
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			String search = json.getAsString(VisServiceCompany.FieldsToSearchCompaniesByTheirFirstThreeInitials.search);
-			String upperCaseSearch = search.toUpperCase();
+			String lowerCaseSearch = search.toLowerCase();
 			List<String> domains = getDomainsOfTheGroup(search);
 
 			Set<String> companies = new TreeSet<>();
 			for (String domain : domains) {
-				String companyName = VisEntityVirtualRecruiterDomainInitialsGrouper.getCompanyName(domain);
-				String upperCaseCompanyName = companyName.toUpperCase();
-				boolean anotherCompany = false == upperCaseCompanyName.startsWith(upperCaseSearch);
+				String lowerCaseDomain = domain.toLowerCase();
+				boolean anotherCompany = false == lowerCaseDomain.startsWith(lowerCaseSearch);
 
 				if(anotherCompany) {
 					continue;
 				}
 
-				companies.add(companyName);
+				companies.add(lowerCaseDomain);
 			}
 
 			boolean noCompanyFound = companies.isEmpty();

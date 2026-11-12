@@ -16,17 +16,28 @@ import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityCo
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldTransformer;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.decorators.engine.JnGrouperChildAsJsonEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildAsJsonEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildCounterEntityBeforeWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildEntityBeforeWrite;
+import com.jn.entities.decorators.engine.JnGrouperChildCurrentCounterEntityBeforeWrite;
+import com.jn.entities.decorators.engine.JnInsertionDateEntity;
+import com.jn.entities.fields.counters.JnInsertionYearMonthCounterKeys;
+import com.vis.json.transformers.VisInsertionMonthCounterCombinations;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityInsertionDate;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.business.recruiter.VisBusinessReactivateRecruiterWhoViewed;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerLinkedinHash;
+import com.vis.json.transformers.VisResumeDddCombinations;
+import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 import com.vis.json.transformers.VisResumeViewsOfTheMonthCombinations;
 import com.vis.json.transformers.VisViewedResumeMonthCombinations;
 import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
@@ -49,6 +60,12 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
  * Both relationships are oneToMany (a view has one recruiter and one resume), so the parents are declared by
  * {@code @CcpEntityGrouperParentCombinations} and no field keeps their ids.
  * <p>
+ * Every save also keeps the view in the group of each ddd of the viewed resume ({@code jn_grouper}, parent
+ * {@code vis_virtual_viewed_resume_ddd_grouper}): a JSON text with btc, clt, disponibility, experience, spokenLanguage,
+ * pcd, pj, resumeType, temporallyJobTime and travel of the resume as it was at the view, and the id of the view. The
+ * caller puts those values of the resume in the record being saved; only {@code ddd} is stored, so the next save knows
+ * the groups the view leaves. A save again (a new view or a new alias) replaces the child.
+ * <p>
  * A view makes an inactive recruiter active again ({@link VisBusinessReactivateRecruiterWhoViewed}).
  */
 @CcpAfterSaveFromMainEntity(execute = {VisBusinessReactivateRecruiterWhoViewed.class}, operationHandlers = {})
@@ -62,7 +79,19 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
 // e-mail of this entity as their SHA-1
 @CcpEntityGrouperChild(value = {VisEntityViewedResumesOfTheMonth.class}, beforeDecoratorClass = JnGrouperChildAsJsonEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildAsJsonEntityAfterWrite.class)
 @CcpEntityGrouperChildCounter(value = {VisEntityResumeViewsOfTheMonth.class}, counterKeyClass = VisViewedResumeRecruiterDomain.class, beforeDecoratorClass = JnGrouperChildCounterEntityBeforeWrite.class)
+// the views of the resumes of each ddd: the child is a JSON text with these fields of the resume, as the caller of the
+// save hands them over, and the id of the view
+@CcpEntityGrouperChild(value = {VisEntityVirtualViewedResumeDddGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
+		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
+		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class})
+// the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
+@CcpEntityInsertionDate(JnInsertionDateEntity.class)
+// a single group (its childName tells the entity apart) counts, for each month of insertion (yyyyMM), how many records
+// inserted in that month are active now: the insertion and the reactivation add 1, the deactivation and the delete subtract 1
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualInsertionMonthCounter.class}, counterKeyClass = JnInsertionYearMonthCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualInsertionMonthCounter.class, value = VisInsertionMonthCounterCombinations.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityViewedResumesOfTheMonth.class, value = VisViewedResumeMonthCombinations.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualViewedResumeDddGrouper.class, value = VisResumeDddCombinations.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityResumeViewsOfTheMonth.class, value = VisResumeViewsOfTheMonthCombinations.class)
 public class VisEntityViewedResume implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
@@ -110,5 +139,20 @@ public class VisEntityViewedResume implements CcpEntityConfigurator {
 		 */
 		@CcpJsonFieldTypeString(exactLength = 19)
 		date,
+
+		/**
+		 * The {@code ddd} field: list, the ddds of the viewed resume at the last save of the view, validated as in
+		 * {@code VisJsonCommonsFields}; the groups of {@code vis_virtual_viewed_resume_ddd_grouper} the view is in.
+		 */
+		@CcpJsonFieldValidatorArray
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		ddd,
+
+		/**
+		 * The {@code insertionDate} field: the moment the record was inserted, kept by {@code @CcpEntityInsertionDate}
+		 * (the value of the input is ignored), validated as in {@code JnJsonCommonsFields}.
+		 */
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		insertionDate,
 	}
 }

@@ -55,6 +55,23 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	rankings,
 	/** The number of resumes of the e-mail. */
 	totalOfResumes,
+	/**
+	 * The items of the column "languages and skills" of a resume, each one with its key, label, group and order, kept in
+	 * its row only until the subject of the e-mail is built.
+	 */
+	subjectItems,
+	/** The key of an item of the subject: the same language or skill in two resumes has the same key. */
+	itemKey,
+	/** The text of an item of the subject, as the column "languages and skills" shows it. */
+	itemLabel,
+	/** The group of an item of the subject: 0 fluent English or Spanish, 1 skill, 2 other language. */
+	itemGroup,
+	/** The order of an item of the subject inside its group: the position of the language or the ranking of the skill. */
+	itemOrder,
+	/** The best ranked skills of all the resumes of the e-mail, joined by commas, for the subject. */
+	topSkills,
+	/** How many distinct skills of the resumes of the e-mail are not in {@link #topSkills}, for the subject. */
+	otherSkills,
 	/** A number of a text. */
 	count,
 	/** The days of a text. */
@@ -75,6 +92,8 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	recruiters,
 	/** The SHA-1 of the e-mail of a recruiter, the order of the places of the day. */
 	emailHash,
+	/** The hash of the LinkedIn of a viewed resume: the key of the details, so the list of the views never carries the LinkedIn. */
+	linkedinHash,
 	/** The position of a recruiter in the queue of who did not view a resume lately: the digit of the group + the SHA-1 of the e-mail. */
 	queuePosition,
 	/**

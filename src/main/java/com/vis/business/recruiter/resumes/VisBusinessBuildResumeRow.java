@@ -241,6 +241,30 @@ public class VisBusinessBuildResumeRow implements CcpBusiness {
 		return lines;
 	}
 
+	/**
+	 * The positions (English 0, Spanish 1) of the fluent top languages, in the order of the lines returned by
+	 * {@link #getTopLanguagesAndOthers(CcpJsonRepresentation, JnLanguage, boolean)} with {@code top}: the i-th position is
+	 * the language of the i-th line.
+	 */
+	static List<Integer> getTopLanguagePositions(CcpJsonRepresentation json) {
+		boolean noLanguage = false == json.containsAllFields(VisEntityResume.Fields.spokenLanguage);
+		if(noLanguage) {
+			return List.of();
+		}
+		List<CcpJsonRepresentation> spokenLanguages = json.getAsJsonList(VisEntityResume.Fields.spokenLanguage);
+		List<Integer> positions = new ArrayList<>();
+		for (CcpJsonRepresentation spokenLanguage : spokenLanguages) {
+			boolean isTop = isFluentTopLanguage(spokenLanguage);
+			if(false == isTop) {
+				continue;
+			}
+			Integer position = getTopPosition(spokenLanguage);
+			positions.add(position);
+		}
+		positions.sort(Comparator.naturalOrder());
+		return positions;
+	}
+
 	private static boolean isFluentTopLanguage(CcpJsonRepresentation spokenLanguage) {
 		Integer level = spokenLanguage.getAsIntegerNumber(VisLanguages.level);
 		boolean fluent = level == FLUENT_LEVEL;
@@ -368,7 +392,11 @@ public class VisBusinessBuildResumeRow implements CcpBusiness {
 		return otherInformation;
 	}
 
-	/** Type of resume, CLT, PJ and years of experience: the order of the rows of the table. */
+	/**
+	 * Type of resume, CLT, PJ and years of experience: the order of the rows of the table, every key ascending. The years
+	 * go negative so the most experienced come first (decision of the user on 2026-11-12; until then the least
+	 * experienced came first).
+	 */
 	private static List<Object> getSortKeys(CcpJsonRepresentation json) {
 		Integer resumeType = json.getAsIntegerNumber(VisEntityResume.Fields.resumeType);
 		boolean hasClt = json.containsAllFields(VisEntityResume.Fields.clt);
@@ -376,7 +404,8 @@ public class VisBusinessBuildResumeRow implements CcpBusiness {
 		boolean hasPj = json.containsAllFields(VisEntityResume.Fields.pj);
 		Double pj = hasPj ? json.getAsDoubleNumber(VisEntityResume.Fields.pj) : MISSING_SALARY;
 		int years = getYearsOfExperience(json);
-		List<Object> sortKeys = List.of(resumeType, clt.doubleValue(), pj.doubleValue(), years);
+		int mostExperiencedFirst = -years;
+		List<Object> sortKeys = List.of(resumeType, clt.doubleValue(), pj.doubleValue(), mostExperiencedFirst);
 		return sortKeys;
 	}
 

@@ -1,5 +1,6 @@
 package com.vis.business.recruiter.resumes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.ccp.business.CcpBusiness;
@@ -23,8 +24,10 @@ import com.vis.entities.VisEntityViewedResumesOfTheMonth;
  * {@code jn_grouper}, whose children the saves of {@code vis_viewed_resume} keep up to date. No query runs.
  *
  * <p>Input: {@code email} (the recruiter) and {@code month} ({@code yyyyMM}). Output: {@code month} and
- * {@code viewedResume}, the list of the JSON texts of the views ({@code linkedin}, {@code alias} and {@code date} of the
- * last view of each resume), empty when the recruiter viewed nothing in the month.
+ * {@code viewedResume}, the list of the JSON texts of the views ({@code linkedinHash}, {@code alias} and {@code date} of
+ * the last view of each resume), empty when the recruiter viewed nothing in the month. The LinkedIn never leaves in this
+ * list: its hash is the key of the details ({@link VisBusinessViewedResumeDetails}), which check whether the candidate
+ * still lets the company of the recruiter see the resume.
  */
 public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 
@@ -73,7 +76,17 @@ public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 		String month = json.getAsString(Fields.month);
 		CcpJsonRepresentation groupKey = getGroupKeyOfTheMonth(json);
 		CcpJsonRepresentation group = JnBusinessGetGroup.INSTANCE.execute(groupKey);
-		List<String> viewedResume = group.getAsStringList(JnEntityGrouper.Fields.child);
+		List<String> storedViews = group.getAsStringList(JnEntityGrouper.Fields.child);
+		List<String> viewedResume = new ArrayList<>();
+		for (String storedViewText : storedViews) {
+			CcpJsonRepresentation storedView = new CcpJsonRepresentation(storedViewText);
+			String linkedin = storedView.getAsString(VisEntityViewedResume.Fields.linkedin);
+			String linkedinHash = VisBusinessSendResumesToRecruiters.getLinkedinHash(linkedin);
+			CcpJsonRepresentation viewWithoutLinkedin = storedView.removeFields(VisEntityViewedResume.Fields.linkedin);
+			CcpJsonRepresentation viewToShow = viewWithoutLinkedin.put(VisRecruiterResumesFields.linkedinHash, linkedinHash);
+			String viewToShowText = viewToShow.asUgglyJson();
+			viewedResume.add(viewToShowText);
+		}
 		CcpJsonRepresentation responseWithMonth = CcpOtherConstants.EMPTY_JSON.put(Fields.month, month);
 		CcpJsonRepresentation response = responseWithMonth.put(VisEntityViewedResumesOfTheMonth.Fields.viewedResume, viewedResume);
 		return response;

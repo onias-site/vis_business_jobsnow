@@ -18,6 +18,7 @@ import com.vis.business.recruiter.resumes.VisRecruiterLinks;
 import com.vis.business.recruiter.resumes.VisBusinessViewedResumeDetails;
 import com.vis.business.recruiter.resumes.VisBusinessViewedResumesOfTheMonth;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
+import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
 import com.vis.entities.VisEntityResume;
@@ -43,7 +44,8 @@ public enum VisServiceRecruiterResumes implements JnService {
 					.put(VisEntityViewedResume.Fields.email, email);
 			String alias = getAlias(view, resume);
 			CcpJsonRepresentation viewWithAlias = view.put(VisEntityViewedResume.Fields.alias, alias);
-			VisEntityViewedResume.ENTITY.save(viewWithAlias);
+			CcpJsonRepresentation viewWithTheResume = putTheViewedResume(viewWithAlias, resume);
+			VisEntityViewedResume.ENTITY.save(viewWithTheResume);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON
 					.put(VisEntityResume.Fields.linkedinAddress, linkedinAddress)
 					.put(VisEntityViewedResume.Fields.alias, alias);
@@ -81,7 +83,8 @@ public enum VisServiceRecruiterResumes implements JnService {
 					.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress)
 					.put(VisEntityViewedResume.Fields.email, email)
 					.put(VisEntityViewedResume.Fields.alias, alias);
-			VisEntityViewedResume.ENTITY.save(viewWithAlias);
+			CcpJsonRepresentation viewWithTheResume = putTheViewedResume(viewWithAlias, resume);
+			VisEntityViewedResume.ENTITY.save(viewWithTheResume);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityViewedResume.Fields.alias, alias);
 			return response;
 		}
@@ -132,9 +135,28 @@ public enum VisServiceRecruiterResumes implements JnService {
 	;
 
 	/**
-	 * The resume of a signed link of the e-mail, read by its id.
+	 * The view with the values of the viewed resume that the save keeps in the groups of its ddds: the ddds (stored in
+	 * the view) and btc, clt, disponibility, experience, spokenLanguage, pcd, pj, resumeType, temporallyJobTime and travel
+	 * (only in the child of each group), as the resume is stored.
+	 * @param view the view to be saved
+	 * @param resume the viewed resume, as stored
+	 * @return the view with those values
+	 */
+	private static CcpJsonRepresentation putTheViewedResume(CcpJsonRepresentation view, CcpJsonRepresentation resume) {
+		CcpJsonRepresentation viewedResume = resume.getJsonPiece(VisEntityResume.Fields.ddd, VisEntityResume.Fields.btc, VisEntityResume.Fields.clt,
+				VisEntityResume.Fields.disponibility, VisEntityResume.Fields.experience, VisEntityResume.Fields.spokenLanguage,
+				VisEntityResume.Fields.pcd, VisEntityResume.Fields.pj, VisEntityResume.Fields.resumeType,
+				VisEntityResume.Fields.temporallyJobTime, VisEntityResume.Fields.travel, VisEntityResume.Fields.skill);
+		CcpJsonRepresentation viewWithTheResume = view.mergeWithAnotherJson(viewedResume);
+		return viewWithTheResume;
+	}
+
+	/**
+	 * The resume of a signed link of the e-mail, read by its id. The companies the resume forbids are checked now, not
+	 * only when the e-mail went out: a candidate who forbids the company of the recruiter after the e-mail closes the
+	 * link. The answer is the same of a resume no longer active, so the recruiter does not learn they were forbidden.
 	 * @throws CcpErrorFlowDisturb {@code 401} when the link was not signed for this recruiter and resume; {@code 404}
-	 * when the resume is no longer active
+	 * when the resume is no longer active or now forbids the company of the recruiter
 	 */
 	private static CcpJsonRepresentation getResumeOfTheLink(CcpJsonRepresentation json) {
 		String email = json.getAsString(JnJsonCommonsFields.email);
@@ -144,6 +166,20 @@ public enum VisServiceRecruiterResumes implements JnService {
 		if(invalidLink) {
 			throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.UNHAUTHORIZED);
 		}
+		CcpJsonRepresentation resume = getActiveResume(json, resumeId);
+		List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
+		boolean forbiddenCompany = VisBusinessSendResumesToRecruiters.isTheCompanyOfTheRecruiterForbidden(email, notAllowedCompanies);
+		if(forbiddenCompany) {
+			throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
+		}
+		return resume;
+	}
+
+	/**
+	 * The resume read by its id.
+	 * @throws CcpErrorFlowDisturb {@code 404} when the resume is no longer active
+	 */
+	private static CcpJsonRepresentation getActiveResume(CcpJsonRepresentation json, String resumeId) {
 		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
 		String resumeEntityName = VisEntityResume.ENTITY.getEntityMetaData().entityName;
 		try {

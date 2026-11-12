@@ -32,7 +32,7 @@ import com.vis.business.recruiter.resumes.VisRecruiterResumesTexts;
 import com.vis.messages.VisMessages;
 
 /**
- * The resumes of the last e-mail of each recruiter, every one of them, also the ones beyond the 40 the e-mail shows:
+ * The resumes of the last e-mail of each recruiter, every one of them, also the ones beyond the 30 the e-mail shows:
  * written by {@link VisBusinessSendResumesToRecruiters} before the e-mail goes out, and read by id (the e-mail of the
  * recruiter logged in) by the screen "see all" of the front end, so that the screen runs no query (OQL). Kept for a
  * day: the next e-mail writes it again.
@@ -128,6 +128,8 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		String unsubscribeLink = "{" + VisRecruiterResumesFields.unsubscribeLink + "}";
 		String resumesTable = "{" + VisRecruiterResumesFields.resumesTable + "}";
 		String seeAll = "{" + VisRecruiterResumesFields.seeAll + "}";
+		String topSkills = "{" + VisRecruiterResumesFields.topSkills + "}";
+		String otherSkills = "{" + VisRecruiterResumesFields.otherSkills + "}";
 
 		String portugueseMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Olá, caso você não me conheça ou não se lembre de mim, sou o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
@@ -158,11 +160,11 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation portugueseTemplate = templateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.portuguese)
-				.put(JnJsonCommonsFields.subject, "Currículos inseridos ou alterados nos últimos 7 dias")
+				.put(JnJsonCommonsFields.subject, totalOfResumes + " currículos de " + topSkills + " e mais outras " + otherSkills + " habilidades gratuitos pra você!!!")
 				.put(JnJsonCommonsFields.message, portugueseMessage);
 		CcpJsonRepresentation englishTemplate = templateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.english)
-				.put(JnJsonCommonsFields.subject, "Resumes added or changed in the last 7 days")
+				.put(JnJsonCommonsFields.subject, totalOfResumes + " resumes of " + topSkills + " and " + otherSkills + " other skills for free for you!!!")
 				.put(JnJsonCommonsFields.message, englishMessage);
 
 		String sender = Parameters.SENDER.getValue();

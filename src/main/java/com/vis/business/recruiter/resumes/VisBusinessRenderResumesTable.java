@@ -15,7 +15,8 @@ import com.jn.utils.JnLanguage;
 import com.vis.messages.VisEmailHtml;
 
 /**
- * Renders the table of resumes of the e-mail of a recruiter: one row per resume, five columns, each value of a column
+ * Renders the table of resumes of the e-mail of a recruiter: one row per resume, the column "#" (the number of the row)
+ * and five more columns, each value of a column
  * in a line of its own. The regions after the third one and the languages and skills after the first
  * {@value #VISIBLE_LANGUAGES_AND_SKILLS} stay out, counted by a link ("+N regions", "see the other N skills") whose
  * {@code title} lists them (shown when the mouse rests on it) and that goes
@@ -43,6 +44,8 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 	static enum Html implements CcpJsonFieldName {
 		TABLE { public String getValue() { return "<table id=\"customers\"><tr>{value}</tr>{rows}</table>"; } },
 		HEADER { public String getValue() { return "<th style=\"width: 20%; text-align: center;\">{value}</th>"; } },
+		NUMBER_HEADER { public String getValue() { return "<th style=\"width: 1%; text-align: center;\">#</th>"; } },
+		NUMBER_CELL { public String getValue() { return "<td style=\"text-align: center;\">{value}</td>"; } },
 		ROW { public String getValue() { return "<tr>{value}</tr>"; } },
 		CELL { public String getValue() { return "<td>{value}</td>"; } },
 		LINE { public String getValue() { return "<p>{value}</p>"; } },
@@ -76,7 +79,8 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 				VisRecruiterResumesTexts.columnOtherInformation,
 				VisRecruiterResumesTexts.columnDatesAndViews,
 		};
-		StringBuilder headers = new StringBuilder();
+		String numberHeader = Html.NUMBER_HEADER.getValue();
+		StringBuilder headers = new StringBuilder(numberHeader);
 		for (VisRecruiterResumesTexts column : columns) {
 			String columnName = column.getMessage(language);
 			String header = piece(Html.HEADER, columnName);
@@ -85,8 +89,10 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 
 		List<CcpJsonRepresentation> resumes = json.getAsJsonList(VisRecruiterResumesFields.resumes);
 		StringBuilder rows = new StringBuilder();
+		int rowNumber = 0;
 		for (CcpJsonRepresentation resume : resumes) {
-			String row = this.getRow(resume, language, email, frontendUrl);
+			rowNumber++;
+			String row = this.getRow(resume, rowNumber, language, email, frontendUrl);
 			rows.append(row);
 		}
 
@@ -100,8 +106,11 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 		return jsonWithTable;
 	}
 
-	private String getRow(CcpJsonRepresentation resume, JnLanguage language, String email, String frontendUrl) {
+	/** A row of the table; the first cell, the column "#", is the number of the row, from 1. */
+	private String getRow(CcpJsonRepresentation resume, int rowNumber, JnLanguage language, String email, String frontendUrl) {
 		String resumeLink = getResumeLink(resume, email, frontendUrl);
+		String rowNumberText = String.valueOf(rowNumber);
+		String numberCell = resolveRaw(Html.NUMBER_CELL, rowNumberText);
 
 		List<String> whatMatters = resume.getAsStringList(VisRecruiterResumesFields.whatMatters);
 		List<String> regions = resume.getAsStringList(VisRecruiterResumesFields.regions);
@@ -123,7 +132,7 @@ public class VisBusinessRenderResumesTable implements CcpBusiness {
 
 		String datesCell = getDatesAndViewsCell(resume, resumeLink);
 
-		String cells = whatMattersCell + languagesAndSkillsCell + jobCell + otherInformationCell + datesCell;
+		String cells = numberCell + whatMattersCell +languagesAndSkillsCell + jobCell + otherInformationCell + datesCell;
 		String row = resolveRaw(Html.ROW, cells);
 		return row;
 	}
