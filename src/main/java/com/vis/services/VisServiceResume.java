@@ -1,5 +1,7 @@
 package com.vis.services;
 
+import java.util.List;
+
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpErrorJsonFieldNotFound;
@@ -23,6 +25,7 @@ import com.vis.business.resume.VisBusinessResumeViewersOfTheMonth;
 import com.vis.business.resume.VisBusinessSaveResumeAndSpendTheUpdate;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeDailyAction;
+import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.json.fields.validation.VisJsonFieldsResumeKey;
 import com.vis.json.fields.validation.VisResumeDailyActions;
 import com.vis.status.VisProcessStatusResumeDailyAction;
@@ -146,9 +149,27 @@ public enum VisServiceResume implements JnService {
 			String languageName = json.getOrDefault(JnJsonCommonsFields.language, () -> JnLanguage.portuguese.name());
 			String english = JnLanguage.english.name();
 			JnLanguage language = english.equals(languageName) ? JnLanguage.english : JnLanguage.portuguese;
-			CcpJsonRepresentation withoutInternalFieldsOfTheActive = withoutInternalFields(resumeData, VisEntityResume.ENTITY, language);
-			CcpJsonRepresentation withoutInternalFields = withoutInternalFields(withoutInternalFieldsOfTheActive, twinEntity, language);
+			List<String> restrictionMessages = getRestrictionMessages(json);
+			CcpJsonRepresentation withoutInternalFieldsOfTheActive = withoutInternalFields(resumeData, VisEntityResume.ENTITY, language, restrictionMessages);
+			CcpJsonRepresentation withoutInternalFields = withoutInternalFields(withoutInternalFieldsOfTheActive, twinEntity, language, restrictionMessages);
 			return withoutInternalFields;
+		}
+
+		/**
+		 * What the owner must correct before the resume goes to the recruiters again ({@code vis_resume_restriction},
+		 * since 2026-11-12), read by id.
+		 * @param json the resume key, with the readable e-mail
+		 * @return the messages, none when the resume has no restriction
+		 */
+		private List<String> getRestrictionMessages(CcpJsonRepresentation json) {
+			CcpJsonRepresentation restrictionKey = json.getJsonPiece(VisEntityResumeRestriction.Fields.email);
+			try {
+				CcpJsonRepresentation restriction = VisEntityResumeRestriction.ENTITY.getOneById(restrictionKey);
+				List<String> messages = restriction.getAsStringList(VisEntityResumeRestriction.Fields.message);
+				return messages;
+			} catch (CcpErrorFlowDisturb noRestriction) {
+				return List.of();
+			}
 		}
 
 		/**
@@ -158,9 +179,10 @@ public enum VisServiceResume implements JnService {
 		 * @param resumeData the records by entity
 		 * @param entity the entity whose record is cleaned
 		 * @param language the language of the screen
+		 * @param restrictionMessages what the owner must correct, shown in red at the top of the form
 		 * @return the records by entity, with the record of the entity cleaned
 		 */
-		private CcpJsonRepresentation withoutInternalFields(CcpJsonRepresentation resumeData, CcpEntity entity, JnLanguage language) {
+		private CcpJsonRepresentation withoutInternalFields(CcpJsonRepresentation resumeData, CcpEntity entity, JnLanguage language, List<String> restrictionMessages) {
 			boolean notFound = false == resumeData.containsField(entity);
 			if(notFound) {
 				return resumeData;
@@ -168,7 +190,9 @@ public enum VisServiceResume implements JnService {
 			CcpJsonRepresentation storedRecord = resumeData.getInnerJson(entity);
 			CcpJsonRepresentation fieldsOfTheScreen = storedRecord.removeFields(VisEntityResume.Fields.hash, VisEntityResume.Fields.email);
 			CcpJsonRepresentation fieldsWithTheWarning = withTheInvalidLinkedinWarning(fieldsOfTheScreen, language);
-			CcpJsonRepresentation cleanedResumeData = resumeData.put(entity, fieldsWithTheWarning);
+			boolean noRestriction = restrictionMessages.isEmpty();
+			CcpJsonRepresentation fieldsWithTheRestriction = noRestriction ? fieldsWithTheWarning : fieldsWithTheWarning.put(ResumeResponse.restrictionMessages, restrictionMessages);
+			CcpJsonRepresentation cleanedResumeData = resumeData.put(entity, fieldsWithTheRestriction);
 			return cleanedResumeData;
 		}
 
@@ -265,6 +289,8 @@ public enum VisServiceResume implements JnService {
 		inexistentField,
 		/** The warning of the form about the LinkedIn address confirmed as invalid. */
 		invalidLinkedinAddressMessage,
+		/** What the owner must correct ({@code vis_resume_restriction}), shown in red at the top of the form. */
+		restrictionMessages,
 	}
 
 	/**

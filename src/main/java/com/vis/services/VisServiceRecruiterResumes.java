@@ -2,6 +2,9 @@ package com.vis.services;
 
 import java.util.List;
 
+import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDecoratorTypes;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.dependency.injection.CcpDependencyInjection;
@@ -22,6 +25,7 @@ import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
 import com.vis.entities.VisEntityResume;
+import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.entities.VisEntityViewedResume;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.business.messages.JnMessageType;
@@ -185,7 +189,8 @@ public enum VisServiceRecruiterResumes implements JnService {
 	 * only when the e-mail went out: a candidate who forbids the company of the recruiter after the e-mail closes the
 	 * link. The answer is the same of a resume no longer active, so the recruiter does not learn they were forbidden.
 	 * @throws CcpErrorFlowDisturb {@code 401} when the link was not signed for this recruiter and resume; {@code 404}
-	 * when the resume is no longer active or now forbids the company of the recruiter; {@code 410} when the support
+	 * when the resume is no longer active, now forbids the company of the recruiter or has a restriction its owner must
+	 * correct ({@code vis_resume_restriction}); {@code 410} when the support
 	 * confirmed that its LinkedIn address is invalid
 	 */
 	private static CcpJsonRepresentation getResumeOfTheLink(CcpJsonRepresentation json) {
@@ -201,6 +206,14 @@ public enum VisServiceRecruiterResumes implements JnService {
 		boolean invalidLinkedinAddress = resume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false);
 		if(invalidLinkedinAddress) {
 			return VisProcessStatusInvalidLinkedin.invalidLinkedinAddress.throwException(json);
+		}
+		// the owner must correct the resume first (since 2026-11-12): the same answer of a resume no longer active. The
+		// stored resume holds the e-mail hashed, as the restriction keeps it: read without the fields transformer
+		CcpJsonRepresentation restrictionKey = resume.getJsonPiece(VisEntityResume.Fields.email);
+		CcpEntity restrictionByHashedEmail = CcpEntityFactory.getCustomEntity(VisEntityResumeRestriction.ENTITY, CcpEntityDecoratorTypes.FieldsTransformer);
+		boolean restricted = restrictionByHashedEmail.exists(restrictionKey);
+		if(restricted) {
+			throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
 		}
 		List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
 		boolean forbiddenCompany = VisBusinessSendResumesToRecruiters.isTheCompanyOfTheRecruiterForbidden(email, notAllowedCompanies);

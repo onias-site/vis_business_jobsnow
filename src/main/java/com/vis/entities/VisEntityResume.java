@@ -26,6 +26,8 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.w
 import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.write.CcpAfterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.write.CcpAfterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterUpdateFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterUpdateFromTwinEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeDeleteAnyWhereFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
@@ -62,6 +64,7 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
 import com.jn.business.messages.JnEmailFooter;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
+import com.vis.business.resume.VisBusinessReleaseResumeRestriction;
 import com.vis.business.resume.VisBusinessResumeLinkedinOwner;
 import com.vis.business.resume.VisBusinessResumeLinkedinRelease;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -112,6 +115,9 @@ import com.vis.messages.VisMessages;
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsValidator(VisEntityResume.Fields.class)
 @CcpAfterSaveFromMainEntity(execute = {VisBusinessResumeLinkedinOwner.class}, operationHandlers = {})
+// an update of the resume, active or inactive, only passes with every field valid: it releases the restriction (since 2026-11-12)
+@CcpAfterUpdateFromMainEntity(execute = {VisBusinessReleaseResumeRestriction.class}, operationHandlers = {})
+@CcpAfterUpdateFromTwinEntity(execute = {VisBusinessReleaseResumeRestriction.class}, operationHandlers = {})
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpBeforeDeleteAnyWhereFromMainEntity(execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {})
 @CcpAfterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutSavedResume.class)

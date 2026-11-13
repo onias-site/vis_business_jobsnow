@@ -3,6 +3,7 @@ package com.vis.business.recruiter.resumes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,6 +38,7 @@ import com.vis.entities.VisEntityRecruiterQueueCursor;
 import com.vis.entities.VisEntityRecruiterResumes;
 import com.vis.entities.VisEntityRecruiterSignUpReturn;
 import com.vis.entities.VisEntityResume;
+import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.json.transformers.VisJsonTransformerLinkedinHash;
 import com.vis.json.transformers.VisJsonTransformerRecruiterDomain;
@@ -899,7 +901,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 
 	/**
 	 * The stored resumes of the given e-mails (hashes); the inactive ones are not in {@code vis_resume}, and the ones with
-	 * {@code invalidLinkedinAddress} are left out.
+	 * {@code invalidLinkedinAddress} or with a restriction to correct ({@code vis_resume_restriction}) are left out.
 	 */
 	private static List<CcpJsonRepresentation> getResumes(Set<String> emailHashes) {
 		CcpQueryOptions query = CcpQueryOptions.INSTANCE
@@ -915,7 +917,29 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		query.selectFrom(VisEntityResume.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, resume -> resumes.add(resume));
 		// the support confirmed that the LinkedIn address does not open (since 2026-11-12): the resume goes to no recruiter
 		resumes.removeIf(resume -> resume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false));
+		// the owner must correct the resume first (vis_resume_restriction, since 2026-11-12): it goes to no recruiter
+		Set<String> restrictedEmails = getRestrictedEmails(emailHashes);
+		resumes.removeIf(resume -> restrictedEmails.contains(resume.getAsString(VisEntityResume.Fields.email)));
 		return resumes;
+	}
+
+	/**
+	 * The e-mails (hashes), among the given ones, whose resumes have a restriction to correct: the restriction keeps the
+	 * e-mail hashed as the resume does.
+	 */
+	private static Set<String> getRestrictedEmails(Set<String> emailHashes) {
+		CcpQueryOptions query = CcpQueryOptions.INSTANCE
+				.startQuery()
+					.startBool()
+						.startMust()
+							.terms(VisEntityResumeRestriction.Fields.email, emailHashes)
+						.endMustAndBackToBool()
+					.endBoolAndBackToQuery()
+				.endQueryAndBackToRequest();
+		Set<String> restrictedEmails = new HashSet<>();
+		String scrollTime = Constants.SCROLL_TIME.getValue();
+		query.selectFrom(VisEntityResumeRestriction.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, restriction -> restrictedEmails.add(restriction.getAsString(VisEntityResumeRestriction.Fields.email)));
+		return restrictedEmails;
 	}
 
 	/** The oldest (added) and the newest (last change) times of each resume in the history, by the hash of its e-mail. */
