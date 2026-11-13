@@ -36,6 +36,8 @@ import com.vis.business.bots.linkedin.VisSupportVerifyLinkedinBotConfiguration;
 import com.vis.business.bots.linkedin.VisSupportVerifyLinkedinFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisResumeMessageTypes;
+import com.vis.business.resume.VisBusinessTellTheOwnerAboutTheView;
+import com.vis.business.resume.VisResumeViewMessages;
 import com.vis.messages.VisMessages;
 
 /**
@@ -53,7 +55,7 @@ import com.vis.messages.VisMessages;
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsValidator(VisEntityResumeMessage.Fields.class)
-@CcpAfterSaveFromMainEntitySendAnInstantMessageAndIfFailsSaveAWarning(VisMessages.VisInvalidLinkedinAddress.class)
+@CcpAfterSaveFromMainEntitySendAnInstantMessageAndIfFailsSaveAWarning({VisMessages.VisInvalidLinkedinAddress.class, VisMessages.VisNewViewInYourResume.class})
 public class VisEntityResumeMessage implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntityResumeMessage INSTANCE = new VisEntityResumeMessage();
@@ -90,6 +92,26 @@ public class VisEntityResumeMessage implements CcpEntityConfigurator {
 				+ "profile, nor send your profile to the recruiters. So we ask you to fix it.";
 		List<CcpBulkItem> ownerItems = this.getInstantMessageTemplateAndParameters(ownerTemplateId, ownerPortuguese, ownerEnglish, JnMessageType.JnBotType.user);
 		items.addAll(ownerItems);
+
+		// the new view of the resume: the record already holds the text (one of VisResumeViewMessages), which prevails
+		String viewTemplateId = VisMessages.VisNewViewInYourResume.class.getName();
+		String messagePlaceholder = "{" + JnJsonCommonsFields.message + "}";
+		List<CcpBulkItem> viewItems = this.getInstantMessageTemplateAndParameters(viewTemplateId, messagePlaceholder, messagePlaceholder, JnMessageType.JnBotType.user);
+		items.addAll(viewItems);
+		String datePlaceholder = "{" + JnJsonCommonsFields.date + "}";
+		String domainPlaceholder = "{" + VisBusinessTellTheOwnerAboutTheView.Fields.recruiterDomain + "}";
+		List<CcpBulkItem> byCompanyInPortuguese = VisResumeViewMessages.newViewByCompany.toBulkItems(JnLanguage.portuguese,
+				"Às " + datePlaceholder + " seu currículo foi visualizado por algum recrutador da consultoria / empresa " + domainPlaceholder);
+		List<CcpBulkItem> byCompanyInEnglish = VisResumeViewMessages.newViewByCompany.toBulkItems(JnLanguage.english,
+				"At " + datePlaceholder + " your resume was viewed by a recruiter of the consultancy / company " + domainPlaceholder);
+		List<CcpBulkItem> byFreelancerInPortuguese = VisResumeViewMessages.newViewByFreelancer.toBulkItems(JnLanguage.portuguese,
+				"Às " + datePlaceholder + " seu currículo foi visualizado por algum recrutador freelancer");
+		List<CcpBulkItem> byFreelancerInEnglish = VisResumeViewMessages.newViewByFreelancer.toBulkItems(JnLanguage.english,
+				"At " + datePlaceholder + " your resume was viewed by a freelancer recruiter");
+		items.addAll(byCompanyInPortuguese);
+		items.addAll(byCompanyInEnglish);
+		items.addAll(byFreelancerInPortuguese);
+		items.addAll(byFreelancerInEnglish);
 
 		// the command is the same in every language
 		String ticketTemplateId = VisMessages.VisNotifySupportAboutInvalidLinkedinTicket.class.getName();

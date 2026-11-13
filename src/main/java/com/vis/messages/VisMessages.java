@@ -21,6 +21,7 @@ import com.vis.business.recruiter.resumes.VisBusinessPutResumePreviewInTheEmail;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.entities.VisEntitySkillPending;
+import com.vis.json.fields.validation.VisResumeMessageTypes;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 
 /**
@@ -397,32 +398,29 @@ public class VisMessages {
 
 	/**
 	 * Tells the owner of a resume, through the user bot, that the support confirmed as invalid the LinkedIn address
-	 * reported by a recruiter (since 2026-11-12). Sent by the save of {@code vis_resume_message}, whose {@code message}
-	 * already holds the text of this template in the language of the owner and prevails over the template. Repeatable: the
-	 * owner who fixes the address and has it reported again gets the message again.
+	 * reported by a recruiter (since 2026-11-12): the records of {@code vis_resume_message} of the kind
+	 * {@code invalidLinkedinAddress}.
 	 */
-	public static class VisInvalidLinkedinAddress implements JnMessageTemplate, JnRepeatableMessage{
+	public static class VisInvalidLinkedinAddress extends VisMessageToTheResumeOwner{
 		/** The single instance: the class keeps no state. */
 		public final static VisInvalidLinkedinAddress INSTANCE = new VisInvalidLinkedinAddress();
 
-		private VisInvalidLinkedinAddress() {}
+		private VisInvalidLinkedinAddress() {
+			super(VisResumeMessageTypes.invalidLinkedinAddress);
+		}
+	}
 
-		/**
-		 * Puts the user bot, which sends to the owner (the parameters of the sending are found by bot and template, and a
-		 * message without bot goes through the support one), and the language of the template, Portuguese while the resumes
-		 * keep no language.
-		 * @param json the record of {@code vis_resume_message}
-		 * @return the values of the template
-		 */
-		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			String userBot = JnMessageType.JnBotType.user.name();
-			CcpJsonRepresentation jsonWithBot = json.put(JnJsonInstantMessengerFields.botName, userBot);
-			boolean languageInformed = json.containsField(JnJsonCommonsFields.language);
-			if(languageInformed) {
-				return jsonWithBot;
-			}
-			CcpJsonRepresentation jsonWithLanguage = jsonWithBot.put(JnJsonCommonsFields.language, JnLanguage.portuguese);
-			return jsonWithLanguage;
+	/**
+	 * Tells the owner of a resume, through the user bot, that a recruiter viewed it (since 2026-11-12): the records of
+	 * {@code vis_resume_message} of the kind {@code newViewInYourResume}, saved by every save of the view
+	 * ({@code VisBusinessTellTheOwnerAboutTheView}).
+	 */
+	public static class VisNewViewInYourResume extends VisMessageToTheResumeOwner{
+		/** The single instance: the class keeps no state. */
+		public final static VisNewViewInYourResume INSTANCE = new VisNewViewInYourResume();
+
+		private VisNewViewInYourResume() {
+			super(VisResumeMessageTypes.newViewInYourResume);
 		}
 	}
 

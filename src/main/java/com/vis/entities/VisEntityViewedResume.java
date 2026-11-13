@@ -37,6 +37,7 @@ import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.business.recruiter.VisBusinessReactivateRecruiterWhoViewed;
+import com.vis.business.resume.VisBusinessTellTheOwnerAboutTheView;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerLinkedinHash;
 import com.vis.json.transformers.VisResumeDddCombinations;
@@ -75,7 +76,7 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
  * daily e-mail of resumes ({@code VisBusinessSendResumesToRecruiters}) no longer sends the recruiter a resume whose view
  * of theirs is in the twin. A new save of the view brings it back from the twin.
  */
-@CcpAfterSaveFromMainEntity(execute = {VisBusinessReactivateRecruiterWhoViewed.class}, operationHandlers = {})
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessReactivateRecruiterWhoViewed.class, VisBusinessTellTheOwnerAboutTheView.class}, operationHandlers = {})
 @CcpEntityTwin(
 		twinEntityName = "vis_inactive_viewed_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,

@@ -22,7 +22,7 @@ import com.vis.entities.VisEntityViewedResume;
 public class VisViewedResumeRecruiterDomain implements Function<CcpJsonRepresentation, String> {
 
 	/** The keys of this class. */
-	enum Fields implements CcpJsonFieldName{
+	public enum Fields implements CcpJsonFieldName{
 		/** The key shared by every recruiter whose e-mail has a non-professional domain. */
 		freelancer,
 	}
