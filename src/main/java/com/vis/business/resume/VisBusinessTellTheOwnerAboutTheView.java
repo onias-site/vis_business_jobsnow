@@ -22,7 +22,8 @@ import com.vis.json.transformers.VisJsonTransformerLinkedinHash;
 import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
 
 /**
- * Tells the owner of the viewed resume about the view (since 2026-11-12), after every save of {@code vis_viewed_resume}:
+ * Tells the owner of the viewed resume about the view (since 2026-11-12), after each insertion in {@code vis_viewed_resume} (a save
+ * of a view that already exists, as the reopening of the resume, tells nothing):
  * each resume that uses the viewed LinkedIn address ({@code vis_resume_linkedin}) whose {@code chatId} is greater than
  * zero gets a record in {@code vis_resume_message} ({@code newViewInYourResume}), whose save sends it through the user
  * bot ({@code VisNewViewInYourResume}). The text names the moment of the view and the domain of the recruiter, or tells

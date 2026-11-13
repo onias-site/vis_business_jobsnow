@@ -11,6 +11,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityG
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterInsertFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
@@ -76,7 +77,8 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
  * daily e-mail of resumes ({@code VisBusinessSendResumesToRecruiters}) no longer sends the recruiter a resume whose view
  * of theirs is in the twin. A new save of the view brings it back from the twin.
  */
-@CcpAfterSaveFromMainEntity(execute = {VisBusinessReactivateRecruiterWhoViewed.class, VisBusinessTellTheOwnerAboutTheView.class}, operationHandlers = {})
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessReactivateRecruiterWhoViewed.class}, operationHandlers = {})
+@CcpAfterInsertFromMainEntity(execute = {VisBusinessTellTheOwnerAboutTheView.class}, operationHandlers = {})
 @CcpEntityTwin(
 		twinEntityName = "vis_inactive_viewed_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
