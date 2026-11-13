@@ -11,7 +11,8 @@ import com.vis.json.fields.validation.VisResumeDailyActions;
 /**
  * Last step of {@code VisServiceResume.Save}: saves the resume and, when it already existed (found, active or inactive,
  * under {@code _entities}), spends the update of the day of the candidate ({@link VisEntityResumeDailyAction}).
- * Inserting a resume spends nothing.
+ * Inserting a resume spends nothing. Saving an inactive resume also releases its restriction
+ * ({@link VisBusinessReleaseResumeRestriction}), which the afterUpdate of the resume releases only for an update.
  */
 public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 
@@ -49,6 +50,12 @@ public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 		String email = this.resume.getAsString(VisEntityResume.Fields.email);
 		CcpJsonRepresentation dailyActionKey = VisEntityResumeDailyAction.getKey(email, VisResumeDailyActions.update);
 		VisEntityResumeDailyAction.ENTITY.save(dailyActionKey);
+		if(active) {
+			return jsonAfterTheSteps;
+		}
+		// the save of an inactive resume through the main entity is an insertion for it (the record leaves the twin), so
+		// the afterUpdate of the resume does not run: the correction of the owner releases the restriction here
+		VisBusinessReleaseResumeRestriction.INSTANCE.execute(resumeWithKeptFields);
 		return jsonAfterTheSteps;
 	}
 
