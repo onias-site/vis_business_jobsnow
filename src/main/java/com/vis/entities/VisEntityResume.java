@@ -55,6 +55,8 @@ import com.jn.entities.decorators.engine.JnInsertionDateEntity;
 import com.jn.entities.fields.counters.JnInsertionYearMonthCounterKeys;
 import com.vis.json.transformers.VisInsertionMonthCounterCombinations;
 import com.vis.json.transformers.VisDddCounterCombinations;
+import com.vis.json.transformers.VisInsertionDayCounterCombinations;
+import com.jn.entities.fields.counters.JnInsertionDayCounterKeys;
 import com.vis.json.transformers.VisDddCounterKeys;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityInsertionDate;
 import com.jn.entities.decorators.engine.JnGrouperChildTotalEntity;
@@ -161,6 +163,9 @@ import com.vis.messages.VisMessages;
 // inserted in that month are active now: the insertion and the reactivation add 1, the deactivation and the delete subtract 1
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualInsertionMonthCounter.class}, counterKeyClass = JnInsertionYearMonthCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualInsertionMonthCounter.class, value = VisInsertionMonthCounterCombinations.class)
+// the same counting by day of insertion (yyyyMMdd): the line chart by day of the screen Supply X Demand
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualInsertionDayCounter.class}, counterKeyClass = JnInsertionDayCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualInsertionDayCounter.class, value = VisInsertionDayCounterCombinations.class)
 // a single group (its childName tells the entity apart) counts, for each ddd, how many active resumes list it now: the
 // totals of the folders of the screen Supply X Demand
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualDddCounter.class}, counterKeyClass = VisDddCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
