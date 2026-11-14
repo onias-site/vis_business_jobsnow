@@ -32,6 +32,8 @@ import com.jn.entities.decorators.engine.JnGrouperChildCurrentCounterEntityBefor
 import com.jn.entities.decorators.engine.JnInsertionDateEntity;
 import com.jn.entities.fields.counters.JnInsertionYearMonthCounterKeys;
 import com.vis.json.transformers.VisInsertionMonthCounterCombinations;
+import com.vis.json.transformers.VisDddCounterCombinations;
+import com.vis.json.transformers.VisDddCounterKeys;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityInsertionDate;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
@@ -105,6 +107,10 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
 // inserted in that month are active now: the insertion and the reactivation add 1, the deactivation and the delete subtract 1
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualInsertionMonthCounter.class}, counterKeyClass = JnInsertionYearMonthCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualInsertionMonthCounter.class, value = VisInsertionMonthCounterCombinations.class)
+// a single group (its childName tells the entity apart) counts, for each ddd, how many active views have a resume that
+// lists it: the totals of the folders of the screen Supply X Demand
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualDddCounter.class}, counterKeyClass = VisDddCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddCounter.class, value = VisDddCounterCombinations.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityViewedResumesOfTheMonth.class, value = VisViewedResumeMonthCombinations.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualViewedResumeDddGrouper.class, value = VisResumeDddCombinations.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityResumeViewsOfTheMonth.class, value = VisResumeViewsOfTheMonthCombinations.class)

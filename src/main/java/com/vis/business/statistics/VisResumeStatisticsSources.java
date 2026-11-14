@@ -8,6 +8,7 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaDa
 import com.jn.utils.JnGroupers;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityViewedResume;
+import com.vis.entities.VisEntityVirtualDddCounter;
 import com.vis.entities.VisEntityVirtualDddGrouper;
 import com.vis.entities.VisEntityVirtualViewedResumeDddGrouper;
 
@@ -24,12 +25,22 @@ public enum VisResumeStatisticsSources implements CcpJsonFieldName {
 			CcpJsonRepresentation groupKey = getGroupKey(VisEntityVirtualDddGrouper.ENTITY, VisEntityResume.ENTITY, combination);
 			return groupKey;
 		}
+
+		public CcpJsonRepresentation getTotalsGroupKey() {
+			CcpJsonRepresentation groupKey = getTotalsGroupKey(VisEntityResume.ENTITY);
+			return groupKey;
+		}
 	},
 	/** The views of the resumes of the ddd by the recruiters, with the resume as it was at the view ({@code vis_virtual_viewed_resume_ddd_grouper}). */
 	viewedResumes {
 		public CcpJsonRepresentation getGroupKey(Integer ddd) {
 			CcpJsonRepresentation combination = CcpOtherConstants.EMPTY_JSON.put(VisEntityVirtualViewedResumeDddGrouper.Fields.ddd, ddd);
 			CcpJsonRepresentation groupKey = getGroupKey(VisEntityVirtualViewedResumeDddGrouper.ENTITY, VisEntityViewedResume.ENTITY, combination);
+			return groupKey;
+		}
+
+		public CcpJsonRepresentation getTotalsGroupKey() {
+			CcpJsonRepresentation groupKey = getTotalsGroupKey(VisEntityViewedResume.ENTITY);
 			return groupKey;
 		}
 	},
@@ -41,6 +52,18 @@ public enum VisResumeStatisticsSources implements CcpJsonFieldName {
 	 * @return the parent id, the parent name and the child name of the group
 	 */
 	public abstract CcpJsonRepresentation getGroupKey(Integer ddd);
+
+	/**
+	 * The key of the group of the totals by ddd in {@code jn_grouper} ({@code vis_virtual_ddd_counter}).
+	 * @return the parent id, the parent name and the child name of the group
+	 */
+	public abstract CcpJsonRepresentation getTotalsGroupKey();
+
+	private static CcpJsonRepresentation getTotalsGroupKey(CcpEntity childEntity) {
+		CcpJsonRepresentation combination = VisEntityVirtualDddCounter.getCombination();
+		CcpJsonRepresentation groupKey = getGroupKey(VisEntityVirtualDddCounter.ENTITY, childEntity, combination);
+		return groupKey;
+	}
 
 	private static CcpJsonRepresentation getGroupKey(CcpEntity parentEntity, CcpEntity childEntity, CcpJsonRepresentation combination) {
 		String parentId = parentEntity.calculateId(combination);
