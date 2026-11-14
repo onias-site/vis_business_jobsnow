@@ -15,7 +15,8 @@ import com.vis.business.bots.VisUserBotCommands;
 
 /**
  * Configuration of {@code /receiveMessages <email>} in the user bot (since 2026-11-12): the first step asks the login
- * token of the e-mail ({@link VisUserReceiveMessagesAskToken}); the second checks it and saves the chat in the resume
+ * token of the e-mail ({@link VisUserReceiveMessagesAskToken}), or ends the command when the e-mail is already registered
+ * with this chat; the second checks it and saves the chat of the e-mail in {@code jn_instant_messenger_user}
  * ({@link VisUserReceiveMessagesCheckToken}), or waits for another token while the chat has attempts. Seeded by
  * {@code VisEntityLoginTokenAttempts}.
  */
@@ -32,12 +33,14 @@ public final class VisUserReceiveMessagesBotConfiguration {
 		String tokenStep = VisUserReceiveMessagesSteps.receiveMessagesToken.name();
 		CcpJsonRepresentation[] botReply = JnEntityBotCommandStep.getBotReplyInEveryLanguage();
 
-		// a blocked chat or an invalid e-mail end the session with that notice
+		// a blocked chat, an invalid e-mail or an e-mail already registered with this chat end the session with that notice
 		int blocked = VisUserReceiveMessagesStatus.blocked.asNumber();
 		int invalidEmail = VisUserReceiveMessagesStatus.invalidEmail.asNumber();
+		int alreadyRegistered = VisUserReceiveMessagesStatus.alreadyRegistered.asNumber();
 		CcpJsonRepresentation blockedFlow = JnEntityBotCommandStep.getStepFlow(blocked, "", botReply);
 		CcpJsonRepresentation invalidEmailFlow = JnEntityBotCommandStep.getStepFlow(invalidEmail, "", botReply);
-		CcpJsonRepresentation askTokenStep = JnEntityBotCommandStep.getBotCommandStep(commandName, VisUserReceiveMessagesAskToken.class, tokenStep, blockedFlow, invalidEmailFlow);
+		CcpJsonRepresentation alreadyRegisteredFlow = JnEntityBotCommandStep.getStepFlow(alreadyRegistered, "", botReply);
+		CcpJsonRepresentation askTokenStep = JnEntityBotCommandStep.getBotCommandStep(commandName, VisUserReceiveMessagesAskToken.class, tokenStep, blockedFlow, invalidEmailFlow, alreadyRegisteredFlow);
 
 		// a wrong token waits for another one; at the limit, or without resume, the session ends
 		int wrongToken = VisUserReceiveMessagesStatus.wrongToken.asNumber();
@@ -73,7 +76,10 @@ public final class VisUserReceiveMessagesBotConfiguration {
 						, "We found no resume registered for the e-mail " + email + ". Register your resume on Onias.Site and then use the command /receiveMessages " + email + " again")
 				.systemMessage(VisUserReceiveMessagesMessages.chatSaved
 						, "Pronto! A partir de agora você receberá por aqui as mensagens do Onias.Site sobre o seu currículo."
-						, "Done! From now on you will receive here the messages of Onias.Site about your resume.");
+						, "Done! From now on you will receive here the messages of Onias.Site about your resume.")
+				.systemMessage(VisUserReceiveMessagesMessages.alreadyRegistered
+						, "O e-mail " + email + " já está cadastrado para receber por aqui as mensagens do Onias.Site sobre o seu currículo. Não é preciso fazer mais nada."
+						, "The e-mail " + email + " is already registered to receive here the messages of Onias.Site about your resume. There is nothing else to do.");
 		List<CcpBulkItem> bulkItems = seeds.getBulkItems();
 		return bulkItems;
 	}

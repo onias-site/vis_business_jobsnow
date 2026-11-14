@@ -61,8 +61,7 @@ public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 
 	/**
 	 * The resume of the owner with the fields the form does not send (since 2026-11-12): the save replaces the whole
-	 * record, so without this a save of the owner would erase them. {@code chatId} stays as stored;
-	 * {@code invalidLinkedinAddress} stays {@code true} while the LinkedIn address is the same, and is {@code false} for a
+	 * record, so without this a save of the owner would erase them. {@code invalidLinkedinAddress} stays {@code true} while the LinkedIn address is the same, and is {@code false} for a
 	 * new resume or a new address (the owner fixed the address the support confirmed as invalid).
 	 * @param resume the resume, as it came
 	 * @param storedResume the stored resume, active or inactive; empty for a new resume
@@ -75,12 +74,6 @@ public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 		boolean storedAsInvalid = storedResume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false);
 		boolean invalidLinkedinAddress = sameLinkedinAddress && storedAsInvalid;
 		CcpJsonRepresentation resumeWithTheFlag = resume.put(VisEntityResume.Fields.invalidLinkedinAddress, invalidLinkedinAddress);
-		boolean noChat = false == storedResume.containsField(VisEntityResume.Fields.chatId);
-		if(noChat) {
-			return resumeWithTheFlag;
-		}
-		Long chatId = storedResume.getAsLongNumber(VisEntityResume.Fields.chatId);
-		CcpJsonRepresentation resumeWithTheChat = resumeWithTheFlag.put(VisEntityResume.Fields.chatId, chatId);
-		return resumeWithTheChat;
+		return resumeWithTheFlag;
 	}
 }

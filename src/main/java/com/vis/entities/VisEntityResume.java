@@ -508,9 +508,10 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		invalidLinkedinAddress,
 
 		/**
-		 * The {@code chatId} field: a number, as the chat of the bots, not required (since 2026-11-12), the chat of the owner of the resume in the
-		 * user bot, where the instant messages to the owner go ({@code vis_resume_message}). The save of the owner keeps it
-		 * ({@code VisBusinessSaveResumeAndSpendTheUpdate}).
+		 * The {@code chatId} field: a number, as the chat of the bots, not required. From 2026-11-12 to 2026-11-13 it held
+		 * the chat of the owner in the user bot; since then nothing writes or reads it, the chat of each e-mail being kept
+		 * in {@code jn_instant_messenger_user}. Kept so the records that still hold it stay valid; the next save of the
+		 * owner drops it.
 		 */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonInstantMessengerFields.class)
 		chatId,

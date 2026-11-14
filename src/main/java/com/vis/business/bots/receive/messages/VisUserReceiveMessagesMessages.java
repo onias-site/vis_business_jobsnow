@@ -17,7 +17,9 @@ public enum VisUserReceiveMessagesMessages implements JnSystemMessage {
 	blocked,
 	/** The e-mail has no resume: asks the user to register one. */
 	resumeNotFound,
-	/** The chat was saved in the resume. */
+	/** The chat was saved as the chat of the e-mail ({@code jn_instant_messenger_user}). */
 	chatSaved,
+	/** The e-mail is already registered with this chat: nothing to do (since 2026-11-13). */
+	alreadyRegistered,
 	;
 }

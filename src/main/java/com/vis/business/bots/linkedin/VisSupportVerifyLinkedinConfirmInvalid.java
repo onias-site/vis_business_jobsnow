@@ -17,8 +17,8 @@ import com.jn.entities.JnEntityInstantMessengerTemplateMessage;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
+import com.vis.business.resume.VisResumeOwnerChats;
 import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityResumeMessage;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisResumeMessageTypes;
@@ -33,8 +33,8 @@ import com.vis.messages.VisMessages;
  * its link no longer opens. Only this field is written (a partial update of the document), so the owner does not get the
  * e-mail of a resume saved by them;</li>
  * <li>the view of the recruiter is deleted everywhere ({@code deleteAnyWhere}), as if it never existed;</li>
- * <li>an owner with a {@code chatId} greater than zero gets {@link VisMessages.VisInvalidLinkedinAddress} through the user
- * bot, by a record of {@code vis_resume_message}.</li>
+ * <li>an owner whose e-mail has a chat in {@code jn_instant_messenger_user} gets {@link VisMessages.VisInvalidLinkedinAddress}
+ * through the user bot, by a record of {@code vis_resume_message}.</li>
  * </ul>
  */
 public class VisSupportVerifyLinkedinConfirmInvalid implements CcpBusiness {
@@ -68,7 +68,7 @@ public class VisSupportVerifyLinkedinConfirmInvalid implements CcpBusiness {
 		}
 		String entityName = side.getAsString(JnJsonCommonsFields.entity);
 		CcpJsonRepresentation resume = markTheResume(entityName, resumeId);
-		tellTheOwner(resume, linkedinAddress);
+		this.tellTheOwner(resume, linkedinAddress);
 		return json;
 	}
 
@@ -94,27 +94,16 @@ public class VisSupportVerifyLinkedinConfirmInvalid implements CcpBusiness {
 
 	/**
 	 * Saves the message to the owner in {@code vis_resume_message}, whose save sends it through the user bot, when the
-	 * owner has a chat greater than zero.
-	 * @param resume the resume as stored
+	 * e-mail of the resume has a chat in {@code jn_instant_messenger_user} (since 2026-11-13; until then the chat came
+	 * from the resume).
+	 * @param resume the resume as stored, with the e-mail already hashed
 	 * @param linkedinAddress the address confirmed as invalid
 	 */
-	private static void tellTheOwner(CcpJsonRepresentation resume, String linkedinAddress) {
-		boolean withoutChat = false == resume.containsField(VisEntityResume.Fields.chatId);
-		if(withoutChat) {
-			return;
-		}
-		// the stored number comes back from the JSON as a Double
-		Long chatId = resume.getAsLongNumber(VisEntityResume.Fields.chatId);
-		boolean noChat = chatId <= 0;
-		if(noChat) {
-			return;
-		}
+	private void tellTheOwner(CcpJsonRepresentation resume, String linkedinAddress) {
+		String hashedEmail = resume.getAsString(VisEntityResume.Fields.email);
+		List<String> hashedEmails = List.of(hashedEmail);
 		String message = getMessageToTheOwner(linkedinAddress, OWNER_LANGUAGE);
-		CcpJsonRepresentation resumeMessage = CcpOtherConstants.EMPTY_JSON
-				.put(VisEntityResumeMessage.Fields.chatId, chatId)
-				.put(VisEntityResumeMessage.Fields.messageType, VisResumeMessageTypes.invalidLinkedinAddress)
-				.put(VisEntityResumeMessage.Fields.message, message);
-		VisEntityResumeMessage.ENTITY.save(resumeMessage);
+		VisResumeOwnerChats.saveTheMessage(this, hashedEmails, VisResumeMessageTypes.invalidLinkedinAddress, message);
 	}
 
 	/**

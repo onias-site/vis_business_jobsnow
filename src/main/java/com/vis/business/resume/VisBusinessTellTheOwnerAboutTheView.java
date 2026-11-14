@@ -7,15 +7,9 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTimeDecorator;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDecoratorTypes;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
-import com.ccp.flow.CcpErrorFlowDisturb;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnLanguage;
-import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityResumeMessage;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.json.fields.validation.VisResumeMessageTypes;
 import com.vis.json.transformers.VisJsonTransformerLinkedinHash;
@@ -24,9 +18,10 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
 /**
  * Tells the owner of the viewed resume about the view (since 2026-11-12), after each insertion in {@code vis_viewed_resume} (a save
  * of a view that already exists, as the reopening of the resume, tells nothing):
- * each resume that uses the viewed LinkedIn address ({@code vis_resume_linkedin}) whose {@code chatId} is greater than
- * zero gets a record in {@code vis_resume_message} ({@code newViewInYourResume}), whose save sends it through the user
- * bot ({@code VisNewViewInYourResume}). The text names the moment of the view and the domain of the recruiter, or tells
+ * each e-mail that uses the viewed LinkedIn address ({@code vis_resume_linkedin}) and has a chat in
+ * {@code jn_instant_messenger_user} (since 2026-11-13; until then the chat came from the active resume) gets a record in
+ * {@code vis_resume_message} ({@code newViewInYourResume}), whose save sends it through the user bot
+ * ({@code VisNewViewInYourResume}). The text names the moment of the view and the domain of the recruiter, or tells
  * that the recruiter is a freelancer (an e-mail of a non-professional domain).
  */
 public class VisBusinessTellTheOwnerAboutTheView implements CcpBusiness {
@@ -67,27 +62,8 @@ public class VisBusinessTellTheOwnerAboutTheView implements CcpBusiness {
 			return json;
 		}
 		String message = getMessage(view);
-		// the e-mails of vis_resume_linkedin are already hashed: without the fields transformer, the id is calculated from
-		// them as they are, instead of from a second hash
-		CcpEntity resumeWithHashedKey = CcpEntityFactory.getCustomEntity(VisEntityResume.ENTITY, CcpEntityDecoratorTypes.FieldsTransformer);
-		for (String hashedEmail : hashedEmails) {
-			CcpJsonRepresentation resume = getResume(resumeWithHashedKey, hashedEmail);
-			boolean withoutChat = false == resume.containsField(VisEntityResume.Fields.chatId);
-			if(withoutChat) {
-				continue;
-			}
-			// the stored number comes back from the JSON as a Double
-			Long chatId = resume.getAsLongNumber(VisEntityResume.Fields.chatId);
-			boolean noChat = chatId <= 0;
-			if(noChat) {
-				continue;
-			}
-			CcpJsonRepresentation resumeMessage = CcpOtherConstants.EMPTY_JSON
-					.put(VisEntityResumeMessage.Fields.chatId, chatId)
-					.put(VisEntityResumeMessage.Fields.messageType, VisResumeMessageTypes.newViewInYourResume)
-					.put(VisEntityResumeMessage.Fields.message, message);
-			VisEntityResumeMessage.ENTITY.save(resumeMessage);
-		}
+		// the e-mails of vis_resume_linkedin are already hashed, as the chats of jn_instant_messenger_user are keyed
+		VisResumeOwnerChats.saveTheMessage(this, hashedEmails, VisResumeMessageTypes.newViewInYourResume, message);
 		return json;
 	}
 
@@ -126,19 +102,5 @@ public class VisBusinessTellTheOwnerAboutTheView implements CcpBusiness {
 				.put(Fields.recruiterDomain, recruiterDomain);
 		String message = text.getMessage(JnLanguage.portuguese, parameters);
 		return message;
-	}
-
-	/**
-	 * The active resume of the hashed e-mail, read by id.
-	 * @return the resume, or an empty JSON when the e-mail has no active resume
-	 */
-	private static CcpJsonRepresentation getResume(CcpEntity resumeWithHashedKey, String hashedEmail) {
-		CcpJsonRepresentation resumeKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityResume.Fields.email, hashedEmail);
-		try {
-			CcpJsonRepresentation resume = resumeWithHashedKey.getOneById(resumeKey);
-			return resume;
-		} catch (CcpErrorFlowDisturb noActiveResume) {
-			return CcpOtherConstants.EMPTY_JSON;
-		}
 	}
 }

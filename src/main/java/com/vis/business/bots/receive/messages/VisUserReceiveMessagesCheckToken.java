@@ -10,8 +10,8 @@ import com.vis.entities.VisEntityLoginTokenAttempts;
 
 /**
  * Second step of {@code /receiveMessages <email>}: the token typed by the user, checked by the cost center of the login
- * through {@link JnBusinessCheckLoginToken}. A right token clears the wrong ones of the chat and saves the chat in the
- * resume of the e-mail ({@link VisUserReceiveMessagesSaveTheChat}). A wrong one is counted in
+ * through {@link JnBusinessCheckLoginToken}. A right token clears the wrong ones of the chat and saves the chat of the
+ * e-mail in {@code jn_instant_messenger_user} ({@link VisUserReceiveMessagesSaveTheChat}). A wrong one is counted in
  * {@code vis_login_token_attempts} (1 at the first one): the user is told the attempts left and the command
  * {@code /resendLoginToken}, and the step waits for another token ({@code wrongToken}); at the limit, the chat is blocked
  * ({@code blocked}).

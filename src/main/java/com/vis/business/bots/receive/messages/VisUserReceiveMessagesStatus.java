@@ -16,6 +16,8 @@ public enum VisUserReceiveMessagesStatus implements CcpProcessStatus {
 	blocked(403),
 	/** Status 404: the e-mail has no resume, active or inactive. */
 	resumeNotFound(404),
+	/** Status 409: the e-mail is already registered with this chat in {@code jn_instant_messenger_user} (since 2026-11-13). */
+	alreadyRegistered(409),
 	;
 
 	/** The HTTP status code. */
