@@ -25,17 +25,25 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 	},
 	/**
 	 * The spoken languages: one slice per language and level ({@code <name>|<level>}, level 2 fluent and 1 intermediate),
-	 * so the fluent and the intermediate English are different slices.
+	 * so the fluent and the intermediate English are different slices. A resume with no language goes to the slice
+	 * {@code none}.
 	 */
 	spokenLanguage {
 		public List<String> getKeys(CcpJsonRepresentation resume) {
-			boolean noLanguage = false == resume.containsAllFields(VisEntityResume.Fields.spokenLanguage);
+			boolean absent = false == resume.containsAllFields(VisEntityResume.Fields.spokenLanguage);
+			String none = Values.none.name();
 
-			if(noLanguage) {
-				return List.of();
+			if(absent) {
+				return List.of(none);
 			}
 
 			List<CcpJsonRepresentation> languages = resume.getAsJsonList(VisEntityResume.Fields.spokenLanguage);
+			boolean noLanguage = languages.isEmpty();
+
+			if(noLanguage) {
+				return List.of(none);
+			}
+
 			List<String> keys = new ArrayList<>();
 			String separator = Values.LANGUAGE_SEPARATOR.getValue();
 			for (CcpJsonRepresentation language : languages) {
@@ -127,6 +135,7 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 		accepts,
 		doesNotAccept,
 		notInformed,
+		none,
 		upTo5,
 		from6To15,
 		from16To30,
