@@ -51,6 +51,9 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	/** Keeps, in its only position, the last position of the queue of the legacy views that had its turn. */
 	private final String[] lastLegacyQueuePosition;
 
+	/** Keeps, in its only position, the last position of the queue of the non professional domains that had its turn. */
+	private final String[] lastNonProfessionalQueuePosition;
+
 	/**
 	 * Keeps what the e-mail of each recruiter needs.
 	 * @param restrictedTo the e-mails the run is restricted to; empty for every recruiter
@@ -64,9 +67,11 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * @param lastQueuePosition keeps, in its only position, the last position of the queue that had its turn
 	 * @param lastLegacyQueuePosition keeps, in its only position, the last position of the queue of the legacy views that
 	 * had its turn
+	 * @param lastNonProfessionalQueuePosition keeps, in its only position, the last position of the queue of the non
+	 * professional domains that had its turn
 	 */
 	VisResumesToTheRecruiterSender(List<String> restrictedTo, List<CcpJsonRepresentation> resumesOfTheEmail, Map<String, Long> lastViewByPair,
-			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition) {
+			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition, String[] lastNonProfessionalQueuePosition) {
 		this.restrictedTo = restrictedTo;
 		this.resumesOfTheEmail = resumesOfTheEmail;
 		this.lastViewByPair = lastViewByPair;
@@ -77,6 +82,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 		this.emailsSent = emailsSent;
 		this.lastQueuePosition = lastQueuePosition;
 		this.lastLegacyQueuePosition = lastLegacyQueuePosition;
+		this.lastNonProfessionalQueuePosition = lastNonProfessionalQueuePosition;
 	}
 
 	/**
@@ -96,6 +102,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 		// who is not in a queue has no position in it: that queue stays where it was
 		this.lastQueuePosition[0] = recruiter.getOrDefault(VisRecruiterResumesFields.queuePosition, () -> this.lastQueuePosition[0]);
 		this.lastLegacyQueuePosition[0] = recruiter.getOrDefault(VisRecruiterResumesFields.legacyQueuePosition, () -> this.lastLegacyQueuePosition[0]);
+		this.lastNonProfessionalQueuePosition[0] = recruiter.getOrDefault(VisRecruiterResumesFields.nonProfessionalQueuePosition, () -> this.lastNonProfessionalQueuePosition[0]);
 		CcpStringDecorator emailText = new CcpStringDecorator(email);
 		CcpEmailDecorator emailDecorator = emailText.email();
 		boolean invalidAddress = false == emailDecorator.isValid();
