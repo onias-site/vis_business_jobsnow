@@ -1,5 +1,6 @@
 package com.vis.business.statistics;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,22 +10,20 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.business.CcpBusiness;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.jn.utils.JnGroupers;
 import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityVirtualDddGrouper;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisSeniorityType;
 
 /**
- * The statistics of the active resumes of a region (a ddd, or home office): how many resumes, the averages of the CLT and
- * PJ salary expectations by seniority and of all of them, and the slices of each pie chart of
- * {@link VisResumeStatisticsCharts}. One read by id (OQL): the group of the ddd in {@code jn_grouper}
- * ({@code VisEntityVirtualDddGrouper}), whose children carry the fields of each resume. An average counts only the
- * resumes that informed the salary (or the year the experience started), and is 0 when none did.
+ * The statistics of a region (a ddd, or home office), for each of {@link VisResumeStatisticsSources} (the active resumes
+ * and the views of the resumes): how many children, the averages of the CLT and PJ salary expectations and of the years
+ * of experience by seniority and of all of them, and the slices of each pie chart of {@link VisResumeStatisticsCharts}.
+ * One read by id of the groups of the ddd in {@code jn_grouper} (OQL), whose children carry the fields of the resume. An
+ * average counts only the children that informed the salary (or the year the experience started), and is 0 when none did.
  */
 public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 
@@ -35,7 +34,7 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 		@CcpJsonFieldValidatorRequired
 		ddd,
 
-		/** How many active resumes the region has. */
+		/** How many children the group of the source has: active resumes, or views of resumes. */
 		total,
 
 		/** The averages, by seniority and of {@code all}: {@code resumes}, {@code clt}, {@code pj} and {@code experience}. */
@@ -70,13 +69,35 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 	}
 
 	/**
-	 * Reads the resumes of the region and calculates the statistics.
+	 * Reads the groups of the region and calculates the statistics of each source.
 	 * @param json the region
-	 * @return {@code ddd}, {@code total}, {@code averages} and {@code charts}
+	 * @return {@code ddd} and, under the name of each source, {@code total}, {@code averages} and {@code charts}
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		Integer ddd = json.getAsIntegerNumber(Fields.ddd);
-		List<String> children = getResumesOfTheRegion(ddd);
+		VisResumeStatisticsSources[] sources = VisResumeStatisticsSources.values();
+		List<CcpJsonRepresentation> groupKeys = new ArrayList<>();
+		for (VisResumeStatisticsSources source : sources) {
+			CcpJsonRepresentation groupKey = source.getGroupKey(ddd);
+			groupKeys.add(groupKey);
+		}
+		List<List<String>> childrenOfEachSource = JnGroupers.getChildrenOfEachGroup(groupKeys);
+		CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(Fields.ddd, ddd);
+		for (VisResumeStatisticsSources source : sources) {
+			int sourceIndex = source.ordinal();
+			List<String> children = childrenOfEachSource.get(sourceIndex);
+			CcpJsonRepresentation statistics = getStatistics(children);
+			response = response.put(source, statistics);
+		}
+		return response;
+	}
+
+	/**
+	 * The statistics of the children of a group of the ddd.
+	 * @param children one JSON text per resume (or per view of a resume)
+	 * @return {@code total}, {@code averages} and {@code charts}
+	 */
+	private static CcpJsonRepresentation getStatistics(List<String> children) {
 		Map<String, Map<String, Long>> slicesByChart = new LinkedHashMap<>();
 		Map<String, Map<String, Double>> sumsBySeniority = new LinkedHashMap<>();
 		Map<String, Map<String, Long>> countsBySeniority = new LinkedHashMap<>();
@@ -88,26 +109,11 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 		CcpJsonRepresentation averages = getAverages(sumsBySeniority, countsBySeniority);
 		CcpJsonRepresentation charts = toJson(slicesByChart);
 		int total = children.size();
-		CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON
-				.put(Fields.ddd, ddd)
+		CcpJsonRepresentation statistics = CcpOtherConstants.EMPTY_JSON
 				.put(Fields.total, total)
 				.put(Fields.averages, averages)
 				.put(Fields.charts, charts);
-		return response;
-	}
-
-	/**
-	 * The children of the group of the ddd: one JSON text per active resume.
-	 * @param ddd the region
-	 * @return the children, empty when the region has no resume
-	 */
-	private static List<String> getResumesOfTheRegion(Integer ddd) {
-		CcpJsonRepresentation combination = CcpOtherConstants.EMPTY_JSON.put(VisEntityVirtualDddGrouper.Fields.ddd, ddd);
-		String parentId = VisEntityVirtualDddGrouper.ENTITY.calculateId(combination);
-		CcpEntityMetaData parentDetails = VisEntityVirtualDddGrouper.ENTITY.getEntityMetaData();
-		CcpEntityMetaData resumeDetails = VisEntityResume.ENTITY.getEntityMetaData();
-		List<String> children = JnGroupers.getChildren(false, parentDetails.entityName, resumeDetails.entityName, parentId);
-		return children;
+		return statistics;
 	}
 
 	/**
