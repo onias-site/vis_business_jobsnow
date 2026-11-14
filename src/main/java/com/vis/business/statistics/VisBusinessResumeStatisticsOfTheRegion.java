@@ -24,7 +24,7 @@ import com.vis.json.transformers.VisSeniorityType;
  * PJ salary expectations by seniority and of all of them, and the slices of each pie chart of
  * {@link VisResumeStatisticsCharts}. One read by id (OQL): the group of the ddd in {@code jn_grouper}
  * ({@code VisEntityVirtualDddGrouper}), whose children carry the fields of each resume. An average counts only the
- * resumes that informed the salary, and is 0 when none did.
+ * resumes that informed the salary (or the year the experience started), and is 0 when none did.
  */
 public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 
@@ -38,7 +38,7 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 		/** How many active resumes the region has. */
 		total,
 
-		/** The averages, by seniority and of {@code all}: {@code resumes}, {@code clt} and {@code pj}. */
+		/** The averages, by seniority and of {@code all}: {@code resumes}, {@code clt}, {@code pj} and {@code experience}. */
 		averages,
 
 		/** The slices of each pie chart: {chart: {key: resumes}}. */
@@ -55,6 +55,9 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 
 		/** The average of the PJ salary expectation. */
 		pj,
+
+		/** The average of the years of experience, with one decimal place. */
+		experience,
 	}
 
 	/** The single instance. */
@@ -138,13 +141,34 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 		double clt = VisResumeStatisticsCharts.getSalary(resume, VisEntityResume.Fields.clt);
 		double pj = VisResumeStatisticsCharts.getSalary(resume, VisEntityResume.Fields.pj);
 		String resumesName = Fields.resumes.name();
+		boolean experienceInformed = resume.containsAllFields(VisEntityResume.Fields.experience);
 		for (String group : groups) {
 			Map<String, Double> sums = sumsBySeniority.computeIfAbsent(group, name -> new LinkedHashMap<>());
 			Map<String, Long> counts = countsBySeniority.computeIfAbsent(group, name -> new LinkedHashMap<>());
 			counts.merge(resumesName, 1L, Long::sum);
 			addSalary(Fields.clt, clt, sums, counts);
 			addSalary(Fields.pj, pj, sums, counts);
+			addExperience(resume, experienceInformed, sums, counts);
 		}
+	}
+
+	/**
+	 * Adds the years of experience to their sum and count, when the resume informed the year the experience started.
+	 * @param resume the child, parsed
+	 * @param experienceInformed whether the resume has the field {@code experience}
+	 * @param sums the sums of the group
+	 * @param counts the counts of the group
+	 */
+	private static void addExperience(CcpJsonRepresentation resume, boolean experienceInformed, Map<String, Double> sums, Map<String, Long> counts) {
+		if(false == experienceInformed) {
+			return;
+		}
+
+		int years = VisResumeStatisticsCharts.getYearsOfExperience(resume);
+		double yearsValue = years;
+		String fieldName = Fields.experience.name();
+		sums.merge(fieldName, yearsValue, Double::sum);
+		counts.merge(fieldName, 1L, Long::sum);
 	}
 
 	/**
@@ -197,10 +221,12 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 		long resumes = counts.getOrDefault(resumesName, 0L);
 		long cltAverage = getAverage(Fields.clt, sums, counts);
 		long pjAverage = getAverage(Fields.pj, sums, counts);
+		double experienceAverage = getAverageWithOneDecimal(Fields.experience, sums, counts);
 		CcpJsonRepresentation average = CcpOtherConstants.EMPTY_JSON
 				.put(Fields.resumes, resumes)
 				.put(Fields.clt, cltAverage)
-				.put(Fields.pj, pjAverage);
+				.put(Fields.pj, pjAverage)
+				.put(Fields.experience, experienceAverage);
 		CcpFieldName groupField = new CcpFieldName(group);
 		CcpJsonRepresentation averagesWithGroup = averages.put(groupField, average);
 		return averagesWithGroup;
@@ -217,6 +243,21 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 
 		double sum = sums.get(fieldName);
 		long average = Math.round(sum / informed);
+		return average;
+	}
+
+	private static double getAverageWithOneDecimal(Fields field, Map<String, Double> sums, Map<String, Long> counts) {
+		String fieldName = field.name();
+		long informed = counts.getOrDefault(fieldName, 0L);
+		boolean noneInformed = informed == 0L;
+
+		if(noneInformed) {
+			return 0d;
+		}
+
+		double sum = sums.get(fieldName);
+		long tenths = Math.round(sum * 10 / informed);
+		double average = tenths / 10d;
 		return average;
 	}
 

@@ -149,10 +149,7 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 			return VisSeniorityType.estag;
 		}
 
-		Integer experienceStartYear = resume.getAsIntegerNumber(VisEntityResume.Fields.experience);
-		CcpTimeDecorator now = new CcpTimeDecorator();
-		int currentYear = now.getYear();
-		int years = Math.max(0, currentYear - experienceStartYear);
+		int years = getYearsOfExperience(resume);
 		CcpJsonRepresentation yearsJson = resume.put(VisEntityResume.Fields.experience, years);
 		VisSeniorityType[] seniorities = VisSeniorityType.values();
 		for (VisSeniorityType seniorityType : seniorities) {
@@ -163,6 +160,19 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 			}
 		}
 		return VisSeniorityType.especialista;
+	}
+
+	/**
+	 * The years of experience of the resume: the current year minus the year the experience started, never negative.
+	 * @param resume the child of the group of the ddd, parsed, with the field {@code experience}
+	 * @return the years of experience
+	 */
+	public static int getYearsOfExperience(CcpJsonRepresentation resume) {
+		Integer experienceStartYear = resume.getAsIntegerNumber(VisEntityResume.Fields.experience);
+		CcpTimeDecorator now = new CcpTimeDecorator();
+		int currentYear = now.getYear();
+		int years = Math.max(0, currentYear - experienceStartYear);
+		return years;
 	}
 
 	/**
