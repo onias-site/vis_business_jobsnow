@@ -21,5 +21,9 @@ public enum VisSupportVerifyLinkedinMessages implements JnSystemMessage {
 	resumeNotFound,
 	/** The {@code comment} of the view moved to the twin when the address exists. */
 	viewComment,
+	/** The answer to the recruiter in the screen of tickets when the address was confirmed as invalid: {@code {linkedinAddress}}. */
+	reportAnsweredInvalid,
+	/** The answer to the recruiter in the screen of tickets when the profile exists: {@code {linkedinAddress}}. */
+	reportAnsweredValid,
 	;
 }

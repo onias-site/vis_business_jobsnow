@@ -79,7 +79,13 @@ public final class VisSupportVerifyLinkedinBotConfiguration {
 						, "The resume {resumeEmailSha1} no longer exists.")
 				.systemMessage(VisSupportVerifyLinkedinMessages.viewComment
 						, "O endereço de linkedin deste currículo não pôde ser aberto por este recrutador"
-						, "The LinkedIn address of this resume could not be opened by this recruiter");
+						, "The LinkedIn address of this resume could not be opened by this recruiter")
+				.systemMessage(VisSupportVerifyLinkedinMessages.reportAnsweredInvalid
+						, "Confirmamos que o LinkedIn {linkedinAddress} não abre. Este currículo não será mais enviado aos recrutadores até que o dono corrija o endereço."
+						, "We confirmed that the LinkedIn {linkedinAddress} does not open. This resume will no longer be sent to the recruiters until its owner fixes the address.")
+				.systemMessage(VisSupportVerifyLinkedinMessages.reportAnsweredValid
+						, "O perfil {linkedinAddress} existe no LinkedIn: pode ser que apenas você não tenha permissão de vê-lo. Por isso, este currículo não será mais enviado a você."
+						, "The profile {linkedinAddress} exists on LinkedIn: maybe only you are not allowed to see it. So this resume will no longer be sent to you.");
 		List<CcpBulkItem> bulkItems = seeds.getBulkItems();
 		return bulkItems;
 	}

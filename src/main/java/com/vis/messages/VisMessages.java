@@ -18,6 +18,7 @@ import com.jn.utils.JnLanguage;
 import com.jn.utils.JnSystemProperties;
 import com.ccp.business.CcpBusiness;
 import com.vis.business.recruiter.resumes.VisBusinessPutResumePreviewInTheEmail;
+import com.vis.business.bots.linkedin.VisSupportVerifyLinkedinFields;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntitySkillFixHierarchyPending;
 import com.vis.entities.VisEntitySkillPending;
@@ -426,26 +427,28 @@ public class VisMessages {
 
 	/**
 	 * The ticket of a LinkedIn address reported by a recruiter as not opening, sent to the support operator as the command
-	 * {@code /verifyLinkedinAddress <linkedinAddress> <resumeEmailSha1> <recruiterEmail>} (since 2026-11-12), with the
-	 * priority {@value #PRIORITY}, the one of the reviews of the data of vis (skill and hierarchy). Not repeatable: the same
-	 * recruiter reporting the same resume again on the same day does not open a second ticket.
+	 * {@code /verifyLinkedinAddress <linkedinAddress> <resumeEmailSha1> <recruiterEmail>} (since 2026-11-12) by the insert
+	 * of {@code vis_invalid_linkedin_report} (since 2026-11-13), with the priority {@value #PRIORITY} (since 2026-11-13; it
+	 * was 4). Not repeatable: the same recruiter reporting the same resume again on the same day does not open a second ticket.
 	 */
 	public static class VisNotifySupportAboutInvalidLinkedinTicket implements JnMessageTemplate{
 		/** The single instance: the class keeps no state. */
 		public final static VisNotifySupportAboutInvalidLinkedinTicket INSTANCE = new VisNotifySupportAboutInvalidLinkedinTicket();
 
 		/** The priority of the ticket in {@code /pendingTickets}. */
-		public static final int PRIORITY = 4;
+		public static final int PRIORITY = 2;
 
 		private VisNotifySupportAboutInvalidLinkedinTicket() {}
 
 		/**
-		 * Puts the priority of the ticket.
-		 * @param json the address, the id of the resume and the e-mail of the recruiter
+		 * Puts the e-mail of the recruiter as typed (the stored one is the hash) and the priority of the ticket.
+		 * @param json the report as saved: the address, the id of the resume and the e-mail of the recruiter
 		 * @return the values of the command
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation jsonWithPriority = json.put(JnJsonInstantMessengerFields.priority, PRIORITY);
+			String recruiterEmail = json.getAsString(JnJsonTransformersFieldsEntityDefault.JsonFieldNames.originalEmail);
+			CcpJsonRepresentation jsonWithRecruiterEmail = json.put(VisSupportVerifyLinkedinFields.recruiterEmail, recruiterEmail);
+			CcpJsonRepresentation jsonWithPriority = jsonWithRecruiterEmail.put(JnJsonInstantMessengerFields.priority, PRIORITY);
 			return jsonWithPriority;
 		}
 	}

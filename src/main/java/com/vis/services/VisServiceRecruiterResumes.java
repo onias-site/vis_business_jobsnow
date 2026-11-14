@@ -22,17 +22,12 @@ import com.vis.business.recruiter.resumes.VisBusinessViewedResumeDetails;
 import com.vis.business.recruiter.resumes.VisBusinessViewedResumesOfTheMonth;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
 import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
+import com.vis.entities.VisEntityInvalidLinkedinReport;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.entities.VisEntityViewedResume;
-import com.jn.business.messages.JnMessageSenderExceptionHandler;
-import com.jn.business.messages.JnMessageType;
-import com.jn.messages.JnSendMessageToUser;
-import com.vis.business.bots.linkedin.VisSupportVerifyLinkedinFields;
-import com.vis.json.fields.validation.VisJsonCommonsFields;
-import com.vis.messages.VisMessages;
 import com.vis.status.VisProcessStatusInvalidLinkedin;
 
 /**
@@ -101,9 +96,11 @@ public enum VisServiceRecruiterResumes implements JnService {
 		}
 	},
 	/**
-	 * Reports that the LinkedIn address of a resume of the e-mail does not open (since 2026-11-12): opens the ticket
-	 * {@code /verifyLinkedinAddress <linkedinAddress> <resumeEmailSha1> <recruiterEmail>} in {@code /pendingTickets} of
-	 * the support operator, who tells whether the recruiter is right. The link must be valid, as to open the resume.
+	 * Reports that the LinkedIn address of a resume of the e-mail does not open (since 2026-11-12): saves the report in
+	 * {@code vis_invalid_linkedin_report} (since 2026-11-13, a ticket of the recruiter in the screen of tickets), whose
+	 * insert opens the ticket {@code /verifyLinkedinAddress <linkedinAddress> <resumeEmailSha1> <recruiterEmail>} in
+	 * {@code /pendingTickets} of the support operator, who tells whether the recruiter is right. The link must be valid,
+	 * as to open the resume.
 	 */
 	ReportInvalidLinkedinFromEmail{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
@@ -111,13 +108,12 @@ public enum VisServiceRecruiterResumes implements JnService {
 			String email = json.getAsString(JnJsonCommonsFields.email);
 			String resumeId = json.getAsString(VisRecruiterResumesFields.resumeId);
 			String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
-			CcpJsonRepresentation ticket = CcpOtherConstants.EMPTY_JSON
-					.put(VisJsonCommonsFields.linkedinAddress, linkedinAddress)
-					.put(VisSupportVerifyLinkedinFields.resumeEmailSha1, resumeId)
-					.put(VisSupportVerifyLinkedinFields.recruiterEmail, email);
-			String topic = VisMessages.VisNotifySupportAboutInvalidLinkedinTicket.class.getName();
-			JnMessageType[] messageTypes = {JnMessageType.instantMessenger};
-			new JnSendMessageToUser().sendAllMessages(ticket, topic, messageTypes, JnMessageSenderExceptionHandler.LENIENT);
+			CcpJsonRepresentation report = CcpOtherConstants.EMPTY_JSON
+					.put(VisEntityInvalidLinkedinReport.Fields.email, email)
+					.put(VisEntityInvalidLinkedinReport.Fields.linkedinAddress, linkedinAddress)
+					.put(VisEntityInvalidLinkedinReport.Fields.resumeEmailSha1, resumeId);
+			// the insert sends the ticket to the operator; a report still waiting for the support changes nothing
+			VisEntityInvalidLinkedinReport.ENTITY.save(report);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityResume.Fields.linkedinAddress, linkedinAddress);
 			return response;
 		}

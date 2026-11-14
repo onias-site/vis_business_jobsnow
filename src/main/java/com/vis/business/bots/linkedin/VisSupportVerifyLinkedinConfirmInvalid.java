@@ -28,6 +28,7 @@ import com.vis.messages.VisMessages;
  * The operator confirmed that the LinkedIn address reported by the recruiter is invalid ("Sim" in
  * {@code /verifyLinkedinAddress}):
  * <ul>
+ * <li>the report of the recruiter is closed with the answer ({@link VisSupportVerifyLinkedinCloseTheReport});</li>
  * <li>the resume, active or inactive, gets {@code invalidLinkedinAddress = true}: it no longer goes to the recruiters and
  * its link no longer opens. Only this field is written (a partial update of the document), so the owner does not get the
  * e-mail of a resume saved by them;</li>
@@ -53,6 +54,7 @@ public class VisSupportVerifyLinkedinConfirmInvalid implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String linkedinAddress = json.getAsString(VisJsonCommonsFields.linkedinAddress);
 		String recruiterEmail = json.getAsString(VisSupportVerifyLinkedinFields.recruiterEmail);
+		new VisSupportVerifyLinkedinCloseTheReport(VisSupportVerifyLinkedinMessages.reportAnsweredInvalid).execute(json);
 		CcpJsonRepresentation view = CcpOtherConstants.EMPTY_JSON
 				.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress)
 				.put(VisEntityViewedResume.Fields.email, recruiterEmail);

@@ -22,6 +22,7 @@ import com.vis.messages.VisMessages;
 /**
  * The operator found that the LinkedIn address reported by the recruiter exists ("Não" in {@code /verifyLinkedinAddress}):
  * <ul>
+ * <li>the report of the recruiter is closed with the answer ({@link VisSupportVerifyLinkedinCloseTheReport});</li>
  * <li>the recruiter gets the e-mail {@link VisMessages.VisNotifyRecruiterAboutUnreachableLinkedin}: maybe only they cannot
  * see that profile, but the user exists on LinkedIn;</li>
  * <li>the view of the recruiter goes to the twin ({@code vis_inactive_viewed_resume}) with the {@code comment} that the
@@ -46,6 +47,7 @@ public class VisSupportVerifyLinkedinConfirmValid implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String linkedinAddress = json.getAsString(VisJsonCommonsFields.linkedinAddress);
 		String recruiterEmail = json.getAsString(VisSupportVerifyLinkedinFields.recruiterEmail);
+		new VisSupportVerifyLinkedinCloseTheReport(VisSupportVerifyLinkedinMessages.reportAnsweredValid).execute(json);
 		tellTheRecruiter(recruiterEmail, linkedinAddress);
 		CcpJsonRepresentation view = CcpOtherConstants.EMPTY_JSON
 				.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress)
