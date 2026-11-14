@@ -1,19 +1,12 @@
 package com.vis.business.bots.linkedin;
 
-import java.util.List;
-
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
-import com.ccp.especifications.db.bulk.CcpBulkItem;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.business.messages.JnMessageType;
-import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.messages.JnSendMessageToUser;
-import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -25,9 +18,9 @@ import com.vis.messages.VisMessages;
  * <li>the report of the recruiter is closed with the answer ({@link VisSupportVerifyLinkedinCloseTheReport});</li>
  * <li>the recruiter gets the e-mail {@link VisMessages.VisNotifyRecruiterAboutUnreachableLinkedin}: maybe only they cannot
  * see that profile, but the user exists on LinkedIn;</li>
- * <li>the view of the recruiter, in the twin ({@code vis_inactive_viewed_resume}) since the report (2026-11-13), gets the
- * {@code comment} that the address could not be opened by this recruiter. A view still in the main entity (a ticket
- * opened before 2026-11-13) goes to the twin first.</li>
+ * <li>the view of the recruiter is already in the twin ({@code vis_inactive_viewed_resume}), with its {@code comment},
+ * since the report (2026-11-13); a view still in the main entity (a ticket opened before that) goes there now
+ * ({@link VisSupportVerifyLinkedinInactivateTheView}).</li>
  * </ul>
  */
 public class VisSupportVerifyLinkedinConfirmValid implements CcpBusiness {
@@ -36,11 +29,11 @@ public class VisSupportVerifyLinkedinConfirmValid implements CcpBusiness {
 
 	private VisSupportVerifyLinkedinConfirmValid() {}
 
-	/** The language of the e-mail and of the comment for now: the recruiters keep no language yet. */
-	static final JnLanguage RECRUITER_LANGUAGE = JnLanguage.portuguese;
+	/** The language of the e-mail for now: the recruiters keep no language yet. */
+	static final JnLanguage RECRUITER_LANGUAGE = VisSupportVerifyLinkedinInactivateTheView.RECRUITER_LANGUAGE;
 
 	/**
-	 * Tells the recruiter and moves the view to the twin.
+	 * Closes the report, tells the recruiter and moves to the twin a view still in the main entity.
 	 * @param json the session, with the parameters of the command
 	 * @return the same session
 	 */
@@ -52,14 +45,7 @@ public class VisSupportVerifyLinkedinConfirmValid implements CcpBusiness {
 		CcpJsonRepresentation view = CcpOtherConstants.EMPTY_JSON
 				.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress)
 				.put(VisEntityViewedResume.Fields.email, recruiterEmail);
-		// the delete of the main side moves the view to the twin; a view already there, or none, is not moved
-		VisEntityViewedResume.ENTITY.delete(view);
-		CcpEntity twinEntity = VisEntityViewedResume.ENTITY.getTwinEntity();
-		boolean notInTheTwin = false == twinEntity.exists(view);
-		if(notInTheTwin) {
-			return json;
-		}
-		commentTheView(view, twinEntity);
+		VisSupportVerifyLinkedinInactivateTheView.INSTANCE.execute(view);
 		return json;
 	}
 
@@ -78,18 +64,4 @@ public class VisSupportVerifyLinkedinConfirmValid implements CcpBusiness {
 		new JnSendMessageToUser().sendAllMessages(message, topic, messageTypes, JnMessageSenderExceptionHandler.LENIENT);
 	}
 
-	/**
-	 * Writes the {@code comment} in the view of the twin: only this field (a partial update of the document).
-	 * @param view the key of the view, as typed
-	 * @param twinEntity the twin of {@code vis_viewed_resume}
-	 */
-	private static void commentTheView(CcpJsonRepresentation view, CcpEntity twinEntity) {
-		CcpJsonRepresentation hashedView = VisEntityViewedResume.ENTITY.getJsonWithHandledPrimaryKey(view);
-		String viewId = twinEntity.calculateId(hashedView);
-		String comment = VisSupportVerifyLinkedinMessages.viewComment.getMessage(RECRUITER_LANGUAGE);
-		CcpJsonRepresentation commentField = CcpOtherConstants.EMPTY_JSON.put(VisEntityViewedResume.Fields.comment, comment);
-		CcpBulkItem item = new CcpBulkItem(commentField, CcpBulkEntityOperationType.update, twinEntity, viewId);
-		List<CcpBulkItem> items = List.of(item);
-		JnExecuteBulkOperation.INSTANCE.executeBulk(items, JnDeleteKeysFromCache.INSTANCE);
-	}
 }

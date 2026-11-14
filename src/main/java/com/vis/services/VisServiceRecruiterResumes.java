@@ -30,6 +30,7 @@ import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.status.VisProcessStatusInvalidLinkedin;
 import com.vis.status.VisProcessStatusViewedResume;
+import com.vis.business.bots.linkedin.VisSupportVerifyLinkedinInactivateTheView;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.jn.utils.JnDeleteKeysFromCache;
 
@@ -158,12 +159,12 @@ public enum VisServiceRecruiterResumes implements JnService {
 					.put(VisEntityInvalidLinkedinReport.Fields.resumeEmailSha1, resumeId);
 			// the insert sends the ticket to the operator; a report still waiting for the support changes nothing
 			VisEntityInvalidLinkedinReport.ENTITY.save(report);
-			// the view goes to the twin at once (since 2026-11-13): the resume no longer goes to this recruiter, whatever
-			// the support decides; a view already there, or none, is not moved
+			// the view goes to the twin at once, with its comment (since 2026-11-13): the resume no longer goes to this
+			// recruiter, whatever the support decides
 			CcpJsonRepresentation view = CcpOtherConstants.EMPTY_JSON
 					.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress)
 					.put(VisEntityViewedResume.Fields.email, email);
-			VisEntityViewedResume.ENTITY.delete(view);
+			VisSupportVerifyLinkedinInactivateTheView.INSTANCE.execute(view);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityResume.Fields.linkedinAddress, linkedinAddress);
 			return response;
 		}
