@@ -96,20 +96,6 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 			return keys;
 		}
 	},
-	/** The CLT salary expectation, in ranges of 1000 (the start of the range), or {@code notInformed}. */
-	clt {
-		public List<String> getKeys(CcpJsonRepresentation resume) {
-			List<String> keys = getSalaryRangeKey(resume, VisEntityResume.Fields.clt);
-			return keys;
-		}
-	},
-	/** The PJ salary expectation, in ranges of 1000 (the start of the range), or {@code notInformed}. */
-	pj {
-		public List<String> getKeys(CcpJsonRepresentation resume) {
-			List<String> keys = getSalaryRangeKey(resume, VisEntityResume.Fields.pj);
-			return keys;
-		}
-	},
 	;
 
 	/** The keys that are not values of the resume. */
@@ -125,9 +111,6 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 			}
 		},
 	}
-
-	/** The width of a range of salary. */
-	static final int SALARY_RANGE = 1000;
 
 	/**
 	 * The slices the resume counts in.
@@ -230,21 +213,6 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 		Integer value = resume.getAsIntegerNumber(field);
 		Values slice = value > 0 ? more : zero;
 		String key = slice.name();
-		return List.of(key);
-	}
-
-	private static List<String> getSalaryRangeKey(CcpJsonRepresentation resume, CcpJsonFieldName field) {
-		double salary = getSalary(resume, field);
-		boolean notInformed = salary <= 0d;
-
-		if(notInformed) {
-			String notInformedKey = Values.notInformed.name();
-			return List.of(notInformedKey);
-		}
-
-		long rangeIndex = (long) (salary / SALARY_RANGE);
-		long rangeStart = rangeIndex * SALARY_RANGE;
-		String key = String.valueOf(rangeStart);
 		return List.of(key);
 	}
 }
