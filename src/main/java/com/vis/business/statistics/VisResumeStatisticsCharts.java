@@ -96,6 +96,28 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 			return keys;
 		}
 	},
+	/** How many skills the resume declares to have, in ranges: up to 5, 6 to 15, 16 to 30, 31 to 50 and over 50. */
+	skillsCount {
+		public List<String> getKeys(CcpJsonRepresentation resume) {
+			List<String> skills = skill.getKeys(resume);
+			int count = skills.size();
+			Values range = getSkillsCountRange(count);
+			String key = range.name();
+			return List.of(key);
+		}
+	},
+	/** The kinds of hiring the resume accepts, by the salary expectations it informed: only CLT, only PJ or both. */
+	contractType {
+		public List<String> getKeys(CcpJsonRepresentation resume) {
+			double clt = getSalary(resume, VisEntityResume.Fields.clt);
+			double pj = getSalary(resume, VisEntityResume.Fields.pj);
+			boolean acceptsClt = clt > 0d;
+			boolean acceptsPj = pj > 0d;
+			Values contract = getContractType(acceptsClt, acceptsPj);
+			String key = contract.name();
+			return List.of(key);
+		}
+	},
 	;
 
 	/** The keys that are not values of the resume. */
@@ -105,6 +127,14 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 		accepts,
 		doesNotAccept,
 		notInformed,
+		upTo5,
+		from6To15,
+		from16To30,
+		from31To50,
+		over50,
+		onlyClt,
+		onlyPj,
+		both,
 		LANGUAGE_SEPARATOR {
 			public String getValue() {
 				return "|";
@@ -174,6 +204,35 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 		Double salary = resume.getAsDoubleNumber(field);
 		double positiveSalary = Math.max(0d, salary);
 		return positiveSalary;
+	}
+
+	private static Values getSkillsCountRange(int count) {
+		if(count <= 5) {
+			return Values.upTo5;
+		}
+		if(count <= 15) {
+			return Values.from6To15;
+		}
+		if(count <= 30) {
+			return Values.from16To30;
+		}
+		if(count <= 50) {
+			return Values.from31To50;
+		}
+		return Values.over50;
+	}
+
+	private static Values getContractType(boolean acceptsClt, boolean acceptsPj) {
+		if(acceptsClt && acceptsPj) {
+			return Values.both;
+		}
+		if(acceptsClt) {
+			return Values.onlyClt;
+		}
+		if(acceptsPj) {
+			return Values.onlyPj;
+		}
+		return Values.notInformed;
 	}
 
 	private static List<String> getIntegerKey(CcpJsonRepresentation resume, CcpJsonFieldName field) {
