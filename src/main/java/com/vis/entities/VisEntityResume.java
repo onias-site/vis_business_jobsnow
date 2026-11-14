@@ -46,6 +46,9 @@ import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.JnEntityEmailParametersToSend;
+import com.jn.entities.JnEntityGrouperChartsProviders;
+import com.jn.json.fields.validation.JnGrouperChartsScreens;
+import com.vis.business.statistics.VisBusinessCuriositiesCharts;
 import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnGrouperChildCurrentCounterEntityBeforeWrite;
@@ -78,6 +81,8 @@ import com.vis.json.transformers.VisJsonTransformerExperienceStartYear;
 import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 import com.vis.json.transformers.VisResumeDddCombinations;
 import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
+import com.vis.json.transformers.VisAvoidedSkillsCounterCombinations;
+import com.vis.json.transformers.VisAvoidedSkillsCounterKeys;
 import com.vis.json.transformers.VisResumeExcludedSkillCombinations;
 import com.vis.json.transformers.VisResumeExcludedSkillCounterKeys;
 import com.vis.json.transformers.VisResumeHashCombinations;
@@ -157,6 +162,10 @@ import com.vis.messages.VisMessages;
 // active resumes exclude it now: the most avoided skills
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualExcludedSkillCounter.class}, counterKeyClass = VisResumeExcludedSkillCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualExcludedSkillCounter.class, value = VisResumeExcludedSkillCombinations.class)
+// the same count of the excluded skills in a single group, {skill: n}: the chart of the screen Curiosities reads all of
+// them in one read by id
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualAvoidedSkillsCounter.class}, counterKeyClass = VisAvoidedSkillsCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualAvoidedSkillsCounter.class, value = VisAvoidedSkillsCounterCombinations.class)
 // the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
 @CcpEntityInsertionDate(JnInsertionDateEntity.class)
 // a single group (its childName tells the entity apart) counts, for each month of insertion (yyyyMM), how many records
@@ -310,6 +319,10 @@ public class VisEntityResume implements CcpEntityConfigurator {
 						+ "</body></html>",
 				savedMoreParameters);
 		items.addAll(deletedItems);
+
+		// the charts of vis in the screen Curiosities, read by JnBusinessGetGrouperCharts
+		List<CcpBulkItem> curiositiesProviders = JnEntityGrouperChartsProviders.getSeeds(JnGrouperChartsScreens.curiosities, VisBusinessCuriositiesCharts.class);
+		items.addAll(curiositiesProviders);
 
 		return items;
 	}

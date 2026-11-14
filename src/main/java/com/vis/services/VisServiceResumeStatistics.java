@@ -1,6 +1,8 @@
 package com.vis.services;
 
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.jn.business.grouper.JnBusinessGetGrouperCharts;
+import com.jn.json.fields.validation.JnGrouperChartsScreens;
 import com.jn.services.JnService;
 import com.vis.business.statistics.VisBusinessResumeStatisticsOfTheRegion;
 import com.vis.business.statistics.VisBusinessResumeTotals;
@@ -24,6 +26,22 @@ public enum VisServiceResumeStatistics implements JnService {
 	GetResumeTotals{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation response = VisBusinessResumeTotals.INSTANCE.execute(json);
+			return response;
+		}
+
+		public Class<?> getJsonValidationClass() {
+			return VisBusinessResumeTotals.Fields.class;
+		}
+	},
+	/**
+	 * The charts of the screen Curiosities: the counters of jn_grouper of every cost center that provides charts to it
+	 * (JnEntityGrouperChartsProviders), read by id in a single round trip.
+	 */
+	GetCuriosities{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			String screen = JnGrouperChartsScreens.curiosities.name();
+			CcpJsonRepresentation jsonWithTheScreen = json.put(JnBusinessGetGrouperCharts.Fields.screen, screen);
+			CcpJsonRepresentation response = JnBusinessGetGrouperCharts.INSTANCE.execute(jsonWithTheScreen);
 			return response;
 		}
 

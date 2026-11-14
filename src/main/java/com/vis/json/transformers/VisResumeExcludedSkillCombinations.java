@@ -1,17 +1,12 @@
 package com.vis.json.transformers;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityVirtualExcludedSkillCounter;
-import com.vis.json.fields.validation.VisJsonFieldsSkills;
-import com.vis.json.fields.validation.VisResumeSkillCategories;
 
 /**
  * Produces the groups of {@code VisEntityVirtualExcludedSkillCounter} a resume is counted in: one per skill its owner
@@ -30,20 +25,7 @@ public class VisResumeExcludedSkillCombinations implements Function<CcpJsonRepre
 	 * @return the combinations, {@code {"skill": <skill>}}, none when the resume excludes no skill
 	 */
 	public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json) {
-		List<CcpJsonRepresentation> skills = json.getAsJsonList(VisEntityResume.Fields.skill);
-		String excludedCategory = VisResumeSkillCategories.excludedSkills.name();
-		Set<String> excludedSkills = new LinkedHashSet<>();
-		for (CcpJsonRepresentation skill : skills) {
-			String category = skill.getAsString(VisJsonFieldsSkills.category);
-			boolean notExcluded = false == excludedCategory.equals(category);
-
-			if(notExcluded) {
-				continue;
-			}
-
-			String skillName = skill.getAsString(VisJsonFieldsSkills.skill);
-			excludedSkills.add(skillName);
-		}
+		List<String> excludedSkills = VisAvoidedSkillsCounterKeys.INSTANCE.apply(json);
 		List<CcpJsonRepresentation> combinations = new ArrayList<>();
 		for (String excludedSkill : excludedSkills) {
 			CcpJsonRepresentation combination = CcpOtherConstants.EMPTY_JSON.put(VisEntityVirtualExcludedSkillCounter.Fields.skill, excludedSkill);
