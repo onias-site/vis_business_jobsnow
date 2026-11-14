@@ -83,6 +83,8 @@ import com.vis.json.transformers.VisResumeDddCombinations;
 import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 import com.vis.json.transformers.VisAvoidedSkillsCounterCombinations;
 import com.vis.json.transformers.VisAvoidedSkillsCounterKeys;
+import com.vis.json.transformers.VisResumeTypeCounterCombinations;
+import com.vis.json.transformers.VisResumeTypeCounterKeys;
 import com.vis.json.transformers.VisResumeExcludedSkillCombinations;
 import com.vis.json.transformers.VisResumeExcludedSkillCounterKeys;
 import com.vis.json.transformers.VisResumeHashCombinations;
@@ -166,6 +168,10 @@ import com.vis.messages.VisMessages;
 // them in one read by id
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualAvoidedSkillsCounter.class}, counterKeyClass = VisAvoidedSkillsCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualAvoidedSkillsCounter.class, value = VisAvoidedSkillsCounterCombinations.class)
+// a single group counts, for each area of the resumes (resumeType), how many active resumes are of it now: a chart of the
+// screen Curiosities
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualResumeTypeCounter.class}, counterKeyClass = VisResumeTypeCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualResumeTypeCounter.class, value = VisResumeTypeCounterCombinations.class)
 // the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
 @CcpEntityInsertionDate(JnInsertionDateEntity.class)
 // a single group (its childName tells the entity apart) counts, for each month of insertion (yyyyMM), how many records

@@ -50,6 +50,7 @@ import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 import com.vis.json.transformers.VisResumeViewsOfTheMonthCombinations;
 import com.vis.json.transformers.VisViewedResumeMonthCombinations;
 import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
+import com.vis.json.transformers.VisViewerDomainCounterCombinations;
 
 /**
  * The resumes viewed by each recruiter: one record per resume ({@code linkedin}) and recruiter ({@code email}). Both
@@ -98,6 +99,10 @@ import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
 // e-mail of this entity as their SHA-1
 @CcpEntityGrouperChild(value = {VisEntityViewedResumesOfTheMonth.class}, beforeDecoratorClass = JnGrouperChildAsJsonEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildAsJsonEntityAfterWrite.class)
 @CcpEntityGrouperChildCounter(value = {VisEntityResumeViewsOfTheMonth.class}, counterKeyClass = VisViewedResumeRecruiterDomain.class, beforeDecoratorClass = JnGrouperChildCounterEntityBeforeWrite.class)
+// a single group counts, for each domain of the recruiters, how many views they ever made (a history): the chart of the
+// companies that view the most resumes in the screen Curiosities
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualViewerDomainCounter.class}, counterKeyClass = VisViewedResumeRecruiterDomain.class, beforeDecoratorClass = JnGrouperChildCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualViewerDomainCounter.class, value = VisViewerDomainCounterCombinations.class)
 // the views of the resumes of each ddd: the child is a JSON text with these fields of the resume, as the caller of the
 // save hands them over, and the id of the view
 @CcpEntityGrouperChild(value = {VisEntityVirtualViewedResumeDddGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
