@@ -25,9 +25,9 @@ import com.vis.messages.VisMessages;
  * <li>the report of the recruiter is closed with the answer ({@link VisSupportVerifyLinkedinCloseTheReport});</li>
  * <li>the recruiter gets the e-mail {@link VisMessages.VisNotifyRecruiterAboutUnreachableLinkedin}: maybe only they cannot
  * see that profile, but the user exists on LinkedIn;</li>
- * <li>the view of the recruiter goes to the twin ({@code vis_inactive_viewed_resume}) with the {@code comment} that the
- * address could not be opened by this recruiter, so the resume no longer goes to them. A view already in the twin only
- * gets the comment.</li>
+ * <li>the view of the recruiter, in the twin ({@code vis_inactive_viewed_resume}) since the report (2026-11-13), gets the
+ * {@code comment} that the address could not be opened by this recruiter. A view still in the main entity (a ticket
+ * opened before 2026-11-13) goes to the twin first.</li>
  * </ul>
  */
 public class VisSupportVerifyLinkedinConfirmValid implements CcpBusiness {

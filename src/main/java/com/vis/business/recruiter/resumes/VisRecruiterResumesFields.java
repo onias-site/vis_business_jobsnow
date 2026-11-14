@@ -33,6 +33,11 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	token,
 	/** The alias suggested to the recruiter for a resume never viewed. */
 	defaultAlias,
+	/**
+	 * Whether the view of the recruiter is in the twin ({@code vis_inactive_viewed_resume}): the page of the resume does
+	 * not let it be saved again (since 2026-11-13).
+	 */
+	inactiveView,
 	/** The keys used to sort the resumes. */
 	sortKeys,
 	/** The rows of the table. */
