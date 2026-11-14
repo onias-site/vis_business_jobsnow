@@ -17,7 +17,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityG
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChildCounter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpStoredParentIdsField;
-import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityRecordsCounter;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChildTotal;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
@@ -55,7 +55,7 @@ import com.jn.entities.decorators.engine.JnInsertionDateEntity;
 import com.jn.entities.fields.counters.JnInsertionYearMonthCounterKeys;
 import com.vis.json.transformers.VisInsertionMonthCounterCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityInsertionDate;
-import com.jn.entities.decorators.engine.JnRecordsCounterEntity;
+import com.jn.entities.decorators.engine.JnGrouperChildTotalEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
@@ -124,9 +124,9 @@ import com.vis.messages.VisMessages;
 @CcpAfterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutDeactivatedResume.class)
 @CcpAfterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutReactivatedResume.class)
 @CcpAfterDeleteAnyWhereFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutDeletedResume.class)
-// how many active (vis_resume) and inactive (vis_inactive_resume) resumes there are now, in jn_records_count, counted
-// again after each insertion, deactivation, reactivation and delete
-@CcpEntityRecordsCounter(JnRecordsCounterEntity.class)
+// how many active resumes there are now (the child {"total": n} of the group of jn_virtual_records_total in jn_grouper)
+// and how many inactive ones (the group of the same parent in jn_inactive_grouper), corrected on every write
+@CcpEntityGrouperChildTotal(JnGrouperChildTotalEntity.class)
 @CcpEntityTwin(
 		twinEntityName = "vis_inactive_resume",
 		bulkExecutorClass = JnExecuteBulkOperation.class,
