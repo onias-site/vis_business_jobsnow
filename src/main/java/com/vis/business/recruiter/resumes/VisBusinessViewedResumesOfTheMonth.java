@@ -20,6 +20,7 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnGroupers;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.entities.VisEntityViewedResumesOfTheMonth;
+import com.vis.entities.VisEntityViewedResumesOfTheRecruiter;
 
 /**
  * The resumes a recruiter viewed in a month, read by id (OQL): the id of the group of the recruiter in the month
@@ -34,6 +35,10 @@ import com.vis.entities.VisEntityViewedResumesOfTheMonth;
  * tab "Indesejados" of the screen); each list is empty when that side has nothing in the month. The LinkedIn never leaves in this
  * list: its hash is the key of the details ({@link VisBusinessViewedResumeDetails}), which check whether the candidate
  * still lets the company of the recruiter see the resume.
+ *
+ * <p>The month {@code all} (since 2026-11-15, the option "Listar todos" of the screen) reads, the same way, the group of
+ * every view of the recruiter, whatever the month ({@code VisEntityViewedResumesOfTheRecruiter}); so do the details, the
+ * edit and the moves, which find the view by {@link #getViewOfTheMonth(CcpJsonRepresentation)}.
  */
 public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 
@@ -44,10 +49,23 @@ public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 		@CcpJsonFieldValidatorRequired
 		email,
 
-		/** The month of the views, as {@code yyyyMM} (the format of the monthly disposable entities). */
-		@CcpJsonFieldTypeString(regexValidation = "^[0-9]{4}(0[1-9]|1[0-2])$")
+		/**
+		 * The month of the views, as {@code yyyyMM} (the format of the monthly disposable entities), or {@code all} for every
+		 * view of the recruiter, whatever the month.
+		 */
+		@CcpJsonFieldTypeString(regexValidation = "^([0-9]{4}(0[1-9]|1[0-2])|all)$")
 		@CcpJsonFieldValidatorRequired
 		month,
+	}
+
+	/** The texts of this business. */
+	enum Constants implements CcpJsonFieldName {
+		/** The month that stands for every month: the group of every view of the recruiter. */
+		ALL_MONTHS {
+			public String getValue() {
+				return "all";
+			}
+		},
 	}
 
 	/** The single instance. */
@@ -60,12 +78,20 @@ public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 	}
 
 	/**
-	 * The key, in {@code jn_grouper}, of the group of the views of the recruiter in the month.
-	 * @param json {@code email} (the recruiter) and {@code month} ({@code yyyyMM})
+	 * The key, in {@code jn_grouper}, of the group of the views of the recruiter in the month, or of every view of the
+	 * recruiter when the month is {@code all}.
+	 * @param json {@code email} (the recruiter) and {@code month} ({@code yyyyMM} or {@code all})
 	 * @return the key: parent id, parent name and child name
 	 */
 	static CcpJsonRepresentation getGroupKeyOfTheMonth(CcpJsonRepresentation json) {
 		String month = json.getAsString(Fields.month);
+		String allMonths = Constants.ALL_MONTHS.getValue();
+		boolean everyMonth = allMonths.equals(month);
+
+		if(everyMonth) {
+			return getGroupKeyOfTheRecruiter(json);
+		}
+
 		CcpJsonRepresentation recruiter = json.getJsonPiece(VisEntityViewedResumesOfTheMonth.Fields.email);
 		CcpJsonRepresentation recruiterWithHashedEmail = VisEntityViewedResumesOfTheMonth.ENTITY.getJsonWithHandledPrimaryKey(recruiter);
 		CcpEntityMetaData monthDetails = VisEntityViewedResumesOfTheMonth.ENTITY.getEntityMetaData();
@@ -75,6 +101,23 @@ public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 		String parentId = VisEntityViewedResumesOfTheMonth.ENTITY.calculateId(recruiterKeyInTheMonth);
 		CcpEntityMetaData viewDetails = VisEntityViewedResume.ENTITY.getEntityMetaData();
 		CcpJsonRepresentation groupKey = JnGroupers.getGroupKey(monthDetails.entityName, viewDetails.entityName, parentId);
+		return groupKey;
+	}
+
+	/**
+	 * The key, in {@code jn_grouper}, of the group of every view of the recruiter, whatever the month.
+	 * @param json {@code email} (the recruiter)
+	 * @return the key: parent id, parent name and child name
+	 */
+	static CcpJsonRepresentation getGroupKeyOfTheRecruiter(CcpJsonRepresentation json) {
+		CcpJsonRepresentation recruiter = json.getJsonPiece(VisEntityViewedResumesOfTheRecruiter.Fields.email);
+		CcpJsonRepresentation recruiterWithHashedEmail = VisEntityViewedResumesOfTheRecruiter.ENTITY.getJsonWithHandledPrimaryKey(recruiter);
+		CcpEntityMetaData recruiterDetails = VisEntityViewedResumesOfTheRecruiter.ENTITY.getEntityMetaData();
+		// the transformer also keeps the original e-mail: only the hash calculates the id
+		CcpJsonRepresentation recruiterKey = recruiterDetails.getOnlyExistingFields(recruiterWithHashedEmail);
+		String parentId = VisEntityViewedResumesOfTheRecruiter.ENTITY.calculateId(recruiterKey);
+		CcpEntityMetaData viewDetails = VisEntityViewedResume.ENTITY.getEntityMetaData();
+		CcpJsonRepresentation groupKey = JnGroupers.getGroupKey(recruiterDetails.entityName, viewDetails.entityName, parentId);
 		return groupKey;
 	}
 

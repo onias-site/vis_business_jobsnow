@@ -29,7 +29,7 @@ import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
  * resumes of those e-mails ({@code vis_resume}) and the rankings of their skills. The row has no lines of insertion and
  * last change: they come from the history of the resume, which only a query reads.
  *
- * <p>Input: {@code email} (the recruiter), {@code month} ({@code yyyyMM}) and {@code linkedinHash} (as the list of the
+ * <p>Input: {@code email} (the recruiter), {@code month} ({@code yyyyMM} or {@code all}) and {@code linkedinHash} (as the list of the
  * views shows it; the list never carries the LinkedIn). Output: {@code linkedinHash}, {@code resumes}, one row per active
  * resume that uses the LinkedIn, each with the fields of the preview of the resume in {@code preview}, and {@code linkedin}, only when there is a row to show (usually one;
  * more when the LinkedIn is in the resume of more than one e-mail), empty when none is active anymore. A resume that now
@@ -46,7 +46,7 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 		@CcpJsonCopyFieldValidationsFrom(VisBusinessViewedResumesOfTheMonth.Fields.class)
 		email,
 
-		/** The month of the view ({@code yyyyMM}). */
+		/** The month of the view ({@code yyyyMM}), or {@code all} for the group of every view of the recruiter. */
 		@CcpJsonCopyFieldValidationsFrom(VisBusinessViewedResumesOfTheMonth.Fields.class)
 		month,
 

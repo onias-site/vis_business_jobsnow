@@ -33,7 +33,7 @@ public class VisBusinessMoveViewedResume implements CcpBusiness {
 		@CcpJsonCopyFieldValidationsFrom(VisBusinessViewedResumesOfTheMonth.Fields.class)
 		email,
 
-		/** The month of the view ({@code yyyyMM}). */
+		/** The month of the view ({@code yyyyMM}), or {@code all} for the group of every view of the recruiter. */
 		@CcpJsonCopyFieldValidationsFrom(VisBusinessViewedResumesOfTheMonth.Fields.class)
 		month,
 

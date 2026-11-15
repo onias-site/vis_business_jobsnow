@@ -51,6 +51,7 @@ import com.vis.json.transformers.VisResumeDddCombinations;
 import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 import com.vis.json.transformers.VisResumeViewsOfTheMonthCombinations;
 import com.vis.json.transformers.VisViewedResumeMonthCombinations;
+import com.vis.json.transformers.VisViewedResumeRecruiterCombinations;
 import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
 import com.vis.json.transformers.VisViewerDomainCounterCombinations;
 
@@ -62,7 +63,10 @@ import com.vis.json.transformers.VisViewerDomainCounterCombinations;
  * Every save also keeps the view in the group of the recruiter in the current month ({@code jn_grouper}, parent
  * {@code vis_viewed_resumes_of_the_month}): one JSON text per resume, with the {@code linkedin} as it came (readable),
  * the {@code alias} and the {@code date} of the save, in place of the earlier view of the same resume in that month; the
- * months before are kept. The deletes leave the groups as they are (they are a history).
+ * months before are kept. The deletes leave the groups as they are (they are a history). Since 2026-11-15 the same JSON
+ * text also goes to the group of every view of the recruiter, whatever the month ({@code jn_grouper}, parent
+ * {@code vis_viewed_resumes_of_the_recruiter}, the option "Listar todos" of the screen), one per resume as well; a view
+ * moved to the twin moves its child to {@code jn_inactive_grouper} in both groups.
  * <p>
  * Every save also counts the view among the views of the month of the resume, for the screen "Quem me viu" of the
  * candidate ({@code jn_grouper}, parent {@code vis_resume_views_of_the_month}, one per e-mail that uses the LinkedIn
@@ -101,7 +105,8 @@ import com.vis.json.transformers.VisViewerDomainCounterCombinations;
 // the views of the month of the recruiter, as JSON texts with the LinkedIn as it came, and the views of the month of the
 // resume, counted by domain: both decorators stay before the field transformers, which store the LinkedIn and the
 // e-mail of this entity as their SHA-1
-@CcpEntityGrouperChild(value = {VisEntityViewedResumesOfTheMonth.class}, beforeDecoratorClass = JnGrouperChildAsJsonEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildAsJsonEntityAfterWrite.class)
+// (the group of every view of the recruiter, whatever the month, is kept the same way: the option "Listar todos")
+@CcpEntityGrouperChild(value = {VisEntityViewedResumesOfTheMonth.class, VisEntityViewedResumesOfTheRecruiter.class}, beforeDecoratorClass = JnGrouperChildAsJsonEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildAsJsonEntityAfterWrite.class)
 // a view brought back from the twin finds its previous save there, so the recruiter is not counted again in the month
 @CcpEntityGrouperChildCounter(value = {VisEntityResumeViewsOfTheMonth.class}, counterKeyClass = VisViewedResumeRecruiterDomain.class, beforeDecoratorClass = JnGrouperChildCounterOnBothSidesEntityBeforeWrite.class)
 // a single group counts, for each domain of the recruiters, how many views they ever made (a history): the chart of the
@@ -127,6 +132,7 @@ import com.vis.json.transformers.VisViewerDomainCounterCombinations;
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualDddCounter.class}, counterKeyClass = VisDddCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddCounter.class, value = VisDddCounterCombinations.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityViewedResumesOfTheMonth.class, value = VisViewedResumeMonthCombinations.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityViewedResumesOfTheRecruiter.class, value = VisViewedResumeRecruiterCombinations.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualViewedResumeDddGrouper.class, value = VisResumeDddCombinations.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityResumeViewsOfTheMonth.class, value = VisResumeViewsOfTheMonthCombinations.class)
 public class VisEntityViewedResume implements CcpEntityConfigurator {
