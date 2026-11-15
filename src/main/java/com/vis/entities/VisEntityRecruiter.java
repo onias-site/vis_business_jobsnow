@@ -1,5 +1,7 @@
 package com.vis.entities;
 
+import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -90,6 +92,7 @@ import com.vis.json.transformers.VisRecruiterDomainInitialsCombinations;
  * the legacy index {@code old_recruiters} only; until 2026-10-31 the children were the ids of the recruiters.
  */
 @CcpEntityCache(3600)
+@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsValidator(VisEntityRecruiter.Fields.class)

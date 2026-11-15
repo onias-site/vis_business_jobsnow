@@ -1,5 +1,7 @@
 package com.vis.entities;
 
+import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
@@ -28,6 +30,7 @@ import com.vis.json.transformers.VisStatisSkillPieChartCombinations;
  * which the decorator of {@code @CcpEntityGrouperChild} does not see: that process writes the groups too.
  */
 @CcpEntityCache(3600)
+@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityStatisSkillLineChart.Fields.class)
 @CcpEntityGrouperChild(value = {VisEntityStatisSkill.class, VisEntityStatisSkillPieChart.class}, beforeDecoratorClass = JnGrouperChildAsJsonEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildAsJsonEntityAfterWrite.class)

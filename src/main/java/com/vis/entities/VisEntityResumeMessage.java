@@ -1,5 +1,7 @@
 package com.vis.entities;
 
+import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +54,7 @@ import com.vis.messages.VisMessages;
  * ({@link VisSupportVerifyLinkedinBotConfiguration}).
  */
 @CcpEntityCache(3600)
+@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsValidator(VisEntityResumeMessage.Fields.class)

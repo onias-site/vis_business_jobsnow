@@ -1,5 +1,7 @@
 package com.vis.entities;
 
+import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -53,6 +55,7 @@ import java.util.stream.Stream;
  * {@code initialsGroup} keeps the groups the skill was written in.
  */
 @CcpEntityCache(3600)
+@CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkill.Fields.class)
 @CcpAfterSaveFromMainEntity(execute = {VisBusinessUpdateSkillDictionary.class}, operationHandlers = {})
