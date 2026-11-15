@@ -55,12 +55,13 @@ import com.vis.messages.VisMessages;
  * comes back on viewing a resume again; signing up again counts as a view ({@code vis_recruiter_sign_up_return}). Each day, only
  * {@value #RECRUITERS_PER_DAY} of them: first the ones who viewed a resume in these 35 days, the most recent view first;
  * then the recruiters of the sign-up (source {@code login}) who never received this e-mail
- * ({@code vis_recruiter_first_email}); then, in turns, the recruiters of a non professional domain ({@code professional}
- * false, the domains of {@code NONPROFESSIONALDOMAINS}), in the order of the SHA-1 of the e-mails, a queue of its own that
- * goes on from where the last run stopped and starts over at its end; then, in turns, the ones who viewed a resume in the
- * legacy JobsNow ({@code lastLegacyView}), the most recent view first, another queue of its own; then the ones who appeared
- * on Telegram in the last six months ({@code lastTelegramAppearance}), the most recent appearance first (order of
- * 2026-11-13). The places left go to the queue of the ones who never viewed: the sign-up and then the others,
+ * ({@code vis_recruiter_first_email}); then the ones who appeared on Telegram in the last six months
+ * ({@code lastTelegramAppearance}), the most recent appearance first; then, in turns, the ones who viewed a resume in the
+ * legacy JobsNow ({@code lastLegacyView}), the most recent view first, a queue of its own that goes on from where the last
+ * run stopped and starts over at its end; then, in turns, the ones who were active in the legacy JobsNow
+ * ({@code legacyActive}), in the order of the SHA-1 of the e-mails, another queue of its own; then, in turns, the
+ * recruiters of a non professional domain ({@code professional} false, the domains of {@code NONPROFESSIONALDOMAINS}), in
+ * the order of the SHA-1 of the e-mails, another queue of its own (order of 2026-11-15). The places left go to the queue of the ones who never viewed: the sign-up and then the others,
  * each group in the order of the SHA-1 of the e-mails, which favors no name or domain. The queue goes on from where the last run
  * stopped ({@code vis_recruiter_queue_cursor}) and starts over at its end, so whoever received the e-mail and viewed
  * nothing gives their place to the next one; a run restricted to some recruiters does not move it.</li>
@@ -190,22 +191,26 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		VisEntityRecruiterQueueCursor.CursorNames generalQueue = VisEntityRecruiterQueueCursor.CursorNames.resumesToRecruiters;
 		VisEntityRecruiterQueueCursor.CursorNames legacyQueue = VisEntityRecruiterQueueCursor.CursorNames.legacyViewersOfResumesToRecruiters;
 		VisEntityRecruiterQueueCursor.CursorNames nonProfessionalQueue = VisEntityRecruiterQueueCursor.CursorNames.nonProfessionalRecruitersOfResumesToRecruiters;
+		VisEntityRecruiterQueueCursor.CursorNames legacyActiveQueue = VisEntityRecruiterQueueCursor.CursorNames.legacyActiveRecruitersOfResumesToRecruiters;
 		String lastPositionOfTheLastRun = getLastQueuePosition(generalQueue);
 		String lastLegacyPositionOfTheLastRun = getLastQueuePosition(legacyQueue);
 		String lastNonProfessionalPositionOfTheLastRun = getLastQueuePosition(nonProfessionalQueue);
+		String lastLegacyActivePositionOfTheLastRun = getLastQueuePosition(legacyActiveQueue);
 		String[] lastQueuePosition = {lastPositionOfTheLastRun};
 		String[] lastLegacyQueuePosition = {lastLegacyPositionOfTheLastRun};
 		String[] lastNonProfessionalQueuePosition = {lastNonProfessionalPositionOfTheLastRun};
+		String[] lastLegacyActiveQueuePosition = {lastLegacyActivePositionOfTheLastRun};
 		long telegramSince = now.getDaysAgo(VisEntityRecruiter.DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE);
 
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition);
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition);
 		List<CcpJsonRepresentation> recruiters = getRecruiters();
 		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
-		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun, lastNonProfessionalPositionOfTheLastRun);
+		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun, lastNonProfessionalPositionOfTheLastRun, lastLegacyActivePositionOfTheLastRun);
 		recruitersInOrder.forEach(sendToTheRecruiter);
 		saveLastQueuePosition(generalQueue, restrictedTo, lastPositionOfTheLastRun, lastQueuePosition[0]);
 		saveLastQueuePosition(legacyQueue, restrictedTo, lastLegacyPositionOfTheLastRun, lastLegacyQueuePosition[0]);
 		saveLastQueuePosition(nonProfessionalQueue, restrictedTo, lastNonProfessionalPositionOfTheLastRun, lastNonProfessionalQueuePosition[0]);
+		saveLastQueuePosition(legacyActiveQueue, restrictedTo, lastLegacyActivePositionOfTheLastRun, lastLegacyActiveQueuePosition[0]);
 		List<CcpJsonRepresentation> recruitersWhoStoppedViewing = getRecruitersWhoStoppedViewing(recruiters, lastViewByRecruiter, viewsSince, restrictedTo);
 		// deleting from the recruiters moves the given record to the twin, the inactive recruiters
 		recruitersWhoStoppedViewing.forEach(recruiter -> VisEntityRecruiter.ENTITY.delete(recruiter));
@@ -337,11 +342,13 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * <ol>
 	 * <li>the recruiters who viewed a resume since {@code viewsSince}, the most recent view first;</li>
 	 * <li>the ones of the sign-up waiting for their first e-mail, by the hash;</li>
-	 * <li>the ones of a non professional domain ({@code professional} false), by the hash, right after
-	 * {@code lastNonProfessionalQueuePosition} and going back to the beginning at its end;</li>
+	 * <li>the ones who appeared on Telegram since {@code telegramSince}, the most recent appearance first;</li>
 	 * <li>the ones who viewed a resume in the legacy JobsNow, the most recent view first, right after
 	 * {@code lastLegacyQueuePosition} and going back to the beginning at its end;</li>
-	 * <li>the ones who appeared on Telegram since {@code telegramSince}, the most recent appearance first;</li>
+	 * <li>the ones who were active in the legacy JobsNow ({@code legacyActive}), by the hash, right after
+	 * {@code lastLegacyActiveQueuePosition} and going back to the beginning at its end;</li>
+	 * <li>the ones of a non professional domain ({@code professional} false), by the hash, right after
+	 * {@code lastNonProfessionalQueuePosition} and going back to the beginning at its end;</li>
 	 * <li>the queue of the ones who never viewed, right after {@code lastQueuePosition} and going back to the beginning at
 	 * its end.</li>
 	 * </ol>
@@ -357,11 +364,13 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * @param telegramSince the time before which an appearance on Telegram is no longer recent
 	 * @param lastLegacyQueuePosition where the last run stopped in the queue of the legacy views
 	 * @param lastNonProfessionalQueuePosition where the last run stopped in the queue of the non professional domains
+	 * @param lastLegacyActiveQueuePosition where the last run stopped in the queue of the ones active in the legacy JobsNow
 	 * @return the recruiters in order, each one with {@code emailHash}; the ones of the queue with {@code queuePosition}, the
 	 * ones of the legacy views with {@code legacyQueuePosition}, the ones of the non professional domains with
-	 * {@code nonProfessionalQueuePosition}, the ones waiting for their first e-mail with {@code firstEmail}
+	 * {@code nonProfessionalQueuePosition}, the ones active in the legacy JobsNow with {@code legacyActiveQueuePosition},
+	 * the ones waiting for their first e-mail with {@code firstEmail}
 	 */
-	static List<CcpJsonRepresentation> getRecruitersInOrder(List<CcpJsonRepresentation> recruiters, Map<String, Long> lastViewByRecruiter, long viewsSince, String lastQueuePosition, Set<String> recruitersWithFirstEmail, long telegramSince, String lastLegacyQueuePosition, String lastNonProfessionalQueuePosition) {
+	static List<CcpJsonRepresentation> getRecruitersInOrder(List<CcpJsonRepresentation> recruiters, Map<String, Long> lastViewByRecruiter, long viewsSince, String lastQueuePosition, Set<String> recruitersWithFirstEmail, long telegramSince, String lastLegacyQueuePosition, String lastNonProfessionalQueuePosition, String lastLegacyActiveQueuePosition) {
 		String loginSource = VisEntityRecruiter.Sources.login.getValue();
 		String signUpGroup = Constants.QUEUE_GROUP_OF_THE_SIGN_UP.getValue();
 		String othersGroup = Constants.QUEUE_GROUP_OF_THE_OTHERS.getValue();
@@ -369,6 +378,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		List<CcpJsonRepresentation> recentInTelegram = new ArrayList<>();
 		List<CcpJsonRepresentation> legacyViewers = new ArrayList<>();
 		List<CcpJsonRepresentation> nonProfessionals = new ArrayList<>();
+		List<CcpJsonRepresentation> legacyActives = new ArrayList<>();
 		List<CcpJsonRepresentation> viewers = new ArrayList<>();
 		List<CcpJsonRepresentation> waitingForTheFirstEmail = new ArrayList<>();
 		List<CcpJsonRepresentation> queue = new ArrayList<>();
@@ -394,11 +404,12 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 				waitingForTheFirstEmail.add(recruiterOfTheFirstEmail);
 				continue;
 			}
-			// a record without the field is not known to be of a non professional domain
-			boolean professional = recruiter.getOrDefault(VisEntityRecruiter.Fields.professional, () -> true);
-			if(false == professional) {
-				CcpJsonRepresentation nonProfessional = recruiterWithHash.put(VisRecruiterResumesFields.nonProfessionalQueuePosition, emailHash);
-				nonProfessionals.add(nonProfessional);
+			boolean appearedOnTelegram = recruiter.containsAllFields(VisEntityRecruiter.Fields.lastTelegramAppearance);
+			long telegramAppearance = appearedOnTelegram ? recruiter.getAsLongNumber(VisEntityRecruiter.Fields.lastTelegramAppearance) : 0L;
+			boolean appearedRecentlyOnTelegram = appearedOnTelegram && telegramAppearance >= telegramSince;
+			if(appearedRecentlyOnTelegram) {
+				CcpJsonRepresentation recruiterOfTelegram = recruiterWithHash.put(VisEntityRecruiter.Fields.lastTelegramAppearance, telegramAppearance);
+				recentInTelegram.add(recruiterOfTelegram);
 				continue;
 			}
 			boolean viewedOnTheLegacy = recruiter.containsAllFields(VisEntityRecruiter.Fields.lastLegacyView);
@@ -410,12 +421,17 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 				legacyViewers.add(legacyViewer);
 				continue;
 			}
-			boolean appearedOnTelegram = recruiter.containsAllFields(VisEntityRecruiter.Fields.lastTelegramAppearance);
-			long telegramAppearance = appearedOnTelegram ? recruiter.getAsLongNumber(VisEntityRecruiter.Fields.lastTelegramAppearance) : 0L;
-			boolean appearedRecentlyOnTelegram = appearedOnTelegram && telegramAppearance >= telegramSince;
-			if(appearedRecentlyOnTelegram) {
-				CcpJsonRepresentation recruiterOfTelegram = recruiterWithHash.put(VisEntityRecruiter.Fields.lastTelegramAppearance, telegramAppearance);
-				recentInTelegram.add(recruiterOfTelegram);
+			boolean activeOnTheLegacy = recruiter.getOrDefault(VisEntityRecruiter.Fields.legacyActive, () -> false);
+			if(activeOnTheLegacy) {
+				CcpJsonRepresentation legacyActive = recruiterWithHash.put(VisRecruiterResumesFields.legacyActiveQueuePosition, emailHash);
+				legacyActives.add(legacyActive);
+				continue;
+			}
+			// a record without the field is not known to be of a non professional domain
+			boolean professional = recruiter.getOrDefault(VisEntityRecruiter.Fields.professional, () -> true);
+			if(false == professional) {
+				CcpJsonRepresentation nonProfessional = recruiterWithHash.put(VisRecruiterResumesFields.nonProfessionalQueuePosition, emailHash);
+				nonProfessionals.add(nonProfessional);
 				continue;
 			}
 			String group = cameFromTheSignUp ? signUpGroup : othersGroup;
@@ -431,13 +447,15 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		waitingForTheFirstEmail.sort(byEmailHash);
 		List<CcpJsonRepresentation> nonProfessionalsInTurn = getInTurn(nonProfessionals, VisRecruiterResumesFields.nonProfessionalQueuePosition, lastNonProfessionalQueuePosition);
 		List<CcpJsonRepresentation> legacyViewersInTurn = getInTurn(legacyViewers, VisRecruiterResumesFields.legacyQueuePosition, lastLegacyQueuePosition);
+		List<CcpJsonRepresentation> legacyActivesInTurn = getInTurn(legacyActives, VisRecruiterResumesFields.legacyActiveQueuePosition, lastLegacyActiveQueuePosition);
 		List<CcpJsonRepresentation> queueInTurn = getInTurn(queue, VisRecruiterResumesFields.queuePosition, lastQueuePosition);
 
 		List<CcpJsonRepresentation> recruitersInOrder = new ArrayList<>(viewers);
 		recruitersInOrder.addAll(waitingForTheFirstEmail);
-		recruitersInOrder.addAll(nonProfessionalsInTurn);
-		recruitersInOrder.addAll(legacyViewersInTurn);
 		recruitersInOrder.addAll(recentInTelegram);
+		recruitersInOrder.addAll(legacyViewersInTurn);
+		recruitersInOrder.addAll(legacyActivesInTurn);
+		recruitersInOrder.addAll(nonProfessionalsInTurn);
 		recruitersInOrder.addAll(queueInTurn);
 		return recruitersInOrder;
 	}

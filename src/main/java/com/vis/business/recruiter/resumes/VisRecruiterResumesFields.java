@@ -115,6 +115,8 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	legacyQueuePosition,
 	/** The position of a recruiter in the queue of the non professional domains: the SHA-1 of the e-mail. */
 	nonProfessionalQueuePosition,
+	/** The position of a recruiter in the queue of the ones active in the legacy JobsNow: the SHA-1 of the e-mail. */
+	legacyActiveQueuePosition,
 	/** Marks the recruiter of the sign-up who is about to receive their first e-mail. */
 	firstEmail,
 	/** A document of the legacy index of candidates. */

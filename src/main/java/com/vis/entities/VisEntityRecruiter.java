@@ -166,6 +166,14 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 		 */
 		@CcpJsonFieldTypeNumberUnsigned
 		lastLegacyView,
+
+		/**
+		 * The {@code legacyActive} field: {@code true} when the recruiter was active ({@code status} 1) in the legacy
+		 * JobsNow, in the index {@code recruiters} or {@code old_recruiters} (loaded on 2026-11-15 by the script 86 of
+		 * the deploy). The daily e-mail of resumes gives the fifth places, in turns, to the recruiters who have it.
+		 */
+		@CcpJsonFieldTypeBoolean
+		legacyActive,
 	}
 
 	/** How old, in days (six months), a message of Telegram can be to count as a recent appearance of the recruiter. */
