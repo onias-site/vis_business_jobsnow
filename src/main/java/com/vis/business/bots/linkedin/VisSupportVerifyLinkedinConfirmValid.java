@@ -18,9 +18,10 @@ import com.vis.messages.VisMessages;
  * <li>the report of the recruiter is closed with the answer ({@link VisSupportVerifyLinkedinCloseTheReport});</li>
  * <li>the recruiter gets the e-mail {@link VisMessages.VisNotifyRecruiterAboutUnreachableLinkedin}: maybe only they cannot
  * see that profile, but the user exists on LinkedIn;</li>
- * <li>the view of the recruiter is already in the twin ({@code vis_inactive_viewed_resume}), with its {@code comment},
- * since the report (2026-11-13); a view still in the main entity (a ticket opened before that) goes there now
- * ({@link VisSupportVerifyLinkedinInactivateTheView}).</li>
+ * <li>the view of the recruiter is already in the twin ({@code vis_inactive_viewed_resume}), with the {@code comment} of
+ * the report, since the report (2026-11-13); a view still in the main entity (a ticket opened before that) goes there now,
+ * without a comment: no decision of the operator writes in the comment of the view (since 2026-11-15, rule of the user;
+ * the comment is of the recruiter, or of their report).</li>
  * </ul>
  */
 public class VisSupportVerifyLinkedinConfirmValid implements CcpBusiness {
@@ -45,7 +46,8 @@ public class VisSupportVerifyLinkedinConfirmValid implements CcpBusiness {
 		CcpJsonRepresentation view = CcpOtherConstants.EMPTY_JSON
 				.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress)
 				.put(VisEntityViewedResume.Fields.email, recruiterEmail);
-		VisSupportVerifyLinkedinInactivateTheView.INSTANCE.execute(view);
+		// the delete of the main side moves the view to the twin; a view already there (or none) is left as it is
+		VisEntityViewedResume.ENTITY.delete(view);
 		return json;
 	}
 
