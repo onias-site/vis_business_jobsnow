@@ -12,6 +12,8 @@ import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFr
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.flow.CcpErrorFlowDisturb;
+import com.ccp.process.CcpProcessStatusDefault;
 import com.jn.business.grouper.JnBusinessGetGroupOnBothSides;
 import com.jn.entities.JnEntityGrouper;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
@@ -101,6 +103,42 @@ public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 		CcpJsonRepresentation group = groupOnBothSides.getInnerJson(grouper);
 		List<String> storedViews = group.getAsStringList(JnEntityGrouper.Fields.child);
 		return storedViews;
+	}
+
+	/**
+	 * The view of the recruiter in the month whose LinkedIn has the given hash, on either side of the group of the month,
+	 * as the group keeps it ({@code linkedin} as it came, {@code alias}, {@code date}, {@code ddd} and {@code comment}).
+	 * @param json {@code email} (the recruiter), {@code month} ({@code yyyyMM}) and {@code linkedinHash}
+	 * @return the view, parsed
+	 * @throws CcpErrorFlowDisturb {@code 404} when no view of the recruiter in the month has a LinkedIn of this hash
+	 */
+	static CcpJsonRepresentation getViewOfTheMonth(CcpJsonRepresentation json) {
+		String linkedinHash = json.getAsString(VisRecruiterResumesFields.linkedinHash);
+		CcpJsonRepresentation groupKey = getGroupKeyOfTheMonth(json);
+		CcpJsonRepresentation groupOnBothSides = JnBusinessGetGroupOnBothSides.INSTANCE.execute(groupKey);
+		List<String> mainViews = getStoredViews(groupOnBothSides, false);
+		List<String> twinViews = getStoredViews(groupOnBothSides, true);
+		List<String> views = new ArrayList<>(mainViews);
+		views.addAll(twinViews);
+		for (String viewText : views) {
+			CcpJsonRepresentation view = new CcpJsonRepresentation(viewText);
+			String viewedLinkedin = view.getOrDefault(VisEntityViewedResume.Fields.linkedin, () -> "");
+			boolean noLinkedin = viewedLinkedin.isEmpty();
+
+			if(noLinkedin) {
+				continue;
+			}
+
+			String viewedLinkedinHash = VisBusinessSendResumesToRecruiters.getLinkedinHash(viewedLinkedin);
+			boolean anotherLinkedin = false == linkedinHash.equals(viewedLinkedinHash);
+
+			if(anotherLinkedin) {
+				continue;
+			}
+
+			return view;
+		}
+		throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
 	}
 
 	/**

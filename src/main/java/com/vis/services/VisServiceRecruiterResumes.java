@@ -16,6 +16,9 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.services.JnService;
 import com.jn.utils.JnLanguage;
 import com.vis.business.recruiter.resumes.VisBusinessDefaultResumeAlias;
+import com.vis.business.recruiter.resumes.VisBusinessEditViewedResume;
+import com.vis.business.recruiter.resumes.VisBusinessMoveViewedResume;
+import com.vis.business.recruiter.resumes.VisViewedResumeMoves;
 import com.vis.business.recruiter.resumes.VisBusinessLoadSkillRankings;
 import com.vis.business.recruiter.resumes.VisRecruiterLinks;
 import com.vis.business.recruiter.resumes.VisBusinessViewedResumeDetails;
@@ -212,22 +215,48 @@ public enum VisServiceRecruiterResumes implements JnService {
 			return response;
 		}
 	},
+	/**
+	 * "Editar detalhes" of the screen of the viewed resumes (since 2026-11-15): the alias and the comment of a view of the
+	 * recruiter logged in, saved on the side where the view is (a view of the twin stays there).
+	 */
+	EditViewedResume{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessEditViewedResume.INSTANCE.execute(json);
+			return response;
+		}
+	},
+	/**
+	 * "Negativar CV" of the screen of the viewed resumes (since 2026-11-15): the view of the recruiter logged in goes to
+	 * the twin, and the resume no longer goes to them in the e-mail of resumes.
+	 */
+	MarkViewedResumeAsUnwanted{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			VisBusinessMoveViewedResume moveToTheTwin = new VisBusinessMoveViewedResume(VisViewedResumeMoves.unwanted);
+			CcpJsonRepresentation response = moveToTheTwin.execute(json);
+			return response;
+		}
+	},
+	/**
+	 * "Positivar CV" of the screen of the viewed resumes (since 2026-11-15): the view of the recruiter logged in comes
+	 * back from the twin, and the resume can go to them again in the e-mail of resumes.
+	 */
+	MarkViewedResumeAsWanted{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			VisBusinessMoveViewedResume bringBackFromTheTwin = new VisBusinessMoveViewedResume(VisViewedResumeMoves.wanted);
+			CcpJsonRepresentation response = bringBackFromTheTwin.execute(json);
+			return response;
+		}
+	},
 	;
 
 	/**
-	 * The view with the values of the viewed resume that the save keeps in the groups of its ddds: the ddds (stored in
-	 * the view) and btc, clt, disponibility, experience, spokenLanguage, negotiableClaim, pcd, pj, resumeType, temporallyJobTime and travel
-	 * (only in the child of each group), as the resume is stored.
+	 * The view with the values of the viewed resume that the save keeps in the groups of its ddds.
 	 * @param view the view to be saved
 	 * @param resume the viewed resume, as stored
 	 * @return the view with those values
 	 */
 	private static CcpJsonRepresentation putTheViewedResume(CcpJsonRepresentation view, CcpJsonRepresentation resume) {
-		CcpJsonRepresentation viewedResume = resume.getJsonPiece(VisEntityResume.Fields.ddd, VisEntityResume.Fields.btc, VisEntityResume.Fields.clt,
-				VisEntityResume.Fields.disponibility, VisEntityResume.Fields.experience, VisEntityResume.Fields.spokenLanguage,
-				VisEntityResume.Fields.negotiableClaim, VisEntityResume.Fields.pcd, VisEntityResume.Fields.pj, VisEntityResume.Fields.resumeType,
-				VisEntityResume.Fields.temporallyJobTime, VisEntityResume.Fields.travel, VisEntityResume.Fields.skill);
-		CcpJsonRepresentation viewWithTheResume = view.mergeWithAnotherJson(viewedResume);
+		CcpJsonRepresentation viewWithTheResume = VisBusinessEditViewedResume.putTheViewedResume(view, resume);
 		return viewWithTheResume;
 	}
 
