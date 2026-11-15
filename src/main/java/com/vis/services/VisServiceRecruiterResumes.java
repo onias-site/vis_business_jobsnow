@@ -216,7 +216,7 @@ public enum VisServiceRecruiterResumes implements JnService {
 
 	/**
 	 * The view with the values of the viewed resume that the save keeps in the groups of its ddds: the ddds (stored in
-	 * the view) and btc, clt, disponibility, experience, spokenLanguage, pcd, pj, resumeType, temporallyJobTime and travel
+	 * the view) and btc, clt, disponibility, experience, spokenLanguage, negotiableClaim, pcd, pj, resumeType, temporallyJobTime and travel
 	 * (only in the child of each group), as the resume is stored.
 	 * @param view the view to be saved
 	 * @param resume the viewed resume, as stored
@@ -225,7 +225,7 @@ public enum VisServiceRecruiterResumes implements JnService {
 	private static CcpJsonRepresentation putTheViewedResume(CcpJsonRepresentation view, CcpJsonRepresentation resume) {
 		CcpJsonRepresentation viewedResume = resume.getJsonPiece(VisEntityResume.Fields.ddd, VisEntityResume.Fields.btc, VisEntityResume.Fields.clt,
 				VisEntityResume.Fields.disponibility, VisEntityResume.Fields.experience, VisEntityResume.Fields.spokenLanguage,
-				VisEntityResume.Fields.pcd, VisEntityResume.Fields.pj, VisEntityResume.Fields.resumeType,
+				VisEntityResume.Fields.negotiableClaim, VisEntityResume.Fields.pcd, VisEntityResume.Fields.pj, VisEntityResume.Fields.resumeType,
 				VisEntityResume.Fields.temporallyJobTime, VisEntityResume.Fields.travel, VisEntityResume.Fields.skill);
 		CcpJsonRepresentation viewWithTheResume = view.mergeWithAnotherJson(viewedResume);
 		return viewWithTheResume;

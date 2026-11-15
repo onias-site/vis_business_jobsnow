@@ -82,6 +82,16 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 			return keys;
 		}
 	},
+	/**
+	 * Negotiates the salary expectations: {@code true} or {@code false}; {@code notInformed} for the children written
+	 * before 2026-11-14, when the field entered the groups of ddd.
+	 */
+	negotiableClaim {
+		public List<String> getKeys(CcpJsonRepresentation resume) {
+			List<String> keys = getBooleanKey(resume, VisEntityResume.Fields.negotiableClaim);
+			return keys;
+		}
+	},
 	/** The seniority, one of {@link VisSeniorityType}, from the year the experience started. */
 	seniority {
 		public List<String> getKeys(CcpJsonRepresentation resume) {

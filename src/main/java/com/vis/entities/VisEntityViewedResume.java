@@ -72,7 +72,7 @@ import com.vis.json.transformers.VisViewerDomainCounterCombinations;
  * <p>
  * Every save also keeps the view in the group of each ddd of the viewed resume ({@code jn_grouper}, parent
  * {@code vis_virtual_viewed_resume_ddd_grouper}): a JSON text with btc, clt, disponibility, experience, spokenLanguage,
- * pcd, pj, resumeType, temporallyJobTime and travel of the resume as it was at the view, and the id of the view. The
+ * negotiableClaim (since 2026-11-14), pcd, pj, resumeType, temporallyJobTime and travel of the resume as it was at the view, and the id of the view. The
  * caller puts those values of the resume in the record being saved; only {@code ddd} is stored, so the next save knows
  * the groups the view leaves. A save again (a new view or a new alias) replaces the child.
  * <p>
@@ -106,7 +106,7 @@ import com.vis.json.transformers.VisViewerDomainCounterCombinations;
 // the views of the resumes of each ddd: the child is a JSON text with these fields of the resume, as the caller of the
 // save hands them over, and the id of the view
 @CcpEntityGrouperChild(value = {VisEntityVirtualViewedResumeDddGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
-		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
+		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "negotiableClaim", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
 		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class})
 // the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
 @CcpEntityInsertionDate(JnInsertionDateEntity.class)

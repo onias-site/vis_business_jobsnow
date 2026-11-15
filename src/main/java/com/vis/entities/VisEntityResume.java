@@ -104,7 +104,7 @@ import com.vis.messages.VisMessages;
  * <ul>
  * <li>the save fills the {@code hash} list with every search the resume satisfies;</li>
  * <li>a second {@code @CcpEntityGrouperChild} keeps, in the group of each ddd of the resume ({@link VisEntityVirtualDddGrouper}),
- * a JSON text with btc, clt, disponibility, experience, spokenLanguage, pcd, pj, resumeType, temporallyJobTime, travel and
+ * a JSON text with btc, clt, disponibility, experience, spokenLanguage, negotiableClaim (since 2026-11-14), pcd, pj, resumeType, temporallyJobTime, travel and
  * the id of the resume, moved between the sides as the groups of the hashes are;</li>
  * <li>{@code @CcpEntityGrouperChild} keeps the id of the resume in the groups of {@code JnEntityGrouper} of its hashes:
  * the active resumes in the main groups, the inactive ones in the twin groups ({@code jn_inactive_grouper}); the save
@@ -153,7 +153,7 @@ import com.vis.messages.VisMessages;
 // these fields of the resume, as stored, and its id; it follows the resume between the main and the twin groups as the
 // groups of the hashes do
 @CcpEntityGrouperChild(value = {VisEntityVirtualDddGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
-		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
+		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "negotiableClaim", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
 		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class})
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddGrouper.class, value = VisResumeDddCombinations.class)
 // a single group counts, for each domain of notAllowedCompany, how many active resumes forbid it now: the key dropped
