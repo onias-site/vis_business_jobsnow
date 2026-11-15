@@ -1,6 +1,9 @@
 package com.vis.entities;
 
+import java.util.List;
+
 import com.ccp.decorators.CcpJsonFieldName;
+import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
@@ -13,6 +16,7 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.business.bots.recruiter.VisSupportSaveRecruiterBotConfiguration;
 
 /**
  * When an inactive recruiter came back by signing up again. The e-mail of resumes counts this return as a view: without
@@ -44,5 +48,16 @@ public class VisEntityRecruiterSignUpReturn implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNumberUnsigned
 		returnedAt,
+	}
+
+	/**
+	 * The configuration of {@code /saveRecruiter} of the support bot (since 2026-11-14), which also brings inactive
+	 * recruiters back and writes here: seeded by this entity because the seed of {@code vis_recruiter} is the load of the
+	 * legacy indices.
+	 * @return the seed records
+	 */
+	public List<CcpBulkItem> getFirstRecordsToInsert() {
+		List<CcpBulkItem> saveRecruiterCommand = VisSupportSaveRecruiterBotConfiguration.getSeeds();
+		return saveRecruiterCommand;
 	}
 }

@@ -1,0 +1,32 @@
+package com.vis.business.bots.recruiter;
+
+import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonRepresentation;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
+import com.jn.utils.JnLanguage;
+
+/** The replies of the {@code saveRecruiter} command to the operator, in the language of the session. */
+final class VisSupportSaveRecruiterConversation {
+
+	/** Utility class; not instantiable. */
+	private VisSupportSaveRecruiterConversation() {}
+
+	/**
+	 * Puts in the session the text of the item, in the language of the session (Portuguese by default), filled with the
+	 * e-mail, as the reply to the operator.
+	 * @param session the session
+	 * @param message the text
+	 * @param email the e-mail shown in the text
+	 * @return the session with the reply
+	 */
+	static CcpJsonRepresentation reply(CcpJsonRepresentation session, VisSupportSaveRecruiterMessages message, String email) {
+		String languageName = session.getAsString(JnJsonCommonsFields.language);
+		boolean noLanguage = languageName.isEmpty();
+		JnLanguage language = noLanguage ? JnLanguage.portuguese : JnLanguage.valueOf(languageName);
+		CcpJsonRepresentation parameters = CcpOtherConstants.EMPTY_JSON.put(JnJsonCommonsFields.email, email);
+		String text = message.getMessage(language, parameters);
+		CcpJsonRepresentation sessionWithReply = session.put(JnJsonInstantMessengerFields.botReply, text);
+		return sessionWithReply;
+	}
+}

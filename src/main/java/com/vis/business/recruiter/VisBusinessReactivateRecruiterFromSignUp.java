@@ -8,10 +8,11 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.vis.entities.VisEntityRecruiterSignUpReturn;
 
 /**
- * Step of {@code VisBusinessSaveRecruiterFromLoginAnswers}: moves the inactive recruiter back, with the record it had, and
+ * Step of {@code VisBusinessSaveRecruiterFromLoginAnswers} and of {@code /saveRecruiter} of the support bot (since
+ * 2026-11-14): moves the inactive recruiter back, with the record it had, and
  * keeps when it came back, so that the next e-mail of resumes does not inactivate them again.
  */
-class VisBusinessReactivateRecruiterFromSignUp implements CcpBusiness {
+public class VisBusinessReactivateRecruiterFromSignUp implements CcpBusiness {
 
 	/** Moves the stored record back to the recruiters. */
 	private final CcpBusiness reactivate;
@@ -24,7 +25,7 @@ class VisBusinessReactivateRecruiterFromSignUp implements CcpBusiness {
 	 * @param twinEntity the inactive recruiters
 	 * @param email the e-mail of the recruiter, as typed
 	 */
-	VisBusinessReactivateRecruiterFromSignUp(CcpEntity twinEntity, String email) {
+	public VisBusinessReactivateRecruiterFromSignUp(CcpEntity twinEntity, String email) {
 		this.reactivate = new CcpBusinessDeleteStoredRecordFromEntity(twinEntity);
 		this.email = email;
 	}

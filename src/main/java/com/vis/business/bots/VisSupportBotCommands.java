@@ -15,5 +15,7 @@ public enum VisSupportBotCommands {
 	reviewSkillSuggestion,
 	/** Checks whether the LinkedIn address of a resume, reported by a recruiter as not opening, is really invalid (since 2026-11-12). */
 	verifyLinkedinAddress,
+	/** Saves a recruiter in {@code vis_recruiter}, by the e-mail (since 2026-11-14). */
+	saveRecruiter,
 	;
 }

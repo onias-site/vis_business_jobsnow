@@ -176,6 +176,8 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 		telegram,
 		/** The sign-up of a user whose goal is recruiting ({@link VisBusinessSaveRecruiterFromLoginAnswers}). */
 		login,
+		/** Saved by the support operator, with {@code /saveRecruiter} (since 2026-11-14). */
+		support,
 	}
 
 	/** The legacy indices of the first load. */
