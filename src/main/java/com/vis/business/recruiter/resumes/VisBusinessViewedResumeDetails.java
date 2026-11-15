@@ -16,7 +16,7 @@ import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFr
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.process.CcpProcessStatusDefault;
-import com.jn.entities.JnEntityGrouper;
+import com.jn.business.grouper.JnBusinessGetGroupOnBothSides;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityResume;
@@ -27,7 +27,7 @@ import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 /**
  * The details of a resume the recruiter viewed in a month, as a row of the e-mail of resumes
  * ({@code VisBusinessBuildResumeRow}, the same columns and texts), read by id (OQL): the group of the views of the
- * recruiter in the month and the e-mails that use the LinkedIn ({@code vis_resume_linkedin}) in a single read, then the
+ * recruiter in the month (on both sides of the grouper since 2026-11-15: the views of the twin too) and the e-mails that use the LinkedIn ({@code vis_resume_linkedin}) in a single read, then the
  * resumes of those e-mails ({@code vis_resume}) and the rankings of their skills. The row has no lines of insertion and
  * last change: they come from the history of the resume, which only a query reads.
  *
@@ -72,10 +72,12 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 		CcpJsonRepresentation groupKey = VisBusinessViewedResumesOfTheMonth.getGroupKeyOfTheMonth(json);
 		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
 		// the LinkedIn comes from the view found in the group: the second read depends on it
-		CcpSelectUnionAll groupById = crud.unionAll(groupKey, JnDeleteKeysFromCache.INSTANCE, JnEntityGrouper.ENTITY);
-		Supplier<CcpJsonRepresentation> groupKeySupplier = groupKey.getJsonSupplier();
-		CcpJsonRepresentation group = JnEntityGrouper.ENTITY.getRecordFromUnionAll(groupById, groupKeySupplier);
-		List<String> views = group.getOrDefault(JnEntityGrouper.Fields.child, () -> List.of());
+		// both sides of the group in one read: the details also open the views moved to the twin (tab "Indesejados")
+		CcpJsonRepresentation groupOnBothSides = JnBusinessGetGroupOnBothSides.INSTANCE.execute(groupKey);
+		List<String> mainViews = VisBusinessViewedResumesOfTheMonth.getStoredViews(groupOnBothSides, false);
+		List<String> twinViews = VisBusinessViewedResumesOfTheMonth.getStoredViews(groupOnBothSides, true);
+		List<String> views = new ArrayList<>(mainViews);
+		views.addAll(twinViews);
 		String linkedin = getViewedLinkedin(views, linkedinHash, json);
 
 		CcpJsonRepresentation linkedinKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityResumeLinkedin.Fields.linkedinAddress, linkedin);

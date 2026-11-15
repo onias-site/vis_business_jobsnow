@@ -11,7 +11,8 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaDa
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
-import com.jn.business.grouper.JnBusinessGetGroup;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.jn.business.grouper.JnBusinessGetGroupOnBothSides;
 import com.jn.entities.JnEntityGrouper;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnGroupers;
@@ -21,11 +22,14 @@ import com.vis.entities.VisEntityViewedResumesOfTheMonth;
 /**
  * The resumes a recruiter viewed in a month, read by id (OQL): the id of the group of the recruiter in the month
  * ({@code VisEntityViewedResumesOfTheMonth}, its period given in {@code disposablePeriod}) and then the group itself in
- * {@code jn_grouper}, whose children the saves of {@code vis_viewed_resume} keep up to date. No query runs.
+ * {@code jn_grouper} and in {@code jn_inactive_grouper}, in a single read, whose children the writes of
+ * {@code vis_viewed_resume} keep up to date (the main views in {@code jn_grouper}, the ones moved to the twin,
+ * {@code vis_inactive_viewed_resume}, in {@code jn_inactive_grouper}, since 2026-11-15). No query runs.
  *
- * <p>Input: {@code email} (the recruiter) and {@code month} ({@code yyyyMM}). Output: {@code month} and
- * {@code viewedResume}, the list of the JSON texts of the views ({@code linkedinHash}, {@code alias} and {@code date} of
- * the last view of each resume), empty when the recruiter viewed nothing in the month. The LinkedIn never leaves in this
+ * <p>Input: {@code email} (the recruiter) and {@code month} ({@code yyyyMM}). Output: {@code month},
+ * {@code viewedResume}, the list of the JSON texts of the views of the main entity ({@code linkedinHash}, {@code alias}
+ * and {@code date} of the last view of each resume), and {@code unwantedResume}, the same for the views of the twin (the
+ * tab "Indesejados" of the screen); each list is empty when that side has nothing in the month. The LinkedIn never leaves in this
  * list: its hash is the key of the details ({@link VisBusinessViewedResumeDetails}), which check whether the candidate
  * still lets the company of the recruiter see the resume.
  */
@@ -75,8 +79,36 @@ public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String month = json.getAsString(Fields.month);
 		CcpJsonRepresentation groupKey = getGroupKeyOfTheMonth(json);
-		CcpJsonRepresentation group = JnBusinessGetGroup.INSTANCE.execute(groupKey);
+		CcpJsonRepresentation groupOnBothSides = JnBusinessGetGroupOnBothSides.INSTANCE.execute(groupKey);
+		List<String> mainViews = getStoredViews(groupOnBothSides, false);
+		List<String> twinViews = getStoredViews(groupOnBothSides, true);
+		List<String> viewedResume = getViewsToShow(mainViews);
+		List<String> unwantedResume = getViewsToShow(twinViews);
+		CcpJsonRepresentation responseWithMonth = CcpOtherConstants.EMPTY_JSON.put(Fields.month, month);
+		CcpJsonRepresentation responseWithViewed = responseWithMonth.put(VisEntityViewedResumesOfTheMonth.Fields.viewedResume, viewedResume);
+		CcpJsonRepresentation response = responseWithViewed.put(VisRecruiterResumesFields.unwantedResume, unwantedResume);
+		return response;
+	}
+
+	/**
+	 * The children of a side of the group of the month.
+	 * @param groupOnBothSides the group read on both sides of the grouper, by the name of each side
+	 * @param twinSide whether the twin side ({@code jn_inactive_grouper}) is wanted
+	 * @return the JSON texts of the views, empty when that side has no group
+	 */
+	static List<String> getStoredViews(CcpJsonRepresentation groupOnBothSides, boolean twinSide) {
+		CcpEntity grouper = JnGroupers.getGrouper(twinSide);
+		CcpJsonRepresentation group = groupOnBothSides.getInnerJson(grouper);
 		List<String> storedViews = group.getAsStringList(JnEntityGrouper.Fields.child);
+		return storedViews;
+	}
+
+	/**
+	 * The views as the screen shows them: the LinkedIn replaced by its hash.
+	 * @param storedViews the JSON texts of the views, as the group keeps them
+	 * @return the JSON texts with {@code linkedinHash} in place of {@code linkedin}
+	 */
+	private static List<String> getViewsToShow(List<String> storedViews) {
 		List<String> viewedResume = new ArrayList<>();
 		for (String storedViewText : storedViews) {
 			CcpJsonRepresentation storedView = new CcpJsonRepresentation(storedViewText);
@@ -87,8 +119,6 @@ public class VisBusinessViewedResumesOfTheMonth implements CcpBusiness {
 			String viewToShowText = viewToShow.asUgglyJson();
 			viewedResume.add(viewToShowText);
 		}
-		CcpJsonRepresentation responseWithMonth = CcpOtherConstants.EMPTY_JSON.put(Fields.month, month);
-		CcpJsonRepresentation response = responseWithMonth.put(VisEntityViewedResumesOfTheMonth.Fields.viewedResume, viewedResume);
-		return response;
+		return viewedResume;
 	}
 }
