@@ -69,8 +69,8 @@ public final class VisSupportVerifyLinkedinBotConfiguration {
 						, "Não entendi a resposta.\n\n{options}"
 						, "I did not understand the answer.\n\n{options}")
 				.systemMessage(VisSupportVerifyLinkedinMessages.confirmedInvalid
-						, "O endereço {linkedinAddress} foi marcado como inválido: o currículo não vai mais aos recrutadores, a visualização do recrutador foi apagada e o dono do currículo, se tiver chat, foi avisado."
-						, "The address {linkedinAddress} was marked as invalid: the resume no longer goes to the recruiters, the view of the recruiter was deleted and the owner of the resume, if they have a chat, was told.")
+						, "O endereço {linkedinAddress} foi marcado como inválido: o currículo não vai mais aos recrutadores, a visualização do recrutador continua entre as indesejadas dele e o dono do currículo, se tiver chat, foi avisado."
+						, "The address {linkedinAddress} was marked as invalid: the resume no longer goes to the recruiters, the view of the recruiter stays among their unwanted ones and the owner of the resume, if they have a chat, was told.")
 				.systemMessage(VisSupportVerifyLinkedinMessages.confirmedValid
 						, "O recrutador {recruiterEmail} foi avisado por e-mail de que o perfil {linkedinAddress} existe, e este currículo não vai mais para ele."
 						, "The recruiter {recruiterEmail} was told by e-mail that the profile {linkedinAddress} exists, and this resume no longer goes to them.")

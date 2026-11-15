@@ -11,8 +11,10 @@ import com.vis.json.fields.validation.VisResumeDailyActions;
 /**
  * Last step of {@code VisServiceResume.Save}: saves the resume and, when it already existed (found, active or inactive,
  * under {@code _entities}), spends the update of the day of the candidate ({@link VisEntityResumeDailyAction}).
- * Inserting a resume spends nothing. Saving an inactive resume also releases its restriction
- * ({@link VisBusinessReleaseResumeRestriction}), which the afterUpdate of the resume releases only for an update.
+ * Inserting a resume spends nothing. The resume is saved on the side where it is (since 2026-11-15, rule of the user): an
+ * inactive resume is saved in the twin ({@code vis_inactive_resume}) and stays inactive; that save is an update of the twin,
+ * whose afterUpdate releases the restriction of the resume ({@link VisBusinessReleaseResumeRestriction}). Until then the
+ * save went through the main entity and reactivated the resume.
  */
 public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 
@@ -39,8 +41,11 @@ public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 		CcpJsonFieldName sideOfTheStoredResume = active ? VisEntityResume.ENTITY : twinEntity;
 		CcpJsonRepresentation storedResume = foundRecords.getInnerJson(sideOfTheStoredResume);
 		CcpJsonRepresentation resumeWithKeptFields = getResumeWithKeptFields(this.resume, storedResume);
-		VisEntityResume.ENTITY.save(resumeWithKeptFields);
-		boolean isUpdate = active || foundRecords.containsField(twinEntity);
+		boolean inactive = foundRecords.containsField(twinEntity);
+		// an inactive resume stays inactive: saved in the twin, not through the main entity (which would reactivate it)
+		CcpEntity sideToSave = inactive ? twinEntity : VisEntityResume.ENTITY;
+		sideToSave.save(resumeWithKeptFields);
+		boolean isUpdate = active || inactive;
 		boolean isInsertion = false == isUpdate;
 		if(isInsertion) {
 			return jsonAfterTheSteps;
@@ -50,12 +55,6 @@ public class VisBusinessSaveResumeAndSpendTheUpdate implements CcpBusiness {
 		String email = this.resume.getAsString(VisEntityResume.Fields.email);
 		CcpJsonRepresentation dailyActionKey = VisEntityResumeDailyAction.getKey(email, VisResumeDailyActions.update);
 		VisEntityResumeDailyAction.ENTITY.save(dailyActionKey);
-		if(active) {
-			return jsonAfterTheSteps;
-		}
-		// the save of an inactive resume through the main entity is an insertion for it (the record leaves the twin), so
-		// the afterUpdate of the resume does not run: the correction of the owner releases the restriction here
-		VisBusinessReleaseResumeRestriction.INSTANCE.execute(resumeWithKeptFields);
 		return jsonAfterTheSteps;
 	}
 

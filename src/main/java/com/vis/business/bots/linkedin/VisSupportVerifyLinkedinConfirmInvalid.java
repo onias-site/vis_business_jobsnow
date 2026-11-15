@@ -19,7 +19,6 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
 import com.vis.business.resume.VisResumeOwnerChats;
 import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityViewedResume;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisResumeMessageTypes;
 import com.vis.messages.VisMessages;
@@ -32,7 +31,9 @@ import com.vis.messages.VisMessages;
  * <li>the resume, active or inactive, gets {@code invalidLinkedinAddress = true}: it no longer goes to the recruiters and
  * its link no longer opens. Only this field is written (a partial update of the document), so the owner does not get the
  * e-mail of a resume saved by them;</li>
- * <li>the view of the recruiter is deleted everywhere ({@code deleteAnyWhere}), as if it never existed;</li>
+ * <li>the view of the recruiter is kept: the report already moved it to the twin ({@code vis_inactive_viewed_resume}, tab
+ * "Indesejados"), with its comment (since 2026-11-15, rule of the user; until then it was deleted everywhere, as if it
+ * never existed);</li>
  * <li>an owner whose e-mail has a chat in {@code jn_instant_messenger_user} gets {@link VisMessages.VisInvalidLinkedinAddress}
  * through the user bot, by a record of {@code vis_resume_message}.</li>
  * </ul>
@@ -47,18 +48,14 @@ public class VisSupportVerifyLinkedinConfirmInvalid implements CcpBusiness {
 	static final JnLanguage OWNER_LANGUAGE = JnLanguage.portuguese;
 
 	/**
-	 * Marks the resume, deletes the view and tells the owner.
+	 * Marks the resume and tells the owner; the view stays in the twin.
 	 * @param json the session, with the parameters of the command
 	 * @return the same session
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String linkedinAddress = json.getAsString(VisJsonCommonsFields.linkedinAddress);
-		String recruiterEmail = json.getAsString(VisSupportVerifyLinkedinFields.recruiterEmail);
 		new VisSupportVerifyLinkedinCloseTheReport(VisSupportVerifyLinkedinMessages.reportAnsweredInvalid).execute(json);
-		CcpJsonRepresentation view = CcpOtherConstants.EMPTY_JSON
-				.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress)
-				.put(VisEntityViewedResume.Fields.email, recruiterEmail);
-		VisEntityViewedResume.ENTITY.deleteAnyWhere(view);
+		// the view of the recruiter stays in the twin, where the report put it
 
 		String resumeId = json.getAsString(VisSupportVerifyLinkedinFields.resumeEmailSha1);
 		CcpJsonRepresentation side = VisSupportVerifyLinkedinConversation.getSideOfTheResume(resumeId);
