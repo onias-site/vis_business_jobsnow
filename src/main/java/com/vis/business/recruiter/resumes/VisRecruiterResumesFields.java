@@ -38,6 +38,12 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	 * not let it be saved again (since 2026-11-13).
 	 */
 	inactiveView,
+	/**
+	 * The fields of a viewed resume as the preview of the resume shows them (the details of the views of the month, since
+	 * 2026-11-14): no e-mail, no companies the resume must not reach and no hashes; {@code skill} holds only the names of
+	 * the skills of the resume itself.
+	 */
+	preview,
 	/** The keys used to sort the resumes. */
 	sortKeys,
 	/** The rows of the table. */

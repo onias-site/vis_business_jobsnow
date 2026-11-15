@@ -22,6 +22,7 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeLinkedin;
 import com.vis.entities.VisEntityViewedResume;
+import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 
 /**
  * The details of a resume the recruiter viewed in a month, as a row of the e-mail of resumes
@@ -32,7 +33,7 @@ import com.vis.entities.VisEntityViewedResume;
  *
  * <p>Input: {@code email} (the recruiter), {@code month} ({@code yyyyMM}) and {@code linkedinHash} (as the list of the
  * views shows it; the list never carries the LinkedIn). Output: {@code linkedinHash}, {@code resumes}, one row per active
- * resume that uses the LinkedIn, and {@code linkedin}, only when there is a row to show (usually one;
+ * resume that uses the LinkedIn, each with the fields of the preview of the resume in {@code preview}, and {@code linkedin}, only when there is a row to show (usually one;
  * more when the LinkedIn is in the resume of more than one e-mail), empty when none is active anymore. A resume that now
  * forbids the company of the recruiter ({@code notAllowedCompany}) has no row, as if it were no longer active.
  *
@@ -168,7 +169,7 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 	/**
 	 * The rows of the e-mail of resumes, with the rankings of the skills read by id.
 	 * @param resumes the resumes
-	 * @return the rows, without the keys that sort the e-mail
+	 * @return the rows, without the keys that sort the e-mail, each with the preview of its resume
 	 */
 	private static List<CcpJsonRepresentation> getRows(List<CcpJsonRepresentation> resumes) {
 		CcpJsonRepresentation resumesJson = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.resumes, resumes);
@@ -179,9 +180,41 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 			CcpJsonRepresentation resumeWithRankings = resume.put(VisRecruiterResumesFields.rankings, rankings);
 			CcpJsonRepresentation rowInput = resumeWithRankings.put(JnJsonCommonsFields.language, VisBusinessSendResumesToRecruiters.LANGUAGE);
 			CcpJsonRepresentation row = VisBusinessBuildResumeRow.INSTANCE.execute(rowInput);
-			CcpJsonRepresentation rowToShow = row.removeFields(VisRecruiterResumesFields.sortKeys);
+			CcpJsonRepresentation rowWithoutSortKeys = row.removeFields(VisRecruiterResumesFields.sortKeys);
+			CcpJsonRepresentation preview = getPreview(resume);
+			CcpJsonRepresentation rowToShow = rowWithoutSortKeys.put(VisRecruiterResumesFields.preview, preview);
 			rows.add(rowToShow);
 		}
 		return rows;
+	}
+
+	/**
+	 * The fields of the resume that the preview of the resume shows, as stored ({@code experience} is the year the
+	 * experience started), without the e-mail, the companies the resume must not reach and the hashes; {@code skill}
+	 * keeps only the names of the skills of the resume itself.
+	 * @param resume the resume
+	 * @return the preview
+	 */
+	private static CcpJsonRepresentation getPreview(CcpJsonRepresentation resume) {
+		CcpJsonRepresentation fieldsToShow = resume.getJsonPiece(
+				VisEntityResume.Fields.desiredJob,
+				VisEntityResume.Fields.lastJob,
+				VisEntityResume.Fields.linkedinAddress,
+				VisEntityResume.Fields.resumeType,
+				VisEntityResume.Fields.ddd,
+				VisEntityResume.Fields.spokenLanguage,
+				VisEntityResume.Fields.experience,
+				VisEntityResume.Fields.disponibility,
+				VisEntityResume.Fields.temporallyJobTime,
+				VisEntityResume.Fields.travel,
+				VisEntityResume.Fields.pcd,
+				VisEntityResume.Fields.clt,
+				VisEntityResume.Fields.pj,
+				VisEntityResume.Fields.btc,
+				VisEntityResume.Fields.negotiableClaim
+		);
+		CcpJsonRepresentation skillNames = VisResumeSkillsFromResumeChildField.INSTANCE.apply(resume);
+		CcpJsonRepresentation preview = fieldsToShow.mergeWithAnotherJson(skillNames);
+		return preview;
 	}
 }
