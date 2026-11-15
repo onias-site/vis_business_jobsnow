@@ -25,7 +25,6 @@ import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.entities.decorators.engine.JnGrouperChildAsJsonEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildAsJsonEntityBeforeWrite;
-import com.jn.entities.decorators.engine.JnGrouperChildCounterEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildCounterOnBothSidesEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityBeforeWrite;
@@ -103,8 +102,8 @@ import com.vis.json.transformers.VisViewerDomainCounterCombinations;
 // a view brought back from the twin finds its previous save there, so the recruiter is not counted again in the month
 @CcpEntityGrouperChildCounter(value = {VisEntityResumeViewsOfTheMonth.class}, counterKeyClass = VisViewedResumeRecruiterDomain.class, beforeDecoratorClass = JnGrouperChildCounterOnBothSidesEntityBeforeWrite.class)
 // a single group counts, for each domain of the recruiters, how many views they ever made (a history): the chart of the
-// companies that view the most resumes in the screen Curiosities
-@CcpEntityGrouperChildCounter(value = {VisEntityVirtualViewerDomainCounter.class}, counterKeyClass = VisViewedResumeRecruiterDomain.class, beforeDecoratorClass = JnGrouperChildCounterEntityBeforeWrite.class)
+// companies that view the most resumes in the screen Curiosities; a view brought back from the twin is not counted again
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualViewerDomainCounter.class}, counterKeyClass = VisViewedResumeRecruiterDomain.class, beforeDecoratorClass = JnGrouperChildCounterOnBothSidesEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualViewerDomainCounter.class, value = VisViewerDomainCounterCombinations.class)
 // the views of the resumes of each ddd: the child is a JSON text with these fields of the resume, as the caller of the
 // save hands them over, and the id of the view
