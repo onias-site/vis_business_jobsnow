@@ -28,6 +28,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.messages.w
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterUpdateFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterUpdateFromTwinEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteAnyWhereFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeDeleteAnyWhereFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
@@ -71,6 +72,7 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
 import com.jn.business.messages.JnEmailFooter;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
+import com.vis.business.resume.VisBusinessDeleteTheViewersOfTheDeletedResume;
 import com.vis.business.resume.VisBusinessReleaseResumeRestriction;
 import com.vis.business.resume.VisBusinessResumeLinkedinOwner;
 import com.vis.business.resume.VisBusinessResumeLinkedinRelease;
@@ -115,7 +117,9 @@ import com.vis.messages.VisMessages;
  * <li>the owner is told by e-mail after the save, the deactivation, the reactivation and the delete everywhere;</li>
  * <li>{@link VisEntityResumeLinkedin} keeps the e-mails that use each LinkedIn address: saving an address that is in
  * the resume of another e-mail saves the resume anyway and tells the support operator; a new address or the delete
- * everywhere takes only this e-mail out of the old address.</li>
+ * everywhere takes only this e-mail out of the old address;</li>
+ * <li>the delete everywhere also deletes the groups of the screen "Quem me viu" of the e-mail
+ * ({@code VisBusinessDeleteTheViewersOfTheDeletedResume}, since 2026-11-14); the deactivation keeps them.</li>
  * </ul>
  * A notice that fails to go out saves a warning instead of undoing the write.
  */
@@ -131,6 +135,8 @@ import com.vis.messages.VisMessages;
 @CcpAfterUpdateFromTwinEntity(execute = {VisBusinessReleaseResumeRestriction.class}, operationHandlers = {})
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpBeforeDeleteAnyWhereFromMainEntity(execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {})
+// the delete everywhere (the owner deleted all the data) also deletes the counters of the screen "Quem me viu"
+@CcpAfterDeleteAnyWhereFromMainEntity(execute = {VisBusinessDeleteTheViewersOfTheDeletedResume.class}, operationHandlers = {})
 @CcpAfterSaveFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutSavedResume.class)
 @CcpAfterDeleteFromMainEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutDeactivatedResume.class)
 @CcpAfterDeleteFromTwinEntitySendAnEmailMessageAndIfFailsSaveAWarning(VisMessages.VisNotifyUserAboutReactivatedResume.class)

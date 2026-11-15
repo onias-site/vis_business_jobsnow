@@ -16,7 +16,8 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
  * the views ({@code monthYear}), names the group of {@code jn_grouper} that counts them. The child of that group is a
  * single JSON text, filled by {@code @CcpEntityGrouperChildCounter} of {@code vis_viewed_resume}: one field per domain of the
  * recruiters who viewed the resume in the month, with how many of them did it (each recruiter counted once per month),
- * and {@code childCount} is the number of domains. Read by id (OQL) by {@code VisBusinessResumeViewersOfTheMonth}.
+ * and {@code childCount} is the number of domains. Read by id (OQL) by {@code VisBusinessResumeViewersOfTheMonth}. The
+ * delete everywhere of the resume deletes the groups of every month ({@code VisBusinessDeleteTheViewersOfTheDeletedResume}).
  */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
