@@ -60,8 +60,8 @@ public final class VisUserReceiveMessagesBotConfiguration {
 				.commandExplanation(commandName, JnLanguage.portuguese, "Passa a enviar por aqui as mensagens sobre o currículo do e-mail informado, depois de você digitar o token de login que enviamos a esse e-mail. Uso: /receiveMessages seu@email.com")
 				.commandExplanation(commandName, JnLanguage.english, "Starts sending here the messages about the resume of the e-mail informed, after you type the login token we sent to that e-mail. Usage: /receiveMessages your@email.com")
 				.systemMessage(VisUserReceiveMessagesMessages.askToken
-						, "Digite o token de login que enviamos ao e-mail " + email + "."
-						, "Type the login token we sent to the e-mail " + email + ".")
+						, "Digite o token de login que enviamos ao e-mail " + email + " \nCaso tenha esquecido ou não saiba onde está o token, execute o comando \n/reenviarTokenDeLogin " + email
+						, "Type the login token we sent to the e-mail " + email + " \nIf you forgot it or do not know where the token is, run the command \n/resendLoginToken " + email)
 				.systemMessage(VisUserReceiveMessagesMessages.invalidEmail
 						, "O e-mail '" + email + "' informado é inválido. Uso: /receiveMessages seu@email.com"
 						, "The e-mail '" + email + "' is invalid. Usage: /receiveMessages your@email.com")
