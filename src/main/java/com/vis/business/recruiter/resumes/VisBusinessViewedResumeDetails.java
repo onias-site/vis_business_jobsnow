@@ -177,7 +177,7 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 	 * @param resume the resume
 	 * @return the preview
 	 */
-	private static CcpJsonRepresentation getPreview(CcpJsonRepresentation resume) {
+	public static CcpJsonRepresentation getPreview(CcpJsonRepresentation resume) {
 		CcpJsonRepresentation fieldsToShow = resume.getJsonPiece(
 				VisEntityResume.Fields.desiredJob,
 				VisEntityResume.Fields.lastJob,

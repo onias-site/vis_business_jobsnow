@@ -47,7 +47,9 @@ public enum VisServiceRecruiterResumes implements JnService {
 	 * Opens a resume of the e-mail: saves the view of the recruiter (with the alias they already gave to the resume, or
 	 * the suggested one) and answers the LinkedIn of the resume, the alias and whether the view is inactive. A view in
 	 * the twin ({@code vis_inactive_viewed_resume}, where the report of the LinkedIn puts it) is not saved again: the
-	 * resume opens with the alias kept there, and the page does not let the view be saved (since 2026-11-13).
+	 * resume opens with the alias kept there, and the page does not let the view be saved (since 2026-11-13). Since
+	 * 2026-11-15 it also answers, in {@code preview}, the fields of the preview of the resume (the same of the details of
+	 * the views of the month), shown by the front end in a modal before the form that saves the view.
 	 */
 	ViewResumeFromEmail{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
@@ -60,7 +62,9 @@ public enum VisServiceRecruiterResumes implements JnService {
 			CcpJsonRepresentation storedViews = this.loadTheViews(view);
 			CcpEntity twinEntity = VisEntityViewedResume.ENTITY.getTwinEntity();
 			boolean inactiveView = storedViews.containsField(twinEntity);
+			CcpJsonRepresentation preview = VisBusinessViewedResumeDetails.getPreview(resume);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON
+					.put(VisRecruiterResumesFields.preview, preview)
 					.put(VisEntityResume.Fields.linkedinAddress, linkedinAddress)
 					.put(VisRecruiterResumesFields.inactiveView, inactiveView);
 			if(inactiveView) {
