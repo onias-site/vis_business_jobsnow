@@ -127,13 +127,42 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 	/** The kinds of hiring the resume accepts, by the salary expectations it informed: only CLT, only PJ or both. */
 	contractType {
 		public List<String> getKeys(CcpJsonRepresentation resume) {
-			double clt = getSalary(resume, VisEntityResume.Fields.clt);
-			double pj = getSalary(resume, VisEntityResume.Fields.pj);
-			boolean acceptsClt = clt > 0d;
-			boolean acceptsPj = pj > 0d;
-			Values contract = getContractType(acceptsClt, acceptsPj);
+			Values contract = getContractType(resume);
 			String key = contract.name();
 			return List.of(key);
+		}
+	},
+	/**
+	 * The seniority crossed with the kinds of hiring the resume accepts: {@code <seniority>|<contractType>} (e.g.
+	 * {@code senior|onlyPj}), for the heat map seniority x hiring. A resume that informed no salary counts in none.
+	 */
+	seniorityContract {
+		public List<String> getKeys(CcpJsonRepresentation resume) {
+			Values contract = getContractType(resume);
+			boolean notInformed = Values.notInformed == contract;
+
+			if(notInformed) {
+				return List.of();
+			}
+
+			VisSeniorityType seniorityType = getSeniority(resume);
+			String separator = Values.COMBINATION_SEPARATOR.getValue();
+			String key = seniorityType.name() + separator + contract.name();
+			return List.of(key);
+		}
+	},
+	/** The CLT salary expectation in ranges (up to 3 thousand, 3 to 6, 6 to 10, 10 to 15, 15 to 20 and over 20); none when not informed. */
+	cltRange {
+		public List<String> getKeys(CcpJsonRepresentation resume) {
+			List<String> keys = getSalaryRangeKey(resume, VisEntityResume.Fields.clt);
+			return keys;
+		}
+	},
+	/** The PJ salary expectation in the same ranges of {@link #cltRange}; none when not informed. */
+	pjRange {
+		public List<String> getKeys(CcpJsonRepresentation resume) {
+			List<String> keys = getSalaryRangeKey(resume, VisEntityResume.Fields.pj);
+			return keys;
 		}
 	},
 	;
@@ -154,7 +183,18 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 		onlyClt,
 		onlyPj,
 		both,
+		upTo3k,
+		from3kTo6k,
+		from6kTo10k,
+		from10kTo15k,
+		from15kTo20k,
+		over20k,
 		LANGUAGE_SEPARATOR {
+			public String getValue() {
+				return "|";
+			}
+		},
+		COMBINATION_SEPARATOR {
 			public String getValue() {
 				return "|";
 			}
@@ -239,6 +279,58 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 			return Values.from31To50;
 		}
 		return Values.over50;
+	}
+
+	/**
+	 * The kinds of hiring the resume accepts, by the salary expectations it informed.
+	 * @param resume the child of the group of the ddd, parsed
+	 * @return {@code onlyClt}, {@code onlyPj}, {@code both} or {@code notInformed}
+	 */
+	private static Values getContractType(CcpJsonRepresentation resume) {
+		double clt = getSalary(resume, VisEntityResume.Fields.clt);
+		double pj = getSalary(resume, VisEntityResume.Fields.pj);
+		boolean acceptsClt = clt > 0d;
+		boolean acceptsPj = pj > 0d;
+		Values contract = getContractType(acceptsClt, acceptsPj);
+		return contract;
+	}
+
+	/**
+	 * The range of a salary expectation of the resume.
+	 * @param resume the child of the group of the ddd, parsed
+	 * @param field {@code clt} or {@code pj}
+	 * @return the key of the range, empty when the salary is not informed
+	 */
+	private static List<String> getSalaryRangeKey(CcpJsonRepresentation resume, CcpJsonFieldName field) {
+		double salary = getSalary(resume, field);
+		boolean notInformed = salary <= 0d;
+
+		if(notInformed) {
+			return List.of();
+		}
+
+		Values range = getSalaryRange(salary);
+		String key = range.name();
+		return List.of(key);
+	}
+
+	private static Values getSalaryRange(double salary) {
+		if(salary <= 3_000d) {
+			return Values.upTo3k;
+		}
+		if(salary <= 6_000d) {
+			return Values.from3kTo6k;
+		}
+		if(salary <= 10_000d) {
+			return Values.from6kTo10k;
+		}
+		if(salary <= 15_000d) {
+			return Values.from10kTo15k;
+		}
+		if(salary <= 20_000d) {
+			return Values.from15kTo20k;
+		}
+		return Values.over20k;
 	}
 
 	private static Values getContractType(boolean acceptsClt, boolean acceptsPj) {
