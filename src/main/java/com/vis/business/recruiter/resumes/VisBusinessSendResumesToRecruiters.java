@@ -214,10 +214,12 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		saveLastQueuePosition(legacyQueue, restrictedTo, lastLegacyPositionOfTheLastRun, lastLegacyQueuePosition[0]);
 		saveLastQueuePosition(nonProfessionalQueue, restrictedTo, lastNonProfessionalPositionOfTheLastRun, lastNonProfessionalQueuePosition[0]);
 		saveLastQueuePosition(legacyActiveQueue, restrictedTo, lastLegacyActivePositionOfTheLastRun, lastLegacyActiveQueuePosition[0]);
-		List<CcpJsonRepresentation> recruitersWhoStoppedViewing = getRecruitersWhoStoppedViewing(recruiters, lastViewByRecruiter, viewsSince, restrictedTo);
+		// the views are read again: the sending takes minutes, and who viewed a resume meanwhile must not be inactivated
+		Map<String, Long> lastViewByRecruiterAfterTheSending = getLastViewByRecruiter();
+		List<CcpJsonRepresentation> recruitersWhoStoppedViewing = getRecruitersWhoStoppedViewing(recruiters, lastViewByRecruiterAfterTheSending, viewsSince, restrictedTo);
 		// deleting from the recruiters moves the given record to the twin, the inactive recruiters
 		recruitersWhoStoppedViewing.forEach(recruiter -> VisEntityRecruiter.ENTITY.delete(recruiter));
-		List<CcpJsonRepresentation> recipientsWhoNeverViewed = getRecipientsWhoNeverViewed(recruiters, recipients, lastViewByRecruiter);
+		List<CcpJsonRepresentation> recipientsWhoNeverViewed = getRecipientsWhoNeverViewed(recruiters, recipients, lastViewByRecruiterAfterTheSending);
 		// they come back on viewing a resume of the e-mail (VisBusinessReactivateRecruiterWhoViewed)
 		recipientsWhoNeverViewed.forEach(recruiter -> VisEntityRecruiter.ENTITY.delete(recruiter));
 
@@ -314,6 +316,19 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		everyRecord.selectFrom(VisEntityRecruiterFirstEmail.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, record -> recruitersWithFirstEmail.add(record.getAsString(VisEntityRecruiterFirstEmail.Fields.email)));
 		return recruitersWithFirstEmail;
+	}
+
+	/**
+	 * The last view of each recruiter, by the hash of their e-mail, with the returns by the sign-up counted as views: what
+	 * decides the inactivations, read after the sending so that a view made while the e-mails went out counts.
+	 */
+	private static Map<String, Long> getLastViewByRecruiter() {
+		Map<String, Long> lastViewByPair = new HashMap<>();
+		Map<String, Long> lastViewByRecruiter = new HashMap<>();
+		loadViews(lastViewByPair, lastViewByRecruiter);
+		Map<String, Long> signUpReturns = getSignUpReturns();
+		countTheSignUpReturnsAsViews(lastViewByRecruiter, signUpReturns);
+		return lastViewByRecruiter;
 	}
 
 	/** When each inactive recruiter came back by signing up again, by the hash of their e-mail. */
