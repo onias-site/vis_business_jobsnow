@@ -13,6 +13,10 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityC
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChildCounter;
+import com.jn.entities.decorators.engine.JnGrouperChildCounterEntityBeforeWrite;
+import com.vis.json.transformers.VisTicketKindCounterCombinations;
+import com.vis.json.transformers.VisSkillPendingTicketKindKeys;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
@@ -76,6 +80,9 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
  */
 @CcpEntityGrouperChild(value = {JnEntityLoginEmail.class}, beforeDecoratorClass = JnGrouperChildAsJsonOnBothSidesEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildAsJsonEntityAfterWrite.class)
 @CcpEntityGrouperParentCombinations(parent = JnEntityLoginEmail.class, value = JnLoginEmailParentCombinations.class)
+// 2026-11-17: the tickets ever opened, by kind (a history: the answer does not subtract): the chart of tickets of the screen Curiosities
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualTicketKindCounter.class}, counterKeyClass = VisSkillPendingTicketKindKeys.class, beforeDecoratorClass = JnGrouperChildCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualTicketKindCounter.class, value = VisTicketKindCounterCombinations.class)
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
 @CcpEntityVersionable(JnVersionableEntity.class)

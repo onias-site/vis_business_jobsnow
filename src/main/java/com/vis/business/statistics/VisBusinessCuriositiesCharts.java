@@ -10,14 +10,18 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaDa
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityPhase;
 import com.jn.entities.JnEntityVirtualRecordsTotal;
 import com.jn.utils.JnGrouperChart;
+import com.vis.entities.VisEntityInvalidLinkedinReport;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityResume;
+import com.vis.entities.VisEntitySkillFixHierarchyPending;
+import com.vis.entities.VisEntitySkillPending;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.entities.VisEntityVirtualAvoidedSkillsCounter;
 import com.vis.entities.VisEntityVirtualNotAllowedCompanyCounter;
 import com.vis.entities.VisEntityVirtualRecruiterSourceCounter;
 import com.vis.entities.VisEntityVirtualResumeRegionScopeCounter;
 import com.vis.entities.VisEntityVirtualResumeTypeCounter;
+import com.vis.entities.VisEntityVirtualTicketKindCounter;
 import com.vis.entities.VisEntityVirtualViewerDomainCounter;
 
 /**
@@ -43,6 +47,11 @@ public class VisBusinessCuriositiesCharts implements CcpBusiness {
 		 * The active resumes by the reach of their ddds ({@code {homeOfficeOnly|oneRegion|severalRegions|anyRegion: n}}).
 		 */
 		resumeRegionScopes,
+		/**
+		 * The tickets of vis ever opened, by kind ({@code {hierarchyAdd|hierarchyRemove|skillSuggestion|invalidLinkedin: n}}),
+		 * merged into the chart of the tickets of the contact us of js (same name), since 2026-11-17.
+		 */
+		contactUsTypes,
 		/** The resumes active and inactive now. */
 		resumeSituation,
 		/** The slice of the active resumes. */
@@ -78,13 +87,17 @@ public class VisBusinessCuriositiesCharts implements CcpBusiness {
 		CcpJsonRepresentation recruiterSources = JnGrouperChart.counters(Fields.recruiterSources, VisEntityVirtualRecruiterSourceCounter.ENTITY, VisEntityRecruiter.ENTITY, recruiterSourcesCombination);
 		CcpJsonRepresentation regionScopesCombination = VisEntityVirtualResumeRegionScopeCounter.getCombination();
 		CcpJsonRepresentation regionScopes = JnGrouperChart.counters(Fields.resumeRegionScopes, VisEntityVirtualResumeRegionScopeCounter.ENTITY, VisEntityResume.ENTITY, regionScopesCombination);
+		CcpJsonRepresentation ticketKindCombination = VisEntityVirtualTicketKindCounter.getCombination();
+		CcpJsonRepresentation hierarchyTickets = JnGrouperChart.counters(Fields.contactUsTypes, VisEntityVirtualTicketKindCounter.ENTITY, VisEntitySkillFixHierarchyPending.ENTITY, ticketKindCombination);
+		CcpJsonRepresentation skillTickets = JnGrouperChart.counters(Fields.contactUsTypes, VisEntityVirtualTicketKindCounter.ENTITY, VisEntitySkillPending.ENTITY, ticketKindCombination);
+		CcpJsonRepresentation linkedinTickets = JnGrouperChart.counters(Fields.contactUsTypes, VisEntityVirtualTicketKindCounter.ENTITY, VisEntityInvalidLinkedinReport.ENTITY, ticketKindCombination);
 		// the total of the resumes is one group on each side: the active ones on the main side, the inactive ones on the twin
 		CcpEntityMetaData resumeDetails = VisEntityResume.ENTITY.getEntityMetaData();
 		CcpEntityMetaData totalDetails = JnEntityVirtualRecordsTotal.ENTITY.getEntityMetaData();
 		String totalParentId = JnEntityVirtualRecordsTotal.getParentId(resumeDetails.entityName);
 		CcpJsonRepresentation activeResumes = JnGrouperChart.sum(Fields.resumeSituation, Fields.active, totalDetails.entityName, resumeDetails.entityName, totalParentId, CcpEntityPhase.mainEntity);
 		CcpJsonRepresentation inactiveResumes = JnGrouperChart.sum(Fields.resumeSituation, Fields.inactive, totalDetails.entityName, resumeDetails.entityName, totalParentId, CcpEntityPhase.twinEntity);
-		List<CcpJsonRepresentation> charts = Arrays.asList(notAllowedCompanies, avoidedSkills, resumeTypes, viewerDomains, recruiterSources, regionScopes, activeResumes, inactiveResumes);
+		List<CcpJsonRepresentation> charts = Arrays.asList(notAllowedCompanies, avoidedSkills, resumeTypes, viewerDomains, recruiterSources, regionScopes, hierarchyTickets, skillTickets, linkedinTickets, activeResumes, inactiveResumes);
 		CcpJsonRepresentation output = JnGrouperChart.output(charts);
 		return output;
 	}

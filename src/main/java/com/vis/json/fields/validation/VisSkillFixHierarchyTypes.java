@@ -2,6 +2,7 @@ package com.vis.json.fields.validation;
 
 import java.util.Set;
 
+import com.ccp.decorators.CcpJsonFieldName;
 import com.jn.messages.JnSystemMessage;
 import com.jn.utils.JnLanguage;
 
@@ -18,18 +19,41 @@ public enum VisSkillFixHierarchyTypes implements JnSystemMessage {
 		public void execute(Set<String> parents, String parent) {
 			parents.add(parent);
 		}
+
+		public String getTicketKind() {
+			return TicketKinds.hierarchyAdd.getValue();
+		}
 	},
 	/** Dissociate the skill from the implicit knowledge. */
 	remove {
 		public void execute(Set<String> parents, String parent) {
 			parents.remove(parent);
-			
+
+		}
+
+		public String getTicketKind() {
+			return TicketKinds.hierarchyRemove.getValue();
 		}
 	}
 	;
 
-	public abstract void execute(Set<String> parents, String parent);	
-	
+	/** The kinds of ticket of the requests of hierarchy (the options of the combo of the screen of the tickets of the user). */
+	public static enum TicketKinds implements CcpJsonFieldName{
+		/** A request of association. */
+		hierarchyAdd,
+		/** A request of dissociation. */
+		hierarchyRemove,
+		;
+	}
+
+	public abstract void execute(Set<String> parents, String parent);
+
+	/**
+	 * The kind of ticket of a request of this type, its key in the counter of the tickets by kind (screen Curiosities).
+	 * @return {@code hierarchyAdd} or {@code hierarchyRemove}
+	 */
+	public abstract String getTicketKind();
+
 	/**
 	 * How this type is written in a message in the given language.
 	 */
