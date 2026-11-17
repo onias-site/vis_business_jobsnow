@@ -4,18 +4,18 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.jn.business.database.JnBusinessDailyDatabaseMaintenance;
+import com.jn.business.database.JnBusinessBackupTheDatabase;
 import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
 
 /**
  * The scheduled process that runs once a day ({@code CcpCronTasksController}, topic
  * {@code com.vis.business.scheduled.VisBusinessDailyScheduledProcess}): first the e-mail of the resumes to the recruiters
- * ({@link VisBusinessSendResumesToRecruiters}, which skips the weekend by itself), then the purge of the expired disposable
- * records and the backup of the database ({@link JnBusinessDailyDatabaseMaintenance}), so the backup already holds what the
- * e-mail wrote ({@code vis_recruiter_resumes}).
+ * ({@link VisBusinessSendResumesToRecruiters}, which skips the weekend by itself), then the backup of the database
+ * ({@link JnBusinessBackupTheDatabase}), so the backup already holds what the e-mail wrote ({@code vis_recruiter_resumes}).
  * <p>
- * The suppressions of the e-mail provider are not loaded here: the hourly process of the login token
- * ({@code JsBusinessDailyLoginTokenProcess}) loads them every hour, so the e-mail of the day already skips them.
+ * The suppressions of the e-mail provider and, since 2026-11-17, the purge of the expired disposable records are not run
+ * here: the hourly process of the login token ({@code JsBusinessDailyLoginTokenProcess}) runs both every hour, so the
+ * e-mail of the day already skips the suppressed addresses and the backup is taken at most one hour after a purge.
  * <p>
  * The e-mail can be locked by the input ({@code resumesToRecruitersLocked} true): the process then does all the rest and
  * sends nothing to the recruiters. The Cloud Run Job {@code jobsnow-processo-diario} gives it in the input of its image
@@ -23,7 +23,7 @@ import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
  * <p>
  * Input: the one of the processes ({@code recruiters}, {@code bucketName}, {@code entityNamePatterns} and
  * {@code resumesToRecruitersLocked}, all optional).
- * Output: the one of the maintenance plus {@code resumesToRecruiters} (the counters of the e-mail, or
+ * Output: the one of the backup plus {@code resumesToRecruiters} (the counters of the e-mail, or
  * {@code {"locked": true}} when the e-mail is locked).
  */
 public class VisBusinessDailyScheduledProcess implements CcpBusiness {
@@ -44,15 +44,15 @@ public class VisBusinessDailyScheduledProcess implements CcpBusiness {
 	private VisBusinessDailyScheduledProcess() {}
 
 	/**
-	 * Sends the resumes to the recruiters and then purges and backs up the database.
+	 * Sends the resumes to the recruiters and then backs up the database.
 	 * @param json the input of the processes
-	 * @return the output of the maintenance plus the counters of the e-mail
+	 * @return the output of the backup plus the counters of the e-mail
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpJsonRepresentation resumesToRecruiters = this.sendResumesToRecruiters(json);
-		CcpJsonRepresentation maintenance = JnBusinessDailyDatabaseMaintenance.INSTANCE.execute(json);
-		CcpJsonRepresentation maintenanceWithResumes = maintenance.put(Fields.resumesToRecruiters, resumesToRecruiters);
-		return maintenanceWithResumes;
+		CcpJsonRepresentation backup = JnBusinessBackupTheDatabase.INSTANCE.execute(json);
+		CcpJsonRepresentation backupWithResumes = backup.put(Fields.resumesToRecruiters, resumesToRecruiters);
+		return backupWithResumes;
 	}
 
 	/**
