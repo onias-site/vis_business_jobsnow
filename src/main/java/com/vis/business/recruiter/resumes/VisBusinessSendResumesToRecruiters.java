@@ -52,7 +52,9 @@ import com.vis.messages.VisMessages;
  * <ul>
  * <li>Who receives: the recruiters who never viewed a resume of these e-mails and the ones whose last view is less than
  * 35 days old; who stopped viewing for longer is inactivated by this process (moved to {@code vis_inactive_recruiter}) and
- * comes back on viewing a resume again; signing up again counts as a view ({@code vis_recruiter_sign_up_return}). Each day, only
+ * comes back on viewing a resume again; signing up again counts as a view ({@code vis_recruiter_sign_up_return}). Since
+ * 2026-11-16, who received the e-mail and never viewed a resume is inactivated right after the sending too, and comes back
+ * on viewing a resume of the e-mail. Each day, only
  * {@value #RECRUITERS_PER_DAY} of them: first the ones who viewed a resume in these 35 days, the most recent view first;
  * then the recruiters of the sign-up (source {@code login}) who never received this e-mail
  * ({@code vis_recruiter_first_email}); then the ones who appeared on Telegram in the last six months
@@ -202,7 +204,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String[] lastLegacyActiveQueuePosition = {lastLegacyActivePositionOfTheLastRun};
 		long telegramSince = now.getDaysAgo(VisEntityRecruiter.DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE);
 
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition);
+		Set<String> recipients = new LinkedHashSet<>();
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition, recipients);
 		List<CcpJsonRepresentation> recruiters = getRecruiters();
 		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
 		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun, lastNonProfessionalPositionOfTheLastRun, lastLegacyActivePositionOfTheLastRun);
@@ -214,13 +217,18 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		List<CcpJsonRepresentation> recruitersWhoStoppedViewing = getRecruitersWhoStoppedViewing(recruiters, lastViewByRecruiter, viewsSince, restrictedTo);
 		// deleting from the recruiters moves the given record to the twin, the inactive recruiters
 		recruitersWhoStoppedViewing.forEach(recruiter -> VisEntityRecruiter.ENTITY.delete(recruiter));
+		List<CcpJsonRepresentation> recipientsWhoNeverViewed = getRecipientsWhoNeverViewed(recruiters, recipients, lastViewByRecruiter);
+		// they come back on viewing a resume of the e-mail (VisBusinessReactivateRecruiterWhoViewed)
+		recipientsWhoNeverViewed.forEach(recruiter -> VisEntityRecruiter.ENTITY.delete(recruiter));
 
 		int resumesFound = resumes.size();
 		int recruitersInactivated = recruitersWhoStoppedViewing.size();
+		int recipientsInactivated = recipientsWhoNeverViewed.size();
 		CcpJsonRepresentation counters = json
 				.put(VisRecruiterResumesFields.resumesFound, resumesFound)
 				.put(VisRecruiterResumesFields.emailsSent, emailsSent[0])
-				.put(VisRecruiterResumesFields.recruitersInactivated, recruitersInactivated);
+				.put(VisRecruiterResumesFields.recruitersInactivated, recruitersInactivated)
+				.put(VisRecruiterResumesFields.recipientsWhoNeverViewedInactivated, recipientsInactivated);
 		return counters;
 	}
 
@@ -250,6 +258,33 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 			recruitersWhoStoppedViewing.add(recruiter);
 		}
 		return recruitersWhoStoppedViewing;
+	}
+
+	/**
+	 * The recruiters to inactivate right after the sending (since 2026-11-16, to keep only the recruiters who really view
+	 * resumes): the ones who received the e-mail in this run and never viewed a resume (a return by the sign-up counts as
+	 * a view). Viewing a resume of the e-mail brings them back ({@code VisBusinessReactivateRecruiterWhoViewed}).
+	 * @param recruiters every recruiter, as stored
+	 * @param recipients the e-mails of the recruiters who received the e-mail in this run
+	 * @param lastViewByRecruiter the last view of each recruiter, by the hash of their e-mail
+	 * @return the records of the recruiters to inactivate
+	 */
+	static List<CcpJsonRepresentation> getRecipientsWhoNeverViewed(List<CcpJsonRepresentation> recruiters, Set<String> recipients, Map<String, Long> lastViewByRecruiter) {
+		List<CcpJsonRepresentation> recipientsWhoNeverViewed = new ArrayList<>();
+		for (CcpJsonRepresentation recruiter : recruiters) {
+			String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
+			boolean notARecipient = false == recipients.contains(email);
+			if(notARecipient) {
+				continue;
+			}
+			String emailHash = getSha1OfTheEmail(email);
+			boolean viewed = lastViewByRecruiter.containsKey(emailHash);
+			if(viewed) {
+				continue;
+			}
+			recipientsWhoNeverViewed.add(recruiter);
+		}
+		return recipientsWhoNeverViewed;
 	}
 
 	/** The SHA-1 of an e-mail, which does not refuse an address that is not valid, as {@link #getEmailHash(String)} does. */
@@ -292,7 +327,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 
 	/**
 	 * Takes a return by the sign-up as the last view of a recruiter, when it is more recent, so that signing up again gives
-	 * the recruiter another 35 days. Who never viewed stays without a view: they are in the queue, and no one inactivates them.
+	 * the recruiter another 35 days. Who never viewed stays without a view: they are in the queue until they receive the e-mail,
+	 * which inactivates them ({@link #getRecipientsWhoNeverViewed(List, Set, Map)}).
 	 * @param lastViewByRecruiter the last view of each recruiter, by the hash of their e-mail; receives the returns
 	 * @param signUpReturns when each recruiter came back, by the hash of their e-mail
 	 */

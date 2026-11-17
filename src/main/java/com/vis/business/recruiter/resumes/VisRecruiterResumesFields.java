@@ -127,6 +127,8 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	emailsSent,
 	/** How many recruiters the run inactivated for not viewing a resume for too long. */
 	recruitersInactivated,
+	/** How many recruiters the run inactivated right after the sending, for receiving the e-mail and never viewing a resume (since 2026-11-16). */
+	recipientsWhoNeverViewedInactivated,
 	/** How many resumes were added or changed in the last days. */
 	resumesFound,
 	/** The run was skipped: the e-mails go out only from Monday to Friday. */

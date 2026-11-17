@@ -56,6 +56,9 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 
 	private final String[] lastLegacyActiveQueuePosition;
 
+	/** Receives the e-mail of each recruiter who received the e-mail in this run. */
+	private final Set<String> recipients;
+
 	/**
 	 * Keeps what the e-mail of each recruiter needs.
 	 * @param restrictedTo the e-mails the run is restricted to; empty for every recruiter
@@ -71,9 +74,10 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * had its turn
 	 * @param lastNonProfessionalQueuePosition keeps, in its only position, the last position of the queue of the non
 	 * professional domains that had its turn
+	 * @param recipients receives the e-mail of each recruiter who received the e-mail in this run
 	 */
 	VisResumesToTheRecruiterSender(List<String> restrictedTo, List<CcpJsonRepresentation> resumesOfTheEmail, Map<String, Long> lastViewByPair,
-			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition, String[] lastNonProfessionalQueuePosition, String[] lastLegacyActiveQueuePosition) {
+			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition, String[] lastNonProfessionalQueuePosition, String[] lastLegacyActiveQueuePosition, Set<String> recipients) {
 		this.restrictedTo = restrictedTo;
 		this.resumesOfTheEmail = resumesOfTheEmail;
 		this.lastViewByPair = lastViewByPair;
@@ -86,6 +90,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 		this.lastLegacyQueuePosition = lastLegacyQueuePosition;
 		this.lastNonProfessionalQueuePosition = lastNonProfessionalQueuePosition;
 		this.lastLegacyActiveQueuePosition = lastLegacyActiveQueuePosition;
+		this.recipients = recipients;
 	}
 
 	/**
@@ -121,6 +126,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 		}
 		VisBusinessSendResumesToRecruiters.sendTheEmail(email, rows, this.frontendUrl, this.visApiUrl);
 		this.emailsSent[0]++;
+		this.recipients.add(email);
 		boolean notTheFirstEmail = false == recruiter.containsField(VisRecruiterResumesFields.firstEmail);
 		if(notTheFirstEmail) {
 			return;
