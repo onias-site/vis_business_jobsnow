@@ -56,7 +56,8 @@ import com.vis.messages.VisMessages;
  * 2026-11-16, who received the e-mail and never viewed a resume is inactivated right after the sending too, and comes back
  * on viewing a resume of the e-mail. Each day, only
  * {@value #RECRUITERS_PER_DAY} of them: first the ones who viewed a resume in these 35 days, the most recent view first;
- * then the recruiters of the sign-up (source {@code login}) who never received this e-mail
+ * then the recruiters of the sign-up (source {@code login}) and, tied with them since 2026-11-17, the ones saved by the
+ * support (source {@code support}) who never received this e-mail
  * ({@code vis_recruiter_first_email}); then the ones who appeared on Telegram in the last six months
  * ({@code lastTelegramAppearance}), the most recent appearance first; then, in turns, the ones who viewed a resume in the
  * legacy JobsNow ({@code lastLegacyView}), the most recent view first, a queue of its own that goes on from where the last
@@ -392,7 +393,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * The order in which the places of the day are given:
 	 * <ol>
 	 * <li>the recruiters who viewed a resume since {@code viewsSince}, the most recent view first;</li>
-	 * <li>the ones of the sign-up waiting for their first e-mail, by the hash;</li>
+	 * <li>the ones of the sign-up and the ones saved by the support (since 2026-11-17, tied) waiting for their first e-mail,
+	 * by the hash;</li>
 	 * <li>the ones who appeared on Telegram since {@code telegramSince}, the most recent appearance first;</li>
 	 * <li>the ones who viewed a resume in the legacy JobsNow, the most recent view first, right after
 	 * {@code lastLegacyQueuePosition} and going back to the beginning at its end;</li>
@@ -423,6 +425,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 */
 	static List<CcpJsonRepresentation> getRecruitersInOrder(List<CcpJsonRepresentation> recruiters, Map<String, Long> lastViewByRecruiter, long viewsSince, String lastQueuePosition, Set<String> recruitersWithFirstEmail, long telegramSince, String lastLegacyQueuePosition, String lastNonProfessionalQueuePosition, String lastLegacyActiveQueuePosition) {
 		String loginSource = VisEntityRecruiter.Sources.login.getValue();
+		String supportSource = VisEntityRecruiter.Sources.support.getValue();
 		String signUpGroup = Constants.QUEUE_GROUP_OF_THE_SIGN_UP.getValue();
 		String othersGroup = Constants.QUEUE_GROUP_OF_THE_OTHERS.getValue();
 		String legacyPositionFormat = Constants.LEGACY_QUEUE_POSITION.getValue();
@@ -449,7 +452,10 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 			}
 			String source = recruiter.getOrDefault(VisEntityRecruiter.Fields.source, () -> "");
 			boolean cameFromTheSignUp = loginSource.equals(source);
-			boolean waitsForTheFirstEmail = cameFromTheSignUp && false == recruitersWithFirstEmail.contains(emailHash);
+			boolean savedByTheSupport = supportSource.equals(source);
+			// since 2026-11-17 the ones saved by the support wait for the first e-mail tied with the ones of the sign-up
+			boolean entitledToTheFirstEmail = cameFromTheSignUp || savedByTheSupport;
+			boolean waitsForTheFirstEmail = entitledToTheFirstEmail && false == recruitersWithFirstEmail.contains(emailHash);
 			if(waitsForTheFirstEmail) {
 				CcpJsonRepresentation recruiterOfTheFirstEmail = recruiterWithHash.put(VisRecruiterResumesFields.firstEmail, true);
 				waitingForTheFirstEmail.add(recruiterOfTheFirstEmail);
