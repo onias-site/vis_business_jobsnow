@@ -219,6 +219,9 @@ public class VisBusinessLoadRecruitersFromHtmlFolder implements CcpBusiness {
 			// the bulk goes around the decorator of @CcpEntityGrouperChild: the new recruiters enter their groups here
 			VisRecruiterDomainGroups domainGroups = new VisRecruiterDomainGroups(createdRecruiters);
 			domainGroups.addToTheGroups();
+			// and around the one of @CcpEntityGrouperChildCounter: the new recruiters are counted by source here
+			VisRecruiterSourceCounts sourceCounts = new VisRecruiterSourceCounts(createdRecruiters);
+			sourceCounts.addToTheCounter();
 			int batchCreatedCount = createdRecruiters.size();
 			createdCount += batchCreatedCount;
 		}

@@ -10,10 +10,13 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaDa
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityPhase;
 import com.jn.entities.JnEntityVirtualRecordsTotal;
 import com.jn.utils.JnGrouperChart;
+import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.entities.VisEntityVirtualAvoidedSkillsCounter;
 import com.vis.entities.VisEntityVirtualNotAllowedCompanyCounter;
+import com.vis.entities.VisEntityVirtualRecruiterSourceCounter;
+import com.vis.entities.VisEntityVirtualResumeRegionScopeCounter;
 import com.vis.entities.VisEntityVirtualResumeTypeCounter;
 import com.vis.entities.VisEntityVirtualViewerDomainCounter;
 
@@ -34,6 +37,12 @@ public class VisBusinessCuriositiesCharts implements CcpBusiness {
 		resumeTypes,
 		/** The views of resumes ever made by domain of the recruiter ({@code {domain: n}}). */
 		viewerDomains,
+		/** The active recruiters by source ({@code {source: n}}); the screen leaves the legacy ones out. */
+		recruiterSources,
+		/**
+		 * The active resumes by the reach of their ddds ({@code {homeOfficeOnly|oneRegion|severalRegions|anyRegion: n}}).
+		 */
+		resumeRegionScopes,
 		/** The resumes active and inactive now. */
 		resumeSituation,
 		/** The slice of the active resumes. */
@@ -65,13 +74,17 @@ public class VisBusinessCuriositiesCharts implements CcpBusiness {
 		CcpJsonRepresentation resumeTypes = JnGrouperChart.counters(Fields.resumeTypes, VisEntityVirtualResumeTypeCounter.ENTITY, VisEntityResume.ENTITY, resumeTypesCombination);
 		CcpJsonRepresentation viewerDomainsCombination = VisEntityVirtualViewerDomainCounter.getCombination();
 		CcpJsonRepresentation viewerDomains = JnGrouperChart.counters(Fields.viewerDomains, VisEntityVirtualViewerDomainCounter.ENTITY, VisEntityViewedResume.ENTITY, viewerDomainsCombination);
+		CcpJsonRepresentation recruiterSourcesCombination = VisEntityVirtualRecruiterSourceCounter.getCombination();
+		CcpJsonRepresentation recruiterSources = JnGrouperChart.counters(Fields.recruiterSources, VisEntityVirtualRecruiterSourceCounter.ENTITY, VisEntityRecruiter.ENTITY, recruiterSourcesCombination);
+		CcpJsonRepresentation regionScopesCombination = VisEntityVirtualResumeRegionScopeCounter.getCombination();
+		CcpJsonRepresentation regionScopes = JnGrouperChart.counters(Fields.resumeRegionScopes, VisEntityVirtualResumeRegionScopeCounter.ENTITY, VisEntityResume.ENTITY, regionScopesCombination);
 		// the total of the resumes is one group on each side: the active ones on the main side, the inactive ones on the twin
 		CcpEntityMetaData resumeDetails = VisEntityResume.ENTITY.getEntityMetaData();
 		CcpEntityMetaData totalDetails = JnEntityVirtualRecordsTotal.ENTITY.getEntityMetaData();
 		String totalParentId = JnEntityVirtualRecordsTotal.getParentId(resumeDetails.entityName);
 		CcpJsonRepresentation activeResumes = JnGrouperChart.sum(Fields.resumeSituation, Fields.active, totalDetails.entityName, resumeDetails.entityName, totalParentId, CcpEntityPhase.mainEntity);
 		CcpJsonRepresentation inactiveResumes = JnGrouperChart.sum(Fields.resumeSituation, Fields.inactive, totalDetails.entityName, resumeDetails.entityName, totalParentId, CcpEntityPhase.twinEntity);
-		List<CcpJsonRepresentation> charts = Arrays.asList(notAllowedCompanies, avoidedSkills, resumeTypes, viewerDomains, activeResumes, inactiveResumes);
+		List<CcpJsonRepresentation> charts = Arrays.asList(notAllowedCompanies, avoidedSkills, resumeTypes, viewerDomains, recruiterSources, regionScopes, activeResumes, inactiveResumes);
 		CcpJsonRepresentation output = JnGrouperChart.output(charts);
 		return output;
 	}

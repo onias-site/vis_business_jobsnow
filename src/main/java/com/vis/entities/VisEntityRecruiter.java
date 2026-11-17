@@ -23,6 +23,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityC
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChildCounter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
@@ -40,6 +41,7 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.JnEntityWriteEventSubscribers;
+import com.jn.entities.decorators.engine.JnGrouperChildCurrentCounterEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildFieldEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildFieldEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
@@ -51,12 +53,15 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.recruiter.VisBusinessInactivateSuppressedRecruiter;
 import com.vis.business.recruiter.VisBusinessLoadRecruitersFromHtmlFolder;
 import com.vis.business.recruiter.VisBusinessPrepareRecruiter;
+import com.vis.business.recruiter.VisRecruiterSourceCounts;
 import com.vis.business.recruiter.VisBusinessSaveRecruiterFromLoginAnswers;
 import com.vis.business.recruiter.VisRecruiterDomainGroups;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.transformers.VisJsonTransformerRecruiterDomain;
 import com.vis.json.transformers.VisJsonTransformerRecruiterProfessional;
 import com.vis.json.transformers.VisRecruiterDomainInitialsCombinations;
+import com.vis.json.transformers.VisRecruiterSourceCounterCombinations;
+import com.vis.json.transformers.VisRecruiterSourceCounterKeys;
 
 /**
  * The recruiters: one record per e-mail, kept as typed (no hash), because it is reused to send messages to the
@@ -104,6 +109,10 @@ import com.vis.json.transformers.VisRecruiterDomainInitialsCombinations;
 		)
 @CcpEntityGrouperChild(value = {VisEntityVirtualRecruiterDomainInitialsGrouper.class}, beforeDecoratorClass = JnGrouperChildFieldEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildFieldEntityAfterWrite.class, childField = "domain")
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualRecruiterDomainInitialsGrouper.class, value = VisRecruiterDomainInitialsCombinations.class)
+// a single group counts, for each source, how many active recruiters came from it now: the chart "Origem dos
+// recrutadores" of the screen Curiosities (since 2026-11-17)
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualRecruiterSourceCounter.class}, counterKeyClass = VisRecruiterSourceCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualRecruiterSourceCounter.class, value = VisRecruiterSourceCounterCombinations.class)
 public class VisEntityRecruiter implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntityRecruiter INSTANCE = new VisEntityRecruiter();
@@ -251,8 +260,11 @@ public class VisEntityRecruiter implements CcpEntityConfigurator {
 		List<CcpBulkItem> emailSuppressedSubscription = JnEntityWriteEventSubscribers.getSeeds(ListenedEntities.jn_email_suppressed, CcpEntityDecoratorOperationType.insert, VisBusinessInactivateSuppressedRecruiter.class);
 		VisRecruiterDomainGroups domainGroups = new VisRecruiterDomainGroups(recruiters);
 		List<CcpBulkItem> groups = domainGroups.getItemsToCreateGroups();
+		VisRecruiterSourceCounts sourceCounts = new VisRecruiterSourceCounts(recruiters);
+		List<CcpBulkItem> sourceCounter = sourceCounts.getItemsToCreateGroup();
 		List<CcpBulkItem> firstRecords = new ArrayList<>(legacyRecruiters);
 		firstRecords.addAll(groups);
+		firstRecords.addAll(sourceCounter);
 		firstRecords.addAll(loginAnswersSubscription);
 		firstRecords.addAll(emailSuppressedSubscription);
 		return firstRecords;

@@ -87,6 +87,8 @@ import com.vis.json.transformers.VisAvoidedSkillsCounterCombinations;
 import com.vis.json.transformers.VisAvoidedSkillsCounterKeys;
 import com.vis.json.transformers.VisResumeTypeCounterCombinations;
 import com.vis.json.transformers.VisResumeTypeCounterKeys;
+import com.vis.json.transformers.VisResumeRegionScopeCounterCombinations;
+import com.vis.json.transformers.VisResumeRegionScopeCounterKeys;
 import com.vis.json.transformers.VisResumeExcludedSkillCombinations;
 import com.vis.json.transformers.VisResumeExcludedSkillCounterKeys;
 import com.vis.json.transformers.VisResumeHashCombinations;
@@ -191,6 +193,10 @@ import com.vis.messages.VisMessages;
 // totals of the folders of the screen Supply X Demand
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualDddCounter.class}, counterKeyClass = VisDddCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddCounter.class, value = VisDddCounterCombinations.class)
+// a single group counts the active resumes by the reach of their ddds (only home office, one region, several, all of
+// them), once each: the chart "DDDs do currículo" of the screen Curiosities (since 2026-11-17)
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualResumeRegionScopeCounter.class}, counterKeyClass = VisResumeRegionScopeCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualResumeRegionScopeCounter.class, value = VisResumeRegionScopeCounterCombinations.class)
 public class VisEntityResume implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntityResume INSTANCE = new VisEntityResume();
