@@ -357,10 +357,12 @@ public class VisMessages {
 	}
 
 	/**
-	 * Sends a recruiter the table of the resumes added or changed in the last days. Not repeatable: the sending is
-	 * recorded per recruiter and day, so a second run on the same day does not send it again.
+	 * Sends a recruiter the table of the resumes added or changed in the last days. Repeatable since 2026-11-16 (asked by
+	 * the user for the daily process, the only one that sends this e-mail besides the support): the "already sent" rule
+	 * of {@code jn_email_message_sent} (one e-mail of the kind per recipient and day) no longer stops it, so a second run
+	 * of the process on the same day sends again. The other rules (suppressed address, parameters, template) still apply.
 	 */
-	public static class VisNotifyRecruiterAboutResumes implements JnMessageTemplate{
+	public static class VisNotifyRecruiterAboutResumes implements JnMessageTemplate, JnRepeatableMessage{
 		/** The single instance: the class keeps no state. */
 		public final static VisNotifyRecruiterAboutResumes INSTANCE = new VisNotifyRecruiterAboutResumes();
 
