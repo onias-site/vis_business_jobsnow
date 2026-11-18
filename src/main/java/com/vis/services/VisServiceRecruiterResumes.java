@@ -28,6 +28,7 @@ import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
 import com.vis.entities.VisEntityInvalidLinkedinReport;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
+import com.vis.entities.VisEntityRecruiterUnsubscribed;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.entities.VisEntityViewedResume;
@@ -176,7 +177,10 @@ public enum VisServiceRecruiterResumes implements JnService {
 			return response;
 		}
 	},
-	/** Stops the e-mails of resumes to the recruiter: moves them to the inactive recruiters ({@code vis_inactive_recruiter}). */
+	/**
+	 * Stops the e-mails of resumes to the recruiter: records the unsubscription ({@code vis_recruiter_unsubscribed}) and
+	 * moves them to the inactive recruiters ({@code vis_inactive_recruiter}).
+	 */
 	UnsubscribeFromResumesEmail{
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			String email = json.getAsString(JnJsonCommonsFields.email);
@@ -186,6 +190,9 @@ public enum VisServiceRecruiterResumes implements JnService {
 				throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.UNHAUTHORIZED);
 			}
 			CcpJsonRepresentation recruiter = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiter.Fields.email, email);
+			// the unsubscription of their own will is kept apart from the inactivations by the daily process
+			CcpJsonRepresentation unsubscribed = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterUnsubscribed.Fields.email, email);
+			VisEntityRecruiterUnsubscribed.ENTITY.save(unsubscribed);
 			boolean active = VisEntityRecruiter.ENTITY.exists(recruiter);
 			// a second click on the link finds the recruiter already inactive: the answer is the same
 			if(active) {
