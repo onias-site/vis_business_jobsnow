@@ -21,7 +21,8 @@ import com.vis.entities.VisEntityRecruiter;
  * spaces around, no accents, {@link VisBusinessPrepareRecruiter}) and must be a valid address: the rules of
  * {@code CcpEmailDecorator.isValid} and the validation of the entity. Both sides of the recruiters are read at once:
  * <ul>
- * <li>already an active recruiter: nothing is written ({@code alreadyRecruiter});</li>
+ * <li>an active recruiter: nothing is written yet and the operator is asked whether they want to inactivate them
+ * ({@code askInactivation}, since 2026-11-19); the answer goes to {@link VisSupportSaveRecruiterConfirmInactivation};</li>
  * <li>an inactive recruiter ({@code vis_inactive_recruiter}): the operator is asked whether they really want to reactivate
  * them ({@code askReactivation}, since 2026-11-19); the answer goes to {@link VisSupportSaveRecruiterConfirmReactivation};</li>
  * <li>neither: a new recruiter, and the step ends with the reply {@code saved}.</li>
@@ -43,35 +44,36 @@ public class VisSupportSaveRecruiter implements CcpBusiness {
 	 * Saves the recruiter, or asks to confirm the reactivation.
 	 * @param json the session, with {@code email}
 	 * @return the session with the reply {@code saved}
-	 * @throws CcpErrorFlowDisturb with {@code invalidEmail}, {@code alreadyRecruiter} or {@code askReactivation}
+	 * @throws CcpErrorFlowDisturb with {@code invalidEmail}, {@code askInactivation} or {@code askReactivation}
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpJsonRepresentation recruiter = prepare(json);
 		String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
+		CcpBusiness askInactivation = new VisSupportSaveRecruiterAskInactivation(json, email);
 		CcpBusiness askReactivation = new VisSupportSaveRecruiterAskReactivation(json, email);
-		CcpJsonRepresentation sessionWithReply = save(this, json, recruiter, askReactivation);
+		CcpJsonRepresentation sessionWithReply = save(this, json, recruiter, askInactivation, askReactivation);
 		return sessionWithReply;
 	}
 
 	/**
-	 * Reads both sides of the recruiters at once and acts on the side where the e-mail is: active, only reported; inactive,
-	 * the given action; neither, a new recruiter.
+	 * Reads both sides of the recruiters at once and acts on the side where the e-mail is: active or inactive, the given
+	 * action; neither, a new recruiter.
 	 * @param context the step that runs the procedure
 	 * @param session the session of the command
 	 * @param recruiter the recruiter, as prepared by {@link #prepare(CcpJsonRepresentation)}
+	 * @param whenActive what is done to an active recruiter
 	 * @param whenInactive what is done to an inactive recruiter
 	 * @return the session with the reply {@code saved}
-	 * @throws CcpErrorFlowDisturb with {@code alreadyRecruiter} or the status of {@code whenInactive}
+	 * @throws CcpErrorFlowDisturb with the status of {@code whenActive} or of {@code whenInactive}
 	 */
-	static CcpJsonRepresentation save(CcpJsonFieldName context, CcpJsonRepresentation session, CcpJsonRepresentation recruiter, CcpBusiness whenInactive) {
+	static CcpJsonRepresentation save(CcpJsonFieldName context, CcpJsonRepresentation session, CcpJsonRepresentation recruiter, CcpBusiness whenActive, CcpBusiness whenInactive) {
 		String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
 		CcpEntity twinEntity = VisEntityRecruiter.ENTITY.getTwinEntity();
-		CcpBusiness alreadySaved = new VisSupportSaveRecruiterAlreadySaved(session, email);
 		CcpBusiness insert = new VisSupportSaveRecruiterInsert(recruiter);
 
 		new CcpGetEntityId(recruiter)
 		.toBeginProcedureAnd()
-			.ifThisIdIsPresentInEntity(VisEntityRecruiter.ENTITY).executeAction(alreadySaved).and()
+			.ifThisIdIsPresentInEntity(VisEntityRecruiter.ENTITY).executeAction(whenActive).and()
 			.ifThisIdIsPresentInEntity(twinEntity).executeAction(whenInactive).and()
 			.executeAction(insert)
 			.andFinallyReturningTheseFields(Fields.inexistentField)

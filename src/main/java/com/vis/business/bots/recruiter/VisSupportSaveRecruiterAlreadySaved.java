@@ -4,7 +4,10 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.flow.CcpErrorFlowDisturb;
 
-/** Step of the flow of {@code /saveRecruiter}: the e-mail is already an active recruiter, nothing is written. */
+/**
+ * Step of the flow of the confirmation of the reactivation of {@code /saveRecruiter}: the e-mail became an active
+ * recruiter before the "Sim", nothing is written.
+ */
 class VisSupportSaveRecruiterAlreadySaved implements CcpBusiness {
 
 	/** The session of the command. */

@@ -4,13 +4,13 @@ import com.ccp.process.CcpProcessStatus;
 
 /**
  * Diversions of the {@code saveRecruiter} command, mapped in the {@code stepFlow} of its steps: {@code askReactivation}
- * goes to the confirmation, {@code invalidAnswer} repeats it and the others end the session; each one with the reply the
+ * and {@code askInactivation} go to their confirmations, {@code invalidAnswer} repeats it and the others end the session; each one with the reply the
  * step left in {@code botReply}.
  */
 public enum VisSupportSaveRecruiterStatus implements CcpProcessStatus {
 	/** Status 400: the e-mail is not a valid address. */
 	invalidEmail(400),
-	/** Status 409: the e-mail is already an active recruiter. */
+	/** Status 409: the e-mail became an active recruiter between the question of the reactivation and the answer. */
 	alreadyRecruiter(409),
 	/** Status 202: the e-mail was an inactive recruiter and became active again, with the source {@code support}. */
 	reactivated(202),
@@ -20,6 +20,14 @@ public enum VisSupportSaveRecruiterStatus implements CcpProcessStatus {
 	invalidAnswer(406),
 	/** Status 204: the operator did not confirm the reactivation, nothing is written. */
 	reactivationCancelled(204),
+	/** Status 303: the e-mail is an active recruiter; the operator is asked whether to inactivate them. */
+	askInactivation(303),
+	/** Status 200: the recruiter was inactivated and recorded as unsubscribed. */
+	inactivated(200),
+	/** Status 205: the operator did not confirm the inactivation, nothing is written. */
+	inactivationCancelled(205),
+	/** Status 410: the recruiter stopped being active before the confirmation, nothing is written. */
+	noLongerActive(410),
 	;
 
 	/** The HTTP status code. */

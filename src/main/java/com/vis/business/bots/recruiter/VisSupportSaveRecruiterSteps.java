@@ -5,5 +5,7 @@ package com.vis.business.bots.recruiter;
  */
 public enum VisSupportSaveRecruiterSteps {
 	/** The answer of the operator: reactivate the inactive recruiter? (since 2026-11-19) */
-	saveRecruiterConfirmReactivation
+	saveRecruiterConfirmReactivation,
+	/** The answer of the operator: inactivate the active recruiter? (since 2026-11-19) */
+	saveRecruiterConfirmInactivation
 }
