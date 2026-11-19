@@ -3,14 +3,16 @@ package com.vis.business.bots.recruiter;
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.CcpEntity.JsonFieldNames;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.vis.business.recruiter.VisBusinessReactivateRecruiterFromSignUp;
 import com.vis.entities.VisEntityRecruiter;
 
 /**
- * Step of the flow of {@code /saveRecruiter}: the e-mail is an inactive recruiter, who goes back to the recruiters with
- * the record they had, as in the sign-up ({@link VisBusinessReactivateRecruiterFromSignUp}, which also keeps the moment
- * of the return so the next e-mail of resumes does not inactivate them again).
+ * Step of the flow of the confirmation of {@code /saveRecruiter}: the operator confirmed the reactivation of the inactive
+ * recruiter, who goes back to the recruiters with the record they had, but with the source {@code support} (since
+ * 2026-11-19), as in the sign-up ({@link VisBusinessReactivateRecruiterFromSignUp}, which also keeps the moment of the
+ * return so the next e-mail of resumes does not inactivate them again).
  */
 class VisSupportSaveRecruiterReactivate implements CcpBusiness {
 
@@ -31,15 +33,19 @@ class VisSupportSaveRecruiterReactivate implements CcpBusiness {
 	}
 
 	/**
-	 * Reactivates the recruiter and ends the session telling the operator.
+	 * Reactivates the recruiter, with the source {@code support}, and ends the session telling the operator.
 	 * @param json the json of the procedure, holding the inactive record under {@code _entities}
 	 * @return never returns normally
 	 * @throws CcpErrorFlowDisturb with {@code reactivated}
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpEntity twinEntity = VisEntityRecruiter.ENTITY.getTwinEntity();
+		CcpJsonRepresentation storedRecord = json.getInnerJsonFromPath(JsonFieldNames._entities, twinEntity);
+		String supportSource = VisEntityRecruiter.Sources.support.getValue();
+		CcpJsonRepresentation recordFromSupport = storedRecord.put(VisEntityRecruiter.Fields.source, supportSource);
+		CcpJsonRepresentation jsonFromSupport = json.addToItem(JsonFieldNames._entities, twinEntity, recordFromSupport);
 		CcpBusiness reactivate = new VisBusinessReactivateRecruiterFromSignUp(twinEntity, this.email);
-		reactivate.execute(json);
+		reactivate.execute(jsonFromSupport);
 		CcpJsonRepresentation sessionWithReply = VisSupportSaveRecruiterConversation.reply(this.session, VisSupportSaveRecruiterMessages.reactivated, this.email);
 		return VisSupportSaveRecruiterStatus.reactivated.throwException(sessionWithReply);
 	}

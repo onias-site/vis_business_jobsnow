@@ -15,8 +15,9 @@ import com.vis.business.bots.VisSupportBotCommands;
 
 /**
  * Configuration of {@code /saveRecruiter <email>} in the support bot (since 2026-11-14): the operator saves an e-mail as a
- * recruiter in {@code vis_recruiter}; an invalid address, a recruiter already active or an inactive one brought back end
- * the session with their own reply. Seeded by {@code VisEntityRecruiterSignUpReturn}.
+ * recruiter in {@code vis_recruiter}; an invalid address or a recruiter already active end the session with their own
+ * reply. An inactive recruiter is brought back, with the source {@code support}, only after the operator confirms it
+ * (second step, since 2026-11-19). Seeded by {@code VisEntityRecruiterSignUpReturn}.
  */
 public final class VisSupportSaveRecruiterBotConfiguration {
 
@@ -30,19 +31,32 @@ public final class VisSupportSaveRecruiterBotConfiguration {
 		String commandName = VisSupportBotCommands.saveRecruiter.name();
 		CcpJsonRepresentation[] botReply = JnEntityBotCommandStep.getBotReplyInEveryLanguage();
 
+		String confirmReactivation = VisSupportSaveRecruiterSteps.saveRecruiterConfirmReactivation.name();
+
+		// an inactive recruiter is not reactivated at once: the operator is asked to confirm (since 2026-11-19)
 		int invalidEmail = VisSupportSaveRecruiterStatus.invalidEmail.asNumber();
 		int alreadyRecruiter = VisSupportSaveRecruiterStatus.alreadyRecruiter.asNumber();
-		int reactivated = VisSupportSaveRecruiterStatus.reactivated.asNumber();
+		int askReactivation = VisSupportSaveRecruiterStatus.askReactivation.asNumber();
 		CcpJsonRepresentation invalidEmailFlow = JnEntityBotCommandStep.getStepFlow(invalidEmail, "", botReply);
 		CcpJsonRepresentation alreadyRecruiterFlow = JnEntityBotCommandStep.getStepFlow(alreadyRecruiter, "", botReply);
-		CcpJsonRepresentation reactivatedFlow = JnEntityBotCommandStep.getStepFlow(reactivated, "", botReply);
-		CcpJsonRepresentation step = JnEntityBotCommandStep.getBotCommandStep(commandName, VisSupportSaveRecruiter.class, "", invalidEmailFlow, alreadyRecruiterFlow, reactivatedFlow);
+		CcpJsonRepresentation askReactivationFlow = JnEntityBotCommandStep.getStepFlow(askReactivation, confirmReactivation, botReply);
+		CcpJsonRepresentation firstStep = JnEntityBotCommandStep.getBotCommandStep(commandName, VisSupportSaveRecruiter.class, "", invalidEmailFlow, alreadyRecruiterFlow, askReactivationFlow);
 
-		List<CcpJsonRepresentation> endMessages = JnEntityBotCommandStepEndMessage.getBotReplyEndMessages(commandName);
+		// "Sim" reactivates with the source support, "Não" writes nothing; an answer not understood repeats the step
+		int reactivated = VisSupportSaveRecruiterStatus.reactivated.asNumber();
+		int reactivationCancelled = VisSupportSaveRecruiterStatus.reactivationCancelled.asNumber();
+		int invalidAnswer = VisSupportSaveRecruiterStatus.invalidAnswer.asNumber();
+		CcpJsonRepresentation reactivatedFlow = JnEntityBotCommandStep.getStepFlow(reactivated, "", botReply);
+		CcpJsonRepresentation reactivationCancelledFlow = JnEntityBotCommandStep.getStepFlow(reactivationCancelled, "", botReply);
+		CcpJsonRepresentation invalidAnswerFlow = JnEntityBotCommandStep.getStepFlow(invalidAnswer, confirmReactivation, botReply);
+		CcpJsonRepresentation alreadyRecruiterMeanwhileFlow = JnEntityBotCommandStep.getStepFlow(alreadyRecruiter, "", botReply);
+		CcpJsonRepresentation confirmStep = JnEntityBotCommandStep.getBotCommandStep(confirmReactivation, VisSupportSaveRecruiterConfirmReactivation.class, "", reactivatedFlow, reactivationCancelledFlow, invalidAnswerFlow, alreadyRecruiterMeanwhileFlow);
+
+		List<CcpJsonRepresentation> endMessages = JnEntityBotCommandStepEndMessage.getBotReplyEndMessages(commandName, confirmReactivation);
 		JnBotConfigurationSeeds seeds = new JnBotConfigurationSeeds(JnMessageType.JnBotType.support)
 				.command(commandName, JnJsonCommonsFields.email)
 				.portugueseNames(VisCommandNamesInPortuguese.saveRecruiter)
-				.steps(step)
+				.steps(firstStep, confirmStep)
 				.endMessages(endMessages)
 				.commandExplanation(commandName, JnLanguage.portuguese, "Cadastra um e-mail como recrutador, para que ele passe a receber o e-mail diário de currículos")
 				.commandExplanation(commandName, JnLanguage.english, "Saves an e-mail as a recruiter, so that it starts receiving the daily e-mail of resumes")
@@ -53,8 +67,20 @@ public final class VisSupportSaveRecruiterBotConfiguration {
 						, "O e-mail {email} já está cadastrado como recrutador."
 						, "The e-mail {email} is already saved as a recruiter.")
 				.systemMessage(VisSupportSaveRecruiterMessages.reactivated
-						, "O recrutador {email} estava inativo e foi reativado."
-						, "The recruiter {email} was inactive and was reactivated.")
+						, "O recrutador {email} estava inativo e foi reativado, agora com a origem support."
+						, "The recruiter {email} was inactive and was reactivated, now with the source support.")
+				.systemMessage(VisSupportSaveRecruiterMessages.confirmReactivation
+						, "O e-mail {email} é de um recrutador inativo. Quer mesmo reativar este recrutador? Se sim, a origem dele passa a ser support.\n\n{options}"
+						, "The e-mail {email} belongs to an inactive recruiter. Do you really want to reactivate this recruiter? If so, their source becomes support.\n\n{options}")
+				.systemMessage(VisSupportSaveRecruiterMessages.options
+						, "Digite \"Sim\" ou \"Não\""
+						, "Type \"Yes\" or \"No\"")
+				.systemMessage(VisSupportSaveRecruiterMessages.notUnderstood
+						, "Não entendi a resposta.\n\n{options}"
+						, "I did not understand the answer.\n\n{options}")
+				.systemMessage(VisSupportSaveRecruiterMessages.reactivationCancelled
+						, "O recrutador {email} continua inativo. Nada foi gravado."
+						, "The recruiter {email} stays inactive. Nothing was written.")
 				.systemMessage(VisSupportSaveRecruiterMessages.saved
 						, "O recrutador {email} foi cadastrado."
 						, "The recruiter {email} was saved.");
