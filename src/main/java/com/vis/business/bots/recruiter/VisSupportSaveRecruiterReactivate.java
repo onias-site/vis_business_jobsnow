@@ -1,18 +1,21 @@
 package com.vis.business.bots.recruiter;
 
 import com.ccp.business.CcpBusiness;
+import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.CcpEntity.JsonFieldNames;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.vis.business.recruiter.VisBusinessReactivateRecruiterFromSignUp;
 import com.vis.entities.VisEntityRecruiter;
+import com.vis.entities.VisEntityRecruiterUnsubscribed;
 
 /**
  * Step of the flow of the confirmation of {@code /saveRecruiter}: the operator confirmed the reactivation of the inactive
  * recruiter, who goes back to the recruiters with the record they had, but with the source {@code support} (since
  * 2026-11-19), as in the sign-up ({@link VisBusinessReactivateRecruiterFromSignUp}, which also keeps the moment of the
- * return so the next e-mail of resumes does not inactivate them again).
+ * return so the next e-mail of resumes does not inactivate them again). The recruiter also leaves the unsubscribed ones
+ * ({@code vis_recruiter_unsubscribed}), when there.
  */
 class VisSupportSaveRecruiterReactivate implements CcpBusiness {
 
@@ -46,6 +49,10 @@ class VisSupportSaveRecruiterReactivate implements CcpBusiness {
 		CcpJsonRepresentation jsonFromSupport = json.addToItem(JsonFieldNames._entities, twinEntity, recordFromSupport);
 		CcpBusiness reactivate = new VisBusinessReactivateRecruiterFromSignUp(twinEntity, this.email);
 		reactivate.execute(jsonFromSupport);
+		// bringing the recruiter back is a will to receive the resumes again: the unsubscription goes away, as in a view
+		// of a resume (VisBusinessReactivateRecruiterWhoViewed); a recruiter never unsubscribed makes this delete find nothing
+		CcpJsonRepresentation unsubscribed = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterUnsubscribed.Fields.email, this.email);
+		VisEntityRecruiterUnsubscribed.ENTITY.delete(unsubscribed);
 		CcpJsonRepresentation sessionWithReply = VisSupportSaveRecruiterConversation.reply(this.session, VisSupportSaveRecruiterMessages.reactivated, this.email);
 		return VisSupportSaveRecruiterStatus.reactivated.throwException(sessionWithReply);
 	}
