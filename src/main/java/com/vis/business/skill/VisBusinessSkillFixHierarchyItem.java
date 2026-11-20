@@ -1,5 +1,8 @@
 package com.vis.business.skill;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -23,8 +26,11 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * <p>The lookup the resume screen reads ({@link VisSkillWordsByInitials}) takes the parents from the record itself, so
  * the implicit knowledge of the resume screen shows the approved fix with no other write.
  *
- * <p>A skill that has no {@link VisEntitySkill} record is not created there, because the record cannot be created
- * without its {@code ranking}, and nothing changes: since 2026-10-27 the lookup keeps no word apart from the records.
+ * <p>An approval always changes {@link VisEntitySkill} (rule of 2026-11-20): an association whose skill has no record
+ * creates it, with the approved parent, no synonym and the last {@code ranking} (the number of skills plus one), as the
+ * approval of a suggestion of skill does ({@link VisBusinessCreateApprovedSkill}). A dissociation whose skill has no
+ * record has no parent to take out, and nothing changes. The save of the skill updates its groups of initials in
+ * {@code jn_grouper} and the dictionary.
  */
 public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 	/** The single instance: the class keeps no state. */
@@ -48,10 +54,19 @@ public class VisBusinessSkillFixHierarchyItem implements CcpBusiness {
 
 		CcpBusiness changeTheSkillParents = new VisBusinessChangeTheSkillParents(changeParents);
 
+		// a skill with no record starts with no parent: only an association leaves it with one, and creates it
+		Set<String> parentsOfANewSkill = new LinkedHashSet<>();
+		changeParents.accept(parentsOfANewSkill);
+		List<String> newSkillParents = new ArrayList<>(parentsOfANewSkill);
+		CcpJsonRepresentation newSkillKey = skillKey.put(VisEntitySkill.Fields.parent, newSkillParents);
+		boolean nothingToCreate = parentsOfANewSkill.isEmpty();
+		CcpBusiness createTheSkill = nothingToCreate ? CcpOtherConstants.DO_NOTHING : new VisBusinessCreateApprovedSkill(newSkillKey, List.of());
+
 		// a single read by id brings the stored skill
 		new CcpGetEntityId(skillKey)
 		.toBeginProcedureAnd()
-			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).executeAction(changeTheSkillParents)
+			.ifThisIdIsPresentInEntity(VisEntitySkill.ENTITY).executeAction(changeTheSkillParents).and()
+			.ifThisIdIsNotPresentInEntity(VisEntitySkill.ENTITY).executeAction(createTheSkill)
 			.andFinallyReturningTheseFields(JsonFieldNames.inexistentField)
 		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
 		;
