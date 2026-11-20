@@ -18,6 +18,11 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyItem;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeDeleteAnyWhereFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteFromMainEntity;
+import com.vis.business.skill.VisBusinessCountFixHierarchyItemApproved;
+import com.vis.business.skill.VisBusinessCountFixHierarchyItemDeletedEverywhere;
+import com.vis.business.skill.VisBusinessCountFixHierarchyItemRejected;
 
 /**
  * Represents each skill of a pending skill hierarchy fix request, one record per skill: the same
@@ -31,7 +36,12 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkillFixHierarchyItemPending.Fields.class)
-@CcpAfterTransferDataFromMainEntity(targetEntity = VisEntitySkillFixHierarchyItemApproved.class, execute = {VisBusinessSkillFixHierarchyItem.class}, transferHandlers = {})
+@CcpAfterTransferDataFromMainEntity(targetEntity = VisEntitySkillFixHierarchyItemApproved.class, execute = {VisBusinessSkillFixHierarchyItem.class, VisBusinessCountFixHierarchyItemApproved.class}, transferHandlers = {})
+// the items by type and status (pending, approved, rejected): the charts of association and of dissociation of the
+// hierarchy of the screen Curiosities (since 2026-11-20); the creation (VisBusinessSkillFixHierarchyCreateItems) and the
+// transfers go in bulk, so each change is counted by a side effect
+@CcpAfterDeleteFromMainEntity(execute = {VisBusinessCountFixHierarchyItemRejected.class}, operationHandlers = {})
+@CcpBeforeDeleteAnyWhereFromMainEntity(execute = {VisBusinessCountFixHierarchyItemDeletedEverywhere.class}, operationHandlers = {})
 @CcpEntityTwin(
 		twinEntityName = "vis_skill_fix_hierarchy_item_rejected",
 		bulkExecutorClass = JnExecuteBulkOperation.class,

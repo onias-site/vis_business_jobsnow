@@ -60,6 +60,13 @@ import com.vis.messages.VisEmailHtmlFields;
 import com.vis.messages.VisMessages;
 import com.vis.messages.VisMessages.VisNotifyUserAboutAprovedSkill;
 import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteAnyWhereFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterInsertFromMainEntity;
+import com.vis.business.skill.VisBusinessCountSkillSuggestionApproved;
+import com.vis.business.skill.VisBusinessCountSkillSuggestionDeleted;
+import com.vis.business.skill.VisBusinessCountSkillSuggestionInserted;
+import com.vis.business.skill.VisBusinessCountSkillSuggestionRejected;
 
 /**
  * Skills suggested by candidates that are not in {@link VisEntitySkill} yet, waiting for the review of the support
@@ -90,10 +97,15 @@ import com.vis.messages.VisMessages.VisNotifyUserAboutRejectedSkill;
 @CcpEntityFieldsValidator(VisEntitySkillPending.Fields.class)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpAfterInsertFromMainEntitySendAnEmailMessageAndInstantMessageAndIfFailsThrowAnError(VisMessages.VisNotifySupportAndUserAboutPendingSkillRequest.class)
-@CcpAfterTransferDataFromMainEntity(targetEntity = VisEntitySkillRejected.class, execute = {VisBusinessSkillSuggestionShareRejection.class}, transferHandlers = {})
+@CcpAfterTransferDataFromMainEntity(targetEntity = VisEntitySkillRejected.class, execute = {VisBusinessSkillSuggestionShareRejection.class, VisBusinessCountSkillSuggestionRejected.class}, transferHandlers = {})
 @CcpAfterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError(messageTemplate = VisNotifyUserAboutAprovedSkill.class, targetEntity = VisEntitySkillApproved.class)
 @CcpAfterTransferDataFromMainEntitySendAnEmailMessageAndIfFailsThrowAnError(messageTemplate = VisNotifyUserAboutRejectedSkill.class, targetEntity = VisEntitySkillRejected.class)
-@CcpAfterTransferDataFromMainEntity(targetEntity = VisEntitySkillApproved.class, execute = {VisBusinessSkillSuggestionApply.class, VisBusinessSkillSuggestionShareApproval.class}, transferHandlers = {})
+@CcpAfterTransferDataFromMainEntity(targetEntity = VisEntitySkillApproved.class, execute = {VisBusinessSkillSuggestionApply.class, VisBusinessSkillSuggestionShareApproval.class, VisBusinessCountSkillSuggestionApproved.class}, transferHandlers = {})
+// the suggestions by status (pending, approved, rejected): the chart of the suggestions of new skills of the screen
+// Curiosities (since 2026-11-20); the transfers of the review go in bulk, so each change is counted by a side effect
+@CcpAfterInsertFromMainEntity(execute = {VisBusinessCountSkillSuggestionInserted.class}, operationHandlers = {})
+@CcpAfterDeleteFromMainEntity(execute = {VisBusinessCountSkillSuggestionDeleted.class}, operationHandlers = {})
+@CcpAfterDeleteAnyWhereFromMainEntity(execute = {VisBusinessCountSkillSuggestionDeleted.class}, operationHandlers = {})
 public class VisEntitySkillPending implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntitySkillPending INSTANCE = new VisEntitySkillPending();

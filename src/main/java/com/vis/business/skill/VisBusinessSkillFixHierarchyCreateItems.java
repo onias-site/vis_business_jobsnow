@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.jn.db.bulk.JnBulkCreateResult;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntitySkillFixHierarchyItemApproved;
@@ -16,7 +17,8 @@ import com.vis.entities.VisEntitySkillFixHierarchyPending;
 /**
  * Runs after every save of a {@link VisEntitySkillFixHierarchyPending} request, insert or update: splits it into
  * one {@link VisEntitySkillFixHierarchyItemPending} record per skill of the {@code skill} array, created in a
- * single bulk operation. An item that already exists as pending, as rejected (the twin) or in
+ * single bulk operation; each item created is one more pending in the counter of its type
+ * ({@link VisSuggestionStatusCounters}). An item that already exists as pending, as rejected (the twin) or in
  * {@link VisEntitySkillFixHierarchyItemApproved} is not written: its decision was already taken, and the
  * {@code fixSkillHierarchy} command of the support bot reports that decision without asking the operator again.
  *
@@ -46,7 +48,18 @@ public class VisBusinessSkillFixHierarchyCreateItems implements CcpBusiness {
 
 		CcpEntity rejectedItemEntity = VisEntitySkillFixHierarchyItemPending.ENTITY.getTwinEntity();
 		CcpEntity[] entitiesThatPreventCreation = {rejectedItemEntity, VisEntitySkillFixHierarchyItemApproved.ENTITY};
-		JnExecuteBulkOperation.INSTANCE.executeCreateBulk(VisEntitySkillFixHierarchyItemPending.ENTITY, entitiesThatPreventCreation, JnDeleteKeysFromCache.INSTANCE, items);
+		List<JnBulkCreateResult> results = JnExecuteBulkOperation.INSTANCE.executeCreateBulk(VisEntitySkillFixHierarchyItemPending.ENTITY, entitiesThatPreventCreation, JnDeleteKeysFromCache.INSTANCE, items);
+		// the bulk goes out of the decorators of the entity: each item created is one more pending in the counter of its type
+		CcpJsonRepresentation oneMorePending = VisSuggestionStatuses.pending.enter();
+		for (JnBulkCreateResult result : results) {
+			boolean notCreated = false == result.created;
+
+			if(notCreated) {
+				continue;
+			}
+
+			VisSuggestionStatusCounters.skillFixHierarchyItem.addToCounters(result.json, oneMorePending);
+		}
 
 		return json;
 	}

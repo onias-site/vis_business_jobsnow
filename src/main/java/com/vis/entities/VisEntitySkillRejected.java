@@ -18,6 +18,8 @@ import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteFromMainEntity;
+import com.vis.business.skill.VisBusinessCountRejectedSkillSuggestionDeleted;
 
 /**
  * Skill suggestions rejected by the support bot operator: the suggestion of {@link VisEntitySkillPending} with the
@@ -25,6 +27,8 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * Versionable, with a 1-hour cache.
  */
 @CcpEntityCache(3600)
+// the delete takes the record out of the counter of the suggestions by status of the screen Curiosities (since 2026-11-20)
+@CcpAfterDeleteFromMainEntity(execute = {VisBusinessCountRejectedSkillSuggestionDeleted.class}, operationHandlers = {})
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsValidator(VisEntitySkillRejected.Fields.class)

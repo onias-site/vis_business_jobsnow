@@ -13,6 +13,8 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteFromMainEntity;
+import com.vis.business.skill.VisBusinessCountApprovedFixHierarchyItemDeleted;
 
 /**
  * Represents each approved skill of a skill hierarchy fix request, one record per skill, with exactly the
@@ -20,6 +22,8 @@ import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
  * 1-hour cache.
  */
 @CcpEntityCache(3600)
+// the delete takes the record out of the counter of the suggestions by status of the screen Curiosities (since 2026-11-20)
+@CcpAfterDeleteFromMainEntity(execute = {VisBusinessCountApprovedFixHierarchyItemDeleted.class}, operationHandlers = {})
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntitySkillFixHierarchyItemApproved.Fields.class)
 public class VisEntitySkillFixHierarchyItemApproved implements CcpEntityConfigurator {

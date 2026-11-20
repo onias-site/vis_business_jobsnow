@@ -23,6 +23,10 @@ import com.vis.entities.VisEntityVirtualResumeRegionScopeCounter;
 import com.vis.entities.VisEntityVirtualResumeTypeCounter;
 import com.vis.entities.VisEntityVirtualTicketKindCounter;
 import com.vis.entities.VisEntityVirtualViewerDomainCounter;
+import com.vis.entities.VisEntityVirtualSuggestionStatusCounter;
+import com.vis.business.skill.VisSuggestionStatusCounters;
+import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
 
 /**
  * The provider of the charts of vis in the screen Curiosities, run by class name by {@code JnBusinessGetGrouperCharts}
@@ -52,6 +56,12 @@ public class VisBusinessCuriositiesCharts implements CcpBusiness {
 		 * merged into the chart of the tickets of the contact us of js (same name), since 2026-11-17.
 		 */
 		contactUsTypes,
+		/** The suggestions of a new skill by status ({@code {pending|approved|rejected: n}}), since 2026-11-20. */
+		skillSuggestionStatuses,
+		/** The items of the suggestions of association of the hierarchy by status ({@code {pending|approved|rejected: n}}). */
+		hierarchyAddStatuses,
+		/** The items of the suggestions of dissociation of the hierarchy by status ({@code {pending|approved|rejected: n}}). */
+		hierarchyRemoveStatuses,
 		/** The resumes active and inactive now. */
 		resumeSituation,
 		/** The slice of the active resumes. */
@@ -91,14 +101,32 @@ public class VisBusinessCuriositiesCharts implements CcpBusiness {
 		CcpJsonRepresentation hierarchyTickets = JnGrouperChart.counters(Fields.contactUsTypes, VisEntityVirtualTicketKindCounter.ENTITY, VisEntitySkillFixHierarchyPending.ENTITY, ticketKindCombination);
 		CcpJsonRepresentation skillTickets = JnGrouperChart.counters(Fields.contactUsTypes, VisEntityVirtualTicketKindCounter.ENTITY, VisEntitySkillPending.ENTITY, ticketKindCombination);
 		CcpJsonRepresentation linkedinTickets = JnGrouperChart.counters(Fields.contactUsTypes, VisEntityVirtualTicketKindCounter.ENTITY, VisEntityInvalidLinkedinReport.ENTITY, ticketKindCombination);
+		CcpJsonRepresentation skillSuggestionStatuses = suggestionStatuses(Fields.skillSuggestionStatuses, VisSuggestionStatusCounters.skillSuggestion, VisSuggestionStatusCounters.skillSuggestion);
+		CcpJsonRepresentation hierarchyAddStatuses = suggestionStatuses(Fields.hierarchyAddStatuses, VisSuggestionStatusCounters.skillFixHierarchyItem, VisSkillFixHierarchyTypes.add);
+		CcpJsonRepresentation hierarchyRemoveStatuses = suggestionStatuses(Fields.hierarchyRemoveStatuses, VisSuggestionStatusCounters.skillFixHierarchyItem, VisSkillFixHierarchyTypes.remove);
 		// the total of the resumes is one group on each side: the active ones on the main side, the inactive ones on the twin
 		CcpEntityMetaData resumeDetails = VisEntityResume.ENTITY.getEntityMetaData();
 		CcpEntityMetaData totalDetails = JnEntityVirtualRecordsTotal.ENTITY.getEntityMetaData();
 		String totalParentId = JnEntityVirtualRecordsTotal.getParentId(resumeDetails.entityName);
 		CcpJsonRepresentation activeResumes = JnGrouperChart.sum(Fields.resumeSituation, Fields.active, totalDetails.entityName, resumeDetails.entityName, totalParentId, CcpEntityPhase.mainEntity);
 		CcpJsonRepresentation inactiveResumes = JnGrouperChart.sum(Fields.resumeSituation, Fields.inactive, totalDetails.entityName, resumeDetails.entityName, totalParentId, CcpEntityPhase.twinEntity);
-		List<CcpJsonRepresentation> charts = Arrays.asList(notAllowedCompanies, avoidedSkills, resumeTypes, viewerDomains, recruiterSources, regionScopes, hierarchyTickets, skillTickets, linkedinTickets, activeResumes, inactiveResumes);
+		List<CcpJsonRepresentation> charts = Arrays.asList(notAllowedCompanies, avoidedSkills, resumeTypes, viewerDomains, recruiterSources, regionScopes, hierarchyTickets, skillTickets, linkedinTickets, skillSuggestionStatuses, hierarchyAddStatuses, hierarchyRemoveStatuses, activeResumes, inactiveResumes);
 		CcpJsonRepresentation output = JnGrouperChart.output(charts);
 		return output;
+	}
+
+	/**
+	 * The chart of a counting of the suggestions by status.
+	 * @param chart the name of the chart
+	 * @param counters the counting
+	 * @param counterName the name of the group of the counting ({@code skillSuggestion}, {@code add} or {@code remove})
+	 * @return the description of the group
+	 */
+	private static CcpJsonRepresentation suggestionStatuses(Fields chart, VisSuggestionStatusCounters counters, Enum<?> counterName) {
+		String name = counterName.name();
+		CcpJsonRepresentation combination = VisEntityVirtualSuggestionStatusCounter.getCombination(name);
+		CcpEntity childEntity = counters.getChildEntity();
+		CcpJsonRepresentation description = JnGrouperChart.counters(chart, VisEntityVirtualSuggestionStatusCounter.ENTITY, childEntity, combination);
+		return description;
 	}
 }
