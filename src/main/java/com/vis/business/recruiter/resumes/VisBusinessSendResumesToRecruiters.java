@@ -28,10 +28,10 @@ import com.ccp.json.fields.validation.CcpJsonCommonsFields;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.business.messages.JnMessageType;
 import com.jn.entities.JnEntityEmailParametersToSend;
-import com.jn.entities.JnEntityVersionable;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.messages.JnSendMessageToUser;
 import com.jn.utils.JnLanguage;
+import com.jn.utils.JnVersionableHistory;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterFirstEmail;
 import com.vis.entities.VisEntityRecruiterQueueCursor;
@@ -47,7 +47,8 @@ import com.vis.messages.VisMessages;
 
 /**
  * The daily process (Monday to Friday, as the legacy one) that sends each recruiter of {@code vis_recruiter} the table
- * of the resumes added or changed in the last 7 days (the dates come from the history, {@code jn_versionable}).
+ * of the resumes added or changed in the last 7 days (the dates come from the history, {@code JnVersionableHistory}, in
+ * {@code jn_grouper}; until 2026-11-20 in {@code jn_versionable}).
  *
  * <ul>
  * <li>Who receives: the recruiters who never viewed a resume of these e-mails and the ones whose last view is less than
@@ -983,28 +984,12 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 
 	/**
 	 * The primary keys of the records of an entity written since the given time, read from the history: the
-	 * {@code json} of each history row (the {@code id} of the row does not come back from the query).
+	 * {@code json} of each version written since then.
 	 */
 	private static Set<String> getRecordsChangedSince(String entityName, long since, CcpJsonFieldName keyField) {
-		String timestampField = JnJsonCommonsFields.timestamp.getValue();
-		CcpQueryOptions query = CcpQueryOptions.INSTANCE
-				.startQuery()
-					.startBool()
-						.startMust()
-							.term(JnJsonCommonsFields.entity, entityName)
-							.startRange()
-								.startFieldRange(timestampField)
-									.greaterThanEquals(since)
-								.endFieldRangeAndBackToRange()
-							.endRangeAndBackToMust()
-						.endMustAndBackToBool()
-					.endBoolAndBackToQuery()
-				.endQueryAndBackToRequest();
 		Set<String> keys = new LinkedHashSet<>();
 		Consumer<CcpJsonRepresentation> keepTheKey = new VisHistoryKeyCollector(keys, keyField);
-		String scrollTime = Constants.SCROLL_TIME.getValue();
-		String jsonField = JnJsonCommonsFields.json.getValue();
-		query.selectFrom(JnEntityVersionable.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, keepTheKey, jsonField);
+		JnVersionableHistory.consumeVersions(entityName, since, keepTheKey);
 		return keys;
 	}
 
@@ -1053,28 +1038,11 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 
 	/** The oldest (added) and the newest (last change) times of each resume in the history, by the hash of its e-mail. */
 	private static Map<String, long[]> getResumeDates(Set<String> emailHashes) {
-		List<String> historyIds = new ArrayList<>();
-		for (String emailHash : emailHashes) {
-			CcpJsonRepresentation primaryKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityResume.Fields.email, emailHash);
-			String historyId = primaryKey.asUgglyJson();
-			historyIds.add(historyId);
-		}
 		String resumeEntityName = VisEntityResume.ENTITY.getEntityMetaData().entityName;
-		CcpQueryOptions query = CcpQueryOptions.INSTANCE
-				.startQuery()
-					.startBool()
-						.startMust()
-							.term(JnJsonCommonsFields.entity, resumeEntityName)
-							.terms(JnJsonCommonsFields.id, historyIds)
-						.endMustAndBackToBool()
-					.endBoolAndBackToQuery()
-				.endQueryAndBackToRequest();
 		Map<String, long[]> dates = new HashMap<>();
 		Consumer<CcpJsonRepresentation> keepTheDates = new VisHistoryResumeDatesCollector(dates);
-		String scrollTime = Constants.SCROLL_TIME.getValue();
-		String jsonField = JnJsonCommonsFields.json.getValue();
-		String timestampField = JnJsonCommonsFields.timestamp.getValue();
-		query.selectFrom(JnEntityVersionable.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, keepTheDates, jsonField, timestampField);
+		JnVersionableHistory.consumeVersions(resumeEntityName, 0, keepTheDates);
+		dates.keySet().retainAll(emailHashes);
 		return dates;
 	}
 
@@ -1084,20 +1052,9 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 */
 	private static void loadViews(Map<String, Long> lastViewByPair, Map<String, Long> lastViewByRecruiter) {
 		String viewedResumeEntityName = VisEntityViewedResume.ENTITY.getEntityMetaData().entityName;
-		CcpQueryOptions query = CcpQueryOptions.INSTANCE
-				.startQuery()
-					.startBool()
-						.startMust()
-							.term(JnJsonCommonsFields.entity, viewedResumeEntityName)
-						.endMustAndBackToBool()
-					.endBoolAndBackToQuery()
-				.endQueryAndBackToRequest();
 		String separator = Constants.SEPARATOR.getValue();
 		Consumer<CcpJsonRepresentation> keepTheLastView = new VisHistoryLastViewCollector(lastViewByPair, lastViewByRecruiter, separator);
-		String scrollTime = Constants.SCROLL_TIME.getValue();
-		String jsonField = JnJsonCommonsFields.json.getValue();
-		String timestampField = JnJsonCommonsFields.timestamp.getValue();
-		query.selectFrom(JnEntityVersionable.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, keepTheLastView, jsonField, timestampField);
+		JnVersionableHistory.consumeVersions(viewedResumeEntityName, 0, keepTheLastView);
 	}
 
 	/** The alias of each pair recruiter + resume, by the same key of {@link #loadViews(Map, Map)}. */
@@ -1152,8 +1109,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	static CcpJsonRepresentation getRecordOfTheHistoryRow(CcpJsonRepresentation historyRow) {
-		String recordAsText = historyRow.getAsString(JnJsonCommonsFields.json);
-		CcpJsonRepresentation record = new CcpJsonRepresentation(recordAsText);
+		CcpJsonRepresentation record = historyRow.getInnerJson(JnJsonCommonsFields.json);
 		return record;
 	}
 
