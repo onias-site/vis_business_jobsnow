@@ -128,14 +128,19 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		String unsubscribeLink = "{" + VisRecruiterResumesFields.unsubscribeLink + "}";
 		String resumesTable = "{" + VisRecruiterResumesFields.resumesTable + "}";
 		String seeAll = "{" + VisRecruiterResumesFields.seeAll + "}";
+		String seeAllUrl = "{" + VisRecruiterResumesFields.seeAllUrl + "}";
+		String frontendUrlPlaceholder = "{" + VisRecruiterResumesFields.frontendUrl + "}";
 		String topSkills = "{" + VisRecruiterResumesFields.topSkills + "}";
 		String otherSkills = "{" + VisRecruiterResumesFields.otherSkills + "}";
 
 		String portugueseMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Olá, caso você não me conheça ou não se lembre de mim, sou o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
-				+ "<p>Seguem os currículos inseridos ou alterados no Onias.Site nos últimos 7 dias (" + totalOfResumes + " no total).</p>"
+				+ "<p>Seguem os currículos inseridos ou alterados no <a href=\"" + frontendUrlPlaceholder + "\" target=\"_blank\">onias.site</a> dos últimos 7 dias "
+				+ totalOfResumes + " no total (<a href=\"" + seeAllUrl + "\" target=\"_blank\">ver todos</a>).</p>"
 				+ Notice.PORTUGUESE.getValue()
 				+ "<p><strong>Caso não queira mais receber este tipo de e-mail, favor <a href=\"" + unsubscribeLink + "\" target=\"_blank\">clicar aqui</a></strong>.</p>"
+				+ "<p>Ao abordar o candidato encontrado aqui no nosso site, sempre lhe diga que o encontrou aqui, isso ajuda muito o nosso trabalho "
+				+ "de lhes entregar currículos gratuitamente.</p>"
 				+ resumesTable
 				+ "<p>" + seeAll + "</p>"
 				+ "<p>Dica para sucesso em abordagem a candidatos: ao abordar o dono do currículo que te interessou, por favor, dê preferência a meios menos invasivos "
@@ -145,9 +150,12 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "</body></html>";
 		String englishMessage = "<html><head>" + css + "</head><body>"
 				+ "<p>Hello, in case you do not know me or do not remember me, I am <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
-				+ "<p>Here are the resumes added or changed on Onias.Site in the last 7 days (" + totalOfResumes + " in total).</p>"
+				+ "<p>Here are the resumes added or changed on <a href=\"" + frontendUrlPlaceholder + "\" target=\"_blank\">onias.site</a> in the last 7 days, "
+				+ totalOfResumes + " in total (<a href=\"" + seeAllUrl + "\" target=\"_blank\">see all</a>).</p>"
 				+ Notice.ENGLISH.getValue()
 				+ "<p><strong>If you no longer want to receive this kind of e-mail, please <a href=\"" + unsubscribeLink + "\" target=\"_blank\">click here</a></strong>.</p>"
+				+ "<p>When you contact a candidate found here on our site, always tell them you found them here: it helps a lot our work "
+				+ "of delivering resumes to you for free.</p>"
 				+ resumesTable
 				+ "<p>" + seeAll + "</p>"
 				+ "<p>A tip for approaching candidates: when you contact the owner of a resume you liked, please prefer less invasive ways of communication than "
@@ -160,11 +168,11 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation portugueseTemplate = templateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.portuguese)
-				.put(JnJsonCommonsFields.subject, totalOfResumes + " currículos de " + topSkills + " e mais outras " + otherSkills + " habilidades gratuitos pra você!!!")
+				.put(JnJsonCommonsFields.subject, "[DE GRAÇA!!!] " + totalOfResumes + " currículos de " + topSkills + " e mais outras " + otherSkills + " habilidades gratuitos pra você!!!")
 				.put(JnJsonCommonsFields.message, portugueseMessage);
 		CcpJsonRepresentation englishTemplate = templateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.english)
-				.put(JnJsonCommonsFields.subject, totalOfResumes + " resumes of " + topSkills + " and " + otherSkills + " other skills for free for you!!!")
+				.put(JnJsonCommonsFields.subject, "[FOR FREE!!!] " + totalOfResumes + " resumes of " + topSkills + " and " + otherSkills + " other skills for free for you!!!")
 				.put(JnJsonCommonsFields.message, englishMessage);
 
 		String sender = Parameters.SENDER.getValue();

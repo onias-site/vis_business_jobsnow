@@ -55,6 +55,8 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	seeAll,
 	/** The link of the paragraph "see all". */
 	seeAllLink,
+	/** The address of the screen "see all", linked by the opening text of the e-mail even when every resume fits in it. */
+	seeAllUrl,
 	/** The link that stops the e-mails to the recruiter. */
 	unsubscribeLink,
 	/** The address of the front end, where the links of the e-mail go. */

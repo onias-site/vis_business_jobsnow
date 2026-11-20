@@ -119,7 +119,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		SEPARATOR { public String getValue() { return "|"; } },
 		NOT_LETTERS_OR_DIGITS { public String getValue() { return "[^a-z0-9]"; } },
 		DOMAIN_PARTS_SEPARATORS { public String getValue() { return "[.\\-]"; } },
-		LINK { public String getValue() { return "<a href=\"{frontendUrl}/meu-recrutamento/curriculos-da-semana?email={email}\" target=\"_blank\">{value}</a>"; } },
+		SEE_ALL_URL { public String getValue() { return "{frontendUrl}/meu-recrutamento/curriculos-da-semana?email={email}"; } },
+		LINK { public String getValue() { return "<a href=\"{seeAllUrl}\" target=\"_blank\">{value}</a>"; } },
 		UNSUBSCRIBE_PATH { public String getValue() { return "{frontendUrl}/recrutador/descadastrar?email={email}&token={token}"; } },
 		LIST_UNSUBSCRIBE { public String getValue() { return "List-Unsubscribe"; } },
 		LIST_UNSUBSCRIBE_POST { public String getValue() { return "List-Unsubscribe-Post"; } },
@@ -768,7 +769,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		CcpJsonRepresentation withTable = VisBusinessRenderResumesTable.INSTANCE.execute(tableInput);
 		String resumesTable = withTable.getAsString(VisRecruiterResumesFields.resumesTable);
 
-		String seeAll = getSeeAll(email, shown, total, frontendUrl);
+		String seeAllUrl = getSeeAllUrl(email, frontendUrl);
+		String seeAll = getSeeAll(shown, total, seeAllUrl);
 		String unsubscribeLink = getUnsubscribeLink(email, frontendUrl);
 		CcpJsonRepresentation emailHeaders = getEmailHeaders(email, visApiUrl);
 
@@ -777,6 +779,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 				.put(JnJsonCommonsFields.language, LANGUAGE)
 				.put(VisRecruiterResumesFields.resumesTable, resumesTable)
 				.put(VisRecruiterResumesFields.seeAll, seeAll)
+				.put(VisRecruiterResumesFields.seeAllUrl, seeAllUrl)
 				.put(VisRecruiterResumesFields.unsubscribeLink, unsubscribeLink)
 				.put(VisRecruiterResumesFields.totalOfResumes, total)
 				.put(JnJsonCommonsFields.emailHeaders, emailHeaders)
@@ -791,18 +794,14 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * (since 2026-11-12): the screen reads the list of the account logged in, and when it is another one (a browser
 	 * already logged in with another account) the screen asks for the login of the recipient instead of opening empty.
 	 */
-	private static String getSeeAll(String email, int shown, int total, String frontendUrl) {
+	private static String getSeeAll(int shown, int total, String seeAllUrl) {
 		boolean everyResumeFits = shown >= total;
 		if(everyResumeFits) {
 			return "";
 		}
 		String seeAllLabel = VisRecruiterResumesTexts.seeAll.getMessage(LANGUAGE);
-		CcpStringDecorator emailDecorator = new CcpStringDecorator(email);
-		CcpUrlDecorator emailUrl = emailDecorator.url();
-		String encodedEmail = emailUrl.asEnconded();
 		CcpJsonRepresentation linkValues = CcpOtherConstants.EMPTY_JSON
-				.put(JnJsonCommonsFields.email, encodedEmail)
-				.put(VisRecruiterResumesFields.frontendUrl, frontendUrl)
+				.put(VisRecruiterResumesFields.seeAllUrl, seeAllUrl)
 				.put(CcpJsonCommonsFields.value, seeAllLabel);
 		String seeAllLink = resolve(Constants.LINK, linkValues);
 		CcpJsonRepresentation paragraphValues = CcpOtherConstants.EMPTY_JSON
@@ -811,6 +810,21 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 				.put(VisRecruiterResumesFields.seeAllLink, seeAllLink);
 		String seeAll = VisRecruiterResumesTexts.seeAllParagraph.getMessage(LANGUAGE, paragraphValues);
 		return seeAll;
+	}
+
+	/**
+	 * The address of the screen "see all", with the recipient. Since 2026-11-19 the opening text of the e-mail links it
+	 * too, even when every resume fits in the e-mail.
+	 */
+	private static String getSeeAllUrl(String email, String frontendUrl) {
+		CcpStringDecorator emailDecorator = new CcpStringDecorator(email);
+		CcpUrlDecorator emailUrl = emailDecorator.url();
+		String encodedEmail = emailUrl.asEnconded();
+		CcpJsonRepresentation urlValues = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.email, encodedEmail)
+				.put(VisRecruiterResumesFields.frontendUrl, frontendUrl);
+		String seeAllUrl = resolve(Constants.SEE_ALL_URL, urlValues);
+		return seeAllUrl;
 	}
 
 	private static String getUnsubscribeLink(String email, String frontendUrl) {
