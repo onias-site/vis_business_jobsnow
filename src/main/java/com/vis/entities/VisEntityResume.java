@@ -36,7 +36,6 @@ import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityCo
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldTransformer;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
-import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeBoolean;
@@ -548,15 +547,6 @@ public class VisEntityResume implements CcpEntityConfigurator {
 		 */
 		@CcpJsonFieldTypeBoolean
 		invalidLinkedinAddress,
-
-		/**
-		 * The {@code chatId} field: a number, as the chat of the bots, not required. From 2026-11-12 to 2026-11-13 it held
-		 * the chat of the owner in the user bot; since then nothing writes or reads it, the chat of each e-mail being kept
-		 * in {@code jn_instant_messenger_user}. Kept so the records that still hold it stay valid; the next save of the
-		 * owner drops it.
-		 */
-		@CcpJsonCopyFieldValidationsFrom(JnJsonInstantMessengerFields.class)
-		chatId,
 		;
 	}
 }
