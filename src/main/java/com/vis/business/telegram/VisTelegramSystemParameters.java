@@ -6,21 +6,30 @@ import java.util.List;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
-import com.jn.entities.JnEntitySystemMessage;
+import com.jn.entities.JnEntitySystemParameter;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.jn.messages.JnSystemMessage;
-import com.jn.utils.JnLanguage;
 
 /**
- * The records of {@link JnEntitySystemMessage} about the Telegram: each line of {@link #groups} is the link of a group
+ * The records of {@link JnEntitySystemParameter} about the Telegram: each line of {@link #groups} is the link of a group
  * whose positions are read by the load.
  */
-public enum VisTelegramSystemMessages implements JnSystemMessage {
+public enum VisTelegramSystemParameters {
 	/** The links of the groups, one per line of the message. */
 	groups;
 
 	/**
-	 * The record of the links of the groups, in Portuguese.
+	 * The name of the record of this item: the name of the enum followed by the name of the item.
+	 * @return the {@code systemMessageName}
+	 */
+	public String getSystemMessageName() {
+		Class<?> declaringClass = this.getDeclaringClass();
+		String className = declaringClass.getName();
+		String systemMessageName = className + "." + this.name();
+		return systemMessageName;
+	}
+
+	/**
+	 * The record of the links of the groups.
 	 * @return the record
 	 */
 	public static CcpJsonRepresentation getGroupsRecord() {
@@ -43,18 +52,19 @@ public enum VisTelegramSystemMessages implements JnSystemMessage {
 				, "https://t.me/joinchat/VCso3zuEeF-GkDnr"
 				, "https://t.me/phpbrasilvagas"
 				);
-		CcpJsonRepresentation groupsId = groups.getSystemMessageId(JnLanguage.portuguese);
+		String systemMessageName = groups.getSystemMessageName();
+		CcpJsonRepresentation groupsId = JnEntitySystemParameter.getKey(systemMessageName);
 		CcpJsonRepresentation groupsRecord = groupsId.put(JnJsonCommonsFields.message, links);
 		return groupsRecord;
 	}
 
 	/**
 	 * The seed of the links of the groups.
-	 * @return the records of {@code jn_system_message}
+	 * @return the records of {@code jn_system_parameter}
 	 */
 	public static List<CcpBulkItem> getSeeds() {
 		CcpJsonRepresentation groupsRecord = getGroupsRecord();
-		List<CcpBulkItem> seeds = JnEntitySystemMessage.ENTITY.toBulkItems(groupsRecord, CcpBulkEntityOperationType.create);
+		List<CcpBulkItem> seeds = JnEntitySystemParameter.ENTITY.toBulkItems(groupsRecord, CcpBulkEntityOperationType.create);
 		return seeds;
 	}
 }

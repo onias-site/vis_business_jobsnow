@@ -6,12 +6,10 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.jn.entities.JnEntitySystemMessage;
-import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.jn.utils.JnLanguage;
+import com.jn.entities.JnEntitySystemParameter;
 
 /**
- * The links of the Telegram groups whose positions are read by the load: one read by id of {@link JnEntitySystemMessage}
+ * The links of the Telegram groups whose positions are read by the load: one read by id of {@link JnEntitySystemParameter}
  * (OQL), kept in the cache of the entity. Takes no input.
  */
 public class VisBusinessTelegramGroups implements CcpBusiness {
@@ -37,9 +35,8 @@ public class VisBusinessTelegramGroups implements CcpBusiness {
 	 * @return {@code groups}
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation groupsId = VisTelegramSystemMessages.groups.getSystemMessageId(JnLanguage.portuguese);
-		CcpJsonRepresentation groupsRecord = JnEntitySystemMessage.ENTITY.getOneById(groupsId);
-		List<String> links = groupsRecord.getAsStringList(JnJsonCommonsFields.message);
+		String systemMessageName = VisTelegramSystemParameters.groups.getSystemMessageName();
+		List<String> links = JnEntitySystemParameter.getValues(systemMessageName);
 		CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(Fields.groups, links);
 		return response;
 	}

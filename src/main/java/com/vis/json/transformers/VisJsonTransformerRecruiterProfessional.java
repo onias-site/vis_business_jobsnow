@@ -2,21 +2,18 @@ package com.vis.json.transformers;
 
 import java.util.List;
 
-import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.especifications.db.utils.entity.fields.CcpJsonTransformersDefaultEntityField;
-import com.jn.entities.JnEntitySystemMessage;
-import com.jn.json.fields.validation.JnJsonCommonsFields;
-import com.jn.utils.JnLanguage;
+import com.jn.entities.JnEntitySystemParameter;
 import com.vis.entities.VisEntityRecruiter;
 
 /**
  * Field transformer applied to the {@code professional} of the VisEntityRecruiter entity while it is persisted: the
  * e-mail is professional when its domain (the text after the {@code @}) is not in the list of non-professional domains
- * (public webmail providers such as {@code gmail.com}), which is the {@code message} of the {@code jn_system_message}
- * record {@code NONPROFESSIONALDOMAINS} in Portuguese. The domain is taken from the e-mail itself, so this transformer
+ * (public webmail providers such as {@code gmail.com}), which is the {@code message} of the {@code jn_system_parameter}
+ * record {@code NONPROFESSIONALDOMAINS}. The domain is taken from the e-mail itself, so this transformer
  * does not depend on the one of the {@code domain} field having run before. A json with no e-mail is returned as is.
  */
 public class VisJsonTransformerRecruiterProfessional implements CcpJsonTransformersDefaultEntityField {
@@ -42,12 +39,8 @@ public class VisJsonTransformerRecruiterProfessional implements CcpJsonTransform
 		CcpEmailDecorator emailDecorator = emailText.email();
 		String domain = emailDecorator.getDomain();
 
-		CcpJsonRepresentation systemMessageName = CcpOtherConstants.EMPTY_JSON
-				.put(JnEntitySystemMessage.Fields.systemMessageName, JnEntitySystemMessage.NON_PROFESSIONAL_DOMAINS);
-		CcpJsonRepresentation systemMessageId = systemMessageName.put(JnJsonCommonsFields.language, JnLanguage.portuguese);
 		// cached for an hour by the entity: a load of thousands of recruiters reads the database once
-		CcpJsonRepresentation nonProfessionalDomainsMessage = JnEntitySystemMessage.ENTITY.getOneById(systemMessageId);
-		List<String> nonProfessionalDomains = nonProfessionalDomainsMessage.getAsStringList(JnJsonCommonsFields.message);
+		List<String> nonProfessionalDomains = JnEntitySystemParameter.getValues(JnEntitySystemParameter.NON_PROFESSIONAL_DOMAINS);
 
 		boolean professional = false == nonProfessionalDomains.contains(domain);
 		CcpJsonRepresentation jsonWithProfessional = json.put(VisEntityRecruiter.Fields.professional, professional);

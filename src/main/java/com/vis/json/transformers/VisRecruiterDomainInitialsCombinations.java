@@ -11,7 +11,7 @@ import com.vis.entities.VisEntityVirtualRecruiterDomainInitialsGrouper;
 /**
  * Produces the group of {@code VisEntityVirtualRecruiterDomainInitialsGrouper} the domain of a recruiter belongs to: the first three
  * letters (upper case) of the domain of its e-mail. A recruiter whose domain is non-professional (the {@code professional}
- * flag, calculated from the {@code NONPROFESSIONALDOMAINS} record of {@code jn_system_message}, is {@code false}) belongs
+ * flag, calculated from the {@code NONPROFESSIONALDOMAINS} record of {@code jn_system_parameter}, is {@code false}) belongs
  * to no group.
  */
 public class VisRecruiterDomainInitialsCombinations implements Function<CcpJsonRepresentation, List<CcpJsonRepresentation>>{

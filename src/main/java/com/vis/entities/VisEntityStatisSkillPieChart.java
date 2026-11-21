@@ -14,7 +14,7 @@ import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityField
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
-import com.vis.business.telegram.VisTelegramSystemMessages;
+import com.vis.business.telegram.VisTelegramSystemParameters;
 import com.vis.json.fields.validation.VisJsonSkillStatisticsFields;
 
 /**
@@ -69,7 +69,7 @@ public class VisEntityStatisSkillPieChart implements CcpEntityConfigurator {
 	 * @return the seed records
 	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		List<CcpBulkItem> seeds = VisTelegramSystemMessages.getSeeds();
+		List<CcpBulkItem> seeds = VisTelegramSystemParameters.getSeeds();
 		return seeds;
 	}
 }
