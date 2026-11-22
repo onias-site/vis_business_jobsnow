@@ -97,6 +97,10 @@ public enum VisPositionOfTheRecruiterFields implements CcpJsonFieldName {
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
 	mustSendInGroups,
 
+	/** The {@code visibleToCandidates} field of the position, validated as in {@code VisEntityPosition}. */
+	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
+	visibleToCandidates,
+
 	/** The {@code mustSendToResumes} field of the position, validated as in {@code VisEntityPosition}. */
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
 	mustSendToResumes,
