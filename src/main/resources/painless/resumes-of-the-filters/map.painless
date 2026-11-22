@@ -55,17 +55,15 @@ boolean outOfRange(double value, def range) {
   return false;
 }
 
-// the budgets of the position (since 2026-11-22), each one counting only when filled: every claim the candidate informs of
-// a type offered fits its budget, and the candidate informs at least one of them. With both budgets filled, a candidate
-// of CLT only, of PJ only or of both enters, each claim informed inside its budget; with one budget only, the candidate
-// needs a claim of that type inside it
+// the budgets of the position (since 2026-11-22), each one counting only when filled: the candidate enters when at least
+// one claim informed fits the budget of its type. With both budgets filled, a candidate of CLT only, of PJ only or of both
+// enters with one claim inside its budget, even if the other one is outside; with one budget only, the candidate needs a
+// claim of that type inside it
 boolean outOfTheBudgets(double clt, def cltBudget, double pj, def pjBudget) {
   if (cltBudget == null && pjBudget == null) { return false; }
-  boolean evaluatesCltOffered = cltBudget != null && clt >= 0;
-  boolean evaluatesPjOffered = pjBudget != null && pj >= 0;
-  if (evaluatesCltOffered && outOfRange(clt, cltBudget)) { return true; }
-  if (evaluatesPjOffered && outOfRange(pj, pjBudget)) { return true; }
-  return !evaluatesCltOffered && !evaluatesPjOffered;
+  boolean cltInside = cltBudget != null && clt >= 0 && !outOfRange(clt, cltBudget);
+  boolean pjInside = pjBudget != null && pj >= 0 && !outOfRange(pj, pjBudget);
+  return !cltInside && !pjInside;
 }
 
 // every language asked, in a level equal to or above the one asked
