@@ -28,6 +28,7 @@ import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.db.bulk.JnExecuteBulkOperation;
+import com.jn.entities.JnEntityLoginEmail;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
 import com.jn.entities.decorators.engine.JnGrouperChildCurrentCounterEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
@@ -55,6 +56,7 @@ import com.vis.json.transformers.VisInsertionMonthCounterCombinations;
 import com.vis.json.transformers.VisJsonTransformerRecruiterHash;
 import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 import com.vis.json.transformers.VisPositionHashCombinations;
+import com.vis.json.transformers.VisPositionRecruiterLoginEmailCombinations;
 import com.vis.json.transformers.VisPositionSalaryChildField;
 import com.vis.json.transformers.VisResumeDddCombinations;
 import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
@@ -70,7 +72,9 @@ import com.vis.json.transformers.VisSeniorityType;
  * groups tells the entities apart). The statistics of the screen Supply X Demand read the active positions from the
  * same kinds of groups of the resumes and of their views: one group per ddd (the child is a JSON text with the fields
  * compared with the resumes, the salaries as the middle of each range) and the counters by ddd, by day and by month of
- * insertion. Uses the Twin Entity pattern to control inactive positions
+ * insertion. The logged-in user sees the positions they registered (the {@code recruiter} is their e-mail) in the
+ * group of their e-mail ({@code jn_login_email}): the active ones in {@code jn_grouper}, the inactive ones in
+ * {@code jn_inactive_grouper}, read by id. Uses the Twin Entity pattern to control inactive positions
  * ({@code vis_inactive_position}), asynchronous writing, versioning and a 1-hour cache.
  */
 @CcpEntityCache(3600)
@@ -96,6 +100,12 @@ import com.vis.json.transformers.VisSeniorityType;
 		childFields = {"disponibility", "spokenLanguage", "negotiableClaim", "pcd", "resumeType", "seniority", "temporallyJobTime", "travel"},
 		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class, VisPositionSalaryChildField.class})
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualPositionDddGrouper.class, value = VisResumeDddCombinations.class)
+// the positions of the logged-in user who registered them (the recruiter is their e-mail): one group per user, the child a
+// JSON text with what the user filled in and the id; the deactivation moves it to the same group of jn_inactive_grouper
+@CcpEntityGrouperChild(value = {JnEntityLoginEmail.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
+		childFields = {"title", "description", "resumeType", "seniority", "ddd", "clt", "pj", "disponibility", "temporallyJobTime", "spokenLanguage", "skill",
+				"negotiableClaim", "pcd", "travel", "expiration", "sort", "contact", "mustSendInGroups", "mustSendToResumes", "frequencyType", "insertionDate"})
+@CcpEntityGrouperParentCombinations(parent = JnEntityLoginEmail.class, value = VisPositionRecruiterLoginEmailCombinations.class)
 // the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
 @CcpEntityInsertionDate(JnInsertionDateEntity.class)
 // the active positions by month (yyyyMM) and by day (yyyyMMdd) of insertion: the line chart of the screen Supply X Demand
