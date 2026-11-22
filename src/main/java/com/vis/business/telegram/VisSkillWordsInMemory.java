@@ -24,6 +24,9 @@ public class VisSkillWordsInMemory implements Function<Collection<String>, List<
 	/** The items of the words, by their initials. */
 	private final Map<String, List<CcpJsonRepresentation>> itemsByInitials;
 
+	/** The skills that have each skill as a parent, by the parent, in upper case. */
+	private final Map<String, Set<String>> childrenBySkill;
+
 	/**
 	 * Reads the items of every word of every skill.
 	 */
@@ -37,12 +40,49 @@ public class VisSkillWordsInMemory implements Function<Collection<String>, List<
 	 */
 	public VisSkillWordsInMemory(List<CcpJsonRepresentation> items) {
 		Map<String, List<CcpJsonRepresentation>> indexedItems = new HashMap<>();
+		Map<String, Set<String>> childrenOfEachSkill = new HashMap<>();
 		for (CcpJsonRepresentation item : items) {
 			String word = item.getAsString(VisJsonCommonsFields.word);
 			String initials = word.substring(0, VisEntityVirtualSkillInitialsGrouper.SHORTEST_WORD);
 			indexedItems.computeIfAbsent(initials, x -> new ArrayList<>()).add(item);
+			String skill = item.getAsString(VisJsonCommonsFields.skill);
+			String upperCaseSkill = skill.toUpperCase();
+			List<String> parents = item.getAsStringList(VisJsonCommonsFields.parent);
+			for (String parent : parents) {
+				String upperCaseParent = parent.toUpperCase();
+				childrenOfEachSkill.computeIfAbsent(upperCaseParent, x -> new LinkedHashSet<>()).add(upperCaseSkill);
+			}
 		}
 		this.itemsByInitials = indexedItems;
+		this.childrenBySkill = childrenOfEachSkill;
+	}
+
+	/**
+	 * The skill and every skill below it in the hierarchy: its children (the skills that have it as a parent), the children
+	 * of its children and so on. A resume with any of them has the skill (a "backend" position takes the "php" resumes).
+	 * @param skill the skill, in any case
+	 * @return the skill and its descendants, in upper case
+	 */
+	public Set<String> getSkillAndItsDescendants(String skill) {
+		String upperCaseSkill = skill.toUpperCase();
+		Set<String> found = new LinkedHashSet<>();
+		found.add(upperCaseSkill);
+		List<String> pending = new ArrayList<>();
+		pending.add(upperCaseSkill);
+		while (false == pending.isEmpty()) {
+			int lastIndex = pending.size() - 1;
+			String current = pending.remove(lastIndex);
+			Set<String> noChildren = new LinkedHashSet<>();
+			Set<String> children = this.childrenBySkill.getOrDefault(current, noChildren);
+			for (String child : children) {
+				boolean newChild = found.add(child);
+
+				if(newChild) {
+					pending.add(child);
+				}
+			}
+		}
+		return found;
 	}
 
 	/**

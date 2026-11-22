@@ -7,7 +7,7 @@ import com.vis.business.position.VisBusinessDeletePosition;
 import com.vis.business.position.VisBusinessEditPosition;
 import com.vis.business.position.VisBusinessInactivatePosition;
 import com.vis.business.position.VisBusinessReactivatePosition;
-import com.vis.business.position.VisBusinessResumesOfTheDdds;
+import com.vis.business.position.VisBusinessResumesOfTheFilters;
 import com.vis.business.position.VisPositionKeyFields;
 import com.vis.business.position.VisPositionOfTheRecruiterFields;
 
@@ -79,15 +79,15 @@ public enum VisServicePosition implements JnService {
 		}
 	},
 
-	/** Tab "Opções" of the form: the active resumes of each ddd asked, one read by id of their groups. */
-	GetResumesOfTheDdds {
+	/** The tabs of the position form: the resumes that satisfy its filters, counted inside Elasticsearch. */
+	GetResumesOfTheFilters {
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-			CcpJsonRepresentation response = VisBusinessResumesOfTheDdds.INSTANCE.execute(json);
+			CcpJsonRepresentation response = VisBusinessResumesOfTheFilters.INSTANCE.execute(json);
 			return response;
 		}
 
 		public Class<?> getJsonValidationClass() {
-			return VisBusinessResumesOfTheDdds.Fields.class;
+			return VisBusinessResumesOfTheFilters.Fields.class;
 		}
 	},
 	;

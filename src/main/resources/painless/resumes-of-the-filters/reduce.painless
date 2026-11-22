@@ -1,0 +1,20 @@
+// joins the resumes of every shard (a resume listed by several ddds counts once, by its id) and averages the salaries
+// of the ones that informed them
+Map resumes = new HashMap();
+for (def shardResumes : states) {
+  if (shardResumes != null) { resumes.putAll(shardResumes); }
+}
+double cltTotal = 0;
+int cltCount = 0;
+double pjTotal = 0;
+int pjCount = 0;
+for (def salaries : resumes.values()) {
+  if (salaries[0] > 0) { cltTotal += salaries[0]; cltCount++; }
+  if (salaries[1] > 0) { pjTotal += salaries[1]; pjCount++; }
+}
+Map result = new HashMap();
+result.put('ids', new ArrayList(resumes.keySet()));
+result.put('resumes', resumes.size());
+if (cltCount > 0) { result.put('cltAverage', cltTotal / cltCount); }
+if (pjCount > 0) { result.put('pjAverage', pjTotal / pjCount); }
+return result;

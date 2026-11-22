@@ -1,0 +1,119 @@
+// Map script of the counting of the resumes of the filters of a position (VisBusinessResumesOfTheFilters): each document
+// is a group of jn_grouper of one ddd and one area (vis_virtual_ddd_resume_type_grouper), whose child is a list of JSON
+// texts, one per resume (part of the resume and its id). Painless has no JSON parser, so each field is found by its key
+// with indexOf (no loop per character: the loops are only over the resumes, their skills and their languages).
+
+// the raw value of a field of the child: the text between the brackets of a list, or the scalar up to the next , or }
+String valueOf(String child, String field) {
+  String key = '"' + field + '":';
+  int position = child.indexOf(key);
+  if (position < 0) { return null; }
+  int start = position + key.length();
+  char first = child.charAt(start);
+  if (first == (char)'[') { int close = child.indexOf(']', start); return child.substring(start + 1, close); }
+  int comma = child.indexOf(',', start);
+  int brace = child.indexOf('}', start);
+  // an item of a list split by },{ may end with no } at all: the value goes to the end of the text
+  if (comma < 0 && brace < 0) { return child.substring(start); }
+  if (comma < 0 || (brace >= 0 && brace < comma)) { return child.substring(start, brace); }
+  return child.substring(start, comma);
+}
+
+// a number of the child, -1 when absent
+double numberOf(String child, String field) {
+  String value = valueOf(child, field);
+  if (value == null || value == 'null') { return -1; }
+  return Double.parseDouble(value);
+}
+
+boolean flagOf(String child, String field) {
+  String value = valueOf(child, field);
+  return value != null && value == 'true';
+}
+
+String unquoted(String text) {
+  String result = text;
+  if (result.startsWith('"')) { result = result.substring(1); }
+  if (result.endsWith('"')) { result = result.substring(0, result.length() - 1); }
+  return result;
+}
+
+// the texts of a list of texts (the raw value of the list, without the brackets)
+List textsOf(String list) {
+  List texts = new ArrayList();
+  if (list == null || list.length() < 2) { return texts; }
+  for (String quoted : list.splitOnToken('","')) { texts.add(unquoted(quoted)); }
+  return texts;
+}
+
+// a range {min, max} of the filters, inclusive; a resume without the value is out of an informed range
+boolean outOfRange(double value, def range) {
+  if (range == null) { return false; }
+  if (value < 0) { return true; }
+  if (range.min != null && value < range.min) { return true; }
+  if (range.max != null && value > range.max) { return true; }
+  return false;
+}
+
+// every language asked, in a level equal to or above the one asked
+boolean speaksTheLanguages(String child, List required) {
+  if (required == null || required.isEmpty()) { return true; }
+  String list = valueOf(child, 'spokenLanguage');
+  if (list == null) { return false; }
+  Map levelByName = new HashMap();
+  for (String item : list.splitOnToken('},{')) {
+    String name = valueOf(item, 'name');
+    String level = valueOf(item, 'level');
+    if (name == null || level == null) { continue; }
+    levelByName.put(unquoted(name), Double.parseDouble(level));
+  }
+  for (def language : required) {
+    def level = levelByName.get(language.name);
+    if (level == null || level < language.level) { return false; }
+  }
+  return true;
+}
+
+// each required skill is a list of alternatives (the skill and its descendants): the resume needs one of each list
+boolean hasTheSkills(String child, List requiredSkills) {
+  if (requiredSkills == null || requiredSkills.isEmpty()) { return true; }
+  List skills = textsOf(valueOf(child, 'skill'));
+  for (def alternatives : requiredSkills) {
+    boolean found = false;
+    for (String skill : skills) {
+      if (alternatives.contains(skill)) { found = true; break; }
+    }
+    if (!found) { return false; }
+  }
+  return true;
+}
+
+// the domain of the recruiter among the companies the candidate does not want to see the resume
+boolean forbidsTheRecruiter(String child, def recruiterDomain) {
+  if (recruiterDomain == null) { return false; }
+  for (String company : textsOf(valueOf(child, 'notAllowedCompany'))) {
+    if (company.toLowerCase() == recruiterDomain) { return true; }
+  }
+  return false;
+}
+
+boolean matches(String child, Map filters) {
+  if (filters.maxDisponibility != null && numberOf(child, 'disponibility') > filters.maxDisponibility) { return false; }
+  if (filters.maxTemporallyJobTime != null && numberOf(child, 'temporallyJobTime') > filters.maxTemporallyJobTime) { return false; }
+  if (outOfRange(numberOf(child, 'experience'), filters.experience)) { return false; }
+  if (filters.negotiableClaim == true && !flagOf(child, 'negotiableClaim')) { return false; }
+  if (filters.pcd == true && !flagOf(child, 'pcd')) { return false; }
+  if (filters.travel == true && !flagOf(child, 'travel')) { return false; }
+  if (outOfRange(numberOf(child, 'clt'), filters.clt)) { return false; }
+  if (outOfRange(numberOf(child, 'pj'), filters.pj)) { return false; }
+  if (forbidsTheRecruiter(child, filters.recruiterDomain)) { return false; }
+  if (!speaksTheLanguages(child, filters.spokenLanguage)) { return false; }
+  if (!hasTheSkills(child, filters.skill)) { return false; }
+  return true;
+}
+
+for (String child : params['_source'].child) {
+  if (!matches(child, params.filters)) { continue; }
+  String id = unquoted(valueOf(child, 'id'));
+  state.resumes.put(id, [numberOf(child, 'clt'), numberOf(child, 'pj')]);
+}

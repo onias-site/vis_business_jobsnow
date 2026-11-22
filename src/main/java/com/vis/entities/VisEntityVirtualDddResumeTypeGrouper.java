@@ -15,9 +15,10 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
  * Virtual entity whose id identifies the group of {@code JnEntityGrouper} of one region (ddd) and one area of the resumes
  * (resumeType), since 2026-11-22: every resume that lists the ddd and is of the area is a child of its group, so a resume
  * with several ddds is a child of several groups, all of its own area. The child is a JSON text with part of the resume
- * ({@code childFields} of the {@code @CcpEntityGrouperChild} of {@link VisEntityResume}) and its id. The active resumes
- * are in the main groups, the inactive ones in the twin groups. The position form counts, by these groups, the resumes
- * of the regions and of the area of the position. Cached for 1 hour.
+ * ({@code childFields} of the {@code @CcpEntityGrouperChild} of {@link VisEntityResume}, the companies the candidate
+ * forbids included) and its id. The active resumes are in the main groups, the inactive ones in the twin groups. The
+ * position form counts in these groups, by a Painless script, the resumes that satisfy its filters
+ * ({@code VisBusinessResumesOfTheFilters}). Cached for 1 hour.
  */
 @CcpEntityCache(3600)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)

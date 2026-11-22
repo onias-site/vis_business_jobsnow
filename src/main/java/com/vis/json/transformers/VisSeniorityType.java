@@ -33,6 +33,28 @@ public enum VisSeniorityType {
 		}
 		return true;
 	}
-	
+
+	/**
+	 * The earliest year a career may have started to be of this seniority now: the experience of the resume is the year its
+	 * career started, so the years of experience are the current year minus it.
+	 * @param currentYear the current year
+	 * @return the first year of the range, inclusive
+	 */
+	public int getFirstExperienceYear(int currentYear) {
+		int firstYear = currentYear - this.max + 1;
+		return firstYear;
+	}
+
+	/**
+	 * The latest year a career may have started to be of this seniority now (an empty range, the first year after the last
+	 * one, for {@link #unknown}).
+	 * @param currentYear the current year
+	 * @return the last year of the range, inclusive
+	 */
+	public int getLastExperienceYear(int currentYear) {
+		int lastYear = currentYear - this.min;
+		return lastYear;
+	}
+
 	
 }
