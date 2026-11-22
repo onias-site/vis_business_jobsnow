@@ -50,7 +50,7 @@ public class VisBusinessPutTheBroadSkills implements CcpBusiness {
 	/**
 	 * Adds the broad skills of the text.
 	 * @param json the answer of the search of skills in the text
-	 * @return the same answer with {@code broadSkill} (empty when the text has none)
+	 * @return the same answer with {@code broadSkill}, absent when the text has none
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		Set<String> skillsOfTheText = new LinkedHashSet<>();
@@ -83,6 +83,13 @@ public class VisBusinessPutTheBroadSkills implements CcpBusiness {
 					.put(Fields.children, children);
 			broadSkills.add(broadSkill);
 		}
+		boolean noBroadSkill = broadSkills.isEmpty();
+
+		// the answer of an empty text stays empty: the field only comes when there is a broad skill
+		if(noBroadSkill) {
+			return json;
+		}
+
 		CcpJsonRepresentation withTheBroadSkills = json.put(Fields.broadSkill, broadSkills);
 		return withTheBroadSkills;
 	}
