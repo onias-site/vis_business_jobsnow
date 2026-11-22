@@ -54,6 +54,8 @@ import com.vis.json.transformers.VisViewedResumeMonthCombinations;
 import com.vis.json.transformers.VisViewedResumeRecruiterCombinations;
 import com.vis.json.transformers.VisViewedResumeRecruiterDomain;
 import com.vis.json.transformers.VisViewerDomainCounterCombinations;
+import com.vis.json.transformers.VisResumeViewsCounterCombinations;
+import com.vis.json.transformers.VisResumeViewsCounterKeys;
 
 /**
  * The resumes viewed by each recruiter: one record per resume ({@code linkedin}) and recruiter ({@code email}). Both
@@ -73,6 +75,11 @@ import com.vis.json.transformers.VisViewerDomainCounterCombinations;
  * address): a single JSON with one counter per domain of recruiter, where each recruiter counts once per month (the
  * first save of the view in the month, even when the view went to the twin and came back, since 2026-11-14). The delete
  * everywhere of the resume deletes these groups.
+ * <p>
+ * Since 2026-11-21 every save also counts the view among all the views of the resume, whatever the month
+ * ({@code jn_grouper}, parent {@code vis_virtual_resume_views_counter}, one group per e-mail that uses the LinkedIn
+ * address, whose id is the id of the resume): {@code {"views": n}}, each recruiter counted once (a history). The delete
+ * everywhere of the resume deletes this group too.
  * <p>
  * Both relationships are oneToMany (a view has one recruiter and one resume), so the parents are declared by
  * {@code @CcpEntityGrouperParentCombinations} and no field keeps their ids.
@@ -113,6 +120,10 @@ import com.vis.json.transformers.VisViewerDomainCounterCombinations;
 // companies that view the most resumes in the screen Curiosities; a view brought back from the twin is not counted again
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualViewerDomainCounter.class}, counterKeyClass = VisViewedResumeRecruiterDomain.class, beforeDecoratorClass = JnGrouperChildCounterOnBothSidesEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualViewerDomainCounter.class, value = VisViewerDomainCounterCombinations.class)
+// one group per resume (one per e-mail of the viewed LinkedIn address) counts how many views it ever had, each recruiter
+// once (a history): {"views": n}; a view brought back from the twin is not counted again
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualResumeViewsCounter.class}, counterKeyClass = VisResumeViewsCounterKeys.class, beforeDecoratorClass = JnGrouperChildCounterOnBothSidesEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualResumeViewsCounter.class, value = VisResumeViewsCounterCombinations.class)
 // the views of the resumes of each ddd: the child is a JSON text with these fields of the resume, as the caller of the
 // save hands them over, and the id of the view
 @CcpEntityGrouperChild(value = {VisEntityVirtualViewedResumeDddGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,

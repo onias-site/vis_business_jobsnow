@@ -15,6 +15,7 @@ import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnGroupers;
 import com.vis.entities.VisEntityResumeViewsOfTheMonth;
 import com.vis.entities.VisEntityViewedResume;
+import com.vis.entities.VisEntityVirtualResumeViewsCounter;
 
 /**
  * Runs after a resume is deleted everywhere (the owner deleted all the data of the resume): deletes, from
@@ -27,6 +28,9 @@ import com.vis.entities.VisEntityViewedResume;
  * counting ({@link Constants#FIRST_MONTH}) to the current one, and the groups are deleted by id in one bulk (deleting a
  * group that does not exist is silent), which also clears their cache keys. The groups of counters are always on the
  * main side of the grouper.
+ * <p>
+ * Since 2026-11-21 the same bulk also deletes the group of the total of views of the resume (parent
+ * {@code vis_virtual_resume_views_counter}, whose id comes from the e-mail alone).
  */
 public class VisBusinessDeleteTheViewersOfTheDeletedResume implements CcpBusiness {
 
@@ -68,8 +72,28 @@ public class VisBusinessDeleteTheViewersOfTheDeletedResume implements CcpBusines
 			CcpBulkItem deleteItem = grouperDetails.toDeleteBulkItem(groupKey);
 			items.add(deleteItem);
 		}
+		CcpBulkItem deleteTotalOfViews = getItemToDeleteTheTotalOfViews(owner, viewDetails, grouperDetails);
+		items.add(deleteTotalOfViews);
 		JnExecuteBulkOperation.INSTANCE.executeBulk(items, JnDeleteKeysFromCache.INSTANCE);
 		return json;
+	}
+
+	/**
+	 * The item that deletes the group of the total of views of the resume.
+	 * @param owner the key of the resume, its {@code email}
+	 * @param viewDetails the details of {@code vis_viewed_resume}, the child of the group
+	 * @param grouperDetails the details of the main side of the grouper
+	 * @return the delete item
+	 */
+	private static CcpBulkItem getItemToDeleteTheTotalOfViews(CcpJsonRepresentation owner, CcpEntityMetaData viewDetails, CcpEntityMetaData grouperDetails) {
+		CcpEntityMetaData counterDetails = VisEntityVirtualResumeViewsCounter.ENTITY.getEntityMetaData();
+		CcpJsonRepresentation ownerWithHashedEmail = VisEntityVirtualResumeViewsCounter.ENTITY.getJsonWithHandledPrimaryKey(owner);
+		// the transformer also keeps the original e-mail: only the hash calculates the id
+		CcpJsonRepresentation parentKey = counterDetails.getOnlyExistingFields(ownerWithHashedEmail);
+		String parentId = VisEntityVirtualResumeViewsCounter.ENTITY.calculateId(parentKey);
+		CcpJsonRepresentation groupKey = JnGroupers.getGroupKey(counterDetails.entityName, viewDetails.entityName, parentId);
+		CcpBulkItem deleteItem = grouperDetails.toDeleteBulkItem(groupKey);
+		return deleteItem;
 	}
 
 	/**
