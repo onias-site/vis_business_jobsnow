@@ -7,6 +7,7 @@ import com.vis.business.position.VisBusinessDeletePosition;
 import com.vis.business.position.VisBusinessEditPosition;
 import com.vis.business.position.VisBusinessInactivatePosition;
 import com.vis.business.position.VisBusinessReactivatePosition;
+import com.vis.business.position.VisBusinessResumesOfTheDdds;
 import com.vis.business.position.VisPositionKeyFields;
 import com.vis.business.position.VisPositionOfTheRecruiterFields;
 
@@ -75,6 +76,18 @@ public enum VisServicePosition implements JnService {
 
 		public Class<?> getJsonValidationClass() {
 			return VisBusinessReactivatePosition.Fields.class;
+		}
+	},
+
+	/** Tab "Opções" of the form: the active resumes of each ddd asked, one read by id of their groups. */
+	GetResumesOfTheDdds {
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessResumesOfTheDdds.INSTANCE.execute(json);
+			return response;
+		}
+
+		public Class<?> getJsonValidationClass() {
+			return VisBusinessResumesOfTheDdds.Fields.class;
 		}
 	},
 	;
