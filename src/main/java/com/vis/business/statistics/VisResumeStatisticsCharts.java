@@ -7,6 +7,7 @@ import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.vis.entities.VisEntityResume;
+import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisLanguages;
 import com.vis.json.transformers.VisSeniorityType;
 
@@ -210,11 +211,18 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 
 	/**
 	 * The seniority of the resume: its years of experience (the current year minus the year the experience started)
-	 * classified by {@link VisSeniorityType}; {@code especialista} above every range, {@code estag} without the year.
+	 * classified by {@link VisSeniorityType}; {@code especialista} above every range, {@code estag} without the year. A
+	 * position has no experience: it carries the seniority it asks for, taken as it is.
 	 * @param resume the child of the group of the ddd, parsed
 	 * @return the seniority
 	 */
 	public static VisSeniorityType getSeniority(CcpJsonRepresentation resume) {
+		boolean declaredSeniority = resume.containsAllFields(VisJsonCommonsFields.seniority);
+
+		if(declaredSeniority) {
+			return resume.getAsEnum(VisJsonCommonsFields.seniority, VisSeniorityType.class);
+		}
+
 		boolean noExperience = false == resume.containsAllFields(VisEntityResume.Fields.experience);
 
 		if(noExperience) {

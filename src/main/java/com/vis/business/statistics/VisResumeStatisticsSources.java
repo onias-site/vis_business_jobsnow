@@ -6,15 +6,18 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.jn.utils.JnGroupers;
+import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.entities.VisEntityVirtualDddGrouper;
+import com.vis.entities.VisEntityVirtualPositionDddGrouper;
 import com.vis.entities.VisEntityVirtualViewedResumeDddGrouper;
 
 /**
  * Where the statistics of a region come from: each item is a group of {@code jn_grouper} of the ddd whose children carry
- * the same fields of the resume, so the same charts and averages are calculated over each one. The vacancies will be one
- * more item once their rules are defined.
+ * the same fields of the resume, so the same charts and averages are calculated over each one: the active resumes (the
+ * supply), the views of the resumes and the active positions (the demand). The names of the items are contracts of the
+ * screen Supply X Demand.
  */
 public enum VisResumeStatisticsSources implements CcpJsonFieldName {
 	/** The active resumes of the ddd ({@code vis_virtual_ddd_grouper}). */
@@ -39,6 +42,21 @@ public enum VisResumeStatisticsSources implements CcpJsonFieldName {
 
 		public CcpEntity getChildEntity() {
 			return VisEntityViewedResume.ENTITY;
+		}
+	},
+	/**
+	 * The active positions of the ddd ({@code vis_virtual_position_ddd_grouper}), with the salaries as the middle of each
+	 * range and the seniority the position asks for.
+	 */
+	vacancies {
+		public CcpJsonRepresentation getGroupKey(Integer ddd) {
+			CcpJsonRepresentation combination = CcpOtherConstants.EMPTY_JSON.put(VisEntityVirtualPositionDddGrouper.Fields.ddd, ddd);
+			CcpJsonRepresentation groupKey = getGroupKey(VisEntityVirtualPositionDddGrouper.ENTITY, VisEntityPosition.ENTITY, combination);
+			return groupKey;
+		}
+
+		public CcpEntity getChildEntity() {
+			return VisEntityPosition.ENTITY;
 		}
 	},
 	;

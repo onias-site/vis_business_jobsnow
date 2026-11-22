@@ -6,6 +6,9 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityC
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChild;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperChildCounter;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityGrouperParentCombinations;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityInsertionDate;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityTwin;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
@@ -26,11 +29,16 @@ import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.decorators.engine.JnAsyncWriterEntity;
+import com.jn.entities.decorators.engine.JnGrouperChildCurrentCounterEntityBeforeWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildEntityBeforeWrite;
+import com.jn.entities.decorators.engine.JnInsertionDateEntity;
 import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
+import com.jn.entities.fields.counters.JnInsertionDayCounterKeys;
+import com.jn.entities.fields.counters.JnInsertionYearMonthCounterKeys;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
+import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.position.VisBusinessPutPositionDefaultValues;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -40,9 +48,16 @@ import com.vis.json.fields.validation.VisJsonFieldsPositionSkills;
 import com.vis.json.fields.validation.VisJsonFieldsPositionSort;
 import com.vis.json.fields.validation.VisJsonFieldsSalaryRange;
 import com.vis.json.fields.validation.VisPositionFrequencyTypes;
+import com.vis.json.transformers.VisDddCounterCombinations;
+import com.vis.json.transformers.VisDddCounterKeys;
+import com.vis.json.transformers.VisInsertionDayCounterCombinations;
+import com.vis.json.transformers.VisInsertionMonthCounterCombinations;
 import com.vis.json.transformers.VisJsonTransformerRecruiterHash;
 import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 import com.vis.json.transformers.VisPositionHashCombinations;
+import com.vis.json.transformers.VisPositionSalaryChildField;
+import com.vis.json.transformers.VisResumeDddCombinations;
+import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 import com.vis.json.transformers.VisSeniorityType;
 
 /**
@@ -52,7 +67,10 @@ import com.vis.json.transformers.VisSeniorityType;
  * expiration, the order of the resumes found, the contacts and how the resumes are sent (frequency, groups, resumes).
  * The save fills the {@code hash} list with every search of the position ({@code VisPositionHashCombinations}) and
  * keeps the id of the position in the groups of those hashes, apart from the resumes (the {@code childName} of the
- * groups tells the entities apart). Uses the Twin Entity pattern to control inactive positions
+ * groups tells the entities apart). The statistics of the screen Supply X Demand read the active positions from the
+ * same kinds of groups of the resumes and of their views: one group per ddd (the child is a JSON text with the fields
+ * compared with the resumes, the salaries as the middle of each range) and the counters by ddd, by day and by month of
+ * insertion. Uses the Twin Entity pattern to control inactive positions
  * ({@code vis_inactive_position}), asynchronous writing, versioning and a 1-hour cache.
  */
 @CcpEntityCache(3600)
@@ -71,6 +89,23 @@ import com.vis.json.transformers.VisSeniorityType;
 // one group per hash (each search of the position): the combinations and the list where the save keeps their ids come
 // from the field hash
 @CcpEntityGrouperChild(value = {VisEntityVirtualHashGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
+// one group per ddd of the position (statistics of the region): the child is a JSON text with these fields of the position,
+// as stored, the skills of the main list, the middle of each salary range and its id; it follows the position between the
+// main and the twin groups as the groups of the hashes do
+@CcpEntityGrouperChild(value = {VisEntityVirtualPositionDddGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
+		childFields = {"disponibility", "spokenLanguage", "negotiableClaim", "pcd", "resumeType", "seniority", "temporallyJobTime", "travel"},
+		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class, VisPositionSalaryChildField.class})
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualPositionDddGrouper.class, value = VisResumeDddCombinations.class)
+// the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
+@CcpEntityInsertionDate(JnInsertionDateEntity.class)
+// the active positions by month (yyyyMM) and by day (yyyyMMdd) of insertion: the line chart of the screen Supply X Demand
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualInsertionMonthCounter.class}, counterKeyClass = JnInsertionYearMonthCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualInsertionMonthCounter.class, value = VisInsertionMonthCounterCombinations.class)
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualInsertionDayCounter.class}, counterKeyClass = JnInsertionDayCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualInsertionDayCounter.class, value = VisInsertionDayCounterCombinations.class)
+// how many active positions list each ddd now: the totals of the folders of the screen Supply X Demand
+@CcpEntityGrouperChildCounter(value = {VisEntityVirtualDddCounter.class}, counterKeyClass = VisDddCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddCounter.class, value = VisDddCounterCombinations.class)
 public class VisEntityPosition implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntityPosition INSTANCE = new VisEntityPosition();
@@ -226,6 +261,13 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsPositionContact.class, allowsEmptyJson = false)
 		contact,
+
+		/**
+		 * The {@code insertionDate} field: the moment the record was inserted, kept by {@code @CcpEntityInsertionDate}
+		 * (the value of the input is ignored), validated as in {@code JnJsonCommonsFields}.
+		 */
+		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
+		insertionDate,
 		;
 	}
 }
