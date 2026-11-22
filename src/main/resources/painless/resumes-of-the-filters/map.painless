@@ -114,6 +114,10 @@ boolean matches(String child, Map filters) {
 
 for (String child : params['_source'].child) {
   if (!matches(child, params.filters)) { continue; }
-  String id = unquoted(valueOf(child, 'id'));
+  // the e-mail of the resume, hashed as stored: the key that reads the resume back (the id of the group is the record id).
+  // A child written before the e-mail joined the group (until the load of script 110) has none: it waits for that load
+  String email = valueOf(child, 'email');
+  if (email == null) { continue; }
+  String id = unquoted(email);
   state.resumes.put(id, [numberOf(child, 'clt'), numberOf(child, 'pj')]);
 }

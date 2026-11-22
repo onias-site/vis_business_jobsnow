@@ -12,11 +12,13 @@ import com.ccp.especifications.db.bulk.CcpBulkEntityOperationType;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.jn.db.bulk.JnExecuteBulkOperation;
 import com.jn.entities.JnEntityInstantMessengerTemplateMessage;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
+import com.vis.business.resume.VisBusinessRefreshResumeDddResumeTypeGroups;
 import com.vis.business.resume.VisResumeOwnerChats;
 import com.vis.entities.VisEntityResume;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -30,7 +32,8 @@ import com.vis.messages.VisMessages;
  * <li>the report of the recruiter is closed with the answer ({@link VisSupportVerifyLinkedinCloseTheReport});</li>
  * <li>the resume, active or inactive, gets {@code invalidLinkedinAddress = true}: it no longer goes to the recruiters and
  * its link no longer opens. Only this field is written (a partial update of the document), so the owner does not get the
- * e-mail of a resume saved by them;</li>
+ * e-mail of a resume saved by them; the resume leaves the groups of ddd and area, which feed the count of the resumes of
+ * the filters of a position (since 2026-11-22);</li>
  * <li>the view of the recruiter is kept: the report already moved it to the twin ({@code vis_inactive_viewed_resume}, tab
  * "Indesejados"), with its comment (since 2026-11-15, rule of the user; until then it was deleted everywhere, as if it
  * never existed);</li>
@@ -65,6 +68,10 @@ public class VisSupportVerifyLinkedinConfirmInvalid implements CcpBusiness {
 		}
 		String entityName = side.getAsString(JnJsonCommonsFields.entity);
 		CcpJsonRepresentation resume = markTheResume(entityName, resumeId);
+		// the partial update does not pass through the decorators: the resume leaves the groups of ddd and area here
+		CcpEntityMetaData resumeDetails = VisEntityResume.ENTITY.getEntityMetaData();
+		boolean inactive = false == resumeDetails.entityName.equals(entityName);
+		VisBusinessRefreshResumeDddResumeTypeGroups.refresh(resume, inactive);
 		this.tellTheOwner(resume, linkedinAddress);
 		return json;
 	}

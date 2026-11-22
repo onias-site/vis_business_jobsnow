@@ -5,6 +5,8 @@ import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterDeleteFromMainEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -14,6 +16,7 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.business.resume.VisBusinessRefreshResumeDddResumeTypeGroups;
 
 /**
  * The resumes that must be corrected by their owners (since 2026-11-12), one record per owner ({@code email}, kept as
@@ -21,7 +24,9 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
  * the record exists the resume goes to no recruiter and its link opens nothing (404), and the form of the owner shows the
  * messages in red at the top. Any update of the resume, active or inactive, deletes the record: the save only passes with
  * every field valid. The first records came from the domains of {@code notAllowedCompany} saved before that field was
- * validated (script 65 of the deploy).
+ * validated (script 65 of the deploy). The resume is out of the groups of ddd and area (the count of the resumes of the
+ * filters of a position) while the record exists: its save takes the resume out of them and its delete puts it back
+ * (since 2026-11-22).
  * <p>
  * Configuration:
  * <ul>
@@ -29,6 +34,8 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
  * <li>records cached for 3600 seconds</li>
  * </ul>
  */
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessRefreshResumeDddResumeTypeGroups.class}, operationHandlers = {})
+@CcpAfterDeleteFromMainEntity(execute = {VisBusinessRefreshResumeDddResumeTypeGroups.class}, operationHandlers = {})
 @CcpEntityCache(3600)
 @CcpEntityFieldsValidator(VisEntityResumeRestriction.Fields.class)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)

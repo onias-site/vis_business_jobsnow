@@ -167,10 +167,11 @@ import com.vis.messages.VisMessages;
 		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "negotiableClaim", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
 		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class})
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddGrouper.class, value = VisResumeDddCombinations.class)
-// the same child, plus the companies the candidate forbids, in one group per ddd and area (resumeType) of the resume,
-// since 2026-11-22: the position form counts there, by a Painless script, the resumes that satisfy its filters
+// the same child, plus the companies the candidate forbids and the e-mail (hashed, as stored: the key that reads the resume
+// back), in one group per ddd and area (resumeType) of the resume, since 2026-11-22: the position form counts there, by a
+// Painless script, the resumes that satisfy its filters, and lists them to the recruiter logged in
 @CcpEntityGrouperChild(value = {VisEntityVirtualDddResumeTypeGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
-		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "negotiableClaim", "notAllowedCompany", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
+		childFields = {"btc", "clt", "disponibility", "email", "experience", "spokenLanguage", "negotiableClaim", "notAllowedCompany", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
 		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class})
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddResumeTypeGrouper.class, value = VisResumeDddResumeTypeCombinations.class)
 // a single group counts, for each domain of notAllowedCompany, how many active resumes forbid it now: the key dropped

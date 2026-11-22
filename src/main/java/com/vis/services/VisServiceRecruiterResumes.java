@@ -21,6 +21,7 @@ import com.vis.business.recruiter.resumes.VisBusinessMoveViewedResume;
 import com.vis.business.recruiter.resumes.VisViewedResumeMoves;
 import com.vis.business.recruiter.resumes.VisBusinessLoadSkillRankings;
 import com.vis.business.recruiter.resumes.VisRecruiterLinks;
+import com.vis.business.recruiter.resumes.VisBusinessResumesOfThePositionFilters;
 import com.vis.business.recruiter.resumes.VisBusinessViewedResumeDetails;
 import com.vis.business.recruiter.resumes.VisBusinessViewedResumesOfTheMonth;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
@@ -209,6 +210,17 @@ public enum VisServiceRecruiterResumes implements JnService {
 			CcpJsonRepresentation recruiterResumes = VisEntityRecruiterResumes.ENTITY.getOneById(recruiter);
 			List<CcpJsonRepresentation> resumes = recruiterResumes.getAsJsonList(VisEntityRecruiterResumes.Fields.resumes);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterResumes.Fields.resumes, resumes);
+			return response;
+		}
+	},
+	/**
+	 * The resumes that satisfy the filters of a position, listed to the recruiter logged in (link "Ver quais são estes
+	 * currículos" of the position form, since 2026-11-22): the resumes of the ids the count returned, read by id, as the
+	 * rows of the screen of the resumes of the week, the unwanted ones apart.
+	 */
+	GetResumesOfThePositionFilters{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessResumesOfThePositionFilters.INSTANCE.execute(json);
 			return response;
 		}
 	},
