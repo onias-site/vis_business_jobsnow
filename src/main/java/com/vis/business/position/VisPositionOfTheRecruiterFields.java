@@ -7,6 +7,7 @@ import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.entities.VisEntityPosition;
+import com.vis.json.fields.validation.VisJsonValidatorPositionResumesEmailRequired;
 
 /**
  * The input of the creation and of the edition of a position by the logged-in user (screen "Meu Recrutamento - Vagas"):
@@ -16,7 +17,7 @@ import com.vis.entities.VisEntityPosition;
  */
 @CcpJsonGlobalValidations(requiresAtLeastOne = {
 		@CcpJsonValidationFieldList(VisEntityPosition.SalaryType.class)
-})
+}, customJsonValidators = {VisJsonValidatorPositionResumesEmailRequired.class})
 public enum VisPositionOfTheRecruiterFields implements CcpJsonFieldName {
 	/** The e-mail of the logged-in user, the recruiter of the position. */
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
@@ -108,5 +109,12 @@ public enum VisPositionOfTheRecruiterFields implements CcpJsonFieldName {
 	/** The {@code frequencyType} field of the position, validated as in {@code VisEntityPosition}. */
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
 	frequencyType,
+
+	/**
+	 * The {@code resumesEmail} field of the position, validated as in {@code VisEntityPosition}; required unless the
+	 * {@code frequencyType} is {@code none} ({@code VisJsonValidatorPositionResumesEmailRequired}).
+	 */
+	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
+	resumesEmail,
 	;
 }

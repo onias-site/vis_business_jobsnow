@@ -1,4 +1,5 @@
 package com.vis.entities;
+import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
@@ -104,7 +105,7 @@ import com.vis.json.transformers.VisSeniorityType;
 // JSON text with what the user filled in and the id; the deactivation moves it to the same group of jn_inactive_grouper
 @CcpEntityGrouperChild(value = {JnEntityLoginEmail.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
 		childFields = {"title", "description", "resumeType", "seniority", "ddd", "clt", "pj", "disponibility", "temporallyJobTime", "spokenLanguage", "skill",
-				"negotiableClaim", "pcd", "travel", "expiration", "sort", "contact", "mustSendInGroups", "mustSendToResumes", "visibleToCandidates", "frequencyType", "insertionDate"})
+				"negotiableClaim", "pcd", "travel", "expiration", "sort", "contact", "mustSendInGroups", "mustSendToResumes", "visibleToCandidates", "frequencyType", "resumesEmail", "insertionDate"})
 @CcpEntityGrouperParentCombinations(parent = JnEntityLoginEmail.class, value = VisPositionRecruiterLoginEmailCombinations.class)
 // the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
 @CcpEntityInsertionDate(JnInsertionDateEntity.class)
@@ -267,6 +268,15 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionFrequencyTypes.class)
 		@CcpJsonFieldDefaultValue(defaultStrings = "daily")
 		frequencyType,
+
+		/**
+		 * The {@code resumesEmail} field: the e-mail that receives the resumes found for the position, in the frequency of
+		 * {@code frequencyType} (the screen fills it with the e-mail of the logged recruiter); validated as the e-mail of
+		 * {@code JnJsonCommonsFields}. Required by the screen unless the frequency is {@code none}
+		 * ({@code VisJsonValidatorPositionResumesEmailRequired}).
+		 */
+		@CcpJsonFieldTypeString(regexValidation = CcpEmailDecorator.EMAIL_REGEX, minLength = 7, maxLength = 100)
+		resumesEmail,
 
 		/**
 		 * The {@code contact} field: required, list, where the candidates reach the recruiter, each item validated by
