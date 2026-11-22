@@ -52,7 +52,9 @@ import com.vis.json.transformers.VisSeniorityType;
  * required skill above another required one gives way to it ("backend" and "php" ask for "php");</li>
  * <li>{@code spokenLanguage}: each language, at least in the level asked;</li>
  * <li>{@code negotiableClaim}, {@code pcd} and {@code travel}: checked, only the resumes that have them;</li>
- * <li>{@code clt} and {@code pj}: the claim inside the range;</li>
+ * <li>{@code clt} and {@code pj} (the budgets): each claim the resume informs of a type offered inside its range, and at
+ * least one of them informed. Both filled, the resume of CLT only, PJ only or both enters; one only, the resume needs
+ * that claim inside it;</li>
  * <li>{@code recruiterDomain}: the resumes that forbid the company of the logged recruiter are left out.</li>
  * </ul>
  */
