@@ -81,6 +81,7 @@ import com.vis.json.fields.validation.VisJsonValidatorHomeOfficeAlone;
 import com.vis.json.transformers.VisJsonTransformerExperienceStartYear;
 import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 import com.vis.json.transformers.VisResumeDddCombinations;
+import com.vis.json.transformers.VisResumeDddResumeTypeCombinations;
 import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 import com.vis.json.transformers.VisAvoidedSkillsCounterCombinations;
 import com.vis.json.transformers.VisAvoidedSkillsCounterKeys;
@@ -109,6 +110,8 @@ import com.vis.messages.VisMessages;
  * <li>a second {@code @CcpEntityGrouperChild} keeps, in the group of each ddd of the resume ({@link VisEntityVirtualDddGrouper}),
  * a JSON text with btc, clt, disponibility, experience, spokenLanguage, negotiableClaim (since 2026-11-14), pcd, pj, resumeType, temporallyJobTime, travel and
  * the id of the resume, moved between the sides as the groups of the hashes are;</li>
+ * <li>a third {@code @CcpEntityGrouperChild} keeps the same JSON text in the group of each ddd and area of the resume
+ * ({@link VisEntityVirtualDddResumeTypeGrouper}, since 2026-11-22), read by the position form;</li>
  * <li>{@code @CcpEntityGrouperChild} keeps the id of the resume in the groups of {@code JnEntityGrouper} of its hashes:
  * the active resumes in the main groups, the inactive ones in the twin groups ({@code jn_inactive_grouper}); the save
  * moves it to the groups of its new hashes, the deactivation and the reactivation move it between the sides, and the
@@ -163,6 +166,12 @@ import com.vis.messages.VisMessages;
 		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "negotiableClaim", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
 		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class})
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddGrouper.class, value = VisResumeDddCombinations.class)
+// the same child in one group per ddd and area (resumeType) of the resume, since 2026-11-22: the position form counts the
+// resumes of the regions and of the area of the position
+@CcpEntityGrouperChild(value = {VisEntityVirtualDddResumeTypeGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
+		childFields = {"btc", "clt", "disponibility", "experience", "spokenLanguage", "negotiableClaim", "pcd", "pj", "resumeType", "temporallyJobTime", "travel"},
+		childFieldsProducers = {VisResumeSkillsFromResumeChildField.class})
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddResumeTypeGrouper.class, value = VisResumeDddResumeTypeCombinations.class)
 // a single group counts, for each domain of notAllowedCompany, how many active resumes forbid it now: the key dropped
 // by a save, the deactivation and the delete everywhere subtract 1, the reactivation adds it back
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualNotAllowedCompanyCounter.class}, counterKeyClass = VisResumeNotAllowedCompanyCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)

@@ -11,16 +11,20 @@ import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
+import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
+import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.jn.utils.JnGroupers;
-import com.vis.business.statistics.VisResumeStatisticsSources;
+import com.vis.entities.VisEntityResume;
+import com.vis.entities.VisEntityVirtualDddResumeTypeGrouper;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 
 /**
- * The active resumes of the regions a position is offered in (tab "Opções" of the position form, since 2026-11-22): for
- * each ddd asked, the children of its group of active resumes in {@code jn_grouper} (parent
- * {@code vis_virtual_ddd_grouper}), each one a JSON with part of the resume (salaries, experience, languages, the flags
+ * The active resumes of the regions and of the area a position is offered in (tab "Filtros" of the position form, since
+ * 2026-11-22): for each ddd asked, the children of the group of the active resumes of the ddd and of the area
+ * ({@code resumeType}) in {@code jn_grouper} (parent {@code vis_virtual_ddd_resume_type_grouper}), each one a JSON with part of the resume (salaries, experience, languages, the flags
  * and the skills) and its id, never a contact. One read by id of every group (MGIE, OQL): the screen keeps each ddd in
  * the browser for one hour and asks only for the ddds it does not have, so a resume listed by several ddds is counted
  * once by its id. A repeated ddd is refused by the validation of the list. With no ddd, every ddd (the allowed values of
@@ -34,6 +38,11 @@ public class VisBusinessResumesOfTheDdds implements CcpBusiness {
 		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ddd,
+
+		/** The area of the resumes (the resumeType of the position): only the resumes of this area are listed. */
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		resumeType,
 
 		/** The output: {ddd: [resume, ...]}, every ddd asked present, an empty list for a ddd with no active resume. */
 		resumes,
@@ -49,15 +58,16 @@ public class VisBusinessResumesOfTheDdds implements CcpBusiness {
 	}
 
 	/**
-	 * Reads the groups of active resumes of the ddds asked.
-	 * @param json the ddds
+	 * Reads the groups of active resumes of the ddds and of the area asked.
+	 * @param json the ddds and the area
 	 * @return {@code resumes}: the resumes of each ddd, by ddd
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		List<Integer> ddds = getDdds(json);
+		Integer resumeType = json.getAsIntegerNumber(Fields.resumeType);
 		List<CcpJsonRepresentation> groupKeys = new ArrayList<>();
 		for (Integer ddd : ddds) {
-			CcpJsonRepresentation groupKey = VisResumeStatisticsSources.resumes.getGroupKey(ddd);
+			CcpJsonRepresentation groupKey = getGroupKey(ddd, resumeType);
 			groupKeys.add(groupKey);
 		}
 		List<List<String>> childrenOfEachDdd = JnGroupers.getChildrenOfEachGroup(groupKeys);
@@ -73,6 +83,24 @@ public class VisBusinessResumesOfTheDdds implements CcpBusiness {
 		}
 		CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(Fields.resumes, resumesByDdd);
 		return response;
+	}
+
+	/**
+	 * The key of the group of the active resumes of one ddd and one area in {@code jn_grouper}.
+	 * @param ddd the region
+	 * @param resumeType the area of the resumes
+	 * @return the parent id, the parent name and the child name of the group
+	 */
+	private static CcpJsonRepresentation getGroupKey(Integer ddd, Integer resumeType) {
+		CcpJsonRepresentation combination = CcpOtherConstants.EMPTY_JSON
+				.put(VisEntityVirtualDddResumeTypeGrouper.Fields.ddd, ddd)
+				.put(VisEntityVirtualDddResumeTypeGrouper.Fields.resumeType, resumeType);
+		CcpEntity parentEntity = VisEntityVirtualDddResumeTypeGrouper.ENTITY;
+		String parentId = parentEntity.calculateId(combination);
+		CcpEntityMetaData parentDetails = parentEntity.getEntityMetaData();
+		CcpEntityMetaData childDetails = VisEntityResume.ENTITY.getEntityMetaData();
+		CcpJsonRepresentation groupKey = JnGroupers.getGroupKey(parentDetails.entityName, childDetails.entityName, parentId);
+		return groupKey;
 	}
 
 	/**
