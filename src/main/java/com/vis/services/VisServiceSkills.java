@@ -8,6 +8,7 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNestedJson;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.services.JnService;
+import com.vis.business.skill.VisBusinessPutTheBroadSkills;
 import com.vis.business.skill.VisSkillDictionary;
 import com.vis.business.telegram.VisSkillWordsInMemory;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
@@ -50,12 +51,16 @@ public enum VisServiceSkills implements JnService {
 		/**
 		 * Finds the skills of the text.
 		 * @param json {@code text} and the {@code excludedSkill} list
-		 * @return {@code skill} (the chosen skills), {@code discardedSkills} and {@code excludedSkill}
+		 * @return {@code skill} (the chosen skills), {@code discardedSkills}, {@code excludedSkill} and {@code broadSkill}
+		 * (the terms too broad, each one with the skills below it: {@link VisBusinessPutTheBroadSkills})
 		 */
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			VisSkillWordsInMemory words = VisSkillDictionary.getWords();
 			CcpJsonRepresentation skillsOfTheText = VisSkillsInText.find(json, words);
-			return skillsOfTheText;
+			// the terms too broad of the text (backend with no skill below it), for the screen of the position
+			VisBusinessPutTheBroadSkills putTheBroadSkills = new VisBusinessPutTheBroadSkills(words);
+			CcpJsonRepresentation withTheBroadSkills = putTheBroadSkills.execute(skillsOfTheText);
+			return withTheBroadSkills;
 		}
 	}
 	;
