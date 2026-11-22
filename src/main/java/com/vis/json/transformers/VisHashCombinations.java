@@ -21,7 +21,7 @@ import com.vis.json.fields.validation.VisResumeSkillCategories;
  * field of the grouper, then every combination among those lists (each combination is one record, whose id is a hash).
  * The resume ({@link VisResumeHashCombinations}) and the position ({@link VisPositionHashCombinations}) share this
  * logic; only the {@link VisRecordType} given by each subclass changes how the values of the record become the values
- * of the hash (the flags, the areas and the seniorities).
+ * of the hash (the flags and the seniorities).
  * <p>Only exact values take part; the numeric ranges (claims, availability, temporary job time) stay out of the hash
  * and are compared after the read by id. A spoken language always gets the neutral value {@code none} too, and so does
  * the skill, so a search that requires no language, or no skill, finds the record. The regions (ddd) stay out of the
@@ -92,8 +92,10 @@ public abstract class VisHashCombinations implements Function<CcpJsonRepresentat
 	 */
 	public List<List<CcpJsonRepresentation>> getValuesByField(CcpJsonRepresentation json) {
 
-		Integer[] resumeTypes = this.recordType.getResumeTypes(json);
-		List<CcpJsonRepresentation> resumeTypeValues = this.toValues(VisEntityVirtualHashGrouper.Fields.resumeType, resumeTypes);
+		List<CcpJsonRepresentation> resumeTypeValues = new ArrayList<>();
+		Integer resumeType = json.getAsIntegerNumber(VisJsonCommonsFields.resumeType);
+		CcpJsonRepresentation resumeTypeValue = CcpOtherConstants.EMPTY_JSON.put(VisEntityVirtualHashGrouper.Fields.resumeType, resumeType);
+		resumeTypeValues.add(resumeTypeValue);
 
 		// a fluent speaker (2) also answers a search for the intermediate level (1)
 		List<CcpJsonRepresentation> languageValues = new ArrayList<>();

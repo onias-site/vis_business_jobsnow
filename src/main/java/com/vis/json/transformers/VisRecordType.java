@@ -48,17 +48,6 @@ public enum VisRecordType {
 		}
 
 		/**
-		 * The area of the resume, as declared in it.
-		 * @param json the resume
-		 * @return the area of the resume
-		 */
-		public Integer[] getResumeTypes(CcpJsonRepresentation json) {
-			Integer resumeType = json.getAsIntegerNumber(VisJsonCommonsFields.resumeType);
-			Integer[] resumeTypes = new Integer[] {resumeType};
-			return resumeTypes;
-		}
-
-		/**
 		 * Every seniority whose range holds the years of experience of the resume, also when the json already carries
 		 * the year the experience started.
 		 * @param json the resume
@@ -132,15 +121,6 @@ public enum VisRecordType {
 		}
 
 		/**
-		 * Every area of resume: the position does not declare one, so it searches the resumes of all of them.
-		 * @param json the position
-		 * @return the areas accepted by {@code VisJsonCommonsFields.resumeType}
-		 */
-		public Integer[] getResumeTypes(CcpJsonRepresentation json) {
-			return ALL_RESUME_TYPES;
-		}
-
-		/**
 		 * The seniority the position asks for.
 		 * @param json the position
 		 * @return the seniority of the position
@@ -156,8 +136,6 @@ public enum VisRecordType {
 	/** The largest number of years of experience: a larger {@code experience} is the year the experience started. */
 	private static final int MAX_YEARS_OF_EXPERIENCE = 70;
 
-	/** The areas accepted by {@code VisJsonCommonsFields.resumeType}. */
-	private static final Integer[] ALL_RESUME_TYPES = new Integer[] {1, 2, 3, 4};
 
 	private final Integer[] whenFalse;
 	private final Integer[] whenTrue;
@@ -183,13 +161,6 @@ public enum VisRecordType {
 	public abstract Integer[] fromIntegerField(CcpJsonFieldName field, CcpJsonRepresentation json, int threshold);
 
 	public abstract Integer[] fromDoubleField(CcpJsonFieldName field, CcpJsonRepresentation json, double threshold, double increment);
-
-	/**
-	 * The values of {@code resumeType} in the hashes of the record.
-	 * @param json the record
-	 * @return the areas
-	 */
-	public abstract Integer[] getResumeTypes(CcpJsonRepresentation json);
 
 	/**
 	 * The values of {@code seniority} in the hashes of the record.

@@ -10,6 +10,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityT
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpStoredParentIdsField;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
@@ -31,6 +32,7 @@ import com.jn.entities.decorators.engine.JnVersionableEntity;
 import com.jn.entities.decorators.engine.JnVersionablePurgeEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.position.VisBusinessPutPositionDefaultValues;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsExpirationRange;
 import com.vis.json.fields.validation.VisJsonFieldsPositionContact;
@@ -45,7 +47,7 @@ import com.vis.json.transformers.VisSeniorityType;
 
 /**
  * Represents the Position entity: a position published by a recruiter, identified by the SHA-1 hash of the e-mail of
- * the recruiter who owns it. Stores the title, the description, the seniority, the regions (DDD), the availability,
+ * the recruiter who owns it and by its title. Stores the title, the description, the area (resumeType), the seniority, the regions (DDD), the availability,
  * the skills (required and desired), the spoken languages, the salary ranges (CLT and PJ, at least one of them), the
  * expiration, the order of the resumes found, the contacts and how the resumes are sent (frequency, groups, resumes).
  * The save fills the {@code hash} list with every search of the position ({@code VisPositionHashCombinations}) and
@@ -64,6 +66,8 @@ import com.vis.json.transformers.VisSeniorityType;
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
+// the default values of the fields (mustSendInGroups, mustSendToResumes, frequencyType) go into the record before it is saved
+@CcpBeforeSaveFromMainEntity(execute = {VisBusinessPutPositionDefaultValues.class}, operationHandlers = {})
 // one group per hash (each search of the position): the combinations and the list where the save keeps their ids come
 // from the field hash
 @CcpEntityGrouperChild(value = {VisEntityVirtualHashGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
@@ -86,8 +90,8 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 
 	/**
 	 * The fields of the entity, with their validation rules (this enum is the class named by
-	 * {@code @CcpEntityFieldsValidator}). The default values apply where this enum validates the input of a business
-	 * ({@code CcpBusiness.execute}); the save of the entity itself only validates.
+	 * {@code @CcpEntityFieldsValidator}). The default values are put before the save by
+	 * {@code VisBusinessPutPositionDefaultValues}.
 	 */
 	@CcpJsonGlobalValidations(requiresAtLeastOne = {
 			@CcpJsonValidationFieldList(SalaryType.class)
@@ -109,13 +113,18 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		ddd,
 
 		/**
-		 * The {@code recruiter} field: the primary key, the e-mail of the recruiter who owns the position, validated as in
+		 * The {@code recruiter} field: part of the primary key, the e-mail of the recruiter who owns the position, validated as in
 		 * {@code VisJsonCommonsFields}; stored as its SHA-1 hash ({@code VisJsonTransformerRecruiterHash}).
 		 */
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		@CcpEntityFieldTransformer(VisJsonTransformerRecruiterHash.class)
 		recruiter,
+
+		/** The {@code resumeType} field: required, the area of the position, validated as in {@code VisJsonCommonsFields}. */
+		@CcpJsonFieldValidatorRequired
+		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
+		resumeType,
 
 		/** The {@code seniority} field: required, one of {@code VisSeniorityType}. */
 		@CcpJsonFieldValidatorRequired
@@ -167,8 +176,8 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		travel,
 
-		/** The {@code title} field: required, the title of the position, text of 10 to 100 characters. */
-		@CcpJsonFieldValidatorRequired
+		/** The {@code title} field: part of the primary key, the title of the position, text of 10 to 100 characters. */
+		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(minLength = 10, maxLength = 100)
 		title,
 
