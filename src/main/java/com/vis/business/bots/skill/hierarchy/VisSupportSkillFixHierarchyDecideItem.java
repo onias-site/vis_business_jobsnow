@@ -2,18 +2,21 @@ package com.vis.business.bots.skill.hierarchy;
 
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.utils.JnLanguage;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyReview;
+import com.vis.business.skill.VisSkillFixHierarchyDecisions;
 import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
 import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
 
 /**
  * Step of the one by one review of the {@code fixSkillHierarchy} command: the operator approves or rejects the
- * current item, always with a justification. The step repeats itself (its {@code nextStep} is itself) while
+ * current item, always with a justification, or denies it in an association request (a rejection with the standard
+ * justification: the parent would become a prerequisite of the skill). The step repeats itself (its {@code nextStep} is itself) while
  * there are items left, asking for the next one; the decision on the last item finishes the review
  * ({@code reviewFinished}). An answer that is not a decision with justification asks again for the same item
  * ({@code invalidAnswer}). A request the user withdrew in the middle of the review ends the session with a notice to
@@ -37,7 +40,7 @@ public class VisSupportSkillFixHierarchyDecideItem implements CcpBusiness {
 
 		int itemIndex = json.getAsIntegerNumber(VisSupportSkillFixHierarchyFields.itemIndex);
 		VisSupportSkillFixHierarchyAnswer answer = VisSupportSkillFixHierarchyAnswer.read(json);
-		boolean decisionWithJustification = answer.isDecisionWithJustification();
+		boolean decisionWithJustification = answer.isDecisionWithJustification() || answer.isDenial();
 
 		if(false == decisionWithJustification) {
 			JnLanguage language = VisSupportSkillFixHierarchyConversation.getLanguage(json);
@@ -53,7 +56,11 @@ public class VisSupportSkillFixHierarchyDecideItem implements CcpBusiness {
 		CcpJsonRepresentation item = reviewItems.get(itemIndex);
 		String type = item.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.type);
 		String skill = item.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
-		CcpJsonRepresentation decision = VisBusinessSkillFixHierarchyReview.getDecision(type, skill, answer.getDecision(), answer.justification);
+		List<String> deniedSkills = Arrays.asList(skill);
+		// a denial is a rejection whose justification is the standard one, built from the skill of the item
+		String justification = answer.isDenial() ? VisSupportSkillFixHierarchyConversation.getDenialJustification(json, deniedSkills) : answer.justification;
+		VisSkillFixHierarchyDecisions itemDecision = answer.isDenial() ? VisSkillFixHierarchyDecisions.rejected : answer.getDecision();
+		CcpJsonRepresentation decision = VisBusinessSkillFixHierarchyReview.getDecision(type, skill, itemDecision, justification);
 
 		List<CcpJsonRepresentation> previousDecisions = json.getAsJsonList(VisSkillFixHierarchyReviewFields.reviewDecisions);
 		List<CcpJsonRepresentation> decisions = new ArrayList<>(previousDecisions);

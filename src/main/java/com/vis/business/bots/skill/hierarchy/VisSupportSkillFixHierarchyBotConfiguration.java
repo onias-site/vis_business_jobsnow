@@ -56,11 +56,13 @@ public final class VisSupportSkillFixHierarchyBotConfiguration {
 						, "Responda com uma das opções:\n"
 						+ "• aprovar <justificativa> — aprova todos os itens pendentes\n"
 						+ "• rejeitar <justificativa> — rejeita todos os itens pendentes\n"
+						+ "• negar — (só associação) rejeita todos os itens pendentes, avisando que o termo passaria a ser pré-requisito deles\n"
 						+ "• um a um — decide item por item\n"
 						+ "• ignorar — descarta a solicitação e ignora as próximas deste usuário em todos os comandos"
 						, "Answer with one of the options:\n"
 						+ "• approve <justification> — approves all the pending items\n"
 						+ "• reject <justification> — rejects all the pending items\n"
+						+ "• deny — (association only) rejects all the pending items, telling that the term would become their prerequisite\n"
 						+ "• one by one — decides item by item\n"
 						+ "• ignore — discards the request and ignores the next ones of this user in every command")
 				.systemMessage(VisSupportSkillFixHierarchyMessages.ignoreConfirmation
@@ -81,9 +83,12 @@ public final class VisSupportSkillFixHierarchyBotConfiguration {
 						, "I did not understand the answer. Every decision needs to come with a justification.\n\n")
 				.systemMessage(VisSupportSkillFixHierarchyMessages.itemPrompt
 						, "Item {itemNumber} de {itemsCount}: {skill} ({typeDescription} com o termo {parent})\n"
-						+ "Responda: aprovar <justificativa> ou rejeitar <justificativa>"
+						+ "Responda: aprovar <justificativa>, rejeitar <justificativa> ou negar (só associação)"
 						, "Item {itemNumber} of {itemsCount}: {skill} ({typeDescription} with the term {parent})\n"
-						+ "Answer: approve <justification> or reject <justification>")
+						+ "Answer: approve <justification>, reject <justification> or deny (association only)")
+				.systemMessage(VisSupportSkillFixHierarchyMessages.denialJustification
+						, "Não podemos aprovar essa sugestão, pois, isso implicaria que para saber {skills} teria que ser necessário saber primeiro {parent}"
+						, "We cannot approve this suggestion, because it would imply that knowing {skills} would require knowing {parent} first")
 				.systemMessage(VisSupportSkillFixHierarchyMessages.reviewFinished
 						, "Revisão concluída para {email} / {parent}.\n"
 						+ "Aprovados: {approvedSkills}\n"

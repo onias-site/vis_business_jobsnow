@@ -1,13 +1,17 @@
 package com.vis.business.bots.skill.hierarchy;
 
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.business.skill.VisSkillFixHierarchyDecisions;
+import com.vis.entities.VisEntitySkillFixHierarchyPending;
+import com.vis.json.fields.validation.VisSkillFixHierarchyTypes;
 
 /**
  * What the operator typed in answer to a step of the {@code fixSkillHierarchy} command, in Portuguese or English: a
  * decision (approve or reject, with the Portuguese verbs aprovar, rejeitar or reprovar) followed by the justification;
- * one by one (um a um) to decide item by item; ignore (ignorar) to ignore the user for the command; and yes or no (sim,
+ * deny (negar), only in an association request, a rejection whose justification is the standard one (the parent would
+ * become a prerequisite of the skills); one by one (um a um) to decide item by item; ignore (ignorar) to ignore the user for the command; and yes or no (sim,
  * nao with or without the accent) to confirm it. Case is ignored. Also read by the {@code reviewSkillSuggestion}
  * command, which takes the same decisions on a single skill.
  */
@@ -87,6 +91,17 @@ public final class VisSupportSkillFixHierarchyAnswer {
 			return rejection;
 		}
 
+		boolean isDenialWord = firstWord.equals(Words.negar.getValue()) || firstWord.equals(Words.deny.getValue());
+		String typeName = json.getAsString(VisEntitySkillFixHierarchyPending.Fields.type);
+		String associationTypeName = VisSkillFixHierarchyTypes.add.name();
+		boolean isAssociationRequest = associationTypeName.equals(typeName);
+		boolean isDenial = isDenialWord && isAssociationRequest;
+
+		if(isDenial) {
+			VisSupportSkillFixHierarchyAnswer denial = new VisSupportSkillFixHierarchyAnswer(VisSupportSkillFixHierarchyAnswerType.deny, "");
+			return denial;
+		}
+
 		VisSupportSkillFixHierarchyAnswer notUnderstood = new VisSupportSkillFixHierarchyAnswer(VisSupportSkillFixHierarchyAnswerType.notUnderstood, "");
 		return notUnderstood;
 	}
@@ -138,6 +153,16 @@ public final class VisSupportSkillFixHierarchyAnswer {
 	}
 
 	/**
+	 * Tells whether the operator denied an association request: a rejection with the standard justification, which the
+	 * step builds from the skills and the parent.
+	 * @return {@code true} for a denial
+	 */
+	public boolean isDenial() {
+		boolean denial = VisSupportSkillFixHierarchyAnswerType.deny == this.type;
+		return denial;
+	}
+
+	/**
 	 * Tells whether the operator approved (with or without justification).
 	 * @return {@code true} for an approval
 	 */
@@ -153,5 +178,13 @@ public final class VisSupportSkillFixHierarchyAnswer {
 		boolean isApproval = VisSupportSkillFixHierarchyAnswerType.approve == this.type;
 		VisSkillFixHierarchyDecisions decision = isApproval ? VisSkillFixHierarchyDecisions.approved : VisSkillFixHierarchyDecisions.rejected;
 		return decision;
+	}
+
+	/** The words of the denial. */
+	enum Words implements CcpJsonFieldName {
+		/** The Portuguese verb. */
+		negar,
+		/** The English verb. */
+		deny
 	}
 }

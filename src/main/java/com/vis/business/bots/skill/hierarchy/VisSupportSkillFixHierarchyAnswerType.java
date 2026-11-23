@@ -2,14 +2,19 @@ package com.vis.business.bots.skill.hierarchy;
 
 /**
  * Kinds of answer the operator gives along the {@code fixSkillHierarchy} command: a decision on the items
- * ({@code approve}, {@code reject}, {@code oneByOne}), the request to ignore the user ({@code ignore}) and the
- * answer to its confirmation ({@code yes}, {@code no}).
+ * ({@code approve}, {@code reject}, {@code deny}, {@code oneByOne}), the request to ignore the user ({@code ignore})
+ * and the answer to its confirmation ({@code yes}, {@code no}).
  */
 enum VisSupportSkillFixHierarchyAnswerType {
 	/** Approve, with a justification. */
 	approve,
 	/** Reject, with a justification. */
 	reject,
+	/**
+	 * Reject an association request with the standard justification: the parent would become a prerequisite of the
+	 * skills.
+	 */
+	deny,
 	/** Decide item by item. */
 	oneByOne,
 	/** Ignore the user for the command. */

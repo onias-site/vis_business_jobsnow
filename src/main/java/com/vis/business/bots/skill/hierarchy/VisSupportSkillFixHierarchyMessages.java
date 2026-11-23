@@ -22,6 +22,12 @@ public enum VisSupportSkillFixHierarchyMessages implements JnSystemMessage {
 	/** Justification that goes to the user for an item rejected in an earlier review. */
 	previousDecisionRejected,
 
+	/**
+	 * Justification that goes to the user for the skills of an association the operator denied: {@code {skills}} and
+	 * {@code {parent}}.
+	 */
+	denialJustification,
+
 	/** Answer the operator gave that is not a decision with justification; precedes the question asked again. */
 	notUnderstood,
 

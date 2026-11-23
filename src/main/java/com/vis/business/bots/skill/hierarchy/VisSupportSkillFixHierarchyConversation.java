@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnLanguage;
+import com.jn.utils.JnSystemProperties;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyReview;
 import com.vis.business.skill.VisSkillFixHierarchyDecisions;
 import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
@@ -77,6 +78,24 @@ final class VisSupportSkillFixHierarchyConversation {
 		VisSupportSkillFixHierarchyMessages previousDecision = approved ? VisSupportSkillFixHierarchyMessages.previousDecisionApproved : VisSupportSkillFixHierarchyMessages.previousDecisionRejected;
 		String previousDecisionJustification = previousDecision.getMessage(language);
 		return previousDecisionJustification;
+	}
+
+	/**
+	 * Justification that goes to the user when the operator denies an association: the parent would become a
+	 * prerequisite of the skills. It is written in the language of the user, which is not stored yet, so it is the
+	 * language of the system, as in the email of the review.
+	 * @param json the session, with the {@code parent}
+	 * @param skills the denied skills
+	 * @return the justification
+	 */
+	static String getDenialJustification(CcpJsonRepresentation json, List<String> skills) {
+		String languageName = JnSystemProperties.INSTANCE.supportLanguage();
+		JnLanguage language = JnLanguage.valueOf(languageName);
+		String skillsText = String.join(", ", skills);
+		CcpJsonRepresentation parent = json.getJsonPiece(VisEntitySkillFixHierarchyPending.Fields.parent);
+		CcpJsonRepresentation parameters = parent.put(VisSupportSkillFixHierarchyMessageFields.skills, skillsText);
+		String denialJustification = VisSupportSkillFixHierarchyMessages.denialJustification.getMessage(language, parameters);
+		return denialJustification;
 	}
 
 	/**

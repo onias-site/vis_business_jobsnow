@@ -3,17 +3,22 @@ package com.vis.business.bots.skill.hierarchy;
 import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.jn.utils.JnLanguage;
 import com.vis.business.skill.VisBusinessSkillFixHierarchyReview;
+import com.vis.business.skill.VisSkillFixHierarchyDecisions;
 import com.vis.business.skill.VisSkillFixHierarchyReviewFields;
 import com.vis.entities.VisEntitySkillFixHierarchyItemPending;
 
 /**
  * Second step of the {@code fixSkillHierarchy} command: the operator approves all the pending items, rejects all the
- * pending items (both with one justification, that goes to every item) or chooses to decide them one by one.
+ * pending items (both with one justification, that goes to every item), denies an association (a rejection of every
+ * pending item with the standard justification: the parent would become a prerequisite of the skills) or chooses to
+ * decide them one by one.
  * The items decided in earlier reviews are already in {@code reviewDecisions} and keep their decisions.
  *
  * <p>Deciding all the items finishes the review ({@code reviewFinished}). Choosing one by one asks for the
@@ -53,22 +58,22 @@ public class VisSupportSkillFixHierarchyChooseMode implements CcpBusiness {
 			return confirmationAsked;
 		}
 
+		List<CcpJsonRepresentation> reviewItems = json.getAsJsonList(VisSupportSkillFixHierarchyFields.reviewItems);
+
+		if(answer.isDenial()) {
+			Stream<CcpJsonRepresentation> reviewItemsStream = reviewItems.stream();
+			Stream<String> skillsStream = reviewItemsStream.map(reviewItem -> reviewItem.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill));
+			List<String> skills = skillsStream.collect(Collectors.toList());
+			String denialJustification = VisSupportSkillFixHierarchyConversation.getDenialJustification(json, skills);
+			CcpJsonRepresentation finished = this.decideAll(json, reviewItems, VisSkillFixHierarchyDecisions.rejected, denialJustification);
+			return finished;
+		}
+
 		boolean decisionWithJustification = answer.isDecisionWithJustification();
 
 		if(decisionWithJustification) {
-			List<CcpJsonRepresentation> reviewItems = json.getAsJsonList(VisSupportSkillFixHierarchyFields.reviewItems);
-			// starts from the items decided in earlier reviews, which the first step already put in the session
-			List<CcpJsonRepresentation> previousDecisions = json.getAsJsonList(VisSkillFixHierarchyReviewFields.reviewDecisions);
-			List<CcpJsonRepresentation> decisions = new ArrayList<>(previousDecisions);
-
-			for (CcpJsonRepresentation reviewItem : reviewItems) {
-				String type = reviewItem.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.type);
-				String skill = reviewItem.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
-				CcpJsonRepresentation decision = VisBusinessSkillFixHierarchyReview.getDecision(type, skill, answer.getDecision(), answer.justification);
-				decisions.add(decision);
-			}
-
-			CcpJsonRepresentation finished = VisSupportSkillFixHierarchyConversation.finish(json, decisions);
+			VisSkillFixHierarchyDecisions decision = answer.getDecision();
+			CcpJsonRepresentation finished = this.decideAll(json, reviewItems, decision, answer.justification);
 			return finished;
 		}
 
@@ -79,5 +84,24 @@ public class VisSupportSkillFixHierarchyChooseMode implements CcpBusiness {
 		CcpJsonRepresentation jsonAskingAgain = json.put(JnJsonInstantMessengerFields.botReply, askAgain);
 		CcpJsonRepresentation askedAgain = VisSupportSkillFixHierarchyStatus.invalidAnswer.throwException(jsonAskingAgain);
 		return askedAgain;
+	}
+
+	/**
+	 * Gives the same decision and justification to every pending item and finishes the review.
+	 */
+	private CcpJsonRepresentation decideAll(CcpJsonRepresentation json, List<CcpJsonRepresentation> reviewItems, VisSkillFixHierarchyDecisions decision, String justification) {
+		// starts from the items decided in earlier reviews, which the first step already put in the session
+		List<CcpJsonRepresentation> previousDecisions = json.getAsJsonList(VisSkillFixHierarchyReviewFields.reviewDecisions);
+		List<CcpJsonRepresentation> decisions = new ArrayList<>(previousDecisions);
+
+		for (CcpJsonRepresentation reviewItem : reviewItems) {
+			String type = reviewItem.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.type);
+			String skill = reviewItem.getAsString(VisEntitySkillFixHierarchyItemPending.Fields.skill);
+			CcpJsonRepresentation itemDecision = VisBusinessSkillFixHierarchyReview.getDecision(type, skill, decision, justification);
+			decisions.add(itemDecision);
+		}
+
+		CcpJsonRepresentation finished = VisSupportSkillFixHierarchyConversation.finish(json, decisions);
+		return finished;
 	}
 }
