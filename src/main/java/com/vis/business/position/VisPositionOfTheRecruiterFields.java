@@ -35,8 +35,9 @@ public enum VisPositionOfTheRecruiterFields implements CcpJsonFieldName {
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
 	resumeType,
 
-	/** The {@code seniority} field of the position, validated as in {@code VisEntityPosition}. */
+	/** The {@code seniority} field of the position, validated as in {@code VisEntityPosition}: a list since 2026-11-23. */
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
+	@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 6)
 	seniority,
 
 	/** The {@code ddd} field of the position, validated as in {@code VisEntityPosition}. */

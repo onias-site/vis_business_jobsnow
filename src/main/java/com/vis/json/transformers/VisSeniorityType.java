@@ -1,5 +1,8 @@
 package com.vis.json.transformers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 
@@ -21,6 +24,23 @@ public enum VisSeniorityType {
 	private VisSeniorityType(int min, int max) {
 		this.min = min;
 		this.max = max;
+	}
+
+	/**
+	 * The seniorities of a field that holds a list of them (the position, since 2026-11-23) or a single one (the positions
+	 * saved before, the positions of Telegram): the single text is read as a list of one.
+	 * @param json the record
+	 * @param field the field of the seniorities
+	 * @return the seniorities, in the order of the field
+	 */
+	public static List<VisSeniorityType> listOf(CcpJsonRepresentation json, CcpJsonFieldName field) {
+		List<String> names = json.getAsStringList(field);
+		List<VisSeniorityType> seniorities = new ArrayList<>();
+		for (String name : names) {
+			VisSeniorityType seniority = VisSeniorityType.valueOf(name);
+			seniorities.add(seniority);
+		}
+		return seniorities;
 	}
 
 	public boolean matches(CcpJsonFieldName field, CcpJsonRepresentation json) {

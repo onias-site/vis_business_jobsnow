@@ -93,12 +93,19 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 			return keys;
 		}
 	},
-	/** The seniority, one of {@link VisSeniorityType}, from the year the experience started. */
+	/**
+	 * The seniority, one of {@link VisSeniorityType}, from the year the experience started; a position counts in each
+	 * seniority it accepts.
+	 */
 	seniority {
 		public List<String> getKeys(CcpJsonRepresentation resume) {
-			VisSeniorityType seniorityType = getSeniority(resume);
-			String key = seniorityType.name();
-			return List.of(key);
+			List<VisSeniorityType> seniorityTypes = getSeniorities(resume);
+			List<String> keys = new ArrayList<>();
+			for (VisSeniorityType seniorityType : seniorityTypes) {
+				String key = seniorityType.name();
+				keys.add(key);
+			}
+			return keys;
 		}
 	},
 	/** The availability: {@code immediate} (0 days) or {@code notImmediate}. */
@@ -146,10 +153,14 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 				return List.of();
 			}
 
-			VisSeniorityType seniorityType = getSeniority(resume);
+			List<VisSeniorityType> seniorityTypes = getSeniorities(resume);
 			String separator = Values.COMBINATION_SEPARATOR.getValue();
-			String key = seniorityType.name() + separator + contract.name();
-			return List.of(key);
+			List<String> keys = new ArrayList<>();
+			for (VisSeniorityType seniorityType : seniorityTypes) {
+				String key = seniorityType.name() + separator + contract.name();
+				keys.add(key);
+			}
+			return keys;
 		}
 	},
 	/** The CLT salary expectation in ranges (up to 3 thousand, 3 to 6, 6 to 10, 10 to 15, 15 to 20 and over 20); none when not informed. */
@@ -212,17 +223,28 @@ public enum VisResumeStatisticsCharts implements CcpJsonFieldName {
 	/**
 	 * The seniority of the resume: its years of experience (the current year minus the year the experience started)
 	 * classified by {@link VisSeniorityType}; {@code especialista} above every range, {@code estag} without the year. A
-	 * position has no experience: it carries the seniority it asks for, taken as it is.
+	 * position has no experience: it carries the seniorities it accepts, taken as they are (a list since 2026-11-23, a
+	 * single text in the positions saved before).
 	 * @param resume the child of the group of the ddd, parsed
-	 * @return the seniority
+	 * @return the seniorities: one for a resume, one or more for a position
 	 */
-	public static VisSeniorityType getSeniority(CcpJsonRepresentation resume) {
+	public static List<VisSeniorityType> getSeniorities(CcpJsonRepresentation resume) {
 		boolean declaredSeniority = resume.containsAllFields(VisJsonCommonsFields.seniority);
 
 		if(declaredSeniority) {
-			return resume.getAsEnum(VisJsonCommonsFields.seniority, VisSeniorityType.class);
+			return VisSeniorityType.listOf(resume, VisJsonCommonsFields.seniority);
 		}
 
+		VisSeniorityType seniority = getSeniorityOfTheExperience(resume);
+		return List.of(seniority);
+	}
+
+	/**
+	 * The seniority of the years of experience of the resume.
+	 * @param resume the child of the group of the ddd, parsed
+	 * @return the seniority
+	 */
+	private static VisSeniorityType getSeniorityOfTheExperience(CcpJsonRepresentation resume) {
 		boolean noExperience = false == resume.containsAllFields(VisEntityResume.Fields.experience);
 
 		if(noExperience) {

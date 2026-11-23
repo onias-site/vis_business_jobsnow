@@ -121,13 +121,12 @@ public enum VisRecordType {
 		}
 
 		/**
-		 * The seniority the position asks for.
+		 * The seniorities the position accepts (a list since 2026-11-23; a single text in the positions saved before).
 		 * @param json the position
-		 * @return the seniority of the position
+		 * @return the seniorities of the position
 		 */
 		public List<VisSeniorityType> getSeniorities(CcpJsonRepresentation json) {
-			VisSeniorityType seniority = json.getAsEnum(VisJsonCommonsFields.seniority, VisSeniorityType.class);
-			List<VisSeniorityType> seniorities = Arrays.asList(seniority);
+			List<VisSeniorityType> seniorities = VisSeniorityType.listOf(json, VisJsonCommonsFields.seniority);
 			return seniorities;
 		}
 	}

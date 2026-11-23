@@ -134,16 +134,21 @@ public class VisBusinessResumeStatisticsOfTheRegion implements CcpBusiness {
 	}
 
 	/**
-	 * Adds the resume to the averages of its seniority and of all of them.
+	 * Adds the resume to the averages of its seniority and of all of them (a position of several seniorities, since
+	 * 2026-11-23, to the averages of each one, and once to the average of all).
 	 * @param resume the child, parsed
 	 * @param sumsBySeniority receives the sums of the salaries, by seniority
 	 * @param countsBySeniority receives the counts of resumes and of informed salaries, by seniority
 	 */
 	private static void addToTheAverages(CcpJsonRepresentation resume, Map<String, Map<String, Double>> sumsBySeniority, Map<String, Map<String, Long>> countsBySeniority) {
-		VisSeniorityType seniority = VisResumeStatisticsCharts.getSeniority(resume);
-		String seniorityName = seniority.name();
+		List<VisSeniorityType> seniorities = VisResumeStatisticsCharts.getSeniorities(resume);
+		List<String> groups = new ArrayList<>();
+		for (VisSeniorityType seniority : seniorities) {
+			String seniorityName = seniority.name();
+			groups.add(seniorityName);
+		}
 		String allName = Fields.all.name();
-		List<String> groups = List.of(seniorityName, allName);
+		groups.add(allName);
 		double clt = VisResumeStatisticsCharts.getSalary(resume, VisEntityResume.Fields.clt);
 		double pj = VisResumeStatisticsCharts.getSalary(resume, VisEntityResume.Fields.pj);
 		String resumesName = Fields.resumes.name();

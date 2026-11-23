@@ -55,6 +55,16 @@ boolean outOfRange(double value, def range) {
   return false;
 }
 
+// the seniorities of the position (a list since 2026-11-23), each one a range of the years the experience started: the
+// resume needs to be inside any of them; no range informed, no filter
+boolean outOfEveryRange(double value, List ranges) {
+  if (ranges == null || ranges.isEmpty()) { return false; }
+  for (def range : ranges) {
+    if (!outOfRange(value, range)) { return false; }
+  }
+  return true;
+}
+
 // the budgets of the position (since 2026-11-22), each one counting only when filled: the candidate enters when at least
 // one claim informed fits the budget of its type. With both budgets filled, a candidate of CLT only, of PJ only or of both
 // enters with one claim inside its budget, even if the other one is outside; with one budget only, the candidate needs a
@@ -111,7 +121,7 @@ boolean forbidsTheRecruiter(String child, def recruiterDomain) {
 boolean matches(String child, Map filters) {
   if (filters.maxDisponibility != null && numberOf(child, 'disponibility') > filters.maxDisponibility) { return false; }
   if (filters.maxTemporallyJobTime != null && numberOf(child, 'temporallyJobTime') > filters.maxTemporallyJobTime) { return false; }
-  if (outOfRange(numberOf(child, 'experience'), filters.experience)) { return false; }
+  if (outOfEveryRange(numberOf(child, 'experience'), filters.experience)) { return false; }
   if (filters.negotiableClaim == true && !flagOf(child, 'negotiableClaim')) { return false; }
   if (filters.pcd == true && !flagOf(child, 'pcd')) { return false; }
   if (filters.travel == true && !flagOf(child, 'travel')) { return false; }

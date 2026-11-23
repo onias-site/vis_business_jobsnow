@@ -172,8 +172,12 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		resumeType,
 
-		/** The {@code seniority} field: required, one of {@code VisSeniorityType}. */
+		/**
+		 * The {@code seniority} field: required, the seniorities the position accepts, each one of {@code VisSeniorityType}
+		 * (a list since 2026-11-23; the positions saved before keep a single text, read as a list of one).
+		 */
 		@CcpJsonFieldValidatorRequired
+		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 6)
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisSeniorityType.class)
 		seniority,
 

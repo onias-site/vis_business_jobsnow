@@ -47,7 +47,7 @@ import com.vis.json.transformers.VisSeniorityType;
  * <ul>
  * <li>{@code disponibility} and {@code temporallyJobTime}: at most the number informed (0, immediate hiring or no
  * temporary job, does not filter);</li>
- * <li>{@code seniority}: the years of experience of its range ({@link VisSeniorityType});</li>
+ * <li>{@code seniority}: the years of experience of the range of any of the seniorities informed ({@link VisSeniorityType});</li>
  * <li>{@code skill}: every required skill, found in the resume itself or in a skill below it in the hierarchy; a
  * required skill above another required one gives way to it ("backend" and "php" ask for "php");</li>
  * <li>{@code spokenLanguage}: each language, at least in the level asked;</li>
@@ -80,7 +80,11 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		temporallyJobTime,
 
-		/** The seniority of the position: the years of experience of its range. */
+		/**
+		 * The seniorities of the position (a list since 2026-11-23): the resume enters when its years of experience fall in
+		 * the range of any of them.
+		 */
+		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 6)
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisSeniorityType.class)
 		seniority,
 
@@ -281,15 +285,20 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 			return filters;
 		}
 
-		VisSeniorityType seniority = json.getAsEnum(Fields.seniority, VisSeniorityType.class);
+		// one range of the years the experience started per seniority: the map script accepts the resume inside any of them
+		List<VisSeniorityType> seniorities = VisSeniorityType.listOf(json, Fields.seniority);
 		CcpTimeDecorator time = new CcpTimeDecorator();
 		int currentYear = time.getYear();
-		int firstYear = seniority.getFirstExperienceYear(currentYear);
-		int lastYear = seniority.getLastExperienceYear(currentYear);
-		CcpJsonRepresentation range = CcpOtherConstants.EMPTY_JSON
-				.put(SearchFields.min, firstYear)
-				.put(SearchFields.max, lastYear);
-		CcpJsonRepresentation withTheExperience = filters.put(SearchFields.experience, range);
+		List<Map<String, Object>> ranges = new ArrayList<>();
+		for (VisSeniorityType seniority : seniorities) {
+			int firstYear = seniority.getFirstExperienceYear(currentYear);
+			int lastYear = seniority.getLastExperienceYear(currentYear);
+			CcpJsonRepresentation range = CcpOtherConstants.EMPTY_JSON
+					.put(SearchFields.min, firstYear)
+					.put(SearchFields.max, lastYear);
+			ranges.add(range.content);
+		}
+		CcpJsonRepresentation withTheExperience = filters.put(SearchFields.experience, ranges);
 		return withTheExperience;
 	}
 
