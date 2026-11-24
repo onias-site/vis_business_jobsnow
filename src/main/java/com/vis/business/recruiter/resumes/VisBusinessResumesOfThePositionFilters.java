@@ -177,7 +177,10 @@ public class VisBusinessResumesOfThePositionFilters implements CcpBusiness {
 			String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
 			String linkedinHash = VisBusinessSendResumesToRecruiters.getLinkedinHash(linkedinAddress);
 			CcpJsonRepresentation rowWithLinkedin = row.put(VisEntityViewedResume.Fields.linkedin, linkedinHash);
-			rows.add(rowWithLinkedin);
+			// the raw values by which the screen sorts the list in the order the recruiter chose (since 2026-11-24)
+			CcpJsonRepresentation sortValues = VisBusinessResumeSortValues.INSTANCE.execute(resume);
+			CcpJsonRepresentation rowWithSortValues = rowWithLinkedin.put(VisRecruiterResumesFields.sortValues, sortValues);
+			rows.add(rowWithSortValues);
 		}
 		rows.sort(VisResumesBySortKeys.INSTANCE);
 		return rows;

@@ -47,6 +47,8 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	preview,
 	/** The keys used to sort the resumes. */
 	sortKeys,
+	/** The raw values by which the screen sorts the resumes of the position (VisBusinessResumeSortValues). */
+	sortValues,
 	/** The rows of the table. */
 	resumes,
 	/** The table of resumes, as HTML. */
