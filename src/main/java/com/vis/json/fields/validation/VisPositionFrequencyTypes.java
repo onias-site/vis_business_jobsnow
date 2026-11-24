@@ -7,6 +7,8 @@ package com.vis.json.fields.validation;
 public enum VisPositionFrequencyTypes {
 	/** Never. */
 	none,
+	/** Nothing is sent to the recruiter: the matching candidates see the position and send their resumes themselves. */
+	byTheCandidates,
 	/** As soon as a matching resume shows up. */
 	instantly,
 	/** Every hour. */

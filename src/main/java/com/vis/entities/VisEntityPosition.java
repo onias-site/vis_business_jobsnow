@@ -89,7 +89,7 @@ import com.vis.json.transformers.VisSeniorityType;
 		bulkExecutorClass = JnExecuteBulkOperation.class,
 		functionToDeleteKeysInTheCacheClass = JnDeleteKeysFromCache.class
 		)
-// the default values of the fields (mustSendInGroups, mustSendToResumes, visibleToCandidates, frequencyType) go into the record before it is saved
+// the default values of the fields (mustSendInGroups, frequencyType) go into the record before it is saved
 @CcpBeforeSaveFromMainEntity(execute = {VisBusinessPutPositionDefaultValues.class}, operationHandlers = {})
 // one group per hash (each search of the position): the combinations and the list where the save keeps their ids come
 // from the field hash
@@ -105,7 +105,7 @@ import com.vis.json.transformers.VisSeniorityType;
 // JSON text with what the user filled in and the id; the deactivation moves it to the same group of jn_inactive_grouper
 @CcpEntityGrouperChild(value = {JnEntityLoginEmail.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
 		childFields = {"title", "description", "resumeType", "seniority", "ddd", "clt", "pj", "disponibility", "temporallyJobTime", "spokenLanguage", "skill",
-				"negotiableClaim", "pcd", "travel", "expiration", "sort", "contact", "mustSendInGroups", "mustSendToResumes", "visibleToCandidates", "frequencyType", "resumesEmail", "insertionDate"})
+				"negotiableClaim", "pcd", "travel", "expiration", "sort", "contact", "mustSendInGroups", "frequencyType", "resumesEmail", "insertionDate"})
 @CcpEntityGrouperParentCombinations(parent = JnEntityLoginEmail.class, value = VisPositionRecruiterLoginEmailCombinations.class)
 // the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
 @CcpEntityInsertionDate(JnInsertionDateEntity.class)
@@ -258,17 +258,11 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonFieldDefaultValue(defaultStrings = "true")
 		mustSendInGroups,
 
-		/** The {@code mustSendToResumes} field: boolean, {@code true} by default. */
-		@CcpJsonFieldTypeBoolean
-		@CcpJsonFieldDefaultValue(defaultStrings = "true")
-		mustSendToResumes,
-
-		/** The {@code visibleToCandidates} field: boolean, {@code true} by default; whether the candidates can see the position. */
-		@CcpJsonFieldTypeBoolean
-		@CcpJsonFieldDefaultValue(defaultStrings = "true")
-		visibleToCandidates,
-
-		/** The {@code frequencyType} field: one of {@code VisPositionFrequencyTypes}, {@code daily} by default. */
+		/**
+		 * The {@code frequencyType} field: one of {@code VisPositionFrequencyTypes}, {@code daily} by default; how the recruiter
+		 * receives the matching resumes (since 2026-11-23 it also replaces the former {@code visibleToCandidates}: with
+		 * {@code byTheCandidates} the candidates see the position and send their resumes themselves).
+		 */
 		@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionFrequencyTypes.class)
 		@CcpJsonFieldDefaultValue(defaultStrings = "daily")
 		frequencyType,
