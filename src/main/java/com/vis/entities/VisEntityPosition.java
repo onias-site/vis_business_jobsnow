@@ -152,9 +152,9 @@ public class VisEntityPosition implements CcpEntityConfigurator {
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		disponibility,
 
-		/** The {@code ddd} field: required, list, validated as in {@code VisJsonCommonsFields}. */
+		/** The {@code ddd} field: required, list of up to 68 (every ddd plus the home office, the simplified position since 2026-11-24), validated as in {@code VisJsonCommonsFields}. */
 		@CcpJsonFieldValidatorRequired
-		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
+		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 68)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ddd,
 

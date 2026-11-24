@@ -67,8 +67,8 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		resumeType,
 
-		/** The regions: one or more ddds; absent, every ddd (home office position). */
-		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 67)
+		/** The regions: one to 68 ddds (every ddd plus the home office); absent, every ddd (home office position). */
+		@CcpJsonFieldValidatorArray(minSize = 1, maxSize = 68)
 		@CcpJsonCopyFieldValidationsFrom(VisJsonCommonsFields.class)
 		ddd,
 
