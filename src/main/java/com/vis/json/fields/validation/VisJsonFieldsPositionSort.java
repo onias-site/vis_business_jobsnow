@@ -20,5 +20,12 @@ public enum VisJsonFieldsPositionSort implements CcpJsonFieldName {
 	@CcpJsonFieldValidatorArray
 	@CcpJsonFieldTypeString(allowedValuesEnum = VisPositionSortFieldTypes.class)
 	field,
+
+	/**
+	 * The {@code value} field: the name of the language of the criterion {@code spokenLanguage} or of the skill of the
+	 * criterion {@code skill} (since 2026-11-23); absent in the other criteria.
+	 */
+	@CcpJsonFieldTypeString(minLength = 1, maxLength = 100)
+	value,
 	;
 }
