@@ -57,6 +57,20 @@ public enum VisRecruiterResumesTexts implements JnSystemMessage {
 	insertionDate("Data de inserção: {date}", "Added on: {date}"),
 	lastChangeDate("Última alteração: {date}", "Last changed on: {date}"),
 	aliasYears("{years} Anos", "{years} Years"),
+	// the daily publishing of the positions in the groups of instant messages (since 2026-11-24), html of Telegram
+	positionPublishingHeader("<b>ENVIO SEU CURRICULO PARA 2.000 RHS, VAGAS ADERENTES PRA VOCE E SEU CV PRA VAGAS ADERENTES <a href=\"{frontendUrl}/meus-dados/sobre-mim\">BASTA CLICAR AQUI</a></b>",
+			"<b>I SEND YOUR RESUME TO 2,000 RECRUITERS, POSITIONS THAT MATCH YOU AND YOUR RESUME TO THE POSITIONS THAT MATCH IT <a href=\"{frontendUrl}/meus-dados/sobre-mim\">JUST CLICK HERE</a></b>"),
+	positionPublishingFooter("<b>RECRUTADOR, GRATUITAMENTE ENVIO CURRICULOS CONDIZENTES COM A VAGA QUE VOCE CADASTRAR <a href=\"{frontendUrl}/meu-recrutamento/vagas\">BASTA CLICAR AQUI</a></b>",
+			"<b>RECRUITER, FOR FREE I SEND RESUMES THAT MATCH THE POSITION YOU REGISTER <a href=\"{frontendUrl}/meu-recrutamento/vagas\">JUST CLICK HERE</a></b>"),
+	positionPublishingTitle("<b>Vaga: {value}</b>", "<b>Position: {value}</b>"),
+	positionPublishingArea("Área: {value}", "Area: {value}"),
+	positionPublishingSeniority("Senioridades: {value}", "Seniorities: {value}"),
+	positionPublishingRegions("Regiões (DDD): {value}", "Regions (area codes): {value}"),
+	positionPublishingHomeOffice("Home office", "Home office"),
+	positionPublishingContacts("Contatos:", "Contacts:"),
+	positionPublishingContact_whatsapp("WhatsApp: {value}", "WhatsApp: {value}"),
+	positionPublishingContact_email("E-mail: {value}", "E-mail: {value}"),
+	positionPublishingContact_link("Link: {value}", "Link: {value}"),
 	seeAll("Ver todos", "See all"),
 	seeAllParagraph("Estes são os {shown} primeiros de {total} currículos. {seeAllLink}", "These are the first {shown} of {total} resumes. {seeAllLink}"),
 	;
@@ -81,6 +95,7 @@ public enum VisRecruiterResumesTexts implements JnSystemMessage {
 	public static enum Prefixes implements CcpJsonFieldName {
 		seniority_,
 		resumeType_,
+		positionPublishingContact_,
 	}
 
 	/**

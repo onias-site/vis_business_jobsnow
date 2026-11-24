@@ -142,7 +142,7 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 	}
 
 	/** The fields of the search sent to Elasticsearch and of its answer. */
-	static enum SearchFields implements CcpJsonFieldName {
+	public static enum SearchFields implements CcpJsonFieldName {
 		size, query, ids, values, aggs, aggregations, value, params, filters, min, max,
 		maxDisponibility, maxTemporallyJobTime, experience, currentYear,
 		scriptedMetric { public String getValue() { return "scripted_metric"; } },
@@ -257,7 +257,7 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 	 * @param json the input
 	 * @return the filters
 	 */
-	private static CcpJsonRepresentation getFilters(CcpJsonRepresentation json) {
+	static CcpJsonRepresentation getFilters(CcpJsonRepresentation json) {
 		CcpJsonRepresentation filters = CcpOtherConstants.EMPTY_JSON;
 		filters = putPositiveNumber(json, Fields.disponibility, filters, SearchFields.maxDisponibility);
 		filters = putPositiveNumber(json, Fields.temporallyJobTime, filters, SearchFields.maxTemporallyJobTime);

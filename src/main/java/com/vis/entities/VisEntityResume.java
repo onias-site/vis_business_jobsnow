@@ -74,6 +74,7 @@ import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
 import com.vis.business.resume.VisBusinessDeleteTheViewersOfTheDeletedResume;
 import com.vis.business.resume.VisBusinessReleaseResumeRestriction;
 import com.vis.business.resume.VisBusinessResumeLinkedinOwner;
+import com.vis.business.recruiter.resumes.VisBusinessSendTheResumeToTheInstantPositions;
 import com.vis.business.resume.VisBusinessResumeLinkedinRelease;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsSkills;
@@ -134,7 +135,8 @@ import com.vis.messages.VisMessages;
 @CcpEntityVersionable(JnVersionableEntity.class)
 @CcpEntityVersionablePurge(JnVersionablePurgeEntity.class)
 @CcpEntityFieldsValidator(VisEntityResume.Fields.class)
-@CcpAfterSaveFromMainEntity(execute = {VisBusinessResumeLinkedinOwner.class}, operationHandlers = {})
+// since 2026-11-24 the save also sends the resume to the positions that receive their resumes instantly and that it satisfies
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessResumeLinkedinOwner.class, VisBusinessSendTheResumeToTheInstantPositions.class}, operationHandlers = {})
 // an update of the resume, active or inactive, only passes with every field valid: it releases the restriction (since 2026-11-12)
 @CcpAfterUpdateFromMainEntity(execute = {VisBusinessReleaseResumeRestriction.class}, operationHandlers = {})
 @CcpAfterUpdateFromTwinEntity(execute = {VisBusinessReleaseResumeRestriction.class}, operationHandlers = {})

@@ -59,6 +59,8 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 import com.vis.json.transformers.VisPositionHashCombinations;
 import com.vis.json.transformers.VisPositionRecruiterLoginEmailCombinations;
 import com.vis.json.transformers.VisPositionSalaryChildField;
+import com.vis.json.transformers.VisPositionPublishingBotChildField;
+import com.vis.json.transformers.VisPositionPublishingDayCombinations;
 import com.vis.json.transformers.VisResumeDddCombinations;
 import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
 import com.vis.json.transformers.VisSeniorityType;
@@ -117,7 +119,13 @@ import com.vis.json.transformers.VisSeniorityType;
 // how many active positions list each ddd now: the totals of the folders of the screen Supply X Demand
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualDddCounter.class}, counterKeyClass = VisDddCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddCounter.class, value = VisDddCounterCombinations.class)
-public class VisEntityPosition implements CcpEntityConfigurator {
+// one group per day of publishing in the groups of instant messages (since 2026-11-24): every day of the validity of a
+// position with mustSendInGroups; the child is the title and the recruiter (the primary key that reads the position back)
+// and the bot that publishes it, read by the process of 10:00 in the group of the day
+@CcpEntityGrouperChild(value = {VisEntityVirtualPositionPublishingDay.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
+		childFields = {"title", "recruiter"},
+		childFieldsProducers = {VisPositionPublishingBotChildField.class})
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualPositionPublishingDay.class, value = VisPositionPublishingDayCombinations.class)public class VisEntityPosition implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntityPosition INSTANCE = new VisEntityPosition();
 

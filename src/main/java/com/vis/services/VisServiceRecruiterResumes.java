@@ -28,6 +28,7 @@ import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
 import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
 import com.vis.entities.VisEntityInvalidLinkedinReport;
 import com.vis.entities.VisEntityRecruiter;
+import com.vis.entities.VisEntityPositionResumes;
 import com.vis.entities.VisEntityRecruiterResumes;
 import com.vis.entities.VisEntityRecruiterUnsubscribed;
 import com.vis.entities.VisEntityResume;
@@ -210,6 +211,24 @@ public enum VisServiceRecruiterResumes implements JnService {
 			CcpJsonRepresentation recruiterResumes = VisEntityRecruiterResumes.ENTITY.getOneById(recruiter);
 			List<CcpJsonRepresentation> resumes = recruiterResumes.getAsJsonList(VisEntityRecruiterResumes.Fields.resumes);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterResumes.Fields.resumes, resumes);
+			return response;
+		}
+	},
+	/**
+	 * Every resume of the last e-mail of a position (link "see all" of the e-mails "{n} Cvs recebidos para a vaga", since
+	 * 2026-11-24): the list written before the e-mail went out, read by id (the e-mail that receives the resumes of the
+	 * position and its title).
+	 */
+	GetResumesOfThePosition{
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			String email = json.getAsString(JnJsonCommonsFields.email);
+			String title = json.getAsString(VisEntityPositionResumes.Fields.title);
+			CcpJsonRepresentation positionKey = CcpOtherConstants.EMPTY_JSON
+					.put(VisEntityPositionResumes.Fields.email, email)
+					.put(VisEntityPositionResumes.Fields.title, title);
+			CcpJsonRepresentation positionResumes = VisEntityPositionResumes.ENTITY.getOneById(positionKey);
+			List<CcpJsonRepresentation> resumes = positionResumes.getAsJsonList(VisEntityPositionResumes.Fields.resumes);
+			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityPositionResumes.Fields.resumes, resumes);
 			return response;
 		}
 	},

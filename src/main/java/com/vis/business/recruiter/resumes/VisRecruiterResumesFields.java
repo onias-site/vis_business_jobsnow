@@ -139,4 +139,8 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	weekend,
 	/** The secret of the signature of the links of the e-mail, in the system properties. */
 	recruiterLinksSecret,
+	/** The title of the position whose resumes the e-mail sends (since 2026-11-24). */
+	positionTitle,
+	/** How the position receives its resumes ({@code VisPositionFrequencyTypes}), in the e-mails of the positions. */
+	frequencyType,
 }

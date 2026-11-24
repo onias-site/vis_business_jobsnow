@@ -379,6 +379,47 @@ public class VisMessages {
 	}
 
 	/**
+	 * Sends the recruiter of a position that receives its resumes instantly the resume just saved that matches it ("Cv
+	 * recebido para a vaga", since 2026-11-24). Repeatable: one position receives several resumes a day, and what keeps
+	 * each pair once is {@code vis_position_resume_sent}.
+	 */
+	public static class VisNotifyRecruiterAboutResumeOfThePosition implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyRecruiterAboutResumeOfThePosition INSTANCE = new VisNotifyRecruiterAboutResumeOfThePosition();
+
+		private VisNotifyRecruiterAboutResumeOfThePosition() {}
+
+		/**
+		 * The values of the template are already in the json.
+		 * @param json the values of the e-mail
+		 * @return the same json
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			return json;
+		}
+	}
+
+	/**
+	 * Sends the recruiter of a position that receives its resumes hourly, daily or weekly the resumes that match it saved in
+	 * the period, in the order of the position ("{n} Cvs recebidos para a vaga", since 2026-11-24). Repeatable: a recruiter
+	 * with several positions, or a position of the hourly frequency, receives several e-mails a day.
+	 */
+	public static class VisNotifyRecruiterAboutResumesOfThePosition implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyRecruiterAboutResumesOfThePosition INSTANCE = new VisNotifyRecruiterAboutResumesOfThePosition();
+
+		private VisNotifyRecruiterAboutResumesOfThePosition() {}
+
+		/**
+		 * The values of the template are already in the json.
+		 * @param json the values of the e-mail
+		 * @return the same json
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			return json;
+		}
+	}
+	/**
 	 * Invites a candidate of the legacy index to register the resume in the new form, with a preview of how the recruiters
 	 * will see it. Sent once to each candidate, by a process that runs only at the deploy. Repeatable for the "already sent"
 	 * rule, which lasts a day: what keeps it once is the record of that process, and a simulation must not refuse the sending.

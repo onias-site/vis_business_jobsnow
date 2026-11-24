@@ -36,6 +36,9 @@ import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterFirstEmail;
 import com.vis.entities.VisEntityRecruiterQueueCursor;
 import com.vis.entities.VisEntityRecruiterResumes;
+import com.vis.entities.VisEntityPosition;
+import com.vis.business.position.VisBusinessActivePositionsOfTheFrequency;
+import com.vis.json.fields.validation.VisPositionFrequencyTypes;
 import com.vis.entities.VisEntityRecruiterSignUpReturn;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeRestriction;
@@ -212,6 +215,10 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		List<CcpJsonRepresentation> recruiters = getRecruiters();
 		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
 		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun, lastNonProfessionalPositionOfTheLastRun, lastLegacyActivePositionOfTheLastRun);
+		// who already receives the resumes of an active position (instantly, hourly, daily or weekly) does not receive this
+		// e-mail of every recent resume (since 2026-11-24)
+		Set<String> recruitersWithPositions = getRecruitersWithPositions();
+		recruitersInOrder.removeIf(recruiter -> recruitersWithPositions.contains(recruiter.getAsString(VisEntityRecruiter.Fields.email).toLowerCase()));
 		recruitersInOrder.forEach(sendToTheRecruiter);
 		saveLastQueuePosition(generalQueue, restrictedTo, lastPositionOfTheLastRun, lastQueuePosition[0]);
 		saveLastQueuePosition(legacyQueue, restrictedTo, lastLegacyPositionOfTheLastRun, lastLegacyQueuePosition[0]);
@@ -795,7 +802,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * (since 2026-11-12): the screen reads the list of the account logged in, and when it is another one (a browser
 	 * already logged in with another account) the screen asks for the login of the recipient instead of opening empty.
 	 */
-	private static String getSeeAll(int shown, int total, String seeAllUrl) {
+	static String getSeeAll(int shown, int total, String seeAllUrl) {
 		boolean everyResumeFits = shown >= total;
 		if(everyResumeFits) {
 			return "";
@@ -983,10 +990,29 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/**
+	 * The e-mails (in lower case) that receive the resumes of an active position: the {@code resumesEmail} of the positions
+	 * not expired whose frequency sends resumes.
+	 */
+	static Set<String> getRecruitersWithPositions() {
+		List<String> frequencies = List.of(VisPositionFrequencyTypes.instantly.name(), VisPositionFrequencyTypes.hourly.name(),
+				VisPositionFrequencyTypes.daily.name(), VisPositionFrequencyTypes.weekly.name());
+		CcpJsonRepresentation positionsInput = CcpOtherConstants.EMPTY_JSON.put(VisBusinessActivePositionsOfTheFrequency.Fields.frequencyType, frequencies);
+		CcpJsonRepresentation positionsOutput = VisBusinessActivePositionsOfTheFrequency.INSTANCE.execute(positionsInput);
+		List<CcpJsonRepresentation> positions = positionsOutput.getAsJsonList(VisBusinessActivePositionsOfTheFrequency.Fields.positions);
+		Set<String> emails = new HashSet<>();
+		for (CcpJsonRepresentation position : positions) {
+			String email = position.getOrDefault(VisEntityPosition.Fields.resumesEmail, () -> "");
+			String lowerCaseEmail = email.toLowerCase();
+			emails.add(lowerCaseEmail);
+		}
+		return emails;
+	}
+
+	/**
 	 * The primary keys of the records of an entity written since the given time, read from the history: the
 	 * {@code json} of each version written since then.
 	 */
-	private static Set<String> getRecordsChangedSince(String entityName, long since, CcpJsonFieldName keyField) {
+	static Set<String> getRecordsChangedSince(String entityName, long since, CcpJsonFieldName keyField) {
 		Set<String> keys = new LinkedHashSet<>();
 		Consumer<CcpJsonRepresentation> keepTheKey = new VisHistoryKeyCollector(keys, keyField);
 		JnVersionableHistory.consumeVersions(entityName, since, keepTheKey);
@@ -997,7 +1023,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * The stored resumes of the given e-mails (hashes); the inactive ones are not in {@code vis_resume}, and the ones with
 	 * {@code invalidLinkedinAddress} or with a restriction to correct ({@code vis_resume_restriction}) are left out.
 	 */
-	private static List<CcpJsonRepresentation> getResumes(Set<String> emailHashes) {
+	static List<CcpJsonRepresentation> getResumes(Set<String> emailHashes) {
 		CcpQueryOptions query = CcpQueryOptions.INSTANCE
 				.startQuery()
 					.startBool()
@@ -1037,7 +1063,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/** The oldest (added) and the newest (last change) times of each resume in the history, by the hash of its e-mail. */
-	private static Map<String, long[]> getResumeDates(Set<String> emailHashes) {
+	static Map<String, long[]> getResumeDates(Set<String> emailHashes) {
 		String resumeEntityName = VisEntityResume.ENTITY.getEntityMetaData().entityName;
 		Map<String, long[]> dates = new HashMap<>();
 		Consumer<CcpJsonRepresentation> keepTheDates = new VisHistoryResumeDatesCollector(dates);
@@ -1050,7 +1076,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * The last view of each pair recruiter + resume and of each recruiter, from the history of {@code vis_viewed_resume}
 	 * (the keys are the hashes of the e-mail of the recruiter and of the LinkedIn of the resume).
 	 */
-	private static void loadViews(Map<String, Long> lastViewByPair, Map<String, Long> lastViewByRecruiter) {
+	static void loadViews(Map<String, Long> lastViewByPair, Map<String, Long> lastViewByRecruiter) {
 		String viewedResumeEntityName = VisEntityViewedResume.ENTITY.getEntityMetaData().entityName;
 		String separator = Constants.SEPARATOR.getValue();
 		Consumer<CcpJsonRepresentation> keepTheLastView = new VisHistoryLastViewCollector(lastViewByPair, lastViewByRecruiter, separator);
@@ -1058,7 +1084,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/** The alias of each pair recruiter + resume, by the same key of {@link #loadViews(Map, Map)}. */
-	private static Map<String, String> getAliases() {
+	static Map<String, String> getAliases() {
 		Map<String, String> aliasByPair = new HashMap<>();
 		String separator = Constants.SEPARATOR.getValue();
 		Consumer<CcpJsonRepresentation> keepTheAlias = new VisViewedResumeAliasCollector(aliasByPair, separator);
@@ -1072,7 +1098,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * The pairs recruiter + resume of the twin {@code vis_inactive_viewed_resume}, by the same key of
 	 * {@link #loadViews(Map, Map)}: the resumes that no longer go to each recruiter.
 	 */
-	private static Set<String> getInactivePairs() {
+	static Set<String> getInactivePairs() {
 		Set<String> inactivePairs = new LinkedHashSet<>();
 		String separator = Constants.SEPARATOR.getValue();
 		Consumer<CcpJsonRepresentation> keepThePair = new VisInactiveViewedResumePairCollector(inactivePairs, separator);
@@ -1084,7 +1110,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/** The addresses of the front end and of the API of vis, kept in the sending parameters of the e-mail. */
-	private static CcpJsonRepresentation getLinkAddresses() {
+	public static CcpJsonRepresentation getLinkAddresses() {
 		String templateId = VisMessages.VisNotifyRecruiterAboutResumes.class.getName();
 		CcpJsonRepresentation parametersId = CcpOtherConstants.EMPTY_JSON.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation parameters = JnEntityEmailParametersToSend.ENTITY.getOneById(parametersId);

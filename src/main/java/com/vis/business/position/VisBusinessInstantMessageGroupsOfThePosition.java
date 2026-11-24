@@ -106,7 +106,9 @@ public class VisBusinessInstantMessageGroupsOfThePosition implements CcpBusiness
 			groups.add(group);
 		}
 		groups.sort(Comparator.comparing(group -> group.getAsString(VisEntityInstantMessageGroup.Fields.title)));
-		CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(Fields.groups, groups);
+		// the chats themselves, for the daily publishing of the positions in the groups (since 2026-11-24)
+		List<Object> chatIds = new ArrayList<>(chats);
+		CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(Fields.groups, groups).put(VisEntityPositionInstantMessageGroup.Fields.chatId, chatIds);
 		return response;
 	}
 }
