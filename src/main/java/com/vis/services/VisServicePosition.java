@@ -8,6 +8,7 @@ import com.vis.business.position.VisBusinessEditPosition;
 import com.vis.business.position.VisBusinessInactivatePosition;
 import com.vis.business.position.VisBusinessReactivatePosition;
 import com.vis.business.position.VisBusinessResumesOfTheFilters;
+import com.vis.business.position.VisBusinessInstantMessageGroupsOfThePosition;
 import com.vis.business.position.VisPositionKeyFields;
 import com.vis.business.position.VisPositionOfTheRecruiterFields;
 
@@ -88,6 +89,18 @@ public enum VisServicePosition implements JnService {
 
 		public Class<?> getJsonValidationClass() {
 			return VisBusinessResumesOfTheFilters.Fields.class;
+		}
+	},
+
+	/** The modal of the groups of the position form: the instant message groups of its seniorities, area and ddds. */
+	GetInstantMessageGroups {
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessInstantMessageGroupsOfThePosition.INSTANCE.execute(json);
+			return response;
+		}
+
+		public Class<?> getJsonValidationClass() {
+			return VisBusinessInstantMessageGroupsOfThePosition.Fields.class;
 		}
 	},
 	;
