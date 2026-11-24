@@ -21,6 +21,7 @@ import com.vis.business.resume.VisBusinessChangeResumeStatusOncePerDay;
 import com.vis.business.resume.VisBusinessDeleteResumeAndSpendTheDay;
 import com.vis.business.resume.VisBusinessRefuseResumeNotFound;
 import com.vis.business.resume.VisBusinessRefuseResumeUpdateAlreadyRunToday;
+import com.vis.business.position.VisBusinessPositionsOfTheResume;
 import com.vis.business.resume.VisBusinessResumeViewersOfTheMonth;
 import com.vis.business.resume.VisBusinessSaveResumeAndSpendTheUpdate;
 import com.vis.entities.VisEntityResume;
@@ -279,6 +280,26 @@ public enum VisServiceResume implements JnService {
 		 */
 		public Class<?> getJsonValidationClass() {
 			return VisBusinessResumeViewersOfTheMonth.Fields.class;
+		}
+	},
+	/** The positions open to the candidates that the resume of the candidate logged in satisfies (screen "Minhas vagas"). */
+	GetPositions{
+		/**
+		 * Lists the positions of the resume.
+		 * @param json the candidate
+		 * @return the positions, with the fields shown to the candidate
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessPositionsOfTheResume.INSTANCE.execute(json);
+			return response;
+		}
+
+		/**
+		 * Validates the input with the fields of the business.
+		 * @return the validation class
+		 */
+		public Class<?> getJsonValidationClass() {
+			return VisBusinessPositionsOfTheResume.Fields.class;
 		}
 	},
 	;
