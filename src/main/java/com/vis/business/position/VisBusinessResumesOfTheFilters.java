@@ -42,8 +42,8 @@ import com.vis.json.transformers.VisSeniorityType;
  * of the area (resumeType) in the regions of the position (every region when it is home office), filtered by a Painless
  * script inside Elasticsearch, so the resumes themselves never leave it. The groups of {@code jn_grouper} of each ddd
  * and area ({@code vis_virtual_ddd_resume_type_grouper}) are read by id (MGIE) and a scripted metric keeps the resumes
- * that pass every filter informed, once each by their id. The answer is the set of ids (SHA-1 of the e-mail), its size
- * and the averages of the CLT and PJ claims of those resumes. The filters left out (or unchecked) do not filter:
+ * that pass every filter informed, once each by their id. The answer is the set of ids (SHA-1 of the e-mail), its size and
+ * the averages of the CLT and PJ claims and of the years of experience of those resumes. The filters left out (or unchecked) do not filter:
  * <ul>
  * <li>{@code disponibility} and {@code temporallyJobTime}: at most the number informed (0, immediate hiring or no
  * temporary job, does not filter);</li>
@@ -133,12 +133,18 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 
 		/** The output: the average PJ claim of the resumes found that informed it; absent when none did. */
 		pjAverage,
+
+		/**
+		 * The output (since 2026-11-23): the average years of experience of the resumes found that informed the year it
+		 * started; absent when none did.
+		 */
+		experienceAverage,
 	}
 
 	/** The fields of the search sent to Elasticsearch and of its answer. */
 	static enum SearchFields implements CcpJsonFieldName {
 		size, query, ids, values, aggs, aggregations, value, params, filters, min, max,
-		maxDisponibility, maxTemporallyJobTime, experience,
+		maxDisponibility, maxTemporallyJobTime, experience, currentYear,
 		scriptedMetric { public String getValue() { return "scripted_metric"; } },
 		initScript { public String getValue() { return "init_script"; } },
 		mapScript { public String getValue() { return "map_script"; } },
@@ -164,7 +170,7 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 	/**
 	 * Runs the filters over the groups of the regions and of the area of the position.
 	 * @param json the filters
-	 * @return the ids, their size and the averages of the claims
+	 * @return the ids, their size and the averages of the claims and of the experience
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		List<String> groupIds = getGroupIds(json);
@@ -194,7 +200,8 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 				.put(Fields.resumes, resumes);
 		CcpJsonRepresentation withCltAverage = value.containsAllFields(Fields.cltAverage) ? response.put(Fields.cltAverage, value.getAsDoubleNumber(Fields.cltAverage)) : response;
 		CcpJsonRepresentation withPjAverage = value.containsAllFields(Fields.pjAverage) ? withCltAverage.put(Fields.pjAverage, value.getAsDoubleNumber(Fields.pjAverage)) : withCltAverage;
-		return withPjAverage;
+		CcpJsonRepresentation withExperienceAverage = value.containsAllFields(Fields.experienceAverage) ? withPjAverage.put(Fields.experienceAverage, value.getAsDoubleNumber(Fields.experienceAverage)) : withPjAverage;
+		return withExperienceAverage;
 	}
 
 	/**
@@ -206,7 +213,12 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 	private static CcpJsonRepresentation getSearch(List<String> groupIds, CcpJsonRepresentation filters) {
 		CcpJsonRepresentation ids = CcpOtherConstants.EMPTY_JSON.put(SearchFields.values, groupIds);
 		CcpJsonRepresentation query = CcpOtherConstants.EMPTY_JSON.put(SearchFields.ids, ids);
-		CcpJsonRepresentation params = CcpOtherConstants.EMPTY_JSON.put(SearchFields.filters, filters);
+		// the current year turns the year the experience started into the years of experience of the average
+		CcpTimeDecorator time = new CcpTimeDecorator();
+		int currentYear = time.getYear();
+		CcpJsonRepresentation params = CcpOtherConstants.EMPTY_JSON
+				.put(SearchFields.filters, filters)
+				.put(SearchFields.currentYear, currentYear);
 		String initScript = readScript(SearchFields.initScriptFile);
 		String mapScript = readScript(SearchFields.mapScriptFile);
 		String combineScript = readScript(SearchFields.combineScriptFile);

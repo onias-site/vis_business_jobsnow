@@ -1,5 +1,6 @@
 // joins the resumes of every shard (a resume listed by several ddds counts once, by its id) and averages the salaries
-// of the ones that informed them
+// and (since 2026-11-23) the years of experience of the ones that informed them: the years are the current year (a
+// parameter) minus the year the experience started, never negative
 Map resumes = new HashMap();
 for (def shardResumes : states) {
   if (shardResumes != null) { resumes.putAll(shardResumes); }
@@ -8,13 +9,17 @@ double cltTotal = 0;
 int cltCount = 0;
 double pjTotal = 0;
 int pjCount = 0;
-for (def salaries : resumes.values()) {
-  if (salaries[0] > 0) { cltTotal += salaries[0]; cltCount++; }
-  if (salaries[1] > 0) { pjTotal += salaries[1]; pjCount++; }
+double experienceTotal = 0;
+int experienceCount = 0;
+for (def values : resumes.values()) {
+  if (values[0] > 0) { cltTotal += values[0]; cltCount++; }
+  if (values[1] > 0) { pjTotal += values[1]; pjCount++; }
+  if (values.size() > 2 && values[2] > 0) { experienceTotal += Math.max(0, params.currentYear - values[2]); experienceCount++; }
 }
 Map result = new HashMap();
 result.put('ids', new ArrayList(resumes.keySet()));
 result.put('resumes', resumes.size());
 if (cltCount > 0) { result.put('cltAverage', cltTotal / cltCount); }
 if (pjCount > 0) { result.put('pjAverage', pjTotal / pjCount); }
+if (experienceCount > 0) { result.put('experienceAverage', experienceTotal / experienceCount); }
 return result;
