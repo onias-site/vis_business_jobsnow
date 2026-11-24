@@ -7,8 +7,10 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.especifications.db.crud.CcpGetEntityId;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.process.CcpProcessStatusDefault;
+import com.jn.entities.JnEntityEmailSuppressed;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.entities.VisEntityPosition;
+import com.vis.status.VisProcessStatusSavePosition;
 
 /**
  * "Editar" of the screen "Meu Recrutamento - Vagas": saves again a position of the logged-in user with what they
@@ -38,10 +40,14 @@ public class VisBusinessEditPosition implements CcpBusiness {
 		CcpJsonRepresentation position = VisPositionOfTheRecruiter.fromInput(json);
 		CcpJsonRepresentation key = VisPositionOfTheRecruiter.getKey(json);
 		CcpBusiness save = new VisBusinessSavePosition(position);
+		// the e-mail that receives the resumes, as the key of the suppressions; absent (frequency none), the step is skipped
+		CcpJsonRepresentation resumesEmail = json.getJsonPiece(VisPositionOfTheRecruiterFields.resumesEmail);
+		CcpJsonRepresentation suppressionKey = resumesEmail.renameField(VisPositionOfTheRecruiterFields.resumesEmail, JnEntityEmailSuppressed.Fields.email);
 
-		new CcpGetEntityId(key)
+		new CcpGetEntityId(key, suppressionKey)
 		.toBeginProcedureAnd()
 			.ifThisIdIsNotPresentInEntity(VisEntityPosition.ENTITY).returnStatus(CcpProcessStatusDefault.NOT_FOUND).and()
+			.ifThisIdIsPresentInEntity(JnEntityEmailSuppressed.ENTITY).returnStatus(VisProcessStatusSavePosition.suppressedEmail).and()
 			.executeAction(save)
 			.andFinallyReturningTheseFields(ProcedureFields.inexistentField)
 		.endThisProcedure(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
