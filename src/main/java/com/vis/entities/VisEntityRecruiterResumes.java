@@ -219,7 +219,6 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "<p><strong><a href=\"" + resumeFormLink + "\" target=\"_blank\">Cadastrar meu currículo</a></strong></p>"
 				+ "<p>No cadastro, você também pode informar as empresas para as quais não quer que o seu currículo seja enviado.</p>"
 				+ PreviewPieces.PREVIEW_PORTUGUESE.getValue()
-				+ "<p>Este convite é único: se você não se cadastrar, não enviaremos outro e-mail sobre este assunto.</p>"
 				+ JnEmailFooter.portuguese.getValue()
 				+ "</body></html>";
 		String englishMessage = "<html><head>" + css + "</head><body>"
@@ -229,7 +228,6 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				+ "<p><strong><a href=\"" + resumeFormLink + "\" target=\"_blank\">Register my resume</a></strong></p>"
 				+ "<p>In the form, you can also list the companies you do not want your resume to be sent to.</p>"
 				+ PreviewPieces.PREVIEW_ENGLISH.getValue()
-				+ "<p>This invitation is a one-off: if you do not register, we will not send another e-mail about it.</p>"
 				+ JnEmailFooter.english.getValue()
 				+ "</body></html>";
 
