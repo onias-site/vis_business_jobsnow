@@ -89,6 +89,13 @@ public enum VisPositionSortFieldTypes {
 			boolean hasTheSkill = skills.contains(criterionValue);
 			return hasTheSkill ? 1 : 0;
 		}
+	},
+	/** By the lowest ddd of the resume other than the home office (since 2026-11-24); only the home office goes to the end. */
+	ddd {
+		public double getValue(CcpJsonRepresentation sortValues, String criterionValue, Set<String> desiredSkills) {
+			double value = getNumberOrMissing(sortValues, VisJsonCommonsFields.ddd);
+			return value;
+		}
 	}
 	;
 

@@ -48,7 +48,20 @@ public class VisPositionOfTheRecruiter {
 	 * @return the position, only with the fields of the entity, the recruiter as the e-mail
 	 */
 	public static CcpJsonRepresentation fromStored(CcpJsonRepresentation jsonOfTheProcedure, String email) {
-		CcpJsonRepresentation stored = jsonOfTheProcedure.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntityPosition.ENTITY);
+		CcpJsonRepresentation position = fromStored(jsonOfTheProcedure, email, VisEntityPosition.ENTITY);
+		return position;
+	}
+
+	/**
+	 * The stored position found by a presence check in the given side ({@code vis_position} or the twin
+	 * {@code vis_inactive_position}), ready to be written again.
+	 * @param jsonOfTheProcedure the json of the procedure, holding the stored position under {@code _entities}
+	 * @param email the e-mail of the logged-in user
+	 * @param side the entity of the presence check
+	 * @return the position, only with the fields of the entity, the recruiter as the e-mail
+	 */
+	public static CcpJsonRepresentation fromStored(CcpJsonRepresentation jsonOfTheProcedure, String email, CcpEntity side) {
+		CcpJsonRepresentation stored = jsonOfTheProcedure.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, side);
 		VisEntityPosition.Fields[] fields = VisEntityPosition.Fields.values();
 		CcpJsonRepresentation storedFields = stored.getJsonPiece(fields);
 		CcpJsonRepresentation position = storedFields.put(VisEntityPosition.Fields.recruiter, email);

@@ -2,6 +2,7 @@ package com.vis.business.recruiter.resumes;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.Set;
 
 import com.ccp.business.CcpBusiness;
@@ -18,7 +19,8 @@ import com.vis.json.fields.validation.VisResumeSkillCategories;
  * (since 2026-11-24), in the order the recruiter chose there: the browser sorts the list it already has, so changing the
  * order needs no new request. The claims (absent when the resume has none), the years of experience, the days to start,
  * the months of temporary job, the level of each language ({@code {name: level}}), the skills the candidate wrote and the
- * skills above them in the hierarchy (a desirable skill of the position counts when it is in either list).
+ * skills above them in the hierarchy (a desirable skill of the position counts when it is in either list) and, since
+ * 2026-11-24, the lowest ddd of the resume other than the home office (absent when the resume has only the home office).
  */
 public class VisBusinessResumeSortValues implements CcpBusiness {
 
@@ -30,6 +32,9 @@ public class VisBusinessResumeSortValues implements CcpBusiness {
 
 	/** The single instance: the class keeps no state. */
 	public static final VisBusinessResumeSortValues INSTANCE = new VisBusinessResumeSortValues();
+
+	/** The ddd of the home office, which is no region and does not count in the lowest ddd. */
+	private static final double HOME_OFFICE_DDD = 10;
 
 	private VisBusinessResumeSortValues() {}
 
@@ -50,7 +55,20 @@ public class VisBusinessResumeSortValues implements CcpBusiness {
 				.put(VisEntityResume.Fields.spokenLanguage, languages)
 				.put(VisEntityResume.Fields.skill, writtenSkillsList)
 				.put(Fields.parentSkill, parentSkillsList);
-		return sortValues;
+		CcpJsonRepresentation sortValuesWithDdd = putLowestDdd(sortValues, resume);
+		return sortValuesWithDdd;
+	}
+
+	private static CcpJsonRepresentation putLowestDdd(CcpJsonRepresentation sortValues, CcpJsonRepresentation resume) {
+		List<String> ddds = resume.getAsStringList(VisEntityResume.Fields.ddd);
+		OptionalDouble lowestDdd = ddds.stream().mapToDouble(Double::parseDouble).filter(ddd -> ddd != HOME_OFFICE_DDD).min();
+		boolean onlyHomeOffice = lowestDdd.isEmpty();
+		if(onlyHomeOffice) {
+			return sortValues;
+		}
+		double ddd = lowestDdd.getAsDouble();
+		CcpJsonRepresentation sortValuesWithDdd = sortValues.put(VisEntityResume.Fields.ddd, ddd);
+		return sortValuesWithDdd;
 	}
 
 	private static CcpJsonRepresentation getLanguageLevels(CcpJsonRepresentation resume) {

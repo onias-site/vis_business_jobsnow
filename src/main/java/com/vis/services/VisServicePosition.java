@@ -7,6 +7,7 @@ import com.vis.business.position.VisBusinessDeletePosition;
 import com.vis.business.position.VisBusinessEditPosition;
 import com.vis.business.position.VisBusinessInactivatePosition;
 import com.vis.business.position.VisBusinessReactivatePosition;
+import com.vis.business.position.VisBusinessRestorePosition;
 import com.vis.business.position.VisBusinessResumesOfTheFilters;
 import com.vis.business.position.VisBusinessInstantMessageGroupsOfThePosition;
 import com.vis.business.position.VisPositionKeyFields;
@@ -14,7 +15,8 @@ import com.vis.business.position.VisPositionOfTheRecruiterFields;
 
 /**
  * The positions of the logged-in user (screen "Meu Recrutamento - Vagas", since 2026-11-21): create, edit, delete
- * (move to the twin), inactivate (expire one minute before now) and reactivate (a new end of the expiration). The list
+ * (move to the twin), inactivate (expire one minute before now), reactivate (a new end of the expiration) and restore (back from the twin, since
+ * 2026-11-24). The list
  * of the screen is the group of the e-mail of the user in {@code jn_grouper}, read by id through the endpoint of the
  * groups of js. Every write is asynchronous and every presence check is one read by id.
  */
@@ -77,6 +79,18 @@ public enum VisServicePosition implements JnService {
 
 		public Class<?> getJsonValidationClass() {
 			return VisBusinessReactivatePosition.Fields.class;
+		}
+	},
+
+	/** "Restaurar": a deleted position of the user goes back, valid for one week; an unknown title answers 404. */
+	RestorePosition {
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessRestorePosition.INSTANCE.execute(json);
+			return response;
+		}
+
+		public Class<?> getJsonValidationClass() {
+			return VisPositionKeyFields.class;
 		}
 	},
 
