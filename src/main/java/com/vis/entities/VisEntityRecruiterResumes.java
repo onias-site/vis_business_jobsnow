@@ -169,11 +169,11 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 				.put(JnJsonCommonsFields.templateId, templateId);
 		CcpJsonRepresentation portugueseTemplate = templateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.portuguese)
-				.put(JnJsonCommonsFields.subject, "[DE GRAÇA!!!] " + totalOfResumes + " currículos de " + topSkills + " e mais outras " + otherSkills + " habilidades gratuitos pra você!!!")
+				.put(JnJsonCommonsFields.subject, totalOfResumes + " currículos de " + topSkills + " e mais outras " + otherSkills + " habilidades gratuitos pra você!!!")
 				.put(JnJsonCommonsFields.message, portugueseMessage);
 		CcpJsonRepresentation englishTemplate = templateWithTemplateId
 				.put(JnJsonCommonsFields.language, JnLanguage.english)
-				.put(JnJsonCommonsFields.subject, "[FOR FREE!!!] " + totalOfResumes + " resumes of " + topSkills + " and " + otherSkills + " other skills for free for you!!!")
+				.put(JnJsonCommonsFields.subject, totalOfResumes + " resumes of " + topSkills + " and " + otherSkills + " other skills for free for you!!!")
 				.put(JnJsonCommonsFields.message, englishMessage);
 
 		String sender = Parameters.SENDER.getValue();
