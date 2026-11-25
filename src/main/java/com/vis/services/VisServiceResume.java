@@ -22,6 +22,7 @@ import com.vis.business.resume.VisBusinessDeleteResumeAndSpendTheDay;
 import com.vis.business.resume.VisBusinessRefuseResumeNotFound;
 import com.vis.business.resume.VisBusinessRefuseResumeUpdateAlreadyRunToday;
 import com.vis.business.position.VisBusinessPositionsOfTheResume;
+import com.vis.business.position.VisBusinessRegisterInterestInThePosition;
 import com.vis.business.resume.VisBusinessResumeViewersOfTheMonth;
 import com.vis.business.resume.VisBusinessSaveResumeAndSpendTheUpdate;
 import com.vis.entities.VisEntityResume;
@@ -300,6 +301,25 @@ public enum VisServiceResume implements JnService {
 		 */
 		public Class<?> getJsonValidationClass() {
 			return VisBusinessPositionsOfTheResume.Fields.class;
+		}
+	},
+	RegisterInterestInThePosition{
+		/**
+		 * Registers the interest of the candidate in a position: the resume goes to the recruiter at the next full hour.
+		 * @param json the candidate and the id of the position
+		 * @return the hour of the sending
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessRegisterInterestInThePosition.INSTANCE.execute(json);
+			return response;
+		}
+
+		/**
+		 * Validates the input with the fields of the business.
+		 * @return the validation class
+		 */
+		public Class<?> getJsonValidationClass() {
+			return VisBusinessRegisterInterestInThePosition.Fields.class;
 		}
 	},
 	;

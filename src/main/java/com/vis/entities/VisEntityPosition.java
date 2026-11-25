@@ -54,6 +54,7 @@ import com.vis.json.transformers.VisDddCounterCombinations;
 import com.vis.json.transformers.VisDddCounterKeys;
 import com.vis.json.transformers.VisInsertionDayCounterCombinations;
 import com.vis.json.transformers.VisInsertionMonthCounterCombinations;
+import com.vis.json.transformers.VisJsonTransformerPositionRecruiterDomain;
 import com.vis.json.transformers.VisJsonTransformerRecruiterHash;
 import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 import com.vis.json.transformers.VisPositionHashCombinations;
@@ -299,6 +300,18 @@ import com.vis.json.transformers.VisSeniorityType;
 		 */
 		@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
 		insertionDate,
+
+		/**
+		 * The {@code recruiterDomain} field (since 2026-11-24): the domain of the e-mail of the recruiter who owns the
+		 * position, calculated on every write from the e-mail of the session ({@code VisJsonTransformerPositionRecruiterDomain},
+		 * the value of the input is ignored) and absent for a non-professional domain (gmail and the like). The
+		 * {@code recruiter} keeps only the SHA-1 of the e-mail, and the companies a resume forbids
+		 * ({@code notAllowedCompany}) are compared with this domain, so the candidates never see nor send their resume to
+		 * a position of a company they forbid.
+		 */
+		@CcpJsonFieldTypeString(minLength = 1, maxLength = 100)
+		@CcpEntityFieldTransformer(VisJsonTransformerPositionRecruiterDomain.class)
+		recruiterDomain,
 		;
 	}
 }

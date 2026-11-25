@@ -81,7 +81,7 @@ public abstract class VisBusinessSendResumesOfThePositionsOfThePeriod implements
 	}
 
 	// the views, the aliases and the dates are read once for every position of the run
-	private static VisResumesOfThePositionSender getSender(Set<String> changedResumes) {
+	static VisResumesOfThePositionSender getSender(Set<String> changedResumes) {
 		Map<String, long[]> resumeDates = VisBusinessSendResumesToRecruiters.getResumeDates(changedResumes);
 		Map<String, Long> lastViewByPair = new HashMap<>();
 		Map<String, Long> lastViewByRecruiter = new HashMap<>();

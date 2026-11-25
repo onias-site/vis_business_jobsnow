@@ -954,7 +954,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		return forbiddenCompany;
 	}
 
-	static boolean isForbiddenCompany(String domain, List<String> notAllowedCompanies) {
+	public static boolean isForbiddenCompany(String domain, List<String> notAllowedCompanies) {
 		String lowerCaseDomain = domain.toLowerCase();
 		String partsSeparators = Constants.DOMAIN_PARTS_SEPARATORS.getValue();
 		String[] domainParts = lowerCaseDomain.split(partsSeparators);
@@ -1119,7 +1119,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/** The hash of the e-mail, as the entities keep it. */
-	static String getEmailHash(String email) {
+	public static String getEmailHash(String email) {
 		CcpJsonRepresentation emailJson = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterResumes.Fields.email, email);
 		CcpJsonRepresentation hashedEmail = VisEntityRecruiterResumes.ENTITY.getJsonWithHandledPrimaryKey(emailJson);
 		String emailHash = hashedEmail.getAsString(VisEntityRecruiterResumes.Fields.email);
@@ -1127,7 +1127,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/** The hash of a LinkedIn address, as {@code vis_viewed_resume} keeps it. */
-	static String getLinkedinHash(String linkedinAddress) {
+	public static String getLinkedinHash(String linkedinAddress) {
 		CcpJsonRepresentation linkedinJson = CcpOtherConstants.EMPTY_JSON.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress);
 		CcpJsonRepresentation hashedLinkedin = VisJsonTransformerLinkedinHash.INSTANCE.execute(linkedinJson);
 		String linkedinHash = hashedLinkedin.getAsString(VisEntityViewedResume.Fields.linkedin);
