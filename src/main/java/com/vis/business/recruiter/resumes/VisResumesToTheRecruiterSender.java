@@ -42,6 +42,9 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	/** The address of the API of vis. */
 	private final String visApiUrl;
 
+	/** How many recruiters receive the e-mail each day, read from {@code jn_system_parameter} by the caller. */
+	private final int recruitersPerDay;
+
 	/** Counts the e-mails sent, in its only position. */
 	private final int[] emailsSent;
 
@@ -68,6 +71,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * @param inactivePairs the pairs recruiter + resume of {@code vis_inactive_viewed_resume}
 	 * @param frontendUrl the address of the front end
 	 * @param visApiUrl the address of the API of vis
+	 * @param recruitersPerDay how many recruiters receive the e-mail each day
 	 * @param emailsSent counts the e-mails sent, in its only position
 	 * @param lastQueuePosition keeps, in its only position, the last position of the queue that had its turn
 	 * @param lastLegacyQueuePosition keeps, in its only position, the last position of the queue of the legacy views that
@@ -77,7 +81,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * @param recipients receives the e-mail of each recruiter who received the e-mail in this run
 	 */
 	VisResumesToTheRecruiterSender(List<String> restrictedTo, List<CcpJsonRepresentation> resumesOfTheEmail, Map<String, Long> lastViewByPair,
-			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl, String visApiUrl, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition, String[] lastNonProfessionalQueuePosition, String[] lastLegacyActiveQueuePosition, Set<String> recipients) {
+			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl, String visApiUrl, int recruitersPerDay, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition, String[] lastNonProfessionalQueuePosition, String[] lastLegacyActiveQueuePosition, Set<String> recipients) {
 		this.restrictedTo = restrictedTo;
 		this.resumesOfTheEmail = resumesOfTheEmail;
 		this.lastViewByPair = lastViewByPair;
@@ -85,6 +89,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 		this.inactivePairs = inactivePairs;
 		this.frontendUrl = frontendUrl;
 		this.visApiUrl = visApiUrl;
+		this.recruitersPerDay = recruitersPerDay;
 		this.emailsSent = emailsSent;
 		this.lastQueuePosition = lastQueuePosition;
 		this.lastLegacyQueuePosition = lastLegacyQueuePosition;
@@ -98,7 +103,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * @param recruiter the recruiter
 	 */
 	public void accept(CcpJsonRepresentation recruiter) {
-		boolean dailyLimitReached = this.emailsSent[0] >= VisBusinessSendResumesToRecruiters.RECRUITERS_PER_DAY;
+		boolean dailyLimitReached = this.emailsSent[0] >= this.recruitersPerDay;
 		if(dailyLimitReached) {
 			return;
 		}

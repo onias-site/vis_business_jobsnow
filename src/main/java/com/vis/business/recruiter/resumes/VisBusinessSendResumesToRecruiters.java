@@ -58,8 +58,9 @@ import com.vis.messages.VisMessages;
  * 35 days old; who stopped viewing for longer is inactivated by this process (moved to {@code vis_inactive_recruiter}) and
  * comes back on viewing a resume again; signing up again counts as a view ({@code vis_recruiter_sign_up_return}). Since
  * 2026-11-16, who received the e-mail and never viewed a resume is inactivated right after the sending too, and comes back
- * on viewing a resume of the e-mail. Each day, only
- * {@value #RECRUITERS_PER_DAY} of them: first the ones who viewed a resume in these 35 days, the most recent view first;
+ * on viewing a resume of the e-mail. Each day, only as many of them as the parameter
+ * {@link VisRecruiterResumesSystemParameters#recruitersPerDay} of {@code jn_system_parameter} says (fixed in 2000 until
+ * 2026-11-24): first the ones who viewed a resume in these 35 days, the most recent view first;
  * then the recruiters of the sign-up (source {@code login}) and, tied with them since 2026-11-17, the ones saved by the
  * support (source {@code support}) who never received this e-mail
  * ({@code vis_recruiter_first_email}); then the ones who appeared on Telegram in the last six months
@@ -104,9 +105,6 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	 * rows the HTML reached about 107 KB, beyond the 102 KB from which Gmail clips the message.
 	 */
 	public static final int RESUMES_IN_THE_EMAIL = 30;
-
-	/** How many recruiters receive the e-mail each day. */
-	public static final int RECRUITERS_PER_DAY = 2000;
 
 	/** The skills from which a resume goes before the ones that have fewer. */
 	static final int MINIMUM_SKILLS = 10;
@@ -196,6 +194,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String visApiUrl = linkAddresses.getAsString(VisRecruiterResumesFields.visApiUrl);
 		List<String> restrictedTo = json.getOrDefault(VisRecruiterResumesFields.recruiters, () -> List.of());
 		int[] emailsSent = {0};
+		int recruitersPerDay = VisRecruiterResumesSystemParameters.recruitersPerDay.getAsInteger();
 		VisEntityRecruiterQueueCursor.CursorNames generalQueue = VisEntityRecruiterQueueCursor.CursorNames.resumesToRecruiters;
 		VisEntityRecruiterQueueCursor.CursorNames legacyQueue = VisEntityRecruiterQueueCursor.CursorNames.legacyViewersOfResumesToRecruiters;
 		VisEntityRecruiterQueueCursor.CursorNames nonProfessionalQueue = VisEntityRecruiterQueueCursor.CursorNames.nonProfessionalRecruitersOfResumesToRecruiters;
@@ -211,7 +210,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		long telegramSince = now.getDaysAgo(VisEntityRecruiter.DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE);
 
 		Set<String> recipients = new LinkedHashSet<>();
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition, recipients);
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, recruitersPerDay, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition, recipients);
 		List<CcpJsonRepresentation> recruiters = getRecruiters();
 		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
 		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun, lastNonProfessionalPositionOfTheLastRun, lastLegacyActivePositionOfTheLastRun);

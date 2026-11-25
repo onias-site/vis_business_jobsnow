@@ -28,6 +28,7 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnLanguage;
 import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
+import com.vis.business.recruiter.resumes.VisRecruiterResumesSystemParameters;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesTexts;
 import com.vis.messages.VisMessages;
 
@@ -191,11 +192,13 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		List<CcpBulkItem> parametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailParametersToSend.ENTITY, parameters);
 		List<CcpBulkItem> textItems = VisRecruiterResumesTexts.getSeeds();
 		List<CcpBulkItem> invitationSeeds = this.getInvitationSeeds();
+		List<CcpBulkItem> systemParameterItems = VisRecruiterResumesSystemParameters.getSeeds();
 
 		List<CcpBulkItem> firstRecords = new ArrayList<>(templateItems);
 		firstRecords.addAll(parametersItems);
 		firstRecords.addAll(textItems);
 		firstRecords.addAll(invitationSeeds);
+		firstRecords.addAll(systemParameterItems);
 		return firstRecords;
 	}
 
