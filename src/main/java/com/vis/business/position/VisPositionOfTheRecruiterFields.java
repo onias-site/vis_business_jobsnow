@@ -3,6 +3,7 @@ package com.vis.business.position;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorArray;
+import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
@@ -26,6 +27,20 @@ public enum VisPositionOfTheRecruiterFields implements CcpJsonFieldName {
 	/** The {@code title} field of the position, validated as in {@code VisEntityPosition}. */
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
 	title,
+
+	/**
+	 * The {@code yearMonth} field of the position, validated as in {@code VisEntityPosition}: required by the edition (part of
+	 * the key of the stored position); the creation ignores it and uses the current month.
+	 */
+	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
+	yearMonth,
+
+	/**
+	 * Only in the edition (since 2026-11-24): the title the position had before; when it differs from {@code title}, the
+	 * edition renames the position (the one of the old title disappears and the one of the new title is created).
+	 */
+	@CcpJsonFieldTypeString(minLength = 10, maxLength = 100)
+	oldTitle,
 
 	/** The {@code description} field of the position, validated as in {@code VisEntityPosition}. */
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)

@@ -33,6 +33,10 @@ public class VisBusinessReactivatePosition implements CcpBusiness {
 		@CcpJsonCopyFieldValidationsFrom(VisPositionKeyFields.class)
 		title,
 
+		/** The month of the creation of the position, part of its key. */
+		@CcpJsonCopyFieldValidationsFrom(VisPositionKeyFields.class)
+		yearMonth,
+
 		/** The new end of the expiration: required, timestamp (milliseconds) from the current date on. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeTimeAfter(minValue = 0, intervalType = CcpEntityExpurgableOptions.daily)

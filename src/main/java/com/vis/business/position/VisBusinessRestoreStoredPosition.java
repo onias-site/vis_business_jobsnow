@@ -77,7 +77,8 @@ public class VisBusinessRestoreStoredPosition implements CcpBusiness {
 		}
 
 		String title = deletedPosition.getAsString(VisEntityPosition.Fields.title);
-		String freeTitle = this.getFreeTitle(title);
+		String yearMonth = deletedPosition.getAsString(VisEntityPosition.Fields.yearMonth);
+		String freeTitle = this.getFreeTitle(title, yearMonth);
 		CcpJsonRepresentation renamedPosition = restoredPosition.put(VisEntityPosition.Fields.title, freeTitle);
 		VisEntityPosition.ENTITY.save(renamedPosition);
 		CcpJsonRepresentation storedPositionNotDeleted = VisPositionOfTheRecruiter.fromStored(json, this.email);
@@ -109,9 +110,10 @@ public class VisBusinessRestoreStoredPosition implements CcpBusiness {
 	 * The title followed by the first number, from 2 on, that no position not deleted of the user has; the title is cut
 	 * so the numbered one fits the maximum length.
 	 * @param title the title of the deleted position
+	 * @param yearMonth the month of the creation of the deleted position, part of the key
 	 * @return the free numbered title
 	 */
-	private String getFreeTitle(String title) {
+	private String getFreeTitle(String title, String yearMonth) {
 		String pattern = Fields.NUMBERED_TITLE.getValue();
 		for (int number = FIRST_NUMBER; ; number++) {
 			String suffix = String.valueOf(number);
@@ -121,7 +123,8 @@ public class VisBusinessRestoreStoredPosition implements CcpBusiness {
 			String numberedTitle = String.format(pattern, base, number);
 			CcpJsonRepresentation key = CcpOtherConstants.EMPTY_JSON
 					.put(VisEntityPosition.Fields.recruiter, this.email)
-					.put(VisEntityPosition.Fields.title, numberedTitle);
+					.put(VisEntityPosition.Fields.title, numberedTitle)
+					.put(VisEntityPosition.Fields.yearMonth, yearMonth);
 			boolean taken = VisEntityPosition.ENTITY.exists(key);
 			if (taken) {
 				continue;

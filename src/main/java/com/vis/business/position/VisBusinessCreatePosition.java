@@ -16,8 +16,8 @@ import com.vis.json.fields.validation.VisJsonFieldsNewExpirationRange;
 
 /**
  * "Criar vaga" of the screen "Meu Recrutamento - Vagas": saves a new position of the logged-in user, whose e-mail
- * becomes the {@code recruiter}. The title is part of the primary key: a title the user already has among the positions
- * not deleted answers 409 (the edition is the way to change that one). The expiration of a new position starts and ends
+ * becomes the {@code recruiter}. The title and the month of the creation ({@code yearMonth}, the current one) are part of
+ * the primary key: a title the user already has among the positions not deleted created in the same month answers 409. The expiration of a new position starts and ends
  * from the current date on. The save is asynchronous.
  *
  * @throws CcpErrorFlowDisturb {@code 409} when the user already has a position with this title
@@ -39,7 +39,10 @@ public class VisBusinessCreatePosition implements CcpBusiness {
 		return VisPositionOfTheRecruiterFields.class;
 	}
 
-	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+	public CcpJsonRepresentation apply(CcpJsonRepresentation input) {
+		// the month of the creation is part of the key (since 2026-11-24): always the current one, whatever came in the input
+		String currentYearMonth = VisPositionOfTheRecruiter.getCurrentYearMonth();
+		CcpJsonRepresentation json = input.put(VisPositionOfTheRecruiterFields.yearMonth, currentYearMonth);
 		CcpJsonRepresentation expiration = json.getInnerJson(VisPositionOfTheRecruiterFields.expiration);
 		String expirationName = VisPositionOfTheRecruiterFields.expiration.name();
 		CcpJsonValidatorEngine.INSTANCE.validateJson(VisJsonFieldsNewExpirationRange.class, expiration, expirationName);

@@ -223,9 +223,11 @@ public enum VisServiceRecruiterResumes implements JnService {
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			String email = json.getAsString(JnJsonCommonsFields.email);
 			String title = json.getAsString(VisEntityPositionResumes.Fields.title);
+			String yearMonth = json.getAsString(VisEntityPositionResumes.Fields.yearMonth);
 			CcpJsonRepresentation positionKey = CcpOtherConstants.EMPTY_JSON
 					.put(VisEntityPositionResumes.Fields.email, email)
-					.put(VisEntityPositionResumes.Fields.title, title);
+					.put(VisEntityPositionResumes.Fields.title, title)
+					.put(VisEntityPositionResumes.Fields.yearMonth, yearMonth);
 			CcpJsonRepresentation positionResumes = VisEntityPositionResumes.ENTITY.getOneById(positionKey);
 			List<CcpJsonRepresentation> resumes = positionResumes.getAsJsonList(VisEntityPositionResumes.Fields.resumes);
 			CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON.put(VisEntityPositionResumes.Fields.resumes, resumes);

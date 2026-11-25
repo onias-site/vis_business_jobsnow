@@ -6,7 +6,7 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.entities.VisEntityPositionResumes;
 
-/** The input of {@code VisServiceRecruiterResumes.GetResumesOfThePosition}: the recruiter logged in and the title of the position. */
+/** The input of {@code VisServiceRecruiterResumes.GetResumesOfThePosition}: the recruiter logged in and the key of the position (title and month of creation). */
 enum GetResumesOfThePosition implements CcpJsonFieldName{
 	/** The recruiter logged in, the one that receives the resumes of the position. */
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)
@@ -17,4 +17,9 @@ enum GetResumesOfThePosition implements CcpJsonFieldName{
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPositionResumes.Fields.class)
 	@CcpJsonFieldValidatorRequired
 	title,
+
+	/** The month of the creation of the position, part of its key. */
+	@CcpJsonCopyFieldValidationsFrom(VisEntityPositionResumes.Fields.class)
+	@CcpJsonFieldValidatorRequired
+	yearMonth,
 }

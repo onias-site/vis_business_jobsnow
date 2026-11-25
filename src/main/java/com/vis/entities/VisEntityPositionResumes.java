@@ -26,6 +26,7 @@ import com.jn.entities.JnEntityEmailTemplateMessage;
 import com.jn.entities.decorators.engine.JnDisposableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.json.fields.validation.VisJsonSkillStatisticsFields;
 import com.jn.utils.JnLanguage;
 import com.vis.business.recruiter.resumes.VisRecruiterResumesFields;
 import com.vis.messages.VisMessages;
@@ -34,7 +35,7 @@ import com.vis.messages.VisMessages;
  * The whole list of resumes of the last e-mail of a position (since 2026-11-24): the positions that receive their resumes
  * instantly, hourly, daily or weekly get an e-mail with the first 30, and the link "see all" of that e-mail opens this list
  * (the screen {@code meu-recrutamento/curriculos-da-vaga}, a link of its own, apart from the resumes of the week). One
- * record per e-mail that receives the resumes and title of the position, replaced by every e-mail; discarded with the month.
+ * record per e-mail that receives the resumes and key of the position (title and month of creation), replaced by every e-mail; discarded with the month.
  * <p>
  * Also seeds the templates of the two e-mails of the positions (Portuguese and English) and their sending parameters.
  */
@@ -62,6 +63,11 @@ public class VisEntityPositionResumes implements CcpEntityConfigurator {
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(minLength = 10, maxLength = 100)
 		title,
+
+		/** The month of the creation of the position, {@code yyyyMM}, part of the primary key (since 2026-11-24, as in the position). */
+		@CcpEntityFieldPrimaryKey
+		@CcpJsonCopyFieldValidationsFrom(VisJsonSkillStatisticsFields.class)
+		yearMonth,
 
 		/** The rows of the resumes, as the e-mail shows them, in the order of the position. */
 		@CcpJsonFieldValidatorRequired

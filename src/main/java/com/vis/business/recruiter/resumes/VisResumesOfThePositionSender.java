@@ -47,7 +47,7 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 
 	/** The texts of this class. */
 	static enum Constants implements CcpJsonFieldName {
-		SEE_ALL_URL { public String getValue() { return "{frontendUrl}/meu-recrutamento/curriculos-da-vaga?email={email}&vaga={positionTitle}"; } },
+		SEE_ALL_URL { public String getValue() { return "{frontendUrl}/meu-recrutamento/curriculos-da-vaga?email={email}&vaga={positionTitle}&mes={positionYearMonth}"; } },
 		INSERTION_DATE_PATTERN { public String getValue() { return "dd/MM/yyyy HH:mm:ss"; } },
 	}
 
@@ -165,9 +165,11 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 
 	private void sendTheEmail(CcpJsonRepresentation position, String email, List<CcpJsonRepresentation> rows) {
 		String title = position.getAsString(VisEntityPosition.Fields.title);
+		String positionYearMonth = position.getAsString(VisEntityPosition.Fields.yearMonth);
 		CcpJsonRepresentation positionResumes = CcpOtherConstants.EMPTY_JSON
 				.put(VisEntityPositionResumes.Fields.email, email)
 				.put(VisEntityPositionResumes.Fields.title, title)
+				.put(VisEntityPositionResumes.Fields.yearMonth, positionYearMonth)
 				.put(VisEntityPositionResumes.Fields.resumes, rows);
 		VisEntityPositionResumes.ENTITY.save(positionResumes);
 
@@ -181,7 +183,8 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 				.put(JnJsonCommonsFields.language, VisBusinessSendResumesToRecruiters.LANGUAGE);
 		CcpJsonRepresentation withTable = VisBusinessRenderResumesTable.INSTANCE.execute(tableInput);
 		String resumesTable = withTable.getAsString(VisRecruiterResumesFields.resumesTable);
-		String seeAllUrl = this.getSeeAllUrl(email, title);
+		String yearMonth = position.getAsString(VisEntityPosition.Fields.yearMonth);
+		String seeAllUrl = this.getSeeAllUrl(email, title, yearMonth);
 		String seeAll = VisBusinessSendResumesToRecruiters.getSeeAll(shown, total, seeAllUrl);
 
 		String frequencyName = position.getOrDefault(VisEntityPosition.Fields.frequencyType, () -> VisPositionFrequencyTypes.daily.name());
@@ -200,8 +203,8 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 		new JnSendMessageToUser().sendAllMessages(message, topic, messageTypes, JnMessageSenderExceptionHandler.LENIENT);
 	}
 
-	// the screen of the resumes of the position, with the recipient and the title of the position
-	private String getSeeAllUrl(String email, String title) {
+	// the screen of the resumes of the position, with the recipient and the key of the position (title and month of creation)
+	private String getSeeAllUrl(String email, String title, String yearMonth) {
 		CcpStringDecorator emailDecorator = new CcpStringDecorator(email);
 		CcpUrlDecorator emailUrl = emailDecorator.url();
 		String encodedEmail = emailUrl.asEnconded();
@@ -211,6 +214,7 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 		CcpJsonRepresentation urlValues = CcpOtherConstants.EMPTY_JSON
 				.put(JnJsonCommonsFields.email, encodedEmail)
 				.put(VisRecruiterResumesFields.positionTitle, encodedTitle)
+				.put(VisRecruiterResumesFields.positionYearMonth, yearMonth)
 				.put(VisRecruiterResumesFields.frontendUrl, this.frontendUrl);
 		String seeAllUrl = VisBusinessSendResumesToRecruiters.resolve(Constants.SEE_ALL_URL, urlValues);
 		return seeAllUrl;

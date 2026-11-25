@@ -19,6 +19,7 @@ import com.jn.entities.decorators.engine.JnGrouperChildFieldEntityAfterWrite;
 import com.jn.entities.decorators.engine.JnGrouperChildFieldEntityBeforeWrite;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
+import com.vis.json.transformers.VisPositionCandidatesCombinations;
 import com.vis.json.transformers.VisPositionInterestHourCombinations;
 import com.vis.json.transformers.VisPositionInterestedResumesCombinations;
 
@@ -42,6 +43,10 @@ import com.vis.json.transformers.VisPositionInterestedResumesCombinations;
 // the positions with interested resumes in the hour of the sending, in the group of the hour
 @CcpEntityGrouperChild(value = {VisEntityVirtualPositionInterestHour.class}, beforeDecoratorClass = JnGrouperChildFieldEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildFieldEntityAfterWrite.class, childField = "position")
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualPositionInterestHour.class, value = VisPositionInterestHourCombinations.class)
+// every candidate of the position, whatever the hour (since 2026-11-24): read by id by the edition, which does not rename a
+// position with candidates
+@CcpEntityGrouperChild(value = {VisEntityVirtualPositionCandidates.class}, beforeDecoratorClass = JnGrouperChildFieldEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildFieldEntityAfterWrite.class, childField = "resumeId")
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualPositionCandidates.class, value = VisPositionCandidatesCombinations.class)
 public class VisEntityPositionInterest implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
 	public final static VisEntityPositionInterest INSTANCE = new VisEntityPositionInterest();

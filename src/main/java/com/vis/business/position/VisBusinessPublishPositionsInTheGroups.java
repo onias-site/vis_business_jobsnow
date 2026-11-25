@@ -66,7 +66,12 @@ public class VisBusinessPublishPositionsInTheGroups implements CcpBusiness {
 		}
 		List<CcpJsonRepresentation> positionKeys = new ArrayList<>();
 		for (CcpJsonRepresentation child : children) {
-			CcpJsonRepresentation positionKey = child.getJsonPiece(VisEntityPosition.Fields.title, VisEntityPosition.Fields.recruiter);
+			// a child written before the month of the creation joined the key (2026-11-24) cannot read its position back
+			boolean withoutYearMonth = false == child.containsAllFields(VisEntityPosition.Fields.yearMonth);
+			if(withoutYearMonth) {
+				continue;
+			}
+			CcpJsonRepresentation positionKey = child.getJsonPiece(VisEntityPosition.Fields.title, VisEntityPosition.Fields.recruiter, VisEntityPosition.Fields.yearMonth);
 			positionKeys.add(positionKey);
 		}
 		int keysCount = positionKeys.size();

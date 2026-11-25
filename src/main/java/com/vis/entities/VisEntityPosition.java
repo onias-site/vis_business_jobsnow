@@ -49,6 +49,7 @@ import com.vis.json.fields.validation.VisJsonFieldsPositionContact;
 import com.vis.json.fields.validation.VisJsonFieldsPositionSkills;
 import com.vis.json.fields.validation.VisJsonFieldsPositionSort;
 import com.vis.json.fields.validation.VisJsonFieldsSalaryRange;
+import com.vis.json.fields.validation.VisJsonSkillStatisticsFields;
 import com.vis.json.fields.validation.VisPositionFrequencyTypes;
 import com.vis.json.transformers.VisDddCounterCombinations;
 import com.vis.json.transformers.VisDddCounterKeys;
@@ -107,7 +108,7 @@ import com.vis.json.transformers.VisSeniorityType;
 // the positions of the logged-in user who registered them (the recruiter is their e-mail): one group per user, the child a
 // JSON text with what the user filled in and the id; the deactivation moves it to the same group of jn_inactive_grouper
 @CcpEntityGrouperChild(value = {JnEntityLoginEmail.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
-		childFields = {"title", "description", "resumeType", "seniority", "ddd", "clt", "pj", "disponibility", "temporallyJobTime", "spokenLanguage", "skill",
+		childFields = {"title", "yearMonth", "description", "resumeType", "seniority", "ddd", "clt", "pj", "disponibility", "temporallyJobTime", "spokenLanguage", "skill",
 				"negotiableClaim", "pcd", "travel", "expiration", "sort", "contact", "mustSendInGroups", "frequencyType", "resumesEmail", "insertionDate"})
 @CcpEntityGrouperParentCombinations(parent = JnEntityLoginEmail.class, value = VisPositionRecruiterLoginEmailCombinations.class)
 // the moment of the insertion of the record, kept in insertionDate across the saves and the moves between the sides
@@ -121,10 +122,10 @@ import com.vis.json.transformers.VisSeniorityType;
 @CcpEntityGrouperChildCounter(value = {VisEntityVirtualDddCounter.class}, counterKeyClass = VisDddCounterKeys.class, beforeDecoratorClass = JnGrouperChildCurrentCounterEntityBeforeWrite.class)
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualDddCounter.class, value = VisDddCounterCombinations.class)
 // one group per day of publishing in the groups of instant messages (since 2026-11-24): every day of the validity of a
-// position with mustSendInGroups; the child is the title and the recruiter (the primary key that reads the position back)
-// and the bot that publishes it, read by the process of 10:00 in the group of the day
+// position with mustSendInGroups; the child is the title, the recruiter and the month of creation (the primary key that
+// reads the position back) and the bot that publishes it, read by the process of 10:00 in the group of the day
 @CcpEntityGrouperChild(value = {VisEntityVirtualPositionPublishingDay.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
-		childFields = {"title", "recruiter"},
+		childFields = {"title", "recruiter", "yearMonth"},
 		childFieldsProducers = {VisPositionPublishingBotChildField.class})
 @CcpEntityGrouperParentCombinations(parent = VisEntityVirtualPositionPublishingDay.class, value = VisPositionPublishingDayCombinations.class)public class VisEntityPosition implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
@@ -239,6 +240,15 @@ import com.vis.json.transformers.VisSeniorityType;
 		@CcpEntityFieldPrimaryKey
 		@CcpJsonFieldTypeString(minLength = 10, maxLength = 100)
 		title,
+
+		/**
+		 * The {@code yearMonth} field: part of the primary key (since 2026-11-24), the month of the creation of the position,
+		 * {@code yyyyMM}, set by the creation and kept by every edition, renaming and move between the sides. The same
+		 * recruiter can repeat a title in another month, never in the same one.
+		 */
+		@CcpEntityFieldPrimaryKey
+		@CcpJsonCopyFieldValidationsFrom(VisJsonSkillStatisticsFields.class)
+		yearMonth,
 
 		/**
 		 * The {@code expiration} field: required, {@code {min, max}} timestamps, neither before the current date, the max

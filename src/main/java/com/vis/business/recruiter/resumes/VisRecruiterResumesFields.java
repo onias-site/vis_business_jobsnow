@@ -141,6 +141,8 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	recruiterLinksSecret,
 	/** The title of the position whose resumes the e-mail sends (since 2026-11-24). */
 	positionTitle,
+	/** The month of the creation of the position, part of its key, in the link to the screen of its resumes (since 2026-11-24). */
+	positionYearMonth,
 	/** How the position receives its resumes ({@code VisPositionFrequencyTypes}), in the e-mails of the positions. */
 	frequencyType,
 }

@@ -20,5 +20,10 @@ public enum VisPositionKeyFields implements CcpJsonFieldName {
 	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
 	@CcpJsonFieldValidatorRequired
 	title,
+
+	/** The month of the creation of the position, {@code yyyyMM}: part of the primary key since 2026-11-24. */
+	@CcpJsonCopyFieldValidationsFrom(VisEntityPosition.Fields.class)
+	@CcpJsonFieldValidatorRequired
+	yearMonth,
 	;
 }

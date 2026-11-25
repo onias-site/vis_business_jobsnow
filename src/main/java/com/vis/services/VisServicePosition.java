@@ -6,6 +6,7 @@ import com.vis.business.position.VisBusinessCreatePosition;
 import com.vis.business.position.VisBusinessDeletePosition;
 import com.vis.business.position.VisBusinessEditPosition;
 import com.vis.business.position.VisBusinessInactivatePosition;
+import com.vis.business.position.VisBusinessPositionTitleInUse;
 import com.vis.business.position.VisBusinessReactivatePosition;
 import com.vis.business.position.VisBusinessRestorePosition;
 import com.vis.business.position.VisBusinessResumesOfTheFilters;
@@ -34,7 +35,25 @@ public enum VisServicePosition implements JnService {
 		}
 	},
 
-	/** "Editar": saves again a position of the user, whose title does not change; an unknown title answers 404. */
+	/**
+	 * The title typed in the form (since 2026-11-24): 200 when the user already has a position with it in the month of the
+	 * creation (the form does not save), 404 when it is free.
+	 */
+	PositionTitleInUse {
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			CcpJsonRepresentation response = VisBusinessPositionTitleInUse.INSTANCE.execute(json);
+			return response;
+		}
+
+		public Class<?> getJsonValidationClass() {
+			return VisBusinessPositionTitleInUse.Fields.class;
+		}
+	},
+
+	/**
+	 * "Editar": saves again a position of the user; with {@code oldTitle} different from the title, renames it (since
+	 * 2026-11-24). An unknown title answers 404, a new title already in use 409, a position with candidates 423.
+	 */
 	EditPosition {
 		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 			CcpJsonRepresentation response = VisBusinessEditPosition.INSTANCE.execute(json);

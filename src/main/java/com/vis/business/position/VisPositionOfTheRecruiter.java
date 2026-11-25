@@ -1,7 +1,9 @@
 package com.vis.business.position;
 
 import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.vis.entities.VisEntityPosition;
 
@@ -16,16 +18,46 @@ public class VisPositionOfTheRecruiter {
 
 	/**
 	 * The primary key of the position.
-	 * @param json the input, with {@code email} and {@code title}
-	 * @return {@code {recruiter, title}}
+	 * @param json the input, with {@code email}, {@code title} and {@code yearMonth}
+	 * @return {@code {recruiter, title, yearMonth}}
 	 */
 	public static CcpJsonRepresentation getKey(CcpJsonRepresentation json) {
-		String email = json.getAsString(VisPositionKeyFields.email);
 		String title = json.getAsString(VisPositionKeyFields.title);
+		CcpJsonRepresentation key = getKey(json, title);
+		return key;
+	}
+
+	/**
+	 * The primary key of the position of the logged-in user with another title, in the same month of creation: the old
+	 * title of a renaming, or a numbered title of a restoration.
+	 * @param json the input, with {@code email} and {@code yearMonth}
+	 * @param title the title of the key
+	 * @return {@code {recruiter, title, yearMonth}}
+	 */
+	public static CcpJsonRepresentation getKey(CcpJsonRepresentation json, String title) {
+		String email = json.getAsString(VisPositionKeyFields.email);
+		String yearMonth = json.getAsString(VisPositionKeyFields.yearMonth);
 		CcpJsonRepresentation key = CcpOtherConstants.EMPTY_JSON
 				.put(VisEntityPosition.Fields.recruiter, email)
-				.put(VisEntityPosition.Fields.title, title);
+				.put(VisEntityPosition.Fields.title, title)
+				.put(VisEntityPosition.Fields.yearMonth, yearMonth);
 		return key;
+	}
+
+	/**
+	 * The month of the creation of a new position, {@code yyyyMM}, in the America/Sao_Paulo time zone.
+	 * @return the current month
+	 */
+	public static String getCurrentYearMonth() {
+		CcpTimeDecorator now = new CcpTimeDecorator();
+		String pattern = Constants.YEAR_MONTH_PATTERN.getValue();
+		String yearMonth = now.getFormattedDateTime(pattern);
+		return yearMonth;
+	}
+
+	/** The texts of this class. */
+	static enum Constants implements CcpJsonFieldName {
+		YEAR_MONTH_PATTERN { public String getValue() { return "yyyyMM"; } },
 	}
 
 	/**
