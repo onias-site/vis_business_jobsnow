@@ -17,10 +17,9 @@ import com.vis.entities.VisEntityResumeFilter;
 /**
  * The filters of an id of {@code vis_resume_filter} (since 2026-11-25), one read by id: the screen
  * {@code curriculos/buscar} opened with the id in its address fills the filters in with them. The id is the one the
- * search answered ({@code VisBusinessSearchResumesByTheFilter}), which already holds the hour of the record, so the
- * filters are read straight by it.
+ * search answered ({@code VisBusinessSearchResumesByTheFilter}), which already holds the day of the record.
  *
- * @throws CcpErrorFlowDisturb {@code 404} when there is no record of this id (it expired with its hour or never
+ * @throws CcpErrorFlowDisturb {@code 404} when there is no record of this id (it was discarded with its day or never
  * existed): the screen then does nothing
  */
 public class VisBusinessGetTheResumeFilter implements CcpBusiness {

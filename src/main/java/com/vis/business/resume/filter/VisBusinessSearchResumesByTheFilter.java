@@ -13,9 +13,10 @@ import com.vis.json.fields.validation.VisJsonFieldsResumeFilter;
  * the id of the filters in {@code vis_resume_filter} ({@code calculateId} of {@code {json: filters}}) is the key of the
  * cache of their count. Found in the cache, the count is answered from there, with no search and no write. Otherwise the
  * resumes are counted with the search of the position form, the count is cached for 1 hour under the id and the filters
- * are saved; the save is asynchronous (the entity is disposable, and the REST APIs have no bulk), and its insertion,
- * finding the count already cached, does not search again ({@code VisBusinessCacheTheResumesOfTheFilter}). The answer is
- * the count plus the id, which the screen puts in its address.
+ * are saved (discarded day by day; the same filters in any order are one record of the day); the save is asynchronous
+ * (the entity is disposable, and the REST APIs have no bulk), and the insertion, finding the count already cached, does
+ * not search again ({@code VisBusinessCacheTheResumesOfTheFilter}).
+ * The answer is the count plus the id, which the screen puts in its address.
  */
 public class VisBusinessSearchResumesByTheFilter implements CcpBusiness {
 
