@@ -10,8 +10,8 @@ import com.vis.json.fields.validation.VisJsonFieldsResumeFilter;
 
 /**
  * The resumes of the filters chosen in the screen {@code curriculos/buscar} or in the position form (since 2026-11-25):
- * the id of the filters in {@code vis_resume_filter} ({@code calculateId} of {@code {json: filters}}) is the key of the
- * cache of their count. Found in the cache, the count is answered from there, with no search and no write. Otherwise the
+ * the id of the filters in {@code vis_resume_filter} (the SHA-1 of the filters in their canonical form, since 2026-11-26;
+ * before, the id of the document of the day) is the key of the cache of their count. Found in the cache, the count is answered from there, with no search and no write. Otherwise the
  * resumes are counted with the search of the position form, the count is cached for 1 hour under the id and the filters
  * are saved (discarded day by day; the same filters in any order are one record of the day); the save is asynchronous
  * (the entity is disposable, and the REST APIs have no bulk), and the insertion, finding the count already cached, does
@@ -37,7 +37,7 @@ public class VisBusinessSearchResumesByTheFilter implements CcpBusiness {
 	public CcpJsonRepresentation apply(CcpJsonRepresentation filters) {
 		CcpJsonRepresentation record = CcpOtherConstants.EMPTY_JSON.put(VisEntityResumeFilter.Fields.json, filters);
 		CcpJsonRepresentation handledRecord = VisEntityResumeFilter.ENTITY.getJsonWithHandledPrimaryKey(record);
-		String filterId = VisEntityResumeFilter.ENTITY.calculateId(handledRecord);
+		String filterId = handledRecord.getAsString(VisEntityResumeFilter.Fields.id);
 		CcpCacheDecorator cache = VisBusinessCountTheResumesOfTheFilter.getCache(filterId);
 		CcpJsonRepresentation cachedCount = cache.getOrDefault(CcpOtherConstants.EMPTY_JSON);
 		boolean countedInTheLastHour = false == cachedCount.isEmpty();
@@ -48,7 +48,8 @@ public class VisBusinessSearchResumesByTheFilter implements CcpBusiness {
 
 		CcpJsonRepresentation count = VisBusinessCountTheResumesOfTheFilter.INSTANCE.execute(filters);
 		cache.put(count, VisBusinessCountTheResumesOfTheFilter.CACHE_SECONDS);
-		VisEntityResumeFilter.ENTITY.save(record);
+		CcpJsonRepresentation recordWithTheId = record.put(VisEntityResumeFilter.Fields.id, filterId);
+		VisEntityResumeFilter.ENTITY.save(recordWithTheId);
 		CcpJsonRepresentation countWithTheId = count.put(JnJsonCommonsFields.id, filterId);
 		return countWithTheId;
 	}

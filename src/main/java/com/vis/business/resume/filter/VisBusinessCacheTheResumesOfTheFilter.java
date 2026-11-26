@@ -27,7 +27,7 @@ public class VisBusinessCacheTheResumesOfTheFilter implements CcpBusiness {
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation record) {
 		CcpJsonRepresentation handledRecord = VisEntityResumeFilter.ENTITY.getJsonWithHandledPrimaryKey(record);
-		String filterId = VisEntityResumeFilter.ENTITY.calculateId(handledRecord);
+		String filterId = handledRecord.getAsString(VisEntityResumeFilter.Fields.id);
 		CcpCacheDecorator cache = VisBusinessCountTheResumesOfTheFilter.getCache(filterId);
 		boolean alreadyCounted = cache.isPresentInTheCache();
 
