@@ -55,8 +55,12 @@ public class VisBusinessFiltersOfThePosition implements CcpBusiness {
 		return withDomain;
 	}
 
+	// no ddd (a search of resumes with no region, since 2026-11-25; a position always has one) is every ddd, as the home office
 	private static CcpJsonRepresentation putDdds(CcpJsonRepresentation filters, CcpJsonRepresentation position) {
 		List<String> ddds = position.getAsStringList(VisEntityPosition.Fields.ddd);
+		if(ddds.isEmpty()) {
+			return filters;
+		}
 		String homeOfficeDdd = Constants.HOME_OFFICE_DDD.getValue();
 		boolean homeOffice = ddds.stream().anyMatch(ddd -> ddd.replace(".0", "").equals(homeOfficeDdd));
 		if(homeOffice) {
