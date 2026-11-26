@@ -8,7 +8,9 @@ import com.ccp.json.validations.global.annotations.CcpJsonGlobalValidations;
 import com.ccp.json.validations.global.annotations.CcpJsonValidationFieldList;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.entities.VisEntityPosition;
+import com.vis.json.fields.validation.VisJsonValidatorPositionContactWhenInGroups;
 import com.vis.json.fields.validation.VisJsonValidatorPositionResumesEmailRequired;
+import com.vis.json.fields.validation.VisJsonValidatorPositionUselessWithoutGroupsAndResumes;
 
 /**
  * The input of the creation and of the edition of a position by the logged-in user (screen "Meu Recrutamento - Vagas"):
@@ -18,7 +20,8 @@ import com.vis.json.fields.validation.VisJsonValidatorPositionResumesEmailRequir
  */
 @CcpJsonGlobalValidations(requiresAtLeastOne = {
 		@CcpJsonValidationFieldList(VisEntityPosition.SalaryType.class)
-}, customJsonValidators = {VisJsonValidatorPositionResumesEmailRequired.class})
+}, customJsonValidators = {VisJsonValidatorPositionResumesEmailRequired.class, VisJsonValidatorPositionContactWhenInGroups.class,
+		VisJsonValidatorPositionUselessWithoutGroupsAndResumes.class})
 public enum VisPositionOfTheRecruiterFields implements CcpJsonFieldName {
 	/** The e-mail of the logged-in user, the recruiter of the position. */
 	@CcpJsonCopyFieldValidationsFrom(JnJsonCommonsFields.class)

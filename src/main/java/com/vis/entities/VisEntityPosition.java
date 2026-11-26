@@ -46,6 +46,8 @@ import com.vis.business.position.VisBusinessPutPositionDefaultValues;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsExpirationRange;
 import com.vis.json.fields.validation.VisJsonFieldsPositionContact;
+import com.vis.json.fields.validation.VisJsonValidatorPositionContactWhenInGroups;
+import com.vis.json.fields.validation.VisJsonValidatorPositionUselessWithoutGroupsAndResumes;
 import com.vis.json.fields.validation.VisJsonFieldsPositionSkills;
 import com.vis.json.fields.validation.VisJsonFieldsPositionSort;
 import com.vis.json.fields.validation.VisJsonFieldsSalaryRange;
@@ -151,7 +153,7 @@ import com.vis.json.transformers.VisSeniorityType;
 	 */
 	@CcpJsonGlobalValidations(requiresAtLeastOne = {
 			@CcpJsonValidationFieldList(SalaryType.class)
-	})
+	}, customJsonValidators = {VisJsonValidatorPositionContactWhenInGroups.class, VisJsonValidatorPositionUselessWithoutGroupsAndResumes.class})
 	public static enum Fields implements CcpJsonFieldName{
 		/** The {@code clt} field: the salary range as an employee, {@code {min, max}} from 1,000 to 100,000. */
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsSalaryRange.class, allowsEmptyJson = false)
@@ -296,10 +298,11 @@ import com.vis.json.transformers.VisSeniorityType;
 		resumesEmail,
 
 		/**
-		 * The {@code contact} field: required, list, where the candidates reach the recruiter, each item validated by
-		 * {@code VisJsonFieldsPositionContact} (the value according to its type).
+		 * The {@code contact} field: list, where the candidates reach the recruiter, each item validated by
+		 * {@code VisJsonFieldsPositionContact} (the value according to its type); shown only in the publishing in the
+		 * groups, so required only with {@code mustSendInGroups} (since 2026-11-25,
+		 * {@code VisJsonValidatorPositionContactWhenInGroups}).
 		 */
-		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldValidatorArray(minSize = 1)
 		@CcpJsonFieldTypeNestedJson(jsonValidation = VisJsonFieldsPositionContact.class, allowsEmptyJson = false)
 		contact,
