@@ -1,6 +1,7 @@
 package com.vis.business.job.posting;
 
 import java.util.List;
+import com.jn.business.messages.JnSendHtmlInstantMessage;
 import java.util.concurrent.Callable;
 
 import com.ccp.constants.CcpOtherConstants;
@@ -70,7 +71,7 @@ public class VisJobPostingsToAGroup implements Callable<CcpJsonRepresentation> {
 				long replyTo = 0L;
 				for (String piece : pieces) {
 					timer.sleep(SECONDS_BETWEEN_MESSAGES * 1000);
-					CcpJsonRepresentation result = instantMessenger.sendHtmlMessage(this.botName, this.botToken, this.chatId, replyTo, piece);
+					CcpJsonRepresentation result = JnSendHtmlInstantMessage.send(instantMessenger, this.botName, this.botToken, this.chatId, replyTo, piece);
 					// a messenger that does not answer the id of the message: the next piece answers no message
 					boolean answeredTheId = result.containsAllFields(CcpJsonCommonsFields.replyTo);
 					replyTo = answeredTheId ? result.getAsLongNumber(CcpJsonCommonsFields.replyTo) : 0L;

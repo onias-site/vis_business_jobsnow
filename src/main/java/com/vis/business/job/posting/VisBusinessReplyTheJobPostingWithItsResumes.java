@@ -1,6 +1,7 @@
 package com.vis.business.job.posting;
 
 import com.ccp.business.CcpBusiness;
+import com.jn.business.messages.JnSendHtmlInstantMessage;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
@@ -52,7 +53,7 @@ public class VisBusinessReplyTheJobPostingWithItsResumes implements CcpBusiness 
 		Long groupChatId = json.getAsLongNumber(VisEntityInstantMessagePositionReply.Fields.groupChatId);
 		Long replyTo = json.getAsLongNumber(VisEntityInstantMessagePositionReply.Fields.replyTo);
 		CcpInstantMessenger instantMessenger = CcpDependencyInjection.getDependency(CcpInstantMessenger.class);
-		instantMessenger.sendHtmlMessage(botName, botToken, groupChatId, replyTo, message);
+		JnSendHtmlInstantMessage.send(instantMessenger, botName, botToken, groupChatId, replyTo, message);
 		return json;
 	}
 

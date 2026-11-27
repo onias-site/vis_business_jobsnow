@@ -1,6 +1,7 @@
 package com.vis.business.position;
 
 import java.util.ArrayList;
+import com.jn.business.messages.JnSendHtmlInstantMessage;
 import java.util.List;
 
 import com.ccp.business.CcpBusiness;
@@ -146,7 +147,7 @@ public class VisBusinessPublishPositionsInTheGroups implements CcpBusiness {
 				long replyTo = 0L;
 				for (String piece : pieces) {
 					timer.sleep(SECONDS_BETWEEN_MESSAGES * 1000);
-					CcpJsonRepresentation result = instantMessenger.sendHtmlMessage(botName, botToken, chatIdNumber, replyTo, piece);
+					CcpJsonRepresentation result = JnSendHtmlInstantMessage.send(instantMessenger, botName, botToken, chatIdNumber, replyTo, piece);
 					// a messenger that does not answer the id of the message: the next piece answers no message
 					boolean answeredTheId = result.containsAllFields(CcpJsonCommonsFields.replyTo);
 					replyTo = answeredTheId ? result.getAsLongNumber(CcpJsonCommonsFields.replyTo) : 0L;
