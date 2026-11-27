@@ -24,7 +24,7 @@ import com.vis.services.VisServiceResumeFilter;
  * ({@code possibleSkills}), all of them required, in the area of technology, by the business of its endpoint
  * ({@code POST /resume-filter}). The record keeps the count and the averages of the search and the link of the screen
  * with the filters and the text shared under the e-mail {@code curriculos@onias.site}; it goes on whole (since
- * 2026-11-27 the last business reduces it to the fields of the entity), plus the ids of the resumes found ({@link Fields#resumeIds}, the hashes of their e-mails), for the e-mail
+ * 2026-11-27 the last business removes what the businesses added for one another), plus the ids of the resumes found ({@link Fields#resumeIds}, the hashes of their e-mails), for the e-mail
  * to the recruiters of the text ({@code VisBusinessSendTheResumesOfTheJobPosting}), and the id of the filters
  * ({@link Fields#filterId}), under which {@link VisBusinessSaveTheDescriptionOfTheJobPosting} shares the text (here until
  * 2026-11-27). No possible skill (no resume has any skill of the text), no search: the count is zero, there is no link

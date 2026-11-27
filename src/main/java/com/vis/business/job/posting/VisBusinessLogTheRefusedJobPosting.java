@@ -3,6 +3,7 @@ package com.vis.business.job.posting;
 import com.ccp.business.CcpBusiness;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.vis.entities.VisEntityInstantMessagePositionReply;
 import com.vis.entities.VisEntityJobPosting;
 
 /**
@@ -31,7 +32,8 @@ public class VisBusinessLogTheRefusedJobPosting implements CcpBusiness {
 	 * @return the job posting as it came
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation whatWasFound = json.getJsonPiece(VisEntityJobPosting.Fields.postId, VisBusinessFindTheSkillsOfTheJobPosting.Fields.requestedSkills,
+		// the id of the record: postId in vis_job_posting, chatId (who posted it in the group) in vis_instant_message_position_reply
+		CcpJsonRepresentation whatWasFound = json.getJsonPiece(VisEntityJobPosting.Fields.postId, VisEntityInstantMessagePositionReply.Fields.chatId, VisBusinessFindTheSkillsOfTheJobPosting.Fields.requestedSkills,
 				VisBusinessFindTheMostCoveredSkills.Fields.possibleSkills, VisBusinessSaveTheResumeFilterOfTheJobPosting.Fields.filterId);
 		String prefix = Constants.PREFIX.getValue();
 		String line = whatWasFound.asUgglyJson();

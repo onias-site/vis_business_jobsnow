@@ -15,7 +15,6 @@ import com.jn.entities.JnEntityDisposableRecord;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.recruiter.resumes.VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting;
-import com.vis.entities.VisEntityJobPosting;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
 
@@ -29,7 +28,9 @@ import com.vis.entities.VisEntityRecruiterResumes;
  * disposable entity for 24 hours, but it does not keep away the e-mail of today; the moment of the writing is the
  * {@code trueTimestamp} of its copy in {@code jn_disposable_record}, read in the same round trip.
  * Only the active recruiters get it (an inactive one was not registered again). The recruiters and their lists of today
- * are read once (MGIE). The record goes on to the save with the fields of the entity only.
+ * are read once (MGIE). The record goes on to the save without the fields that the businesses before it added for one
+ * another (since 2026-11-27; until then it was cut to the fields of {@code vis_job_posting}, which dropped the fields of
+ * {@code vis_instant_message_position_reply}, the other entity that runs these businesses before its save).
  */
 public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
 
@@ -41,10 +42,12 @@ public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
 	/**
 	 * Sends the e-mails.
 	 * @param json the record, with {@code resumeIds} and {@code recruiterEmails}
-	 * @return the fields of the entity
+	 * @return the record without the fields the businesses before the save added for one another
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation record = json.getJsonPiece(VisEntityJobPosting.Fields.values());
+		CcpJsonRepresentation record = json.removeFields(VisBusinessRegisterTheRecruitersOfTheJobPosting.Fields.recruiterEmails,
+				VisBusinessFindTheSkillsOfTheJobPosting.Fields.requestedSkills, VisBusinessFindTheMostCoveredSkills.Fields.possibleSkills,
+				VisBusinessSaveTheResumeFilterOfTheJobPosting.Fields.resumeIds, VisBusinessSaveTheResumeFilterOfTheJobPosting.Fields.filterId);
 		List<String> resumeIds = json.getOrDefault(VisBusinessSaveTheResumeFilterOfTheJobPosting.Fields.resumeIds, () -> List.of());
 		List<String> recruiterEmails = json.getOrDefault(VisBusinessRegisterTheRecruitersOfTheJobPosting.Fields.recruiterEmails, () -> List.of());
 		boolean nothingToSend = resumeIds.isEmpty() || recruiterEmails.isEmpty();

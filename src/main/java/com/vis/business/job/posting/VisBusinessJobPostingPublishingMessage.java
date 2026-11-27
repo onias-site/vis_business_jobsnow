@@ -133,7 +133,7 @@ public class VisBusinessJobPostingPublishingMessage implements CcpBusiness {
 	 * @param field the average
 	 * @return the text of the average
 	 */
-	private static String getCurrency(CcpJsonRepresentation jobPosting, CcpJsonFieldName field) {
+	static String getCurrency(CcpJsonRepresentation jobPosting, CcpJsonFieldName field) {
 		boolean notInformed = false == jobPosting.containsAllFields(field);
 
 		if(notInformed) {
@@ -151,7 +151,7 @@ public class VisBusinessJobPostingPublishingMessage implements CcpBusiness {
 	 * @param jobPosting the record
 	 * @return the text of the average
 	 */
-	private static String getExperience(CcpJsonRepresentation jobPosting) {
+	static String getExperience(CcpJsonRepresentation jobPosting) {
 		boolean notInformed = false == jobPosting.containsAllFields(VisEntityJobPosting.Fields.avgExperience);
 
 		if(notInformed) {
