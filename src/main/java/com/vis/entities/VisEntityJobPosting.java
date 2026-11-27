@@ -31,7 +31,9 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.vis.business.bots.job.posting.VisSupportSaveJobPostingBotConfiguration;
 import com.vis.business.job.posting.VisBusinessFindTheMostCoveredSkills;
 import com.vis.business.job.posting.VisBusinessFindTheSkillsOfTheJobPosting;
+import com.vis.business.job.posting.VisBusinessRegisterTheRecruitersOfTheJobPosting;
 import com.vis.business.job.posting.VisBusinessSaveTheResumeFilterOfTheJobPosting;
+import com.vis.business.job.posting.VisBusinessSendTheResumesOfTheJobPosting;
 import com.vis.business.job.posting.VisJobPostingPublishingTexts;
 import com.vis.json.transformers.VisJobPostingHourCombinations;
 import com.vis.json.transformers.VisJsonTransformerJobPostingId;
@@ -48,6 +50,10 @@ import com.vis.json.transformers.VisJsonTransformerJobPostingId;
  * <li>the search of resumes of the screen {@code curriculos/buscar} with those skills as required, its text shared under
  * the e-mail {@code curriculos@onias.site}, and its count and averages kept in the record
  * ({@link VisBusinessSaveTheResumeFilterOfTheJobPosting}).</li>
+ * <li>the valid e-mails of the text registered as recruiters, when they are not recruiters yet nor inactive ones
+ * ({@link VisBusinessRegisterTheRecruitersOfTheJobPosting});</li>
+ * <li>last, the usual e-mail of resumes to each of those recruiters with the resumes found, at most one e-mail of resumes
+ * a day per recruiter ({@link VisBusinessSendTheResumesOfTheJobPosting}).</li>
  * </ol>
  * The records are discarded day by day. Each one is also the child (its text and its id) of one group of
  * {@link VisEntityVirtualJobPostingHour}: the day of the saving and one of the hours still to come in it, from the next
@@ -58,8 +64,10 @@ import com.vis.json.transformers.VisJsonTransformerJobPostingId;
 @CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.daily)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityJobPosting.Fields.class)
-// the skills of the text, the largest set of them that some resume has and the search of resumes over that set
-@CcpBeforeSaveFromMainEntity(execute = {VisBusinessFindTheSkillsOfTheJobPosting.class, VisBusinessFindTheMostCoveredSkills.class, VisBusinessSaveTheResumeFilterOfTheJobPosting.class}, operationHandlers = {})
+// the skills of the text, the largest set of them that some resume has, the search of resumes over that set, the
+// recruiters of the e-mails of the text and, last, the e-mail of the resumes found to them
+@CcpBeforeSaveFromMainEntity(execute = {VisBusinessFindTheSkillsOfTheJobPosting.class, VisBusinessFindTheMostCoveredSkills.class, VisBusinessSaveTheResumeFilterOfTheJobPosting.class,
+		VisBusinessRegisterTheRecruitersOfTheJobPosting.class, VisBusinessSendTheResumesOfTheJobPosting.class}, operationHandlers = {})
 // one group per day and hour still to come in it (the next hour to 23, by the millisecond): the child is a JSON text with the text of the job
 // posting and its id
 @CcpEntityGrouperChild(value = {VisEntityVirtualJobPostingHour.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,

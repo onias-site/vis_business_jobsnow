@@ -107,7 +107,7 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 	}
 
 	// the insertionDate is a text (dd/MM/yyyy HH:mm:ss); without it, the resume was inserted now
-	private static long getInsertion(CcpJsonRepresentation resume, long now) {
+	static long getInsertion(CcpJsonRepresentation resume, long now) {
 		boolean noInsertionDate = false == resume.containsAllFields(VisEntityResume.Fields.insertionDate);
 		if(noInsertionDate) {
 			return now;

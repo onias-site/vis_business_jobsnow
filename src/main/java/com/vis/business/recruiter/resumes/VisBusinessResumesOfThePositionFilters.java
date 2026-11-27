@@ -108,7 +108,8 @@ public class VisBusinessResumesOfThePositionFilters implements CcpBusiness {
 	 * @param recruiterEmail the e-mail of the recruiter
 	 * @return the resumes, as stored
 	 */
-	private static List<CcpJsonRepresentation> getResumesToShow(List<String> emailHashes, String recruiterEmail) {
+	// also the resumes of the e-mail of a job posting of the support bot (VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting)
+	static List<CcpJsonRepresentation> getResumesToShow(List<String> emailHashes, String recruiterEmail) {
 		List<CcpJsonRepresentation> resumes = new ArrayList<>();
 
 		if(emailHashes.isEmpty()) {

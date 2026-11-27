@@ -1,0 +1,80 @@
+package com.vis.business.job.posting;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+import com.ccp.business.CcpBusiness;
+import com.ccp.constants.CcpOtherConstants;
+import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.dependency.injection.CcpDependencyInjection;
+import com.ccp.especifications.db.crud.CcpCrud;
+import com.ccp.especifications.db.crud.CcpSelectUnionAll;
+import com.jn.utils.JnDeleteKeysFromCache;
+import com.vis.business.recruiter.resumes.VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting;
+import com.vis.entities.VisEntityJobPosting;
+import com.vis.entities.VisEntityRecruiter;
+import com.vis.entities.VisEntityRecruiterResumes;
+
+/**
+ * Fifth and last business before the save of {@code vis_job_posting} (since 2026-11-26): each recruiter of the text
+ * ({@link VisBusinessRegisterTheRecruitersOfTheJobPosting}) gets the usual e-mail of resumes with the resumes found by the
+ * search of the job posting ({@link VisBusinessSaveTheResumeFilterOfTheJobPosting}, the same ids of its link), at most
+ * one e-mail of resumes a day: who already has the list of today in {@code vis_recruiter_resumes} (this e-mail or the
+ * hourly one to every recruiter) gets nothing, and the list written by this e-mail keeps the hourly one away for the day.
+ * Only the active recruiters get it (an inactive one was not registered again). The recruiters and their lists of today
+ * are read once (MGIE). The record goes on to the save with the fields of the entity only.
+ */
+public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
+
+	/** The single instance: the class keeps no state. */
+	public static final VisBusinessSendTheResumesOfTheJobPosting INSTANCE = new VisBusinessSendTheResumesOfTheJobPosting();
+
+	private VisBusinessSendTheResumesOfTheJobPosting() {}
+
+	/**
+	 * Sends the e-mails.
+	 * @param json the record, with {@code resumeIds} and {@code recruiterEmails}
+	 * @return the fields of the entity
+	 */
+	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+		CcpJsonRepresentation record = json.getJsonPiece(VisEntityJobPosting.Fields.values());
+		List<String> resumeIds = json.getOrDefault(VisBusinessSaveTheResumeFilterOfTheJobPosting.Fields.resumeIds, () -> List.of());
+		List<String> recruiterEmails = json.getOrDefault(VisBusinessRegisterTheRecruitersOfTheJobPosting.Fields.recruiterEmails, () -> List.of());
+		boolean nothingToSend = resumeIds.isEmpty() || recruiterEmails.isEmpty();
+
+		if(nothingToSend) {
+			return record;
+		}
+
+		List<CcpJsonRepresentation> keys = new ArrayList<>();
+		for (String recruiterEmail : recruiterEmails) {
+			CcpJsonRepresentation key = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiter.Fields.email, recruiterEmail);
+			keys.add(key);
+		}
+		CcpJsonRepresentation[] keysArray = keys.toArray(new CcpJsonRepresentation[0]);
+		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
+		CcpSelectUnionAll found = crud.unionAll(keysArray, JnDeleteKeysFromCache.INSTANCE, VisEntityRecruiter.ENTITY, VisEntityRecruiterResumes.ENTITY);
+		for (CcpJsonRepresentation key : keys) {
+			boolean inactive = false == VisEntityRecruiter.ENTITY.isPresentInThisUnionAll(found, key);
+
+			if(inactive) {
+				continue;
+			}
+
+			boolean alreadyReceivedToday = VisEntityRecruiterResumes.ENTITY.isPresentInThisUnionAll(found, key);
+
+			if(alreadyReceivedToday) {
+				continue;
+			}
+
+			Supplier<CcpJsonRepresentation> keySupplier = key.getJsonSupplier();
+			CcpJsonRepresentation recruiter = VisEntityRecruiter.ENTITY.getRecordFromUnionAll(found, keySupplier);
+			CcpJsonRepresentation sendingInput = CcpOtherConstants.EMPTY_JSON
+					.put(VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting.Fields.recruiter, recruiter)
+					.put(VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting.Fields.resumeIds, resumeIds);
+			VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting.INSTANCE.execute(sendingInput);
+		}
+		return record;
+	}
+}

@@ -20,16 +20,23 @@ import com.vis.json.fields.validation.VisPositionSkillTypes;
 import com.vis.services.VisServiceResumeFilter;
 
 /**
- * Third and last business before the save of {@code vis_job_posting} (since 2026-11-26): the search of resumes of the
+ * Third business before the save of {@code vis_job_posting} (since 2026-11-26): the search of resumes of the
  * screen {@code curriculos/buscar} over the skills that some resume has ({@code possibleSkills}), all of them required, in
  * the area of technology; then the text of the job posting is shared with those filters, as the screen does with
  * "Copiar este link para enviar para alguém", under the e-mail {@code curriculos@onias.site} as the logged user. The two
  * run the businesses of the endpoints of the screen ({@code POST /resume-filter} and the save of the description). The
  * record keeps the count and the averages of the search and the link of the screen with the filters and the text; it
- * goes on to the save with the fields of the entity only. No possible skill (no resume has any skill of the text), no
- * search: the count is zero and there is no link.
+ * goes on with the fields of the entity only, plus the ids of the resumes found ({@link Fields#resumeIds}, the hashes of
+ * their e-mails), for the e-mail to the recruiters of the text ({@code VisBusinessSendTheResumesOfTheJobPosting}). No
+ * possible skill (no resume has any skill of the text), no search: the count is zero, there is no link and no id.
  */
 public class VisBusinessSaveTheResumeFilterOfTheJobPosting implements CcpBusiness {
+
+	/** The output of this business besides the fields of the entity. */
+	public static enum Fields implements CcpJsonFieldName {
+		/** The ids of the resumes found by the search (the hashes of their e-mails). */
+		resumeIds,
+	}
 
 	/** The single instance: the class keeps no state. */
 	public static final VisBusinessSaveTheResumeFilterOfTheJobPosting INSTANCE = new VisBusinessSaveTheResumeFilterOfTheJobPosting();
@@ -52,7 +59,7 @@ public class VisBusinessSaveTheResumeFilterOfTheJobPosting implements CcpBusines
 	/**
 	 * Searches the resumes of the possible skills and shares the text with the filters.
 	 * @param json the record, with {@code description} and {@code possibleSkills}
-	 * @return the fields of the entity, with the count, the averages and the link
+	 * @return the fields of the entity, with the count, the averages and the link, and the ids of the resumes found
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpJsonRepresentation record = json.getJsonPiece(VisEntityJobPosting.Fields.values());
@@ -76,9 +83,11 @@ public class VisBusinessSaveTheResumeFilterOfTheJobPosting implements CcpBusines
 
 		String link = getLink(filterId, sharingEmail);
 		Integer resumesCount = count.getAsIntegerNumber(VisBusinessResumesOfTheFilters.Fields.resumes);
+		List<String> resumeIds = count.getAsStringList(VisBusinessResumesOfTheFilters.Fields.ids);
 		CcpJsonRepresentation recordWithTheCount = record
 				.put(VisEntityJobPosting.Fields.linkToShowResumes, link)
-				.put(VisEntityJobPosting.Fields.resumesCount, resumesCount);
+				.put(VisEntityJobPosting.Fields.resumesCount, resumesCount)
+				.put(Fields.resumeIds, resumeIds);
 		CcpJsonRepresentation recordWithClt = putAverage(recordWithTheCount, count, VisBusinessResumesOfTheFilters.Fields.cltAverage, VisEntityJobPosting.Fields.avgClt);
 		CcpJsonRepresentation recordWithPj = putAverage(recordWithClt, count, VisBusinessResumesOfTheFilters.Fields.pjAverage, VisEntityJobPosting.Fields.avgPj);
 		CcpJsonRepresentation recordWithExperience = putAverage(recordWithPj, count, VisBusinessResumesOfTheFilters.Fields.experienceAverage, VisEntityJobPosting.Fields.avgExperience);
