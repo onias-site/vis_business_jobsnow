@@ -469,7 +469,7 @@ public class VisBusinessResumesOfTheFilters implements CcpBusiness {
 	 * Every ddd: the allowed values of {@link VisJsonCommonsFields#ddd}, the same list that validates the ddds asked.
 	 * @return the ddds, in the order of the annotation
 	 */
-	private static List<Integer> getAllDdds() {
+	public static List<Integer> getAllDdds() {
 		String fieldName = VisJsonCommonsFields.ddd.name();
 		Field field = getEnumField(fieldName);
 		CcpJsonFieldTypeNumberUnsigned annotation = field.getAnnotation(CcpJsonFieldTypeNumberUnsigned.class);

@@ -25,7 +25,7 @@ public class VisJobPostingHourCombinations implements Function<CcpJsonRepresenta
 	private VisJobPostingHourCombinations() {}
 
 	/** The texts of this class. */
-	enum Constants implements CcpJsonFieldName {
+	public enum Constants implements CcpJsonFieldName {
 		/** The format of the day. */
 		DAY_PATTERN { public String getValue() { return "yyyyMMdd"; } },
 		/** The format of the hour of the saving, from 00 to 23. */

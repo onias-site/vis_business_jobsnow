@@ -1,5 +1,6 @@
 package com.vis.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.ccp.decorators.CcpJsonFieldName;
@@ -31,6 +32,7 @@ import com.vis.business.bots.job.posting.VisSupportSaveJobPostingBotConfiguratio
 import com.vis.business.job.posting.VisBusinessFindTheMostCoveredSkills;
 import com.vis.business.job.posting.VisBusinessFindTheSkillsOfTheJobPosting;
 import com.vis.business.job.posting.VisBusinessSaveTheResumeFilterOfTheJobPosting;
+import com.vis.business.job.posting.VisJobPostingPublishingTexts;
 import com.vis.json.transformers.VisJobPostingHourCombinations;
 import com.vis.json.transformers.VisJsonTransformerJobPostingId;
 
@@ -72,9 +74,12 @@ public class VisEntityJobPosting implements CcpEntityConfigurator {
 	/** The entity {@code vis_job_posting}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityJobPosting.class).entityInstance;
 
-	/** Seeds the configuration of {@code /saveJobPosting} in the bot entities of jn. */
+	/** Seeds the configuration of {@code /saveJobPosting} in the bot entities of jn and the texts of its hourly publishing in the groups. */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		List<CcpBulkItem> seeds = VisSupportSaveJobPostingBotConfiguration.getSeeds();
+		List<CcpBulkItem> botSeeds = VisSupportSaveJobPostingBotConfiguration.getSeeds();
+		List<CcpBulkItem> publishingTexts = VisJobPostingPublishingTexts.getSeeds();
+		List<CcpBulkItem> seeds = new ArrayList<>(botSeeds);
+		seeds.addAll(publishingTexts);
 		return seeds;
 	}
 
