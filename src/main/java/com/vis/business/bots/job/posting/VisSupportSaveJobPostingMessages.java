@@ -11,7 +11,7 @@ public enum VisSupportSaveJobPostingMessages implements JnSystemMessage {
 	askTheText,
 	/** The text does not have from 100 to 5,000 characters: takes {@code {length}}. */
 	invalidText,
-	/** The text was received and goes to be saved, with the search of its resumes. */
+	/** The text was received and goes to be saved, with the search of its resumes; asks for the next one or {@code /sair}. */
 	saved,
 	;
 }

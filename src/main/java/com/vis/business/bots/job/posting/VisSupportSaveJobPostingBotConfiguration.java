@@ -15,7 +15,9 @@ import com.vis.business.bots.VisSupportBotCommands;
 /**
  * Configuration of {@code /saveJobPosting} in the support bot (since 2026-11-26): the bot asks the operator for the text
  * of a job posting, from 100 to 5,000 characters, and saves it in {@code vis_job_posting}, whose queue finds the resumes
- * that best answer it; a text of another size is asked again. Seeded by {@code VisEntityJobPosting}.
+ * that best answer it; a text of another size is asked again. Since 2026-11-27 the command is a loop: the step of the
+ * text is its own next step, so after each saving the bot asks for the next job posting, until the operator types
+ * {@code /sair} ({@code /exit}). Seeded by {@code VisEntityJobPosting}.
  */
 public final class VisSupportSaveJobPostingBotConfiguration {
 
@@ -30,12 +32,13 @@ public final class VisSupportSaveJobPostingBotConfiguration {
 		String saveTheText = VisSupportSaveJobPostingSteps.saveJobPostingText.name();
 		CcpJsonRepresentation[] botReply = JnEntityBotCommandStep.getBotReplyInEveryLanguage();
 
-		// the question goes on to the text; a text of another size repeats the step of the text. A step needs a flow: the
+		// the question goes on to the text; a text of another size repeats the step of the text, and so does a saved one
+		// (the loop of job postings, left only by /sair). A step needs a flow: the
 		// question never diverts, so it gets the same one, which leads where the question already goes
 		int invalidText = VisSupportSaveJobPostingStatus.invalidText.asNumber();
 		CcpJsonRepresentation invalidTextFlow = JnEntityBotCommandStep.getStepFlow(invalidText, saveTheText, botReply);
 		CcpJsonRepresentation askStep = JnEntityBotCommandStep.getBotCommandStep(commandName, VisSupportSaveJobPostingAskTheText.class, saveTheText, invalidTextFlow);
-		CcpJsonRepresentation saveStep = JnEntityBotCommandStep.getBotCommandStep(saveTheText, VisSupportSaveJobPostingSaveTheText.class, "", invalidTextFlow);
+		CcpJsonRepresentation saveStep = JnEntityBotCommandStep.getBotCommandStep(saveTheText, VisSupportSaveJobPostingSaveTheText.class, saveTheText, invalidTextFlow);
 
 		List<CcpJsonRepresentation> endMessages = JnEntityBotCommandStepEndMessage.getBotReplyEndMessages(commandName, saveTheText);
 		JnBotConfigurationSeeds seeds = new JnBotConfigurationSeeds(JnMessageType.JnBotType.support)
@@ -52,8 +55,8 @@ public final class VisSupportSaveJobPostingBotConfiguration {
 						, "O texto tem {length} caracteres. Digite o texto da vaga com 100 a 5000 caracteres."
 						, "The text has {length} characters. Type the text of the job posting with 100 to 5000 characters.")
 				.systemMessage(VisSupportSaveJobPostingMessages.saved
-						, "A vaga foi recebida. Em instantes ela será gravada, junto com os currículos que atendem ao maior número possível das habilidades dela."
-						, "The job posting was received. In a moment it will be saved, with the resumes that answer as many of its skills as possible.");
+						, "A vaga foi recebida. Em instantes ela será gravada, junto com os currículos que atendem ao maior número possível das habilidades dela. Envie a próxima vaga ou digite /sair para encerrar."
+						, "The job posting was received. In a moment it will be saved, with the resumes that answer as many of its skills as possible. Send the next job posting or type /exit to finish.");
 		List<CcpBulkItem> bulkItems = seeds.getBulkItems();
 		return bulkItems;
 	}

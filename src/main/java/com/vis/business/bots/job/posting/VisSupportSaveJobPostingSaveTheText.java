@@ -7,7 +7,8 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.vis.entities.VisEntityJobPosting;
 
 /**
- * Second and last step of {@code /saveJobPosting} of the support bot (since 2026-11-26): the text typed by the operator,
+ * Second step of {@code /saveJobPosting} of the support bot (since 2026-11-26), repeated for each job posting (since
+ * 2026-11-27 it is its own next step, until the operator types {@code /sair}): the text typed by the operator,
  * without the spaces around it, from 100 to 5,000 characters, is saved in {@code vis_job_posting} with the millisecond of
  * the saving. The entity is asynchronous: the save only publishes the text to its queue, whose consumer finds the skills
  * of the text and the resumes that best answer it before writing the record; the step ends with the reply {@code saved}
