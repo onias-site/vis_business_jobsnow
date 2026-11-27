@@ -16,6 +16,8 @@ public enum VisCommandNamesInPortuguese implements CcpJsonFieldName{
 	verifyLinkedinAddress { public String getValue() { return "verificarEnderecoDoLinkedin"; } },
 	/** {@code /salvarRh}. */
 	saveRecruiter { public String getValue() { return "salvarRh"; } },
+	/** {@code /salvarVaga}. */
+	saveJobPosting { public String getValue() { return "salvarVaga"; } },
 	/** {@code /receberMensagens}, of the user bot ({@link VisUserBotCommands}). */
 	receiveMessages { public String getValue() { return "receberMensagens"; } },
 	;

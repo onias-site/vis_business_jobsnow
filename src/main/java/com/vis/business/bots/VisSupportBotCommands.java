@@ -17,5 +17,7 @@ public enum VisSupportBotCommands {
 	verifyLinkedinAddress,
 	/** Saves a recruiter in {@code vis_recruiter}, by the e-mail (since 2026-11-14). */
 	saveRecruiter,
+	/** Saves the text of a job posting in {@code vis_job_posting}, with the resumes that best answer it (since 2026-11-26). */
+	saveJobPosting,
 	;
 }
