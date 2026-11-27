@@ -13,10 +13,13 @@ import com.jn.utils.JnLanguage;
  * {@code VisEntityJobPosting}. The {@code {...}} are filled by {@link VisBusinessJobPostingPublishingMessage}.
  */
 public enum VisJobPostingPublishingTexts implements JnSystemMessage {
-	/** Above the text of the job posting. */
+	/**
+	 * The request to forward the job posting: the footer, the last paragraph of the message (since 2026-11-27; until then
+	 * the header, above the text). The name of the item is kept: it is the key of its records in production.
+	 */
 	header("<b>[AJUDE AS PESSOAS ENCAMINHANDO ESTA VAGA AO MÁXIMO DE GRUPOS E PESSOAS QUE VOCÊ PUDER 🙏🙏🙏]</b>",
 			"<b>[HELP PEOPLE BY FORWARDING THIS JOB POSTING TO AS MANY GROUPS AND PEOPLE AS YOU CAN 🙏🙏🙏]</b>"),
-	/** To the candidates, below the text. */
+	/** To the candidates: the header, above the text (since 2026-11-27; until then below the text). */
 	candidates("<b>Envie seu curriculo a 2.000 recrutadores, receba vagas aderentes ao teu perfil, basta <a href=\"{frontendUrl}/meus-dados/sobre-mim\">clicar aqui</a></b>",
 			"<b>Send your resume to 2,000 recruiters and receive job postings that fit your profile, just <a href=\"{frontendUrl}/meus-dados/sobre-mim\">click here</a></b>"),
 	/** To the recruiters, when the job posting found resumes. */

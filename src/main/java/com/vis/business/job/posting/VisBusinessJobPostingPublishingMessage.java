@@ -15,11 +15,12 @@ import com.vis.entities.VisEntityJobPosting;
 
 /**
  * The message of a job posting of {@code /saveJobPosting} in the groups of technology (since 2026-11-26), html of
- * Telegram ({@link VisJobPostingPublishingTexts}): the header, the text of the job posting (escaped), the paragraph to the
- * candidates and the one to the recruiters, this one with the count, the averages and the link of the resumes found when
- * there are resumes. Up to {@value #TELEGRAM_LIMIT} characters it is one piece; longer (the text reaches 5,000), the header
- * and the text go in as many pieces as the limit asks, cut at a blank, and the two paragraphs in the last one, sent as
- * answers to the first.
+ * Telegram ({@link VisJobPostingPublishingTexts}): the paragraph to the candidates as the header (since 2026-11-27; until
+ * then the request to forward the job posting), the text of the job posting (escaped), the paragraph to the recruiters,
+ * with the count, the averages and the link of the resumes found when there are resumes, and the request to forward the
+ * job posting as the footer. Up to {@value #TELEGRAM_LIMIT} characters it is one piece; longer (the text reaches 5,000),
+ * the header and the text go in as many pieces as the limit asks, cut at a blank, and the footer (the paragraph to the
+ * recruiters and the request to forward) in the last one, sent as answers to the first.
  */
 public class VisBusinessJobPostingPublishingMessage implements CcpBusiness {
 
@@ -72,15 +73,16 @@ public class VisBusinessJobPostingPublishingMessage implements CcpBusiness {
 		CcpJsonRepresentation linkAddresses = VisBusinessSendResumesToRecruiters.getLinkAddresses();
 		String frontendUrl = linkAddresses.getAsString(VisRecruiterResumesFields.frontendUrl);
 		CcpJsonRepresentation linkValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.frontendUrl, frontendUrl);
-		String header = VisJobPostingPublishingTexts.header.getMessage(LANGUAGE);
+		// since 2026-11-27 the paragraph to the candidates is the header and the request to forward goes to the footer
+		String candidates = VisJobPostingPublishingTexts.candidates.getMessage(LANGUAGE, linkValues);
 		String description = jobPosting.getAsString(VisEntityJobPosting.Fields.description);
 		String escapedDescription = escape(description);
-		String candidates = VisJobPostingPublishingTexts.candidates.getMessage(LANGUAGE, linkValues);
 		String recruiters = getRecruiters(jobPosting);
+		String forwardRequest = VisJobPostingPublishingTexts.header.getMessage(LANGUAGE);
 		String lineBreak = Constants.LINE_BREAK.getValue();
 		String paragraph = Constants.PARAGRAPH.getValue();
-		String body = header + lineBreak + escapedDescription;
-		String footer = candidates + paragraph + recruiters;
+		String body = candidates + lineBreak + escapedDescription;
+		String footer = recruiters + paragraph + forwardRequest;
 		String whole = body + paragraph + footer;
 		boolean fitsInOne = whole.length() <= TELEGRAM_LIMIT;
 
