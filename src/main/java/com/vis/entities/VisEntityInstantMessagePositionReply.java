@@ -55,19 +55,23 @@ import com.vis.business.job.posting.VisJobPostingReplyTexts;
  * posting ({@link VisBusinessSaveTheDescriptionOfTheJobPosting}, {@link VisErrorJobPostingDescriptionNotSaved});</li>
  * <li>the e-mail of the resumes found to the recruiters of the text ({@link VisBusinessSendTheResumesOfTheJobPosting}).</li>
  * </ol>
- * A refusal is only logged ({@link VisBusinessLogTheRefusedJobPosting}) and cancels the save: the message of the group is
- * ignored. After the save the support bot answers the message of the job posting in the group with the resumes found
+ * A refusal is logged ({@link VisBusinessLogTheRefusedJobPosting}) and cancels the save: the message of the group is
+ * ignored, except (since 2026-11-27) when the filters of its resumes already have a text (a job posting already saved by
+ * {@code /salvarVaga} or written in another group): the support bot answers it too, with the link, the count and the
+ * averages of the search, and the record of the link keeps the first text. After the save the support bot answers the message of the job posting in the group with the resumes found
  * ({@link VisBusinessReplyTheJobPostingWithItsResumes}); no resume found, no answer. The records are discarded day by day.
  */
 @CcpEntityCache(3600)
 @CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.daily)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityInstantMessagePositionReply.Fields.class)
-// the same six businesses of vis_job_posting, with the same refusals, which only log and cancel the save
+// the same six businesses of vis_job_posting, with the same refusals, which log and cancel the save; since 2026-11-27 the
+// refusal of filters that already have a text also answers the message in the group (the answer gives up by itself
+// when there are no filters, so no resume)
 @CcpBeforeSaveFromMainEntity(execute = {VisBusinessRegisterTheRecruitersOfTheJobPosting.class, VisBusinessFindTheSkillsOfTheJobPosting.class, VisBusinessFindTheMostCoveredSkills.class,
 		VisBusinessSaveTheResumeFilterOfTheJobPosting.class, VisBusinessSaveTheDescriptionOfTheJobPosting.class, VisBusinessSendTheResumesOfTheJobPosting.class},
 		operationHandlers = {@CcpExceptionFlow(whenThrowing = VisErrorJobPostingWithoutSkills.class, thenExecute = {VisBusinessLogTheRefusedJobPosting.class}),
-				@CcpExceptionFlow(whenThrowing = VisErrorJobPostingDescriptionNotSaved.class, thenExecute = {VisBusinessLogTheRefusedJobPosting.class})})
+				@CcpExceptionFlow(whenThrowing = VisErrorJobPostingDescriptionNotSaved.class, thenExecute = {VisBusinessLogTheRefusedJobPosting.class, VisBusinessReplyTheJobPostingWithItsResumes.class})})
 @CcpAfterSaveFromMainEntity(execute = {VisBusinessReplyTheJobPostingWithItsResumes.class}, operationHandlers = {})
 public class VisEntityInstantMessagePositionReply implements CcpEntityConfigurator {
 	/** The single instance: the class keeps no state. */
