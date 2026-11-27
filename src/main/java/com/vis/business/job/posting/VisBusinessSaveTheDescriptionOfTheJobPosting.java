@@ -10,9 +10,10 @@ import com.vis.entities.VisEntityResumeFilterDescription;
  * Fifth business before the save of {@code vis_job_posting} (since 2026-11-27): the text of the job posting is shared with
  * the filters of its resumes, as the screen {@code curriculos/buscar} does with "Copiar este link para enviar para
  * alguém", in {@code vis_resume_filter_description} under the id of the filters and the e-mail of the job postings. The
- * flow goes on only when the save inserts the record: when the filters already had a text (the save updates it) or
- * there are no filters (no resume has any skill of the text), it throws {@link VisErrorJobPostingDescriptionNotSaved},
- * which cancels the save of the job posting and the e-mail to its recruiters.
+ * flow goes on only when the record is new: when the filters already had a text, which is kept as it is (the link of
+ * the earlier job posting goes on showing its own text), or there are no filters (no resume has any skill of the text),
+ * it throws {@link VisErrorJobPostingDescriptionNotSaved}, which cancels the save of the job posting and the e-mail to
+ * its recruiters.
  */
 public class VisBusinessSaveTheDescriptionOfTheJobPosting implements CcpBusiness {
 
@@ -41,12 +42,15 @@ public class VisBusinessSaveTheDescriptionOfTheJobPosting implements CcpBusiness
 				.put(VisEntityResumeFilterDescription.Fields.filterId, filterId)
 				.put(VisEntityResumeFilterDescription.Fields.email, sharingEmail)
 				.put(VisEntityResumeFilterDescription.Fields.description, description);
-		boolean inserted = VisEntityResumeFilterDescription.ENTITY.save(sharedDescription);
+		// checked before the save, which would merge the new text over the one of the earlier job posting: the link of its
+		// post in the groups would then show the text of the refused one
+		boolean alreadySaved = VisEntityResumeFilterDescription.ENTITY.exists(sharedDescription);
 
-		if(inserted) {
-			return json;
+		if(alreadySaved) {
+			throw new VisErrorJobPostingDescriptionNotSaved(json);
 		}
 
-		throw new VisErrorJobPostingDescriptionNotSaved(json);
+		VisEntityResumeFilterDescription.ENTITY.save(sharedDescription);
+		return json;
 	}
 }
