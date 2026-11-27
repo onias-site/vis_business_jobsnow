@@ -27,6 +27,7 @@ import com.ccp.hash.CcpHashAlgorithm;
 import com.ccp.json.fields.validation.CcpJsonCommonsFields;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.business.messages.JnMessageType;
+import com.jn.entities.JnEntityDisposableRecord;
 import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.messages.JnSendMessageToUser;
@@ -49,9 +50,12 @@ import com.vis.json.transformers.VisJsonTransformerRecruiterProfessional;
 import com.vis.messages.VisMessages;
 
 /**
- * The daily process (Monday to Friday, as the legacy one) that sends each recruiter of {@code vis_recruiter} the table
+ * The process (Monday to Friday, as the legacy one) that sends each recruiter of {@code vis_recruiter} the table
  * of the resumes added or changed in the last 7 days (the dates come from the history, {@code JnVersionableHistory}, in
- * {@code jn_grouper}; until 2026-11-20 in {@code jn_versionable}).
+ * {@code jn_grouper}; until 2026-11-20 in {@code jn_versionable}). Since 2026-11-27 it runs every hour from 04:00 to 23:00
+ * ({@value #RUNS_PER_DAY} runs a day; until then once a day, at 10:00): each run sends the e-mail to the
+ * {@value #RUNS_PER_DAY}th part of {@link VisRecruiterResumesSystemParameters#recruitersPerDay}, and a recruiter who
+ * already received it on the day ({@link #getRecipientsOfToday(List, CcpTimeDecorator)}) waits for the next day.
  *
  * <ul>
  * <li>Who receives: the recruiters who never viewed a resume of these e-mails and the ones whose last view is less than
@@ -93,6 +97,13 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	public static final VisBusinessSendResumesToRecruiters INSTANCE = new VisBusinessSendResumesToRecruiters();
 
 	private VisBusinessSendResumesToRecruiters() {}
+
+	/**
+	 * How many times a day the process runs (every hour from 04:00 to 23:00, Monday to Friday, by the Cloud Scheduler of
+	 * the job {@code jobsnow-curriculos-aos-recrutadores}, since 2026-11-27): each run sends the e-mail to this part of
+	 * {@link VisRecruiterResumesSystemParameters#recruitersPerDay}.
+	 */
+	static final int RUNS_PER_DAY = 20;
 
 	/** The days of resumes of each e-mail. */
 	static final int DAYS_OF_RESUMES = 7;
@@ -195,6 +206,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		List<String> restrictedTo = json.getOrDefault(VisRecruiterResumesFields.recruiters, () -> List.of());
 		int[] emailsSent = {0};
 		int recruitersPerDay = VisRecruiterResumesSystemParameters.recruitersPerDay.getAsInteger();
+		int recruitersPerRun = recruitersPerDay / RUNS_PER_DAY;
 		VisEntityRecruiterQueueCursor.CursorNames generalQueue = VisEntityRecruiterQueueCursor.CursorNames.resumesToRecruiters;
 		VisEntityRecruiterQueueCursor.CursorNames legacyQueue = VisEntityRecruiterQueueCursor.CursorNames.legacyViewersOfResumesToRecruiters;
 		VisEntityRecruiterQueueCursor.CursorNames nonProfessionalQueue = VisEntityRecruiterQueueCursor.CursorNames.nonProfessionalRecruitersOfResumesToRecruiters;
@@ -210,7 +222,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		long telegramSince = now.getDaysAgo(VisEntityRecruiter.DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE);
 
 		Set<String> recipients = new LinkedHashSet<>();
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, recruitersPerDay, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition, recipients);
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, recruitersPerRun, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition, recipients);
 		List<CcpJsonRepresentation> recruiters = getRecruiters();
 		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
 		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun, lastNonProfessionalPositionOfTheLastRun, lastLegacyActivePositionOfTheLastRun);
@@ -218,6 +230,9 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		// e-mail of every recent resume (since 2026-11-24)
 		Set<String> recruitersWithPositions = getRecruitersWithPositions();
 		recruitersInOrder.removeIf(recruiter -> recruitersWithPositions.contains(recruiter.getAsString(VisEntityRecruiter.Fields.email).toLowerCase()));
+		// the process runs every hour (since 2026-11-27): who already received the e-mail today waits for tomorrow
+		Set<String> recipientsOfToday = getRecipientsOfToday(restrictedTo, now);
+		recruitersInOrder.removeIf(recruiter -> recipientsOfToday.contains(recruiter.getAsString(VisRecruiterResumesFields.emailHash)));
 		recruitersInOrder.forEach(sendToTheRecruiter);
 		saveLastQueuePosition(generalQueue, restrictedTo, lastPositionOfTheLastRun, lastQueuePosition[0]);
 		saveLastQueuePosition(legacyQueue, restrictedTo, lastLegacyPositionOfTheLastRun, lastLegacyQueuePosition[0]);
@@ -316,6 +331,44 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		everyRecruiter.selectFrom(VisEntityRecruiter.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, recruiter -> recruiters.add(recruiter));
 		return recruiters;
+	}
+
+	/**
+	 * The hashes of the e-mails of the recruiters who already received the e-mail today (since 2026-11-27, when the process
+	 * started running every hour): the copies, in {@code jn_disposable_record}, of the lists of {@code vis_recruiter_resumes}
+	 * written since the midnight of today, which {@link #sendTheEmail(String, List, String, String)} writes before each
+	 * e-mail. The record kept in the copy ({@code json}) has the e-mail already hashed by the transformers. A run
+	 * restricted to some recruiters (support and tests) sends to them whatever happened before.
+	 * @param restrictedTo the e-mails the run is restricted to; empty for every recruiter
+	 * @param now the moment of the run
+	 * @return the hashes of the e-mails of the recipients of today; empty in a restricted run
+	 */
+	static Set<String> getRecipientsOfToday(List<String> restrictedTo, CcpTimeDecorator now) {
+		boolean restrictedRun = false == restrictedTo.isEmpty();
+		if(restrictedRun) {
+			return new HashSet<>();
+		}
+		Long midnight = now.getMidnight();
+		String recruiterResumesEntityName = VisEntityRecruiterResumes.ENTITY.getEntityMetaData().entityName;
+		String trueTimestampField = JnEntityDisposableRecord.Fields.trueTimestamp.name();
+		CcpQueryOptions query = CcpQueryOptions.INSTANCE
+				.startQuery()
+					.startBool()
+						.startMust()
+							.term(JnEntityDisposableRecord.Fields.entity, recruiterResumesEntityName)
+							.startRange()
+								.startFieldRange(trueTimestampField)
+									.greaterThanEquals(midnight)
+								.endFieldRangeAndBackToRange()
+							.endRangeAndBackToMust()
+						.endMustAndBackToBool()
+					.endBoolAndBackToQuery()
+				.endQueryAndBackToRequest();
+		Set<String> recipientsOfToday = new HashSet<>();
+		Consumer<CcpJsonRepresentation> keepTheRecipient = new VisRecipientOfTodayCollector(recipientsOfToday);
+		String scrollTime = Constants.SCROLL_TIME.getValue();
+		query.selectFrom(JnEntityDisposableRecord.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, keepTheRecipient);
+		return recipientsOfToday;
 	}
 
 	/** The hashes of the e-mails of the recruiters of the sign-up who already received their first e-mail. */
