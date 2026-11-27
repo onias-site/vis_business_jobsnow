@@ -1,5 +1,6 @@
 package com.vis.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.ccp.decorators.CcpJsonFieldName;
@@ -21,6 +22,8 @@ import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.jn.business.messages.JnMessageType;
+import com.jn.entities.JnEntityBotGroupMessageHandler;
 import com.jn.entities.decorators.engine.JnDisposableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.vis.business.job.posting.VisBusinessFindTheMostCoveredSkills;
@@ -29,6 +32,7 @@ import com.vis.business.job.posting.VisBusinessLogTheRefusedJobPosting;
 import com.vis.business.job.posting.VisBusinessRegisterTheRecruitersOfTheJobPosting;
 import com.vis.business.job.posting.VisBusinessReplyTheJobPostingWithItsResumes;
 import com.vis.business.job.posting.VisBusinessSaveTheDescriptionOfTheJobPosting;
+import com.vis.business.job.posting.VisBusinessSaveTheJobPostingOfTheGroup;
 import com.vis.business.job.posting.VisBusinessSaveTheResumeFilterOfTheJobPosting;
 import com.vis.business.job.posting.VisBusinessSendTheResumesOfTheJobPosting;
 import com.vis.business.job.posting.VisErrorJobPostingDescriptionNotSaved;
@@ -36,7 +40,8 @@ import com.vis.business.job.posting.VisErrorJobPostingWithoutSkills;
 import com.vis.business.job.posting.VisJobPostingReplyTexts;
 
 /**
- * A job posting written in a group of Telegram where the support bot is (since 2026-11-27), one per link of its resumes
+ * A job posting written in a group of Telegram where the support bot is (since 2026-11-27; every text message of those
+ * groups is saved here by {@link VisBusinessSaveTheJobPostingOfTheGroup}, the business of the groups of the support bot), one per link of its resumes
  * ({@code linkToShowResumes}, which the fourth business writes) a day. The writing is synchronous. Before the save run the same six businesses of
  * {@code vis_job_posting}, in the same order and with the same refusals:
  * <ol>
@@ -73,9 +78,16 @@ public class VisEntityInstantMessagePositionReply implements CcpEntityConfigurat
 	/** The entity {@code vis_instant_message_position_reply}, with every decorator of this configuration. */
 	public static final CcpEntity ENTITY = new CcpEntityFactory(VisEntityInstantMessagePositionReply.class).entityInstance;
 
-	/** Seeds the text of the answer in the group ({@code jn_system_message}). */
+	/**
+	 * Seeds the text of the answer in the group ({@code jn_system_message}) and, since 2026-11-27, the business that the
+	 * support bot runs for the messages of its groups ({@code jn_bot_group_message_handler}), which saves them here.
+	 */
 	public List<CcpBulkItem> getFirstRecordsToInsert() {
-		List<CcpBulkItem> seeds = VisJobPostingReplyTexts.getSeeds();
+		List<CcpBulkItem> texts = VisJobPostingReplyTexts.getSeeds();
+		List<CcpBulkItem> seeds = new ArrayList<>(texts);
+		String supportBot = JnMessageType.JnBotType.support.name();
+		List<CcpBulkItem> groupMessageHandler = JnEntityBotGroupMessageHandler.getSeeds(supportBot, VisBusinessSaveTheJobPostingOfTheGroup.class);
+		seeds.addAll(groupMessageHandler);
 		return seeds;
 	}
 
