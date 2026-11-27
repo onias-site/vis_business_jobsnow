@@ -10,6 +10,8 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.json.fields.validation.CcpJsonCommonsFields;
+import com.vis.business.skill.VisSkillDictionary;
+import com.vis.business.telegram.VisSkillWordsInMemory;
 import com.vis.entities.VisEntityJobPosting;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.services.VisServiceSkills;
@@ -17,7 +19,10 @@ import com.vis.services.VisServiceSkills;
 /**
  * First business before the save of {@code vis_job_posting} (since 2026-11-26): the text of the job posting goes to the
  * same search of skills of {@code skills/fromText}, and the skills it finds, each main one and its parents, each once,
- * go on to the crossing of the groups of the resumes ({@link VisBusinessFindTheMostCoveredSkills}).
+ * go on to the crossing of the groups of the resumes ({@link VisBusinessFindTheMostCoveredSkills}). Only the skills the
+ * dictionary has as skills of their own go on (since 2026-11-27): a name that survives only as a parent of old items and
+ * in the resumes, such as {@code INTEGRATION} after its rename to {@code INTEGRATION123} in {@code vis_skill}, is in the
+ * groups of the resumes but not in the hierarchy of the search, which finds no resume by it and so none at all.
  */
 public class VisBusinessFindTheSkillsOfTheJobPosting implements CcpBusiness {
 
@@ -49,7 +54,17 @@ public class VisBusinessFindTheSkillsOfTheJobPosting implements CcpBusiness {
 			List<String> parents = foundSkill.getAsStringList(VisJsonCommonsFields.parent);
 			requestedSkills.addAll(parents);
 		}
-		List<String> requestedSkillList = new ArrayList<>(requestedSkills);
+		VisSkillWordsInMemory words = VisSkillDictionary.getWords();
+		List<String> requestedSkillList = new ArrayList<>();
+		for (String requestedSkill : requestedSkills) {
+			boolean unknown = false == words.hasTheSkill(requestedSkill);
+
+			if(unknown) {
+				continue;
+			}
+
+			requestedSkillList.add(requestedSkill);
+		}
 		CcpJsonRepresentation jsonWithTheSkills = json.put(Fields.requestedSkills, requestedSkillList);
 		return jsonWithTheSkills;
 	}

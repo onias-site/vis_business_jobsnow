@@ -3,6 +3,7 @@ package com.vis.business.telegram;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,9 @@ public class VisSkillWordsInMemory implements Function<Collection<String>, List<
 	/** The skills that have each skill as a parent, by the parent, in upper case. */
 	private final Map<String, Set<String>> childrenBySkill;
 
+	/** The skills of the items, in upper case: the skills the dictionary has as skills of their own, not only as parents. */
+	private final Set<String> skills;
+
 	/**
 	 * Reads the items of every word of every skill.
 	 */
@@ -41,12 +45,14 @@ public class VisSkillWordsInMemory implements Function<Collection<String>, List<
 	public VisSkillWordsInMemory(List<CcpJsonRepresentation> items) {
 		Map<String, List<CcpJsonRepresentation>> indexedItems = new HashMap<>();
 		Map<String, Set<String>> childrenOfEachSkill = new HashMap<>();
+		Set<String> skillsOfTheItems = new HashSet<>();
 		for (CcpJsonRepresentation item : items) {
 			String word = item.getAsString(VisJsonCommonsFields.word);
 			String initials = word.substring(0, VisEntityVirtualSkillInitialsGrouper.SHORTEST_WORD);
 			indexedItems.computeIfAbsent(initials, x -> new ArrayList<>()).add(item);
 			String skill = item.getAsString(VisJsonCommonsFields.skill);
 			String upperCaseSkill = skill.toUpperCase();
+			skillsOfTheItems.add(upperCaseSkill);
 			List<String> parents = item.getAsStringList(VisJsonCommonsFields.parent);
 			for (String parent : parents) {
 				String upperCaseParent = parent.toUpperCase();
@@ -55,6 +61,19 @@ public class VisSkillWordsInMemory implements Function<Collection<String>, List<
 		}
 		this.itemsByInitials = indexedItems;
 		this.childrenBySkill = childrenOfEachSkill;
+		this.skills = skillsOfTheItems;
+	}
+
+	/**
+	 * Whether the dictionary has the skill as a skill of its own (a record of {@code vis_skill}). A name that only appears
+	 * as a parent of other items, such as an old name of a renamed skill, is not one: no search finds resumes by it.
+	 * @param skill the skill, in any case
+	 * @return true when the skill is the skill of some item
+	 */
+	public boolean hasTheSkill(String skill) {
+		String upperCaseSkill = skill.toUpperCase();
+		boolean known = this.skills.contains(upperCaseSkill);
+		return known;
 	}
 
 	/**
