@@ -12,7 +12,7 @@ import com.jn.utils.JnSystemProperties;
 import com.vis.entities.VisEntityInstantMessagePositionReply;
 
 /**
- * After the save of {@code vis_instant_message_position_reply} (since 2026-11-27): the user bot answers, in the group,
+ * After the save of {@code vis_instant_message_position_reply} (since 2026-11-27): the support bot answers, in the group,
  * the message of the job posting ({@code replyTo}) with the resumes its search found, their count, the averages and the
  * link of the screen {@code curriculos/buscar} ({@link VisJobPostingReplyTexts#resumesFound}, html of Telegram, in the
  * language of the groups). A search that found no resume (no link, or a count of zero) answers nothing. A job posting
@@ -45,7 +45,7 @@ public class VisBusinessReplyTheJobPostingWithItsResumes implements CcpBusiness 
 		}
 
 		String message = getMessage(json, resumesCount);
-		String botType = JnMessageType.JnBotType.user.name();
+		String botType = JnMessageType.JnBotType.support.name();
 		CcpStringDecorator botTypeDecorator = new CcpStringDecorator(botType);
 		CcpJsonFieldName botName = botTypeDecorator.jsonFieldName();
 		String botToken = JnSystemProperties.INSTANCE.getSystemInnerProperty(JnMessageType.InstantMessengerApiFields.bots, botName);

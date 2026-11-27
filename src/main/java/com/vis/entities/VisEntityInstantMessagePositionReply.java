@@ -16,14 +16,13 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactor
 import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
-import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
+import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldWrittenBeforeTheSave;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumber;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeNumberUnsigned;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
 import com.jn.entities.decorators.engine.JnDisposableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
-import com.jn.json.fields.validation.JnJsonInstantMessengerFields;
 import com.vis.business.job.posting.VisBusinessFindTheMostCoveredSkills;
 import com.vis.business.job.posting.VisBusinessFindTheSkillsOfTheJobPosting;
 import com.vis.business.job.posting.VisBusinessLogTheRefusedJobPosting;
@@ -37,8 +36,8 @@ import com.vis.business.job.posting.VisErrorJobPostingWithoutSkills;
 import com.vis.business.job.posting.VisJobPostingReplyTexts;
 
 /**
- * A job posting written in a group of Telegram where the user bot is (since 2026-11-27), one per person who posts it
- * ({@code chatId}) a day. The writing is synchronous. Before the save run the same six businesses of
+ * A job posting written in a group of Telegram where the support bot is (since 2026-11-27), one per link of its resumes
+ * ({@code linkToShowResumes}, which the fourth business writes) a day. The writing is synchronous. Before the save run the same six businesses of
  * {@code vis_job_posting}, in the same order and with the same refusals:
  * <ol>
  * <li>the valid e-mails of the text registered as recruiters ({@link VisBusinessRegisterTheRecruitersOfTheJobPosting});</li>
@@ -52,7 +51,7 @@ import com.vis.business.job.posting.VisJobPostingReplyTexts;
  * <li>the e-mail of the resumes found to the recruiters of the text ({@link VisBusinessSendTheResumesOfTheJobPosting}).</li>
  * </ol>
  * A refusal is only logged ({@link VisBusinessLogTheRefusedJobPosting}) and cancels the save: the message of the group is
- * ignored. After the save the user bot answers the message of the job posting in the group with the resumes found
+ * ignored. After the save the support bot answers the message of the job posting in the group with the resumes found
  * ({@link VisBusinessReplyTheJobPostingWithItsResumes}); no resume found, no answer. The records are discarded day by day.
  */
 @CcpEntityCache(3600)
@@ -85,11 +84,6 @@ public class VisEntityInstantMessagePositionReply implements CcpEntityConfigurat
 	 * names of the fields of {@code vis_job_posting}, which those businesses write.
 	 */
 	public static enum Fields implements CcpJsonFieldName{
-		/** The {@code chatId} field: the primary key, the id of the person who posts the job posting in the group of Telegram. */
-		@CcpEntityFieldPrimaryKey
-		@CcpJsonCopyFieldValidationsFrom(JnJsonInstantMessengerFields.class)
-		chatId,
-
 		/** The {@code groupChatId} field: required, the chat of the group where the job posting was written, where the answer goes. */
 		@CcpJsonFieldValidatorRequired
 		@CcpJsonFieldTypeNumber
@@ -106,9 +100,12 @@ public class VisEntityInstantMessagePositionReply implements CcpEntityConfigurat
 		description,
 
 		/**
-		 * The {@code linkToShowResumes} field: the address of the screen {@code curriculos/buscar} with the filters of the
-		 * resumes found and the text of the job posting.
+		 * The {@code linkToShowResumes} field: the primary key, the address of the screen {@code curriculos/buscar} with the
+		 * filters of the resumes found and the text of the job posting, written before the save by
+		 * {@link VisBusinessSaveTheResumeFilterOfTheJobPosting}, so not in the input of the save.
 		 */
+		@CcpEntityFieldPrimaryKey
+		@CcpEntityFieldWrittenBeforeTheSave
 		@CcpJsonFieldTypeString(minLength = 1, maxLength = 500)
 		linkToShowResumes,
 

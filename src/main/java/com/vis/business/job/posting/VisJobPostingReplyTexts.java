@@ -8,7 +8,7 @@ import com.jn.messages.JnSystemMessage;
 import com.jn.utils.JnLanguage;
 
 /**
- * The text of the answer of the user bot to a job posting written in a group of Telegram (since 2026-11-27), html of
+ * The text of the answer of the support bot to a job posting written in a group of Telegram (since 2026-11-27), html of
  * Telegram: one record of {@code jn_system_message} per item and language, seeded by
  * {@code VisEntityInstantMessagePositionReply}. The {@code {...}} are filled by
  * {@link VisBusinessReplyTheJobPostingWithItsResumes}; the averages of claim already come as money ({@code R$ 9.500,00}).
