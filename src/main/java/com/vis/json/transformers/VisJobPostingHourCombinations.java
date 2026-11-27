@@ -14,7 +14,8 @@ import com.vis.entities.VisEntityVirtualJobPostingHour;
  * Produces the group of {@code VisEntityVirtualJobPostingHour} a job posting is a child of (since 2026-11-26): the day
  * ({@code yyyyMMdd}) of the saving and one of the hours still to come in that day, from the next hour to 23, chosen by
  * the millisecond of the saving: {@code hour of the saving + 1 + millisecond % (23 - hour of the saving)} (saved at 19h,
- * 20 to 23; at 16h, 17 to 23). Saved at 23h no hour is left in the day and the group is 23. The hour of the saving is in
+ * 20 to 23; at 16h, 17 to 23). Saved at 23h no hour is left in the day (the job of 23h has already run): the group is
+ * the hour 0 of the next day (since 2026-11-27, the job runs every hour, from 0 to 23). The hour of the saving is in
  * the time zone of {@code CcpTimeDecorator}. The {@code timestamp} is stored, so the stored record gives the same group
  * again; none when the record has no {@code timestamp}.
  */
@@ -35,10 +36,17 @@ public class VisJobPostingHourCombinations implements Function<CcpJsonRepresenta
 	/** The last hour of a day. */
 	private static final int LAST_HOUR = 23;
 
+	/** The first hour of a day, the group of a job posting saved at 23h, in the next day. */
+	private static final int FIRST_HOUR = 0;
+
+	/** One hour, in milliseconds: saved at 23h, one hour later is the next day. */
+	private static final long ONE_HOUR = 3_600_000L;
+
 	/**
 	 * The group of the day of the saving and of one of the hours still to come in it.
 	 * @param json the job posting
-	 * @return the combination, {@code {"day": <yyyyMMdd>, "hour": <next hour to 23>}}, or none
+	 * @return the combination, {@code {"day": <yyyyMMdd>, "hour": <next hour to 23>}} ({@code 0} of the next day when
+	 * saved at 23h), or none
 	 */
 	public List<CcpJsonRepresentation> apply(CcpJsonRepresentation json) {
 		boolean noTimestamp = false == json.containsAllFields(JnJsonCommonsFields.timestamp);
@@ -49,31 +57,46 @@ public class VisJobPostingHourCombinations implements Function<CcpJsonRepresenta
 
 		Long timestamp = json.getAsLongNumber(JnJsonCommonsFields.timestamp);
 		CcpTimeDecorator time = new CcpTimeDecorator(timestamp);
-		String dayPattern = Constants.DAY_PATTERN.getValue();
-		String day = time.getFormattedDateTime(dayPattern);
 		String hourPattern = Constants.HOUR_PATTERN.getValue();
 		String hourOfTheSavingText = time.getFormattedDateTime(hourPattern);
 		int hourOfTheSaving = Integer.parseInt(hourOfTheSavingText);
+		boolean lastHour = hourOfTheSaving == LAST_HOUR;
+
+		if(lastHour) {
+			long oneHourLater = timestamp + ONE_HOUR;
+			CcpTimeDecorator nextDay = new CcpTimeDecorator(oneHourLater);
+			CcpJsonRepresentation combinationOfTheNextDay = getCombination(nextDay, FIRST_HOUR);
+			return List.of(combinationOfTheNextDay);
+		}
+
 		int hour = getHour(hourOfTheSaving, timestamp);
-		CcpJsonRepresentation combination = CcpOtherConstants.EMPTY_JSON
-				.put(VisEntityVirtualJobPostingHour.Fields.day, day)
-				.put(VisEntityVirtualJobPostingHour.Fields.hour, hour);
+		CcpJsonRepresentation combination = getCombination(time, hour);
 		return List.of(combination);
 	}
 
 	/**
+	 * The group of a day and an hour.
+	 * @param time a moment of the day
+	 * @param hour the hour
+	 * @return the combination
+	 */
+	private static CcpJsonRepresentation getCombination(CcpTimeDecorator time, int hour) {
+		String dayPattern = Constants.DAY_PATTERN.getValue();
+		String day = time.getFormattedDateTime(dayPattern);
+		CcpJsonRepresentation combination = CcpOtherConstants.EMPTY_JSON
+				.put(VisEntityVirtualJobPostingHour.Fields.day, day)
+				.put(VisEntityVirtualJobPostingHour.Fields.hour, hour);
+		return combination;
+	}
+
+	/**
 	 * One of the hours after the hour of the saving, up to 23, by the millisecond.
-	 * @param hourOfTheSaving the hour of the saving, from 0 to 23
+	 * @param hourOfTheSaving the hour of the saving, from 0 to 22
 	 * @param timestamp the millisecond of the saving
-	 * @return the hour of the group; 23 when the saving is at 23h
+	 * @return the hour of the group
 	 */
 	private static int getHour(int hourOfTheSaving, long timestamp) {
 		int hoursStillToCome = LAST_HOUR - hourOfTheSaving;
-
-		if(hoursStillToCome == 0) {
-			return LAST_HOUR;
-		}
-
 		long remainder = timestamp % hoursStillToCome;
 		int hour = hourOfTheSaving + 1 + (int) remainder;
 		return hour;
