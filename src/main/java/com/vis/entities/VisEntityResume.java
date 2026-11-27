@@ -84,6 +84,7 @@ import com.vis.json.transformers.VisJsonTransformerSpokenLanguageWithoutId;
 import com.vis.json.transformers.VisResumeDddCombinations;
 import com.vis.json.transformers.VisResumeDddResumeTypeCombinations;
 import com.vis.json.transformers.VisResumeSkillsFromResumeChildField;
+import com.vis.json.transformers.VisResumeSkillCombinations;
 import com.vis.json.transformers.VisAvoidedSkillsCounterCombinations;
 import com.vis.json.transformers.VisAvoidedSkillsCounterKeys;
 import com.vis.json.transformers.VisResumeTypeCounterCombinations;
@@ -118,6 +119,9 @@ import com.vis.messages.VisMessages;
  * the active resumes in the main groups, the inactive ones in the twin groups ({@code jn_inactive_grouper}); the save
  * moves it to the groups of its new hashes, the deactivation and the reactivation move it between the sides, and the
  * delete everywhere takes it out of both;</li>
+ * <li>the same {@code @CcpEntityGrouperChild} keeps the id of the resume in the group of each skill it has, direct or
+ * an ancestor of a direct one ({@link VisEntityVirtualSkillGrouper}, since 2026-11-26), moved between the sides in the
+ * same way;</li>
  * <li>a second {@code @CcpEntityGrouperChildCounter} counts, in the group of each skill the owner excluded
  * ({@link VisEntityVirtualExcludedSkillCounter}), how many active resumes exclude it now: the most avoided skills;</li>
  * <li>the owner is told by e-mail after the save, the deactivation, the reactivation and the delete everywhere;</li>
@@ -160,8 +164,11 @@ import com.vis.messages.VisMessages;
 // reaches the support operator (VisEntityResumeLinkedin)
 @CcpBeforeSaveFromMainEntity(execute = {VisBusinessResumeLinkedinRelease.class}, operationHandlers = {})
 // one group per hash (each search the resume satisfies): the entity that gives the id of each one (and names the
-// groups); the combinations of its values and the list where the save keeps those ids come from the field hash
-@CcpEntityGrouperChild(value = {VisEntityVirtualHashGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
+// groups); the combinations of its values and the list where the save keeps those ids come from the field hash.
+// Since 2026-11-26 the id of the resume is also a child of the group of each skill it has, directly (skillsFromText) or
+// indirectly (the ancestors, category parent): crossing the groups of several skills gives the resumes that have all of them
+@CcpEntityGrouperChild(value = {VisEntityVirtualHashGrouper.class, VisEntityVirtualSkillGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
+@CcpEntityGrouperParentCombinations(parent = VisEntityVirtualSkillGrouper.class, value = VisResumeSkillCombinations.class)
 // one group per ddd of the resume (a resume with several ddds is a child of several groups): the child is a JSON text with
 // these fields of the resume, as stored, and its id; it follows the resume between the main and the twin groups as the
 // groups of the hashes do
