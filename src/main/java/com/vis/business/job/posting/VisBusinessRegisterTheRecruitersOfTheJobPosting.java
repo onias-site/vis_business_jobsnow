@@ -23,7 +23,7 @@ import com.vis.entities.VisEntityJobPosting;
 import com.vis.entities.VisEntityRecruiter;
 
 /**
- * Fourth business before the save of {@code vis_job_posting} (since 2026-11-26): the valid e-mails of the text of the job
+ * First business before the save of {@code vis_job_posting} (since 2026-11-27; the fourth one since 2026-11-26), so that the recruiters are registered even when the job posting is refused: the valid e-mails of the text of the job
  * posting become recruiters of {@code vis_recruiter}, prepared as {@code /saveRecruiter} prepares them (lower case, no
  * accents, source {@code support}, refused when the entity refuses them). An e-mail already among the recruiters stays as
  * it is, and one among the inactive recruiters (the twin: unsubscribed, eliminated or who stopped viewing) is not brought

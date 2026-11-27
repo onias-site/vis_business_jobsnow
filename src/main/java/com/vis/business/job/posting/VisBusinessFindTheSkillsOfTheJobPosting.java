@@ -17,12 +17,13 @@ import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.services.VisServiceSkills;
 
 /**
- * First business before the save of {@code vis_job_posting} (since 2026-11-26): the text of the job posting goes to the
+ * Second business before the save of {@code vis_job_posting} (since 2026-11-26; the first one until 2026-11-27): the text of the job posting goes to the
  * same search of skills of {@code skills/fromText}, and the skills it finds, each main one and its parents, each once,
  * go on to the crossing of the groups of the resumes ({@link VisBusinessFindTheMostCoveredSkills}). Only the skills the
  * dictionary has as skills of their own go on (since 2026-11-27): a name that survives only as a parent of old items and
  * in the resumes, such as {@code INTEGRATION} after its rename to {@code INTEGRATION123} in {@code vis_skill}, is in the
- * groups of the resumes but not in the hierarchy of the search, which finds no resume by it and so none at all.
+ * groups of the resumes but not in the hierarchy of the search, which finds no resume by it and so none at all. A text
+ * without any skill throws {@link VisErrorJobPostingWithoutSkills} (since 2026-11-27), which cancels the save.
  */
 public class VisBusinessFindTheSkillsOfTheJobPosting implements CcpBusiness {
 
@@ -41,6 +42,7 @@ public class VisBusinessFindTheSkillsOfTheJobPosting implements CcpBusiness {
 	 * Finds the skills of the text.
 	 * @param json the record, with {@code description}
 	 * @return the record with {@code requestedSkills}
+	 * @throws VisErrorJobPostingWithoutSkills when the text has no skill
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		String description = json.getAsString(VisEntityJobPosting.Fields.description);
@@ -65,6 +67,12 @@ public class VisBusinessFindTheSkillsOfTheJobPosting implements CcpBusiness {
 
 			requestedSkillList.add(requestedSkill);
 		}
+		boolean noSkill = requestedSkillList.isEmpty();
+
+		if(noSkill) {
+			throw new VisErrorJobPostingWithoutSkills(json);
+		}
+
 		CcpJsonRepresentation jsonWithTheSkills = json.put(Fields.requestedSkills, requestedSkillList);
 		return jsonWithTheSkills;
 	}

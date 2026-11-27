@@ -20,7 +20,7 @@ import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
 
 /**
- * Fifth and last business before the save of {@code vis_job_posting} (since 2026-11-26): each recruiter of the text
+ * Sixth and last business before the save of {@code vis_job_posting} (since 2026-11-26; the fifth one until 2026-11-27): each recruiter of the text
  * ({@link VisBusinessRegisterTheRecruitersOfTheJobPosting}) gets the usual e-mail of resumes with the resumes found by the
  * search of the job posting ({@link VisBusinessSaveTheResumeFilterOfTheJobPosting}, the same ids of its link), at most
  * one e-mail of resumes a day: who already has a list written today in {@code vis_recruiter_resumes} (this e-mail or the

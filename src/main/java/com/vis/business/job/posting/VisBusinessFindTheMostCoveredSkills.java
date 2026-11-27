@@ -16,7 +16,7 @@ import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityVirtualSkillGrouper;
 
 /**
- * Second business before the save of {@code vis_job_posting} (since 2026-11-26): the largest set of the skills of the
+ * Third business before the save of {@code vis_job_posting} (since 2026-11-26; the second one until 2026-11-27): the largest set of the skills of the
  * text ({@code requestedSkills}) that some resume has, directly or indirectly. The groups of the skills in
  * {@code jn_grouper} ({@code vis_virtual_skill_grouper}, the active resumes only) are read by id in one round trip, and
  * each resume is counted by how many of the skills it has. The resumes with the most skills give the answer: when they

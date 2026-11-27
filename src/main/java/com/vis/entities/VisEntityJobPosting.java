@@ -6,6 +6,7 @@ import java.util.List;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.bulk.CcpBulkItem;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpExceptionFlow;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityAsyncWriter;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDisposable;
@@ -31,9 +32,13 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.vis.business.bots.job.posting.VisSupportSaveJobPostingBotConfiguration;
 import com.vis.business.job.posting.VisBusinessFindTheMostCoveredSkills;
 import com.vis.business.job.posting.VisBusinessFindTheSkillsOfTheJobPosting;
+import com.vis.business.job.posting.VisBusinessLogTheRefusedJobPosting;
 import com.vis.business.job.posting.VisBusinessRegisterTheRecruitersOfTheJobPosting;
+import com.vis.business.job.posting.VisBusinessSaveTheDescriptionOfTheJobPosting;
 import com.vis.business.job.posting.VisBusinessSaveTheResumeFilterOfTheJobPosting;
 import com.vis.business.job.posting.VisBusinessSendTheResumesOfTheJobPosting;
+import com.vis.business.job.posting.VisErrorJobPostingDescriptionNotSaved;
+import com.vis.business.job.posting.VisErrorJobPostingWithoutSkills;
 import com.vis.business.job.posting.VisJobPostingPublishingTexts;
 import com.vis.json.transformers.VisJobPostingHourCombinations;
 import com.vis.json.transformers.VisJsonTransformerJobPostingId;
@@ -43,19 +48,24 @@ import com.vis.json.transformers.VisJsonTransformerJobPostingId;
  * resumes that best answer it. The writing is asynchronous: the command of the bot only publishes the text, and the
  * queue of the entity runs, before the save, the businesses that find the resumes:
  * <ol>
+ * <li>first (since 2026-11-27), the valid e-mails of the text registered as recruiters, when they are not recruiters yet
+ * nor inactive ones, even when the job posting is refused next ({@link VisBusinessRegisterTheRecruitersOfTheJobPosting});</li>
  * <li>the skills of the text ({@code skills/fromText}), the main ones and their parents
- * ({@link VisBusinessFindTheSkillsOfTheJobPosting});</li>
+ * ({@link VisBusinessFindTheSkillsOfTheJobPosting}); no skill, the job posting is refused
+ * ({@link VisErrorJobPostingWithoutSkills});</li>
  * <li>the groups of those skills in {@code jn_grouper} ({@code vis_virtual_skill_grouper}, one read by id of each), crossed
  * to find the largest set of them that some resume has ({@link VisBusinessFindTheMostCoveredSkills});</li>
- * <li>the search of resumes of the screen {@code curriculos/buscar} with those skills as required, its text shared under
- * the e-mail {@code curriculos@onias.site}, and its count and averages kept in the record
- * ({@link VisBusinessSaveTheResumeFilterOfTheJobPosting}).</li>
- * <li>the valid e-mails of the text registered as recruiters, when they are not recruiters yet nor inactive ones
- * ({@link VisBusinessRegisterTheRecruitersOfTheJobPosting});</li>
+ * <li>the search of resumes of the screen {@code curriculos/buscar} with those skills as required, and its count and
+ * averages kept in the record ({@link VisBusinessSaveTheResumeFilterOfTheJobPosting});</li>
+ * <li>the text shared with the filters of that search under the e-mail {@code curriculos@onias.site}, in
+ * {@code vis_resume_filter_description}; when the save does not insert the record (the filters already had a text, or
+ * there are no filters), the job posting is refused ({@link VisBusinessSaveTheDescriptionOfTheJobPosting},
+ * {@link VisErrorJobPostingDescriptionNotSaved});</li>
  * <li>last, the usual e-mail of resumes to each of those recruiters with the resumes found, at most one e-mail of resumes
  * a day per recruiter ({@link VisBusinessSendTheResumesOfTheJobPosting}).</li>
  * </ol>
- * The records are discarded day by day. Each one is also the child (its text and its id) of one group of
+ * A refusal is handled by {@link VisBusinessLogTheRefusedJobPosting}, which only logs it, and cancels the save: the
+ * job posting is not written, not grouped by hour and not published. The records are discarded day by day. Each one is also the child (its text and its id) of one group of
  * {@link VisEntityVirtualJobPostingHour}: the day of the saving and one of the hours still to come in it, from the next
  * hour to 23, chosen by the millisecond of the saving (23 when saved at 23h).
  */
@@ -64,10 +74,14 @@ import com.vis.json.transformers.VisJsonTransformerJobPostingId;
 @CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.daily)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityJobPosting.Fields.class)
-// the skills of the text, the largest set of them that some resume has, the search of resumes over that set, the
-// recruiters of the e-mails of the text and, last, the e-mail of the resumes found to them
-@CcpBeforeSaveFromMainEntity(execute = {VisBusinessFindTheSkillsOfTheJobPosting.class, VisBusinessFindTheMostCoveredSkills.class, VisBusinessSaveTheResumeFilterOfTheJobPosting.class,
-		VisBusinessRegisterTheRecruitersOfTheJobPosting.class, VisBusinessSendTheResumesOfTheJobPosting.class}, operationHandlers = {})
+// the recruiters of the e-mails of the text (registered even when the job posting is refused), the skills of the text,
+// the largest set of them that some resume has, the search of resumes over that set, the text shared with the filters of
+// that search and, last, the e-mail of the resumes found to the recruiters. A text without skills, or whose text did not
+// become a new description of the filters, is refused: the handled exception only logs and cancels the save
+@CcpBeforeSaveFromMainEntity(execute = {VisBusinessRegisterTheRecruitersOfTheJobPosting.class, VisBusinessFindTheSkillsOfTheJobPosting.class, VisBusinessFindTheMostCoveredSkills.class,
+		VisBusinessSaveTheResumeFilterOfTheJobPosting.class, VisBusinessSaveTheDescriptionOfTheJobPosting.class, VisBusinessSendTheResumesOfTheJobPosting.class},
+		operationHandlers = {@CcpExceptionFlow(whenThrowing = VisErrorJobPostingWithoutSkills.class, thenExecute = {VisBusinessLogTheRefusedJobPosting.class}),
+				@CcpExceptionFlow(whenThrowing = VisErrorJobPostingDescriptionNotSaved.class, thenExecute = {VisBusinessLogTheRefusedJobPosting.class})})
 // one group per day and hour still to come in it (the next hour to 23, by the millisecond): the child is a JSON text with the text of the job
 // posting and its id
 @CcpEntityGrouperChild(value = {VisEntityVirtualJobPostingHour.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
