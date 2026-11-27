@@ -48,8 +48,8 @@ import com.vis.json.transformers.VisJsonTransformerJobPostingId;
  * ({@link VisBusinessSaveTheResumeFilterOfTheJobPosting}).</li>
  * </ol>
  * The records are discarded day by day. Each one is also the child (its text and its id) of one group of
- * {@link VisEntityVirtualJobPostingHour}: the day of the saving and its millisecond modulo 24, spreading the job postings
- * of a day over 24 groups at random.
+ * {@link VisEntityVirtualJobPostingHour}: the day of the saving and one of the hours still to come in it, from the next
+ * hour to 23, chosen by the millisecond of the saving (23 when saved at 23h).
  */
 @CcpEntityCache(3600)
 @CcpEntityAsyncWriter(JnAsyncWriterEntity.class)
@@ -58,7 +58,7 @@ import com.vis.json.transformers.VisJsonTransformerJobPostingId;
 @CcpEntityFieldsValidator(VisEntityJobPosting.Fields.class)
 // the skills of the text, the largest set of them that some resume has and the search of resumes over that set
 @CcpBeforeSaveFromMainEntity(execute = {VisBusinessFindTheSkillsOfTheJobPosting.class, VisBusinessFindTheMostCoveredSkills.class, VisBusinessSaveTheResumeFilterOfTheJobPosting.class}, operationHandlers = {})
-// one group per day and per millisecond of the saving modulo 24: the child is a JSON text with the text of the job
+// one group per day and hour still to come in it (the next hour to 23, by the millisecond): the child is a JSON text with the text of the job
 // posting and its id
 @CcpEntityGrouperChild(value = {VisEntityVirtualJobPostingHour.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class,
 		childFields = {"description"})
