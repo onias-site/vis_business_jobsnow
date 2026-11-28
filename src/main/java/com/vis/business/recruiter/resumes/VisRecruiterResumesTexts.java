@@ -73,6 +73,9 @@ public enum VisRecruiterResumesTexts implements JnSystemMessage {
 	positionPublishingContact_link("Link: {value}", "Link: {value}"),
 	seeAll("Ver todos", "See all"),
 	seeAllParagraph("Estes são os {shown} primeiros de {total} currículos. {seeAllLink}", "These are the first {shown} of {total} resumes. {seeAllLink}"),
+	// the subject of the e-mail of the resumes of a job posting (since 2026-11-27), by the count of resumes
+	jobPostingSubjectOne("currículo encontrado para o anuncio de vaga {firstLine}", "resume found for the job posting {firstLine}"),
+	jobPostingSubjectMany("{total} currículos encontrados para o anuncio de vaga {firstLine}", "{total} resumes found for the job posting {firstLine}"),
 	;
 
 	/** The text in Portuguese. */

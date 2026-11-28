@@ -80,14 +80,21 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		VIS_API_URL { public String getValue() { return "http://localhost:8081"; } },
 	}
 
-	/** The highlighted notice of the third line of the e-mail: inline styles, which the e-mail clients keep. */
+	/**
+	 * The highlighted notice of the e-mails of resumes (the daily one and, since 2026-11-27, the one of a job posting), with
+	 * inline styles, which the e-mail clients keep: since 2026-11-27 it announces that each position registered receives
+	 * the resumes that match it, linked to the screen of the registered positions ({frontendUrl} comes from the sending
+	 * parameters).
+	 */
 	static enum Notice implements CcpJsonFieldName {
 		PORTUGUESE { public String getValue() { return "<p style=\"background-color: #FFF4CC; border-left: 6px solid #F5A623; padding: 12px 16px; "
-				+ "font-size: 17px; font-weight: bold; color: #333333;\">&#128226; Ainda este ano você poderá, <span style=\"color: #D35400;\">gratuitamente</span>, "
-				+ "cadastrar vagas e receber apenas currículos consistentes!</p>"; } },
+				+ "font-size: 17px; font-weight: bold; color: #333333;\">&#128226; Novidade: agora cada vaga cadastrada no onias.site recebe, "
+				+ "<span style=\"color: #D35400;\">gratuitamente</span>, os currículos aderentes a ela! "
+				+ "<a href=\"{frontendUrl}/curriculos/vagas-cadastradas\" target=\"_blank\" style=\"color: #D35400;\">Clique aqui e cadastre a sua vaga</a>.</p>"; } },
 		ENGLISH { public String getValue() { return "<p style=\"background-color: #FFF4CC; border-left: 6px solid #F5A623; padding: 12px 16px; "
-				+ "font-size: 17px; font-weight: bold; color: #333333;\">&#128226; Later this year you will be able, <span style=\"color: #D35400;\">for free</span>, "
-				+ "to post positions and receive only consistent resumes!</p>"; } },
+				+ "font-size: 17px; font-weight: bold; color: #333333;\">&#128226; New: now each position registered on onias.site receives, "
+				+ "<span style=\"color: #D35400;\">for free</span>, the resumes that match it! "
+				+ "<a href=\"{frontendUrl}/curriculos/vagas-cadastradas\" target=\"_blank\" style=\"color: #D35400;\">Click here and register your position</a>.</p>"; } },
 	}
 
 	/** The pieces of the invitation to the legacy candidates: the greeting and the preview of the resume, with the table. */
@@ -193,13 +200,89 @@ public class VisEntityRecruiterResumes implements CcpEntityConfigurator {
 		List<CcpBulkItem> textItems = VisRecruiterResumesTexts.getSeeds();
 		List<CcpBulkItem> invitationSeeds = this.getInvitationSeeds();
 		List<CcpBulkItem> systemParameterItems = VisRecruiterResumesSystemParameters.getSeeds();
+		List<CcpBulkItem> jobPostingSeeds = this.getJobPostingSeeds();
 
 		List<CcpBulkItem> firstRecords = new ArrayList<>(templateItems);
 		firstRecords.addAll(parametersItems);
 		firstRecords.addAll(textItems);
 		firstRecords.addAll(invitationSeeds);
 		firstRecords.addAll(systemParameterItems);
+		firstRecords.addAll(jobPostingSeeds);
 		return firstRecords;
+	}
+
+	/**
+	 * The template and the sending parameters of the e-mail of the resumes of a job posting (since 2026-11-27,
+	 * {@code VisNotifyRecruiterAboutResumesOfTheJobPosting}): the e-mail of resumes with the text of the job posting in
+	 * place of the paragraph of the last 7 days, without the paragraph "see all", and the subject of the first line of the
+	 * text ({@code jobPostingSubject}, singular or plural by {@code VisRecruiterResumesTexts}). The sending parameters are
+	 * the same of the daily e-mail.
+	 * @return the seed records
+	 */
+	public List<CcpBulkItem> getJobPostingSeeds() {
+		String templateId = VisMessages.VisNotifyRecruiterAboutResumesOfTheJobPosting.class.getName();
+		String css = Style.CSS.getValue();
+		String oniasLinkedin = "{" + VisRecruiterResumesFields.oniasLinkedin + "}";
+		String unsubscribeLink = "{" + VisRecruiterResumesFields.unsubscribeLink + "}";
+		String resumesTable = "{" + VisRecruiterResumesFields.resumesTable + "}";
+		String recruiterEmail = "{" + VisRecruiterResumesFields.recruiterEmail + "}";
+		String jobPosting = "{" + VisRecruiterResumesFields.jobPosting + "}";
+		String jobPostingSubject = "{" + VisRecruiterResumesFields.jobPostingSubject + "}";
+
+		String portugueseMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Olá, caso você não me conheça ou não se lembre de mim, sou o <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
+				+ "<p>Associado ao seu e-mail " + recruiterEmail + " foi postada uma vaga<br/><br/>" + jobPosting + "</p>"
+				+ Notice.PORTUGUESE.getValue()
+				+ "<p><strong>Caso não queira mais receber este tipo de e-mail, favor <a href=\"" + unsubscribeLink + "\" target=\"_blank\">clicar aqui</a></strong>.</p>"
+				+ "<p>Ao abordar o candidato encontrado aqui no nosso site, sempre lhe diga que o encontrou aqui, isso ajuda muito o nosso trabalho "
+				+ "de lhes entregar currículos gratuitamente.</p>"
+				+ resumesTable
+				+ "<p>Dica para sucesso em abordagem a candidatos: ao abordar o dono do currículo que te interessou, por favor, dê preferência a meios menos invasivos "
+				+ "de comunicação do que chamada telefônica ou chamada de WhatsApp. Exemplo: envie mensagem por WhatsApp, LinkedIn ou e-mail e espere o candidato responder.</p>"
+				+ "<p>Caso haja problemas em abrir o LinkedIn do candidato, nos avise.</p>"
+				+ JnEmailFooter.portuguese.getValue()
+				+ "</body></html>";
+		String englishMessage = "<html><head>" + css + "</head><body>"
+				+ "<p>Hello, in case you do not know me or do not remember me, I am <a href=\"" + oniasLinkedin + "\" target=\"_blank\">Onias</a>.</p>"
+				+ "<p>A job posting was published with your e-mail " + recruiterEmail + "<br/><br/>" + jobPosting + "</p>"
+				+ Notice.ENGLISH.getValue()
+				+ "<p><strong>If you no longer want to receive this kind of e-mail, please <a href=\"" + unsubscribeLink + "\" target=\"_blank\">click here</a></strong>.</p>"
+				+ "<p>When you contact a candidate found here on our site, always tell them you found them here: it helps a lot our work "
+				+ "of delivering resumes to you for free.</p>"
+				+ resumesTable
+				+ "<p>A tip for approaching candidates: when you contact the owner of a resume you liked, please prefer less invasive ways of communication than "
+				+ "a phone call or a WhatsApp call. For example: send a message by WhatsApp, LinkedIn or e-mail and wait for the candidate to answer.</p>"
+				+ "<p>If you have any trouble opening the candidate's LinkedIn, please let us know.</p>"
+				+ JnEmailFooter.english.getValue()
+				+ "</body></html>";
+
+		CcpJsonRepresentation templateWithTemplateId = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.templateId, templateId)
+				.put(JnJsonCommonsFields.subject, jobPostingSubject);
+		CcpJsonRepresentation portugueseTemplate = templateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.portuguese)
+				.put(JnJsonCommonsFields.message, portugueseMessage);
+		CcpJsonRepresentation englishTemplate = templateWithTemplateId
+				.put(JnJsonCommonsFields.language, JnLanguage.english)
+				.put(JnJsonCommonsFields.message, englishMessage);
+
+		String sender = Parameters.SENDER.getValue();
+		String oniasLinkedinAddress = Parameters.ONIAS_LINKEDIN.getValue();
+		String frontendUrl = Parameters.FRONTEND_URL.getValue();
+		String visApiUrl = Parameters.VIS_API_URL.getValue();
+		CcpJsonRepresentation parameters = CcpOtherConstants.EMPTY_JSON
+				.put(JnJsonCommonsFields.sender, sender)
+				.put(JnJsonCommonsFields.subjectType, templateId)
+				.put(JnJsonCommonsFields.templateId, templateId)
+				.addToItem(JnJsonCommonsFields.moreParameters, VisRecruiterResumesFields.oniasLinkedin, oniasLinkedinAddress)
+				.addToItem(JnJsonCommonsFields.moreParameters, VisRecruiterResumesFields.frontendUrl, frontendUrl)
+				.addToItem(JnJsonCommonsFields.moreParameters, VisRecruiterResumesFields.visApiUrl, visApiUrl);
+
+		List<CcpBulkItem> templateItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailTemplateMessage.ENTITY, portugueseTemplate, englishTemplate);
+		List<CcpBulkItem> parametersItems = CcpEntityConfigurator.super.toCreateBulkItems(JnEntityEmailParametersToSend.ENTITY, parameters);
+		List<CcpBulkItem> jobPostingSeeds = new ArrayList<>(templateItems);
+		jobPostingSeeds.addAll(parametersItems);
+		return jobPostingSeeds;
 	}
 
 	/**

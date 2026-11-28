@@ -887,7 +887,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		return seeAllUrl;
 	}
 
-	private static String getUnsubscribeLink(String email, String frontendUrl) {
+	static String getUnsubscribeLink(String email, String frontendUrl) {
 		CcpJsonRepresentation linkValues = getUnsubscribeValues(email).put(VisRecruiterResumesFields.frontendUrl, frontendUrl);
 		String unsubscribeLink = resolve(Constants.UNSUBSCRIBE_PATH, linkValues);
 		return unsubscribeLink;

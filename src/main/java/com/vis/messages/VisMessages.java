@@ -379,6 +379,28 @@ public class VisMessages {
 	}
 
 	/**
+	 * Sends a recruiter whose e-mail is in the text of a job posting ({@code /saveJobPosting} or a group of the support bot,
+	 * since 2026-11-27) the resumes found for it: the text of the job posting opens the e-mail, without the paragraph "see
+	 * all", and the subject is the first line of the text. Repeatable as {@link VisNotifyRecruiterAboutResumes}: what keeps
+	 * it once a day is the list of the recruiter in {@code vis_recruiter_resumes}.
+	 */
+	public static class VisNotifyRecruiterAboutResumesOfTheJobPosting implements JnMessageTemplate, JnRepeatableMessage{
+		/** The single instance: the class keeps no state. */
+		public final static VisNotifyRecruiterAboutResumesOfTheJobPosting INSTANCE = new VisNotifyRecruiterAboutResumesOfTheJobPosting();
+
+		private VisNotifyRecruiterAboutResumesOfTheJobPosting() {}
+
+		/**
+		 * The values of the template are already in the json (the subject, the text of the job posting, the table, the links).
+		 * @param json the values of the e-mail
+		 * @return the same json
+		 */
+		public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
+			return json;
+		}
+	}
+
+	/**
 	 * Sends the recruiter of a position that receives its resumes instantly the resume just saved that matches it ("Cv
 	 * recebido para a vaga", since 2026-11-24). Repeatable: one position receives several resumes a day, and what keeps
 	 * each pair once is {@code vis_position_resume_sent}.

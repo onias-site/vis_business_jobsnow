@@ -145,4 +145,12 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	positionYearMonth,
 	/** How the position receives its resumes ({@code VisPositionFrequencyTypes}), in the e-mails of the positions. */
 	frequencyType,
+	/** The readable e-mail of the recruiter, escaped, in the opening of the e-mail of a job posting (since 2026-11-27). */
+	recruiterEmail,
+	/** The text of the job posting, escaped, in the opening of its e-mail (since 2026-11-27). */
+	jobPosting,
+	/** The first line of the text of the job posting, in the subject of its e-mail (since 2026-11-27). */
+	firstLine,
+	/** The subject of the e-mail of a job posting, singular or plural by the count of resumes (since 2026-11-27). */
+	jobPostingSubject,
 }

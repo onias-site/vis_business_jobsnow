@@ -15,12 +15,14 @@ import com.jn.entities.JnEntityDisposableRecord;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.recruiter.resumes.VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting;
+import com.vis.entities.VisEntityJobPosting;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
 
 /**
  * Sixth and last business before the save of {@code vis_job_posting} (since 2026-11-26; the fifth one until 2026-11-27): each recruiter of the text
- * ({@link VisBusinessRegisterTheRecruitersOfTheJobPosting}) gets the usual e-mail of resumes with the resumes found by the
+ * ({@link VisBusinessRegisterTheRecruitersOfTheJobPosting}) gets the e-mail of resumes of the job posting (since 2026-11-27,
+ * opened by the text, which also gives the subject; until then the usual e-mail of resumes) with the resumes found by the
  * search of the job posting ({@link VisBusinessSaveTheResumeFilterOfTheJobPosting}, the same ids of its link), at most
  * one e-mail of resumes a day: who already has a list written today in {@code vis_recruiter_resumes} (this e-mail or the
  * hourly one to every recruiter) gets nothing, and the list written by this e-mail keeps the hourly one away for the day.
@@ -66,6 +68,7 @@ public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
 		CcpSelectUnionAll found = crud.unionAll(keysArray, JnDeleteKeysFromCache.INSTANCE, VisEntityRecruiter.ENTITY, VisEntityRecruiterResumes.ENTITY);
 		CcpTimeDecorator now = new CcpTimeDecorator();
 		Long midnight = now.getMidnight();
+		String description = json.getAsString(VisEntityJobPosting.Fields.description);
 		for (CcpJsonRepresentation key : keys) {
 			boolean inactive = false == VisEntityRecruiter.ENTITY.isPresentInThisUnionAll(found, key);
 
@@ -83,7 +86,8 @@ public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
 			CcpJsonRepresentation recruiter = VisEntityRecruiter.ENTITY.getRecordFromUnionAll(found, keySupplier);
 			CcpJsonRepresentation sendingInput = CcpOtherConstants.EMPTY_JSON
 					.put(VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting.Fields.recruiter, recruiter)
-					.put(VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting.Fields.resumeIds, resumeIds);
+					.put(VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting.Fields.resumeIds, resumeIds)
+					.put(VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting.Fields.description, description);
 			VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting.INSTANCE.execute(sendingInput);
 		}
 		return record;
