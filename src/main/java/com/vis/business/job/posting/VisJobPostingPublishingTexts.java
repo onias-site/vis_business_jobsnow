@@ -20,8 +20,8 @@ public enum VisJobPostingPublishingTexts implements JnSystemMessage {
 	header("<b>[AJUDE AS PESSOAS ENCAMINHANDO ESTA VAGA AO MÁXIMO DE GRUPOS E PESSOAS QUE VOCÊ PUDER 🙏🙏🙏]</b>",
 			"<b>[HELP PEOPLE BY FORWARDING THIS JOB POSTING TO AS MANY GROUPS AND PEOPLE AS YOU CAN 🙏🙏🙏]</b>"),
 	/** To the candidates: the header, above the text (since 2026-11-27; until then below the text). */
-	candidates("<b>Envie seu curriculo a 2.000 recrutadores, receba vagas aderentes ao teu perfil, basta <a href=\"{frontendUrl}/meus-dados/sobre-mim\">clicar aqui</a></b>",
-			"<b>Send your resume to 2,000 recruiters and receive job postings that fit your profile, just <a href=\"{frontendUrl}/meus-dados/sobre-mim\">click here</a></b>"),
+	candidates("<b>Enviamos gratuitamente e todos os dias o seu currículo a 2 mil e-mails de recrutadores e entregamos vagas aderentes ao teu perfil, basta <a href=\"{frontendUrl}/meus-dados/sobre-mim\">clicar aqui</a></b>",
+			"<b>We send your resume for free, every day, to 2 thousand recruiter e-mails and deliver job postings that fit your profile, just <a href=\"{frontendUrl}/meus-dados/sobre-mim\">click here</a></b>"),
 	/** To the recruiters, when the job posting found resumes. */
 	recruitersWithTheResumes("<b>Recrutador, cadastre vagas e receba currículos exatamente aderentes à sua vaga.\nEsta vaga por exemplo encontrou {resumesCount} currículos (média CLT {avgClt}, média PJ {avgPj}, média de experiência {avgExperience} anos) <a href=\"{linkToShowResumes}\">Ver quais são estes currículos</a></b>",
 			"<b>Recruiter, register job postings and receive resumes that fit exactly your job posting.\nThis job posting, for example, found {resumesCount} resumes (average CLT {avgClt}, average contractor {avgPj}, average experience {avgExperience} years) <a href=\"{linkToShowResumes}\">See these resumes</a></b>"),
