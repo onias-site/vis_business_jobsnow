@@ -8,6 +8,7 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.vis.business.compatibility.VisResumeRecruiterCompatibility;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
@@ -137,7 +138,7 @@ public class VisBusinessViewedResumeDetails implements CcpBusiness {
 			Supplier<CcpJsonRepresentation> resumeKeySupplier = resumeKey.getJsonSupplier();
 			CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(resumesById, resumeKeySupplier);
 			List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
-			boolean forbiddenCompany = VisBusinessSendResumesToRecruiters.isTheCompanyOfTheRecruiterForbidden(recruiterEmail, notAllowedCompanies);
+			boolean forbiddenCompany = VisResumeRecruiterCompatibility.isTheCompanyOfTheRecruiterForbidden(recruiterEmail, notAllowedCompanies);
 
 			if(forbiddenCompany) {
 				continue;

@@ -153,4 +153,6 @@ public enum VisRecruiterResumesFields implements CcpJsonFieldName {
 	firstLine,
 	/** The subject of the e-mail of a job posting, singular or plural by the count of resumes (since 2026-11-27). */
 	jobPostingSubject,
+	/** The values of a resume that the rules between recruiter and resume read ({@code VisResumeRecruiterCompatibility}, since 2026-11-28). */
+	resumeOfTheRules,
 }

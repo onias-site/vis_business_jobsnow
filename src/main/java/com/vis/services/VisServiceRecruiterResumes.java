@@ -7,6 +7,7 @@ import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDecora
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.vis.business.compatibility.VisResumeRecruiterCompatibility;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.bulk.CcpErrorBulkEntityRecordNotFound;
@@ -323,21 +324,17 @@ public enum VisServiceRecruiterResumes implements JnService {
 		}
 		CcpJsonRepresentation resume = getActiveResume(json, resumeId);
 		// the support confirmed that the LinkedIn address does not open (since 2026-11-12): no view is saved or counted
-		boolean invalidLinkedinAddress = resume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false);
+		CcpJsonRepresentation resumeOfTheRules = VisResumeRecruiterCompatibility.getResume(resume);
+		boolean invalidLinkedinAddress = resumeOfTheRules.getAsBoolean(VisEntityResume.Fields.invalidLinkedinAddress);
 		if(invalidLinkedinAddress) {
 			return VisProcessStatusInvalidLinkedin.invalidLinkedinAddress.throwException(json);
 		}
-		// the owner must correct the resume first (since 2026-11-12): the same answer of a resume no longer active. The
-		// stored resume holds the e-mail hashed, as the restriction keeps it: read without the fields transformer
-		CcpJsonRepresentation restrictionKey = resume.getJsonPiece(VisEntityResume.Fields.email);
-		CcpEntity restrictionByHashedEmail = CcpEntityFactory.getCustomEntity(VisEntityResumeRestriction.ENTITY, CcpEntityDecoratorTypes.FieldsTransformer);
-		boolean restricted = restrictionByHashedEmail.exists(restrictionKey);
-		if(restricted) {
-			throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
-		}
-		List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
-		boolean forbiddenCompany = VisBusinessSendResumesToRecruiters.isTheCompanyOfTheRecruiterForbidden(email, notAllowedCompanies);
-		if(forbiddenCompany) {
+		// every other rule of the screens between recruiter and resume (VisResumeRecruiterCompatibility: a restriction to
+		// correct, the company of the recruiter forbidden): the same answer of a resume no longer active
+		List<CcpJsonRepresentation> resumes = List.of(resume);
+		List<CcpJsonRepresentation> resumesToShow = VisResumeRecruiterCompatibility.getResumesTheRecruiterMayBeShown(email, resumes);
+		boolean hidden = resumesToShow.isEmpty();
+		if(hidden) {
 			throw new CcpErrorFlowDisturb(json, CcpProcessStatusDefault.NOT_FOUND);
 		}
 		return resume;

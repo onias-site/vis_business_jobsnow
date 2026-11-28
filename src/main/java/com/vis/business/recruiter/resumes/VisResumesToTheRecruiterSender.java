@@ -9,6 +9,7 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpStringDecorator;
+import com.vis.business.compatibility.VisResumeRecruiterFacts;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterFirstEmail;
 
@@ -33,8 +34,8 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	/** The alias of each pair recruiter + resume. */
 	private final Map<String, String> aliasByPair;
 
-	/** The pairs recruiter + resume of {@code vis_inactive_viewed_resume}: the resumes that no longer go to each recruiter. */
-	private final Set<String> inactivePairs;
+	/** What the rules between recruiter and resume read from the database, loaded once for the whole run. */
+	private final VisResumeRecruiterFacts facts;
 
 	/** The address of the front end. */
 	private final String frontendUrl;
@@ -68,7 +69,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * @param resumesOfTheEmail the rows of every resume of the e-mail, in order
 	 * @param lastViewByPair the last view of each pair recruiter + resume
 	 * @param aliasByPair the alias of each pair recruiter + resume
-	 * @param inactivePairs the pairs recruiter + resume of {@code vis_inactive_viewed_resume}
+	 * @param facts what the rules between recruiter and resume read from the database
 	 * @param frontendUrl the address of the front end
 	 * @param visApiUrl the address of the API of vis
 	 * @param recruitersPerRun how many recruiters receive the e-mail in this run
@@ -81,12 +82,12 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 	 * @param recipients receives the e-mail of each recruiter who received the e-mail in this run
 	 */
 	VisResumesToTheRecruiterSender(List<String> restrictedTo, List<CcpJsonRepresentation> resumesOfTheEmail, Map<String, Long> lastViewByPair,
-			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl, String visApiUrl, int recruitersPerRun, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition, String[] lastNonProfessionalQueuePosition, String[] lastLegacyActiveQueuePosition, Set<String> recipients) {
+			Map<String, String> aliasByPair, VisResumeRecruiterFacts facts, String frontendUrl, String visApiUrl, int recruitersPerRun, int[] emailsSent, String[] lastQueuePosition, String[] lastLegacyQueuePosition, String[] lastNonProfessionalQueuePosition, String[] lastLegacyActiveQueuePosition, Set<String> recipients) {
 		this.restrictedTo = restrictedTo;
 		this.resumesOfTheEmail = resumesOfTheEmail;
 		this.lastViewByPair = lastViewByPair;
 		this.aliasByPair = aliasByPair;
-		this.inactivePairs = inactivePairs;
+		this.facts = facts;
 		this.frontendUrl = frontendUrl;
 		this.visApiUrl = visApiUrl;
 		this.recruitersPerRun = recruitersPerRun;
@@ -123,8 +124,7 @@ class VisResumesToTheRecruiterSender implements Consumer<CcpJsonRepresentation> 
 		if(invalidAddress) {
 			return;
 		}
-		String emailHash = VisBusinessSendResumesToRecruiters.getEmailHash(email);
-		List<CcpJsonRepresentation> rows = VisBusinessSendResumesToRecruiters.getRowsOfTheRecruiter(recruiter, emailHash, this.resumesOfTheEmail, this.lastViewByPair, this.aliasByPair, this.inactivePairs);
+		List<CcpJsonRepresentation> rows = VisBusinessSendResumesToRecruiters.getRowsOfTheRecruiter(email, this.resumesOfTheEmail, this.lastViewByPair, this.aliasByPair, this.facts);
 		boolean nothingForTheRecruiter = rows.isEmpty();
 		if(nothingForTheRecruiter) {
 			return;

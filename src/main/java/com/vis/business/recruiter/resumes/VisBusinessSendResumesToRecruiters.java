@@ -48,6 +48,10 @@ import com.vis.entities.VisEntityRecruiterSignUpReturn;
 import com.vis.entities.VisEntityRecruiterUnsubscribed;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeRestriction;
+import com.vis.business.compatibility.VisResumeRecruiterCompatibility;
+import com.vis.business.compatibility.VisResumeRecruiterFacts;
+import com.vis.business.compatibility.VisResumeRecruiterFactsInMemory;
+import com.vis.business.compatibility.VisResumeRecruiterFactsByIds;
 import com.vis.entities.VisEntityViewedResume;
 import com.vis.json.transformers.VisJsonTransformerLinkedinHash;
 import com.vis.json.transformers.VisJsonTransformerRecruiterDomain;
@@ -82,9 +86,10 @@ import com.vis.messages.VisMessages;
  * each group in the order of the SHA-1 of the e-mails, which favors no name or domain. The queue goes on from where the last run
  * stopped ({@code vis_recruiter_queue_cursor}) and starts over at its end, so whoever received the e-mail and viewed
  * nothing gives their place to the next one; a run restricted to some recruiters does not move it.</li>
- * <li>Which resumes: every resume added or changed in the last 7 days, except, for a recruiter of a professional
- * domain, the ones whose {@code notAllowedCompany} names the company of the domain, and, since 2026-11-12, the ones whose
- * view by this recruiter is in {@code vis_inactive_viewed_resume}, the twin of {@code vis_viewed_resume}.</li>
+ * <li>Which resumes: every resume added or changed in the last 7 days that the rules between recruiter and resume let
+ * reach this recruiter ({@link VisResumeRecruiterCompatibility}, since 2026-11-28 the single place of those rules: the
+ * unsubscription, the restriction, the LinkedIn confirmed invalid, the company forbidden and the view in the twin
+ * {@code vis_inactive_viewed_resume}), their facts read once for the whole run ({@link VisResumeRecruiterFactsInMemory}).</li>
  * <li>In which order: first the ones with at least {@value #MINIMUM_SKILLS} skills; then the ones viewed by more
  * recruiters; then the lowest average of the rankings of the skills; then type of resume, CLT, PJ, years of
  * experience.</li>
@@ -125,9 +130,6 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	/** The skills from which a resume goes before the ones that have fewer. */
 	static final int MINIMUM_SKILLS = 10;
 
-	/** The shortest company name compared with a part of the domain of the recruiter. */
-	static final int SHORTEST_COMPANY_NAME = 4;
-
 	/** The language of the e-mails for now: the recruiters have no language yet. */
 	static final JnLanguage LANGUAGE = JnLanguage.portuguese;
 
@@ -135,8 +137,6 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	static enum Constants implements CcpJsonFieldName {
 		SCROLL_TIME { public String getValue() { return "1m"; } },
 		SEPARATOR { public String getValue() { return "|"; } },
-		NOT_LETTERS_OR_DIGITS { public String getValue() { return "[^a-z0-9]"; } },
-		DOMAIN_PARTS_SEPARATORS { public String getValue() { return "[.\\-]"; } },
 		SEE_ALL_URL { public String getValue() { return "{frontendUrl}/meu-recrutamento/curriculos-da-semana?email={email}"; } },
 		LINK { public String getValue() { return "<a href=\"{seeAllUrl}\" target=\"_blank\">{value}</a>"; } },
 		UNSUBSCRIBE_PATH { public String getValue() { return "{frontendUrl}/recrutador/descadastrar?email={email}&token={token}"; } },
@@ -200,7 +200,12 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		Map<String, Long> signUpReturns = getSignUpReturns();
 		countTheSignUpReturnsAsViews(lastViewByRecruiter, signUpReturns);
 		Map<String, String> aliasByPair = getAliases();
+		// the facts of every rule between recruiter and resume, read once for the whole run
+		Set<String> unsubscribedRecruiters = getUnsubscribedRecruiters();
+		Set<String> restrictedResumes = getRestrictedEmails(changedResumes);
 		Set<String> inactivePairs = getInactivePairs();
+		String separator = Constants.SEPARATOR.getValue();
+		VisResumeRecruiterFacts facts = new VisResumeRecruiterFactsInMemory(unsubscribedRecruiters, restrictedResumes, inactivePairs, separator);
 
 		Map<String, Long> viewsByResume = getViewsByResume(lastViewByPair);
 		List<CcpJsonRepresentation> resumesOfTheEmail = getResumesOfTheEmail(resumes, rankings, resumeDates, viewsByResume);
@@ -227,7 +232,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		long telegramSince = now.getDaysAgo(VisEntityRecruiter.DAYS_OF_A_RECENT_TELEGRAM_APPEARANCE);
 
 		Set<String> recipients = new LinkedHashSet<>();
-		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, inactivePairs, frontendUrl, visApiUrl, recruitersPerRun, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition, recipients);
+		Consumer<CcpJsonRepresentation> sendToTheRecruiter = new VisResumesToTheRecruiterSender(restrictedTo, resumesOfTheEmail, lastViewByPair, aliasByPair, facts, frontendUrl, visApiUrl, recruitersPerRun, emailsSent, lastQueuePosition, lastLegacyQueuePosition, lastNonProfessionalQueuePosition, lastLegacyActiveQueuePosition, recipients);
 		List<CcpJsonRepresentation> recruiters = getRecruiters();
 		Set<String> recruitersWithFirstEmail = getRecruitersWithFirstEmail();
 		List<CcpJsonRepresentation> recruitersInOrder = getRecruitersInOrder(recruiters, lastViewByRecruiter, viewsSince, lastPositionOfTheLastRun, recruitersWithFirstEmail, telegramSince, lastLegacyPositionOfTheLastRun, lastNonProfessionalPositionOfTheLastRun, lastLegacyActivePositionOfTheLastRun);
@@ -238,10 +243,9 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		// the process runs every hour (since 2026-11-27): who already received the e-mail today waits for tomorrow
 		Set<String> recipientsOfToday = getRecipientsOfToday(restrictedTo, now);
 		recruitersInOrder.removeIf(recruiter -> recipientsOfToday.contains(recruiter.getAsString(VisRecruiterResumesFields.emailHash)));
-		// who unsubscribed receives no e-mail of resumes, even when something put them back among the active recruiters
-		// without removing the unsubscription (since 2026-11-27)
-		Set<String> unsubscribedRecruiters = getUnsubscribedRecruiters();
-		recruitersInOrder.removeIf(recruiter -> unsubscribedRecruiters.contains(recruiter.getAsString(VisRecruiterResumesFields.emailHash)));
+		// who receives no resume at all (who unsubscribed, even when put back among the active recruiters) does not take
+		// the place of another one in the run: the records carry the hash of the e-mail the rules read
+		recruitersInOrder.removeIf(recruiter -> VisResumeRecruiterCompatibility.receivesNothing(recruiter, facts));
 		recruitersInOrder.forEach(sendToTheRecruiter);
 		saveLastQueuePosition(generalQueue, restrictedTo, lastPositionOfTheLastRun, lastQueuePosition[0]);
 		saveLastQueuePosition(legacyQueue, restrictedTo, lastLegacyPositionOfTheLastRun, lastLegacyQueuePosition[0]);
@@ -709,9 +713,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 				.put(VisRecruiterResumesFields.lastChange, oldestAndNewest[1])
 				.put(JnJsonCommonsFields.language, LANGUAGE);
 		CcpJsonRepresentation row = VisBusinessBuildResumeRow.INSTANCE.execute(rowInput);
-		String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
-		String linkedinHash = getLinkedinHash(linkedinAddress);
-		List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
+		CcpJsonRepresentation resumeOfTheRules = VisResumeRecruiterCompatibility.getResume(resume);
+		String linkedinHash = resumeOfTheRules.getAsString(VisRecruiterResumesFields.linkedinHash);
 		List<String> skills = VisBusinessBuildResumeRow.getSkillsByRanking(rowInput);
 		long views = viewsByResume.getOrDefault(linkedinHash, 0L);
 		List<Object> priorityKeys = getPriorityKeys(skills, rankings, views);
@@ -723,7 +726,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 				.put(VisRecruiterResumesFields.sortKeys, sortKeys)
 				.put(VisRecruiterResumesFields.subjectItems, subjectItems)
 				.put(VisEntityViewedResume.Fields.linkedin, linkedinHash)
-				.put(VisEntityResume.Fields.notAllowedCompany, notAllowedCompanies);
+				.put(VisRecruiterResumesFields.resumeOfTheRules, resumeOfTheRules);
 		return resumeOfTheEmail;
 	}
 
@@ -930,31 +933,37 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/**
-	 * The rows of a recruiter: every resume, but the ones that forbid the company of the recruiter and the ones whose view
-	 * by this recruiter is in the twin {@code vis_inactive_viewed_resume}, each one with the last view of this recruiter,
-	 * the alias they gave to it and the signed link.
+	 * The rows of a recruiter: every resume the rules between recruiter and resume let reach them
+	 * ({@link VisResumeRecruiterCompatibility#mayReceive}), each one with the last view of this recruiter, the alias they
+	 * gave to it and the signed link. The only place where the e-mails of resumes (the daily one, the ones of the
+	 * positions and the one of a job posting) choose their resumes.
+	 * @param email the e-mail of the recruiter
+	 * @param resumesOfTheEmail the resumes of the e-mail ({@link #getResumesOfTheEmail}), each one with the values the rules read
+	 * @param lastViewByPair the last view of each pair recruiter + resume
+	 * @param aliasByPair the alias of each pair recruiter + resume
+	 * @param facts what the rules read from the database
+	 * @return the rows
 	 */
-	static List<CcpJsonRepresentation> getRowsOfTheRecruiter(CcpJsonRepresentation recruiter, String emailHash, List<CcpJsonRepresentation> resumesOfTheEmail,
-			Map<String, Long> lastViewByPair, Map<String, String> aliasByPair, Set<String> inactivePairs) {
-		String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
-		boolean professional = recruiter.getOrDefault(VisEntityRecruiter.Fields.professional, () -> false);
-		String domain = recruiter.getOrDefault(VisEntityRecruiter.Fields.domain, () -> "");
+	static List<CcpJsonRepresentation> getRowsOfTheRecruiter(String email, List<CcpJsonRepresentation> resumesOfTheEmail,
+			Map<String, Long> lastViewByPair, Map<String, String> aliasByPair, VisResumeRecruiterFacts facts) {
+		List<CcpJsonRepresentation> rows = new ArrayList<>();
+		boolean noResume = resumesOfTheEmail.isEmpty();
+		if(noResume) {
+			return rows;
+		}
+		CcpJsonRepresentation recruiter = VisResumeRecruiterCompatibility.getRecruiter(email);
+		String emailHash = recruiter.getAsString(VisRecruiterResumesFields.emailHash);
 		String separator = Constants.SEPARATOR.getValue();
 		String viewResume = VisRecruiterResumesTexts.viewResume.getMessage(LANGUAGE);
 
-		List<CcpJsonRepresentation> rows = new ArrayList<>();
 		for (CcpJsonRepresentation resumeOfTheEmail : resumesOfTheEmail) {
-			List<String> notAllowedCompanies = resumeOfTheEmail.getAsStringList(VisEntityResume.Fields.notAllowedCompany);
-			boolean forbiddenCompany = professional && isForbiddenCompany(domain, notAllowedCompanies);
-			if(forbiddenCompany) {
+			CcpJsonRepresentation resumeOfTheRules = resumeOfTheEmail.getInnerJson(VisRecruiterResumesFields.resumeOfTheRules);
+			boolean incompatible = false == VisResumeRecruiterCompatibility.mayReceive(recruiter, resumeOfTheRules, facts);
+			if(incompatible) {
 				continue;
 			}
 			String linkedinHash = resumeOfTheEmail.getAsString(VisEntityViewedResume.Fields.linkedin);
 			String pairKey = emailHash + separator + linkedinHash;
-			boolean inactiveView = inactivePairs.contains(pairKey);
-			if(inactiveView) {
-				continue;
-			}
 			Long lastView = lastViewByPair.get(pairKey);
 			boolean viewed = lastView != null;
 			String lastViewLine = viewed ? getLastViewLine(lastView) : VisRecruiterResumesTexts.neverViewed.getMessage(LANGUAGE);
@@ -963,7 +972,7 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 			String resumeId = resumeOfTheEmail.getAsString(VisRecruiterResumesFields.resumeId);
 			String token = VisRecruiterLinks.view.sign(email, resumeId);
 			CcpJsonRepresentation row = resumeOfTheEmail
-					.removeFields(VisRecruiterResumesFields.sortKeys, VisEntityViewedResume.Fields.linkedin, VisEntityResume.Fields.notAllowedCompany)
+					.removeFields(VisRecruiterResumesFields.sortKeys, VisEntityViewedResume.Fields.linkedin, VisRecruiterResumesFields.resumeOfTheRules)
 					// subjectItems stays: sendTheEmail builds the subject with it and then removes it
 					.put(VisRecruiterResumesFields.lastView, lastViewLine)
 					.put(VisRecruiterResumesFields.viewed, viewed)
@@ -980,74 +989,6 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		CcpJsonRepresentation lastViewValues = CcpOtherConstants.EMPTY_JSON.put(VisRecruiterResumesFields.date, lastViewDate);
 		String lastViewLine = VisRecruiterResumesTexts.lastView.getMessage(LANGUAGE, lastViewValues);
 		return lastViewLine;
-	}
-
-	/**
-	 * Tells whether the resume forbids the company of the recruiter: the name of a company of {@code notAllowedCompany},
-	 * without accents, spaces and symbols, is a part of the domain (split by dots and hyphens) or, when it has at least
-	 * four letters, is inside the domain written without dots and hyphens ({@code Itaú} forbids {@code itau.com.br} and
-	 * {@code itau-unibanco.com.br}).
-	 */
-	/**
-	 * Tells whether the resume forbids the company of the recruiter, from their e-mail alone (no read of
-	 * {@code vis_recruiter}): the domain and the kind of the e-mail come from the same transformers that write them in the
-	 * recruiter. A recruiter of a non-professional domain (gmail and the like) has no company to forbid. Used when the
-	 * recruiter opens a resume, so a company forbidden after the e-mail went out no longer sees the resume.
-	 * @param recruiterEmail the e-mail of the recruiter
-	 * @param notAllowedCompanies the companies the resume forbids, as they are now
-	 * @return {@code true} when the recruiter must not see the resume
-	 */
-	public static boolean isTheCompanyOfTheRecruiterForbidden(String recruiterEmail, List<String> notAllowedCompanies) {
-		boolean nothingForbidden = notAllowedCompanies.isEmpty();
-		if(nothingForbidden) {
-			return false;
-		}
-		CcpJsonRepresentation recruiter = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiter.Fields.email, recruiterEmail);
-		CcpJsonRepresentation recruiterWithProfessional = VisJsonTransformerRecruiterProfessional.INSTANCE.execute(recruiter);
-		boolean professional = recruiterWithProfessional.getAsBoolean(VisEntityRecruiter.Fields.professional);
-		boolean personalEmail = false == professional;
-		if(personalEmail) {
-			return false;
-		}
-		CcpJsonRepresentation recruiterWithDomain = VisJsonTransformerRecruiterDomain.INSTANCE.execute(recruiter);
-		String domain = recruiterWithDomain.getAsString(VisEntityRecruiter.Fields.domain);
-		boolean forbiddenCompany = isForbiddenCompany(domain, notAllowedCompanies);
-		return forbiddenCompany;
-	}
-
-	public static boolean isForbiddenCompany(String domain, List<String> notAllowedCompanies) {
-		String lowerCaseDomain = domain.toLowerCase();
-		String partsSeparators = Constants.DOMAIN_PARTS_SEPARATORS.getValue();
-		String[] domainParts = lowerCaseDomain.split(partsSeparators);
-		List<String> domainPartsList = List.of(domainParts);
-		String joinedDomain = String.join("", domainParts);
-		for (String company : notAllowedCompanies) {
-			String normalizedCompany = normalize(company);
-			boolean empty = normalizedCompany.isEmpty();
-			if(empty) {
-				continue;
-			}
-			boolean isAPartOfTheDomain = domainPartsList.contains(normalizedCompany);
-			if(isAPartOfTheDomain) {
-				return true;
-			}
-			boolean longEnough = normalizedCompany.length() >= SHORTEST_COMPANY_NAME;
-			boolean insideTheDomain = longEnough && joinedDomain.contains(normalizedCompany);
-			if(insideTheDomain) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static String normalize(String text) {
-		CcpStringDecorator textDecorator = new CcpStringDecorator(text);
-		CcpTextDecorator textText = textDecorator.text();
-		CcpTextDecorator withoutAccents = textText.stripAccents();
-		String lowerCase = withoutAccents.content.toLowerCase();
-		String notLettersOrDigits = Constants.NOT_LETTERS_OR_DIGITS.getValue();
-		String normalized = lowerCase.replaceAll(notLettersOrDigits, "");
-		return normalized;
 	}
 
 	/**
@@ -1081,8 +1022,8 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/**
-	 * The stored resumes of the given e-mails (hashes); the inactive ones are not in {@code vis_resume}, and the ones with
-	 * {@code invalidLinkedinAddress} or with a restriction to correct ({@code vis_resume_restriction}) are left out.
+	 * The stored resumes of the given e-mails (hashes); the inactive ones are not in {@code vis_resume}. Which of them may
+	 * reach each recruiter is told by {@link VisResumeRecruiterCompatibility} when the rows are built.
 	 */
 	static List<CcpJsonRepresentation> getResumes(Set<String> emailHashes) {
 		CcpQueryOptions query = CcpQueryOptions.INSTANCE
@@ -1096,11 +1037,6 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		List<CcpJsonRepresentation> resumes = new ArrayList<>();
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		query.selectFrom(VisEntityResume.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, resume -> resumes.add(resume));
-		// the support confirmed that the LinkedIn address does not open (since 2026-11-12): the resume goes to no recruiter
-		resumes.removeIf(resume -> resume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false));
-		// the owner must correct the resume first (vis_resume_restriction, since 2026-11-12): it goes to no recruiter
-		Set<String> restrictedEmails = getRestrictedEmails(emailHashes);
-		resumes.removeIf(resume -> restrictedEmails.contains(resume.getAsString(VisEntityResume.Fields.email)));
 		return resumes;
 	}
 
@@ -1184,62 +1120,22 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 	}
 
 	/**
-	 * Whether the recruiter unsubscribed from the e-mails of resumes ({@code vis_recruiter_unsubscribed}): who did receives
-	 * none of them, the daily one, the ones of the positions or the one of a job posting (since 2026-11-27).
+	 * The facts of the rules between one recruiter and the resumes of their e-mail, read by id
+	 * ({@link VisResumeRecruiterFactsByIds}): for the e-mails that are not the daily one (a position, a job posting).
 	 * @param email the e-mail of the recruiter
-	 * @return true when the recruiter unsubscribed
+	 * @param resumesOfTheEmail the resumes of the e-mail ({@link #getResumesOfTheEmail})
+	 * @return the facts
 	 */
-	public static boolean isUnsubscribed(String email) {
-		CcpJsonRepresentation unsubscriptionKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterUnsubscribed.Fields.email, email);
-		boolean unsubscribed = VisEntityRecruiterUnsubscribed.ENTITY.exists(unsubscriptionKey);
-		return unsubscribed;
-	}
-
-	/**
-	 * The resumes the recruiter may receive by e-mail (since 2026-11-27, for the e-mails that are not the daily one, which
-	 * reads every pair at once): without the ones whose company the resume forbids and without the ones the recruiter
-	 * marked as unwanted (their view in the twin {@code vis_inactive_viewed_resume}), the views read in a single union all
-	 * (MGIE).
-	 * @param recruiterEmail the e-mail of the recruiter
-	 * @param resumes the resumes, as stored
-	 * @return the resumes that may go to the recruiter
-	 */
-	public static List<CcpJsonRepresentation> getResumesTheRecruiterMayReceive(String recruiterEmail, List<CcpJsonRepresentation> resumes) {
-		List<CcpJsonRepresentation> allowedResumes = new ArrayList<>();
-		List<CcpJsonRepresentation> viewKeys = new ArrayList<>();
-		for (CcpJsonRepresentation resume : resumes) {
-			List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
-			boolean forbiddenCompany = isTheCompanyOfTheRecruiterForbidden(recruiterEmail, notAllowedCompanies);
-			if(forbiddenCompany) {
-				continue;
-			}
-			String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
-			CcpJsonRepresentation viewKey = CcpOtherConstants.EMPTY_JSON
-					.put(VisEntityViewedResume.Fields.email, recruiterEmail)
-					.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress);
-			allowedResumes.add(resume);
-			viewKeys.add(viewKey);
+	static VisResumeRecruiterFacts loadTheFacts(String email, List<CcpJsonRepresentation> resumesOfTheEmail) {
+		CcpJsonRepresentation recruiter = VisResumeRecruiterCompatibility.getRecruiter(email);
+		List<CcpJsonRepresentation> recruiters = List.of(recruiter);
+		List<CcpJsonRepresentation> resumes = new ArrayList<>();
+		for (CcpJsonRepresentation resumeOfTheEmail : resumesOfTheEmail) {
+			CcpJsonRepresentation resumeOfTheRules = resumeOfTheEmail.getInnerJson(VisRecruiterResumesFields.resumeOfTheRules);
+			resumes.add(resumeOfTheRules);
 		}
-		boolean nothingAllowed = allowedResumes.isEmpty();
-		if(nothingAllowed) {
-			return allowedResumes;
-		}
-		int keysCount = viewKeys.size();
-		CcpJsonRepresentation[] viewKeysArray = viewKeys.toArray(new CcpJsonRepresentation[keysCount]);
-		CcpEntity inactiveViewedResume = VisEntityViewedResume.ENTITY.getTwinEntity();
-		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
-		CcpSelectUnionAll views = crud.unionAll(viewKeysArray, JnDeleteKeysFromCache.INSTANCE, inactiveViewedResume);
-		List<CcpJsonRepresentation> resumesTheRecruiterMayReceive = new ArrayList<>();
-		for (int index = 0; index < keysCount; index++) {
-			CcpJsonRepresentation viewKey = viewKeys.get(index);
-			boolean unwanted = inactiveViewedResume.isPresentInThisUnionAll(views, viewKey);
-			if(unwanted) {
-				continue;
-			}
-			CcpJsonRepresentation resume = allowedResumes.get(index);
-			resumesTheRecruiterMayReceive.add(resume);
-		}
-		return resumesTheRecruiterMayReceive;
+		VisResumeRecruiterFacts facts = VisResumeRecruiterFactsByIds.load(recruiters, resumes);
+		return facts;
 	}
 
 	/** The addresses of the front end and of the API of vis, kept in the sending parameters of the e-mail. */

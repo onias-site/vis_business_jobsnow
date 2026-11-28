@@ -10,6 +10,7 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.vis.business.compatibility.VisResumeRecruiterFacts;
 import com.jn.business.messages.JnMessageSenderExceptionHandler;
 import com.jn.business.messages.JnMessageType;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
@@ -72,9 +73,8 @@ public class VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting implements C
 		CcpJsonRepresentation recruiter = json.getInnerJson(Fields.recruiter);
 		List<String> resumeIds = json.getAsStringList(Fields.resumeIds);
 		String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
-		List<CcpJsonRepresentation> resumesToShow = VisBusinessResumesOfThePositionFilters.getResumesToShow(resumeIds, email);
-		// since 2026-11-27 also without the resumes the recruiter marked as unwanted (vis_inactive_viewed_resume)
-		List<CcpJsonRepresentation> resumes = VisBusinessSendResumesToRecruiters.getResumesTheRecruiterMayReceive(email, resumesToShow);
+		// the rows keep only what the rules between recruiter and resume let go (VisResumeRecruiterCompatibility)
+		List<CcpJsonRepresentation> resumes = VisBusinessResumesOfThePositionFilters.getActiveResumes(resumeIds);
 		boolean noResume = resumes.isEmpty();
 
 		if(noResume) {
@@ -86,8 +86,8 @@ public class VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting implements C
 		CcpJsonRepresentation rankings = withRankings.getInnerJson(VisRecruiterResumesFields.rankings);
 		Map<String, long[]> resumeDates = getResumeDates(resumes);
 		List<CcpJsonRepresentation> resumesOfTheEmail = VisBusinessSendResumesToRecruiters.getResumesOfTheEmail(resumes, rankings, resumeDates, Map.of());
-		String emailHash = VisBusinessSendResumesToRecruiters.getEmailHash(email);
-		List<CcpJsonRepresentation> rows = VisBusinessSendResumesToRecruiters.getRowsOfTheRecruiter(recruiter, emailHash, resumesOfTheEmail, Map.of(), Map.of(), Set.of());
+		VisResumeRecruiterFacts facts = VisBusinessSendResumesToRecruiters.loadTheFacts(email, resumesOfTheEmail);
+		List<CcpJsonRepresentation> rows = VisBusinessSendResumesToRecruiters.getRowsOfTheRecruiter(email, resumesOfTheEmail, Map.of(), Map.of(), facts);
 		boolean noRow = rows.isEmpty();
 
 		if(noRow) {

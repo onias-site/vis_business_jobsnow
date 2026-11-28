@@ -18,7 +18,6 @@ import com.vis.business.recruiter.resumes.VisBusinessSendTheResumesToTheRecruite
 import com.vis.entities.VisEntityJobPosting;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
-import com.vis.entities.VisEntityRecruiterUnsubscribed;
 
 /**
  * Sixth and last business before the save of {@code vis_job_posting} (since 2026-11-26; the fifth one until 2026-11-27): each recruiter of the text
@@ -67,7 +66,7 @@ public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
 		}
 		CcpJsonRepresentation[] keysArray = keys.toArray(new CcpJsonRepresentation[0]);
 		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
-		CcpSelectUnionAll found = crud.unionAll(keysArray, JnDeleteKeysFromCache.INSTANCE, VisEntityRecruiter.ENTITY, VisEntityRecruiterResumes.ENTITY, VisEntityRecruiterUnsubscribed.ENTITY);
+		CcpSelectUnionAll found = crud.unionAll(keysArray, JnDeleteKeysFromCache.INSTANCE, VisEntityRecruiter.ENTITY, VisEntityRecruiterResumes.ENTITY);
 		CcpTimeDecorator now = new CcpTimeDecorator();
 		Long midnight = now.getMidnight();
 		String description = json.getAsString(VisEntityJobPosting.Fields.description);
@@ -75,13 +74,6 @@ public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
 			boolean inactive = false == VisEntityRecruiter.ENTITY.isPresentInThisUnionAll(found, key);
 
 			if(inactive) {
-				continue;
-			}
-
-			// since 2026-11-27: who unsubscribed receives nothing, even when active again without removing the unsubscription
-			boolean unsubscribed = VisEntityRecruiterUnsubscribed.ENTITY.isPresentInThisUnionAll(found, key);
-
-			if(unsubscribed) {
 				continue;
 			}
 

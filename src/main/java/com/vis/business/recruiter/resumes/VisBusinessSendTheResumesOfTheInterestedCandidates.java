@@ -23,7 +23,6 @@ import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityPositionInterest;
 import com.vis.entities.VisEntityPositionResumeSent;
 import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.entities.VisEntityVirtualPositionInterestHour;
 import com.vis.entities.VisEntityVirtualPositionInterestedResumes;
 
@@ -169,9 +168,6 @@ public class VisBusinessSendTheResumesOfTheInterestedCandidates implements CcpBu
 		Set<String> resumeIds = positionIdsByResume.keySet();
 		CcpEntityMetaData resumeDetails = VisEntityResume.ENTITY.getEntityMetaData();
 		CcpJsonRepresentation resumesById = resumeDetails.getMultipleByRecordIds(resumeIds);
-		// the id of the restriction is the id of the resume
-		CcpEntityMetaData restrictionDetails = VisEntityResumeRestriction.ENTITY.getEntityMetaData();
-		CcpJsonRepresentation restrictionsById = restrictionDetails.getMultipleByRecordIds(resumeIds);
 		Map<String, List<CcpJsonRepresentation>> resumesByPosition = new LinkedHashMap<>();
 		for (Map.Entry<String, Set<String>> entry : positionIdsByResume.entrySet()) {
 			String resumeId = entry.getKey();
@@ -181,9 +177,6 @@ public class VisBusinessSendTheResumesOfTheInterestedCandidates implements CcpBu
 			if(inactiveResume) {
 				continue;
 			}
-			// the read by ids answers every id asked, empty when the record does not exist
-			CcpJsonRepresentation restriction = restrictionsById.getInnerJson(resumeIdField);
-			boolean restricted = false == restriction.isEmpty();
 			CcpJsonRepresentation positionsOfTheResume = CcpOtherConstants.EMPTY_JSON;
 			for (String positionId : entry.getValue()) {
 				CcpFieldName positionIdField = new CcpFieldName(positionId);
@@ -192,7 +185,6 @@ public class VisBusinessSendTheResumesOfTheInterestedCandidates implements CcpBu
 			}
 			CcpJsonRepresentation openInput = CcpOtherConstants.EMPTY_JSON
 					.put(VisBusinessPositionsOpenToTheResume.Fields.resume, resume)
-					.put(VisBusinessPositionsOpenToTheResume.Fields.restricted, restricted)
 					.put(VisBusinessPositionsOpenToTheResume.Fields.positions, positionsOfTheResume);
 			CcpJsonRepresentation openOutput = VisBusinessPositionsOpenToTheResume.INSTANCE.execute(openInput);
 			CcpJsonRepresentation openPositions = openOutput.getInnerJson(VisBusinessPositionsOpenToTheResume.Fields.positions);

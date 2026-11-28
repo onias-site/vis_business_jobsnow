@@ -20,8 +20,9 @@ import com.vis.json.fields.validation.VisPositionFrequencyTypes;
  * After every save of a resume (since 2026-11-24): the active positions that receive their resumes instantly and that the
  * resume satisfies get the e-mail "Cv recebido para a vaga" with this resume, once per pair position and resume
  * ({@code vis_position_resume_sent}, read for every position in a single union all). Runs in the queue listener of the
- * asynchronous writes of {@code vis_resume} (OQL). A resume whose LinkedIn address the support found invalid goes to no
- * position; the restriction to correct needs no check, since the save of the resume releases it.
+ * asynchronous writes of {@code vis_resume} (OQL). The sender keeps only what the rules between recruiter and resume let
+ * go ({@code VisResumeRecruiterCompatibility}); the restriction to correct counts as released, since the save of the
+ * resume releases it.
  */
 public class VisBusinessSendTheResumeToTheInstantPositions implements CcpBusiness {
 
@@ -31,10 +32,6 @@ public class VisBusinessSendTheResumeToTheInstantPositions implements CcpBusines
 	private VisBusinessSendTheResumeToTheInstantPositions() {}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation resume) {
-		boolean invalidLinkedin = resume.containsAllFields(VisEntityResume.Fields.invalidLinkedinAddress) && resume.getAsBoolean(VisEntityResume.Fields.invalidLinkedinAddress);
-		if(invalidLinkedin) {
-			return resume;
-		}
 		String instantly = VisPositionFrequencyTypes.instantly.name();
 		CcpJsonRepresentation positionsInput = CcpOtherConstants.EMPTY_JSON.put(VisBusinessActivePositionsOfTheFrequency.Fields.frequencyType, List.of(instantly));
 		CcpJsonRepresentation positionsOutput = VisBusinessActivePositionsOfTheFrequency.INSTANCE.execute(positionsInput);

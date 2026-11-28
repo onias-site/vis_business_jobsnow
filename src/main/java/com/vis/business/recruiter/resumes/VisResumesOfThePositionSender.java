@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.vis.business.compatibility.VisResumeRecruiterFacts;
+import com.vis.business.compatibility.VisResumeRecruiterFactsOfASavedResume;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.decorators.CcpUrlDecorator;
@@ -49,6 +50,7 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 	static enum Constants implements CcpJsonFieldName {
 		SEE_ALL_URL { public String getValue() { return "{frontendUrl}/meu-recrutamento/curriculos-da-vaga?email={email}&vaga={positionTitle}&mes={positionYearMonth}"; } },
 		INSERTION_DATE_PATTERN { public String getValue() { return "dd/MM/yyyy HH:mm:ss"; } },
+		NO_SAVED_RESUME { public String getValue() { return ""; } },
 	}
 
 	/** The oldest (added) and the newest (last change) times of each resume, by the hash of its e-mail. */
@@ -63,8 +65,8 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 	/** The alias of each pair recruiter + resume. */
 	private final Map<String, String> aliasByPair;
 
-	/** The pairs recruiter + resume of {@code vis_inactive_viewed_resume}. */
-	private final Set<String> inactivePairs;
+	/** The e-mail (hashed) of the resume just saved, whose save released its restriction; empty for a period. */
+	private final String savedResumeEmailHash;
 
 	/** The address of the front end. */
 	private final String frontendUrl;
@@ -75,16 +77,20 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 	 * @param viewsByResume how many recruiters viewed each resume
 	 * @param lastViewByPair the last view of each pair recruiter + resume
 	 * @param aliasByPair the alias of each pair recruiter + resume
-	 * @param inactivePairs the pairs recruiter + resume of {@code vis_inactive_viewed_resume}
 	 * @param frontendUrl the address of the front end
 	 */
 	public VisResumesOfThePositionSender(Map<String, long[]> resumeDates, Map<String, Long> viewsByResume, Map<String, Long> lastViewByPair,
-			Map<String, String> aliasByPair, Set<String> inactivePairs, String frontendUrl) {
+			Map<String, String> aliasByPair, String frontendUrl) {
+		this(resumeDates, viewsByResume, lastViewByPair, aliasByPair, Constants.NO_SAVED_RESUME.getValue(), frontendUrl);
+	}
+
+	private VisResumesOfThePositionSender(Map<String, long[]> resumeDates, Map<String, Long> viewsByResume, Map<String, Long> lastViewByPair,
+			Map<String, String> aliasByPair, String savedResumeEmailHash, String frontendUrl) {
 		this.resumeDates = resumeDates;
 		this.viewsByResume = viewsByResume;
 		this.lastViewByPair = lastViewByPair;
 		this.aliasByPair = aliasByPair;
-		this.inactivePairs = inactivePairs;
+		this.savedResumeEmailHash = savedResumeEmailHash;
 		this.frontendUrl = frontendUrl;
 	}
 
@@ -102,7 +108,7 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 		resumeDates.put(emailHash, new long[] {insertion, now});
 		CcpJsonRepresentation linkAddresses = VisBusinessSendResumesToRecruiters.getLinkAddresses();
 		String frontendUrl = linkAddresses.getAsString(VisRecruiterResumesFields.frontendUrl);
-		VisResumesOfThePositionSender sender = new VisResumesOfThePositionSender(resumeDates, Map.of(), Map.of(), Map.of(), Set.of(), frontendUrl);
+		VisResumesOfThePositionSender sender = new VisResumesOfThePositionSender(resumeDates, Map.of(), Map.of(), Map.of(), emailHash, frontendUrl);
 		return sender;
 	}
 
@@ -127,18 +133,9 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 			return;
 		}
 		String email = position.getAsString(VisEntityPosition.Fields.resumesEmail);
-		// since 2026-11-27: who unsubscribed receives nothing, and the resumes that forbid the company of the recruiter or
-		// that the recruiter marked as unwanted do not go (the rows do not check the company: the recruiter has no domain here)
-		boolean unsubscribed = VisBusinessSendResumesToRecruiters.isUnsubscribed(email);
-		if(unsubscribed) {
-			return;
-		}
-		List<CcpJsonRepresentation> resumes = VisBusinessSendResumesToRecruiters.getResumesTheRecruiterMayReceive(email, matchingResumes);
-		boolean noAllowedResume = resumes.isEmpty();
-		if(noAllowedResume) {
-			return;
-		}
-		List<CcpJsonRepresentation> rows = this.getRows(email, resumes);
+		// the rows keep only the resumes the rules between recruiter and resume let reach this e-mail
+		// (VisResumeRecruiterCompatibility): nothing goes to who unsubscribed
+		List<CcpJsonRepresentation> rows = this.getRows(email, matchingResumes);
 		boolean noRow = rows.isEmpty();
 		if(noRow) {
 			return;
@@ -157,9 +154,9 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 		CcpJsonRepresentation withRankings = VisBusinessLoadSkillRankings.INSTANCE.execute(resumesJson);
 		CcpJsonRepresentation rankings = withRankings.getInnerJson(VisRecruiterResumesFields.rankings);
 		List<CcpJsonRepresentation> resumesOfTheEmail = VisBusinessSendResumesToRecruiters.getResumesOfTheEmail(resumes, rankings, this.resumeDates, this.viewsByResume);
-		CcpJsonRepresentation recruiter = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiter.Fields.email, email);
-		String emailHash = VisBusinessSendResumesToRecruiters.getEmailHash(email);
-		List<CcpJsonRepresentation> rowsOfTheRecruiter = VisBusinessSendResumesToRecruiters.getRowsOfTheRecruiter(recruiter, emailHash, resumesOfTheEmail, this.lastViewByPair, this.aliasByPair, this.inactivePairs);
+		VisResumeRecruiterFacts storedFacts = VisBusinessSendResumesToRecruiters.loadTheFacts(email, resumesOfTheEmail);
+		VisResumeRecruiterFacts facts = new VisResumeRecruiterFactsOfASavedResume(storedFacts, this.savedResumeEmailHash);
+		List<CcpJsonRepresentation> rowsOfTheRecruiter = VisBusinessSendResumesToRecruiters.getRowsOfTheRecruiter(email, resumesOfTheEmail, this.lastViewByPair, this.aliasByPair, facts);
 		Map<String, CcpJsonRepresentation> sortValuesById = new HashMap<>();
 		for (CcpJsonRepresentation resume : resumes) {
 			String resumeId = VisEntityResume.ENTITY.calculateId(resume);

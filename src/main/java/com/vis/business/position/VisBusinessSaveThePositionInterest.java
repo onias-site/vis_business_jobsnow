@@ -21,8 +21,9 @@ import com.vis.status.VisProcessStatusPositionInterest;
  * restriction and was neither sent nor promised to the position: checks both sides once more, now with the stored
  * resume and position, and saves the interest with the next full hour as the hour of its sending.
  * <ul>
- * <li>the LinkedIn address of the resume confirmed invalid: 422;</li>
  * <li>the position missing or inactive: 404; expired: 410;</li>
+ * <li>the resume blocked by a rule of its own ({@link VisBusinessPositionsOpenToTheResume}: a restriction to correct, the
+ * LinkedIn address confirmed invalid): 422;</li>
  * <li>the position not open to the resume ({@link VisBusinessPositionsOpenToTheResume}): 404.</li>
  * </ul>
  */
@@ -51,10 +52,6 @@ public class VisBusinessSaveThePositionInterest implements CcpBusiness {
 	 */
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		CcpJsonRepresentation resume = json.getInnerJsonFromPath(CcpEntity.JsonFieldNames._entities, VisEntityResume.ENTITY);
-		boolean invalidLinkedin = VisBusinessPositionsOpenToTheResume.hasTheLinkedinConfirmedInvalid(resume);
-		if(invalidLinkedin) {
-			return VisProcessStatusPositionInterest.resumeWithPendingIssues.throwException(json);
-		}
 		CcpEntityMetaData positionDetails = VisEntityPosition.ENTITY.getEntityMetaData();
 		List<String> positionIds = List.of(this.positionId);
 		CcpJsonRepresentation positionsById = positionDetails.getMultipleByRecordIds(positionIds);
@@ -71,9 +68,13 @@ public class VisBusinessSaveThePositionInterest implements CcpBusiness {
 		}
 		CcpJsonRepresentation openInput = CcpOtherConstants.EMPTY_JSON
 				.put(VisBusinessPositionsOpenToTheResume.Fields.resume, resume)
-				.put(VisBusinessPositionsOpenToTheResume.Fields.restricted, false)
 				.put(VisBusinessPositionsOpenToTheResume.Fields.positions, positionsById);
 		CcpJsonRepresentation openOutput = VisBusinessPositionsOpenToTheResume.INSTANCE.execute(openInput);
+		// a restriction to correct or the LinkedIn confirmed invalid
+		boolean blocked = openOutput.getAsBoolean(VisBusinessPositionsOpenToTheResume.Fields.blocked);
+		if(blocked) {
+			return VisProcessStatusPositionInterest.resumeWithPendingIssues.throwException(json);
+		}
 		CcpJsonRepresentation openPositions = openOutput.getInnerJson(VisBusinessPositionsOpenToTheResume.Fields.positions);
 		boolean closed = false == openPositions.containsAllFields(positionIdField);
 		if(closed) {

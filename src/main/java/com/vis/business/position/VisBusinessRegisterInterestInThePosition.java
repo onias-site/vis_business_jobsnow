@@ -16,7 +16,6 @@ import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
 import com.vis.entities.VisEntityPositionInterest;
 import com.vis.entities.VisEntityPositionResumeSent;
 import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.status.VisProcessStatusPositionInterest;
 
 /**
@@ -25,10 +24,11 @@ import com.vis.status.VisProcessStatusPositionInterest;
  * the resumes of the other interested candidates ({@link VisEntityPositionInterest}). Both sides are checked at the
  * confirmation, in one read of the presence checks:
  * <ul>
- * <li>the resume inactive: 301; missing: 404; with a restriction to correct: 422;</li>
+ * <li>the resume inactive: 301; missing: 404;</li>
  * <li>the interest already registered, or the resume already sent to the position: 409;</li>
- * <li>then, with the stored resume and position, {@link VisBusinessSaveThePositionInterest}: the LinkedIn confirmed
- * invalid (422), the position missing or not open to the resume (404) or expired (410).</li>
+ * <li>then, with the stored resume and position, {@link VisBusinessSaveThePositionInterest}: the position missing (404)
+ * or expired (410), the resume blocked by a rule of its own, a restriction to correct or the LinkedIn confirmed invalid
+ * (422), the position not open to the resume (404).</li>
  * </ul>
  * Answers the hour of the sending ({@code sendingHour}, {@code yyyyMMddHH}).
  */
@@ -64,7 +64,6 @@ public class VisBusinessRegisterInterestInThePosition implements CcpBusiness {
 		.toBeginProcedureAnd()
 			.ifThisIdIsPresentInEntity(inactiveResume).returnStatus(CcpProcessStatusDefault.REDIRECT).and()
 			.ifThisIdIsNotPresentInEntity(VisEntityResume.ENTITY).returnStatus(CcpProcessStatusDefault.NOT_FOUND).and()
-			.ifThisIdIsPresentInEntity(VisEntityResumeRestriction.ENTITY).returnStatus(VisProcessStatusPositionInterest.resumeWithPendingIssues).and()
 			.ifThisIdIsPresentInEntity(VisEntityPositionInterest.ENTITY).returnStatus(VisProcessStatusPositionInterest.alreadyInterested).and()
 			.ifThisIdIsPresentInEntity(VisEntityPositionResumeSent.ENTITY).returnStatus(VisProcessStatusPositionInterest.alreadyInterested).and()
 			.ifThisIdIsPresentInEntity(VisEntityResume.ENTITY).executeAction(saveTheInterest)

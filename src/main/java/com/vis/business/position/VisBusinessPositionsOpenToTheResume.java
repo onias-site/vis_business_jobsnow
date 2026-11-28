@@ -2,7 +2,6 @@ package com.vis.business.position;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,14 +11,10 @@ import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpFieldName;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.especifications.db.utils.entity.CcpEntity;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityDecoratorTypes;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
-import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
-import com.vis.business.recruiter.resumes.VisBusinessSendResumesToRecruiters;
+import com.vis.business.compatibility.VisResumeRecruiterCompatibility;
+import com.vis.business.compatibility.VisResumeRecruiterFacts;
+import com.vis.business.compatibility.VisResumeRecruiterFactsByIds;
 import com.vis.entities.VisEntityPosition;
-import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityViewedResume;
 import com.vis.json.fields.validation.VisPositionFrequencyTypes;
 import com.vis.json.transformers.VisPositionPublishingDayCombinations;
 
@@ -31,14 +26,13 @@ import com.vis.json.transformers.VisPositionPublishingDayCombinations;
  * <li>receives the resumes from the candidates themselves ({@code frequencyType} {@code byTheCandidates});</li>
  * <li>is not expired;</li>
  * <li>has filters that the resume satisfies ({@link VisBusinessResumeMatchesTheFilters});</li>
- * <li>is not of a company the resume forbids ({@code notAllowedCompany}): neither the domain of the recruiter who owns it
- * ({@code recruiterDomain}) nor the domain of the e-mail that receives its resumes ({@code resumesEmail});</li>
- * <li>is not of a recruiter who does not want the resume: the view of the resume by the recruiter, or by the e-mail that
- * receives the resumes, is in the twin {@code vis_inactive_viewed_resume} ("Negativar CV" or the report of the LinkedIn).</li>
+ * <li>is compatible with the resume, both the recruiter who owns it and the e-mail that receives its resumes
+ * ({@code resumesEmail}), by every rule between recruiter and resume ({@link VisResumeRecruiterCompatibility}, since
+ * 2026-11-28 the single place of those rules: the unsubscription, the company forbidden, the view in the twin
+ * {@code vis_inactive_viewed_resume}).</li>
  * </ul>
- * The resume itself must not be blocked: one with the LinkedIn address confirmed invalid or with a restriction to correct
- * ({@code vis_resume_restriction}) has no position open; the caller tells which ({@link Fields#restricted}).
- * Reads by id only (OQL): the views of the twin, in one read for every position.
+ * A resume blocked by a rule of its own (a restriction to correct, the LinkedIn confirmed invalid) has no position open,
+ * and the output tells it ({@link Fields#blocked}). Reads by id only (OQL): the facts of every pair in one read.
  */
 public class VisBusinessPositionsOpenToTheResume implements CcpBusiness {
 
@@ -46,10 +40,10 @@ public class VisBusinessPositionsOpenToTheResume implements CcpBusiness {
 	public static enum Fields implements CcpJsonFieldName {
 		/** The resume, as stored. */
 		resume,
-		/** Whether the resume has a restriction to correct ({@code vis_resume_restriction}). */
-		restricted,
 		/** The input: the positions, as stored, by id. The output: only the open ones, by id. */
 		positions,
+		/** The output: whether a rule of the resume alone blocks it (the owner must correct it). */
+		blocked,
 	}
 
 	/** The single instance: the class keeps no state. */
@@ -58,50 +52,48 @@ public class VisBusinessPositionsOpenToTheResume implements CcpBusiness {
 	private VisBusinessPositionsOpenToTheResume() {}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation resume = json.getInnerJson(Fields.resume);
-		boolean restricted = json.getAsBoolean(Fields.restricted);
-		boolean blocked = restricted || hasTheLinkedinConfirmedInvalid(resume);
-		if(blocked) {
-			return json.put(Fields.positions, CcpOtherConstants.EMPTY_JSON);
-		}
+		CcpJsonRepresentation storedResume = json.getInnerJson(Fields.resume);
 		CcpJsonRepresentation positionsById = json.getInnerJson(Fields.positions);
 		long now = System.currentTimeMillis();
-		List<String> companies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
 		Map<String, CcpJsonRepresentation> candidates = new HashMap<>();
+		Map<String, List<CcpJsonRepresentation>> recruitersByPosition = new HashMap<>();
+		List<CcpJsonRepresentation> recruiters = new ArrayList<>();
 		Set<String> positionIds = positionsById.fieldSet();
 		for (String positionId : positionIds) {
 			CcpFieldName positionIdField = new CcpFieldName(positionId);
 			CcpJsonRepresentation position = positionsById.getInnerJson(positionIdField);
-			boolean closed = isClosed(position, resume, companies, now);
+			boolean closed = isClosed(position, storedResume, now);
 			if(closed) {
 				continue;
 			}
 			candidates.put(positionId, position);
+			List<CcpJsonRepresentation> recruitersOfThePosition = getRecruitersOfThePosition(position);
+			recruitersByPosition.put(positionId, recruitersOfThePosition);
+			recruiters.addAll(recruitersOfThePosition);
 		}
-		Set<String> unwantedPositions = getPositionsOfRecruitersWhoDoNotWantTheResume(resume, candidates);
+		CcpJsonRepresentation resume = VisResumeRecruiterCompatibility.getResume(storedResume);
+		List<CcpJsonRepresentation> resumes = List.of(resume);
+		VisResumeRecruiterFacts facts = VisResumeRecruiterFactsByIds.load(recruiters, resumes);
+		boolean blocked = VisResumeRecruiterCompatibility.isTheResumeBlocked(resume, facts);
+		if(blocked) {
+			return json.put(Fields.positions, CcpOtherConstants.EMPTY_JSON).put(Fields.blocked, true);
+		}
 		CcpJsonRepresentation openPositions = CcpOtherConstants.EMPTY_JSON;
 		for (Map.Entry<String, CcpJsonRepresentation> candidate : candidates.entrySet()) {
 			String positionId = candidate.getKey();
-			boolean unwanted = unwantedPositions.contains(positionId);
-			if(unwanted) {
+			List<CcpJsonRepresentation> recruitersOfThePosition = recruitersByPosition.get(positionId);
+			boolean compatible = recruitersOfThePosition.stream().allMatch(recruiter -> VisResumeRecruiterCompatibility.mayReceive(recruiter, resume, facts));
+			if(false == compatible) {
 				continue;
 			}
 			CcpFieldName positionIdField = new CcpFieldName(positionId);
 			CcpJsonRepresentation position = candidate.getValue();
 			openPositions = openPositions.put(positionIdField, position);
 		}
-		CcpJsonRepresentation response = json.put(Fields.positions, openPositions);
+		CcpJsonRepresentation response = json
+				.put(Fields.positions, openPositions)
+				.put(Fields.blocked, false);
 		return response;
-	}
-
-	/**
-	 * Whether the support confirmed that the LinkedIn address of the resume does not open; the flag may come as a text.
-	 * @param resume the resume, as stored
-	 * @return {@code true} when the resume goes to no recruiter
-	 */
-	public static boolean hasTheLinkedinConfirmedInvalid(CcpJsonRepresentation resume) {
-		boolean invalidLinkedin = resume.containsAllFields(VisEntityResume.Fields.invalidLinkedinAddress) && resume.getAsBoolean(VisEntityResume.Fields.invalidLinkedinAddress);
-		return invalidLinkedin;
 	}
 
 	/**
@@ -121,9 +113,8 @@ public class VisBusinessPositionsOpenToTheResume implements CcpBusiness {
 		return expired;
 	}
 
-	// a position read by id may be gone, of another frequency, expired, asking what the resume does not have or of a
-	// company the resume forbids
-	private static boolean isClosed(CcpJsonRepresentation position, CcpJsonRepresentation resume, List<String> companies, long now) {
+	// a position read by id may be gone, of another frequency, expired or asking what the resume does not have
+	private static boolean isClosed(CcpJsonRepresentation position, CcpJsonRepresentation resume, long now) {
 		boolean notFound = position.isEmpty();
 		if (notFound) {
 			return true;
@@ -137,10 +128,6 @@ public class VisBusinessPositionsOpenToTheResume implements CcpBusiness {
 		if (expired) {
 			return true;
 		}
-		boolean forbiddenCompany = isOfAForbiddenCompany(position, companies);
-		if (forbiddenCompany) {
-			return true;
-		}
 		CcpJsonRepresentation filters = VisBusinessFiltersOfThePosition.INSTANCE.execute(position);
 		CcpJsonRepresentation matchInput = CcpOtherConstants.EMPTY_JSON
 				.put(VisBusinessResumeMatchesTheFilters.Fields.filters, filters)
@@ -150,88 +137,21 @@ public class VisBusinessPositionsOpenToTheResume implements CcpBusiness {
 		return false == matches;
 	}
 
-	// the company of the recruiter who owns the position or of the e-mail that receives its resumes
-	private static boolean isOfAForbiddenCompany(CcpJsonRepresentation position, List<String> companies) {
-		boolean nothingForbidden = companies.isEmpty();
-		if (nothingForbidden) {
-			return false;
-		}
-		String recruiterDomain = position.getOrDefault(VisEntityPosition.Fields.recruiterDomain, () -> "");
-		boolean forbidsTheRecruiter = false == recruiterDomain.isEmpty() && VisBusinessSendResumesToRecruiters.isForbiddenCompany(recruiterDomain, companies);
-		if (forbidsTheRecruiter) {
-			return true;
-		}
-		String resumesEmail = position.getOrDefault(VisEntityPosition.Fields.resumesEmail, () -> "");
-		boolean forbidsTheRecipient = false == resumesEmail.isEmpty() && VisBusinessSendResumesToRecruiters.isTheCompanyOfTheRecruiterForbidden(resumesEmail, companies);
-		return forbidsTheRecipient;
-	}
-
-	// the positions whose recruiter, or whose e-mail that receives the resumes, keeps the view of this resume in the twin:
-	// the ids of the views (the e-mails and the LinkedIn already hashed) read in one go
-	private static Set<String> getPositionsOfRecruitersWhoDoNotWantTheResume(CcpJsonRepresentation resume, Map<String, CcpJsonRepresentation> positions) {
-		boolean noPosition = positions.isEmpty();
-		if (noPosition) {
-			return Set.of();
-		}
-		String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
-		String linkedinHash = VisBusinessSendResumesToRecruiters.getLinkedinHash(linkedinAddress);
-		CcpEntity viewsByHashes = CcpEntityFactory.getCustomEntity(VisEntityViewedResume.ENTITY, CcpEntityDecoratorTypes.FieldsTransformer);
-		Map<String, List<String>> viewIdsByPosition = new HashMap<>();
-		List<String> viewIds = new ArrayList<>();
-		for (Map.Entry<String, CcpJsonRepresentation> entry : positions.entrySet()) {
-			CcpJsonRepresentation position = entry.getValue();
-			List<String> recruiterHashes = getRecruiterHashes(position);
-			List<String> viewIdsOfThePosition = new ArrayList<>();
-			for (String recruiterHash : recruiterHashes) {
-				CcpJsonRepresentation viewKey = CcpOtherConstants.EMPTY_JSON
-						.put(VisEntityViewedResume.Fields.linkedin, linkedinHash)
-						.put(VisEntityViewedResume.Fields.email, recruiterHash);
-				String viewId = viewsByHashes.calculateId(viewKey);
-				viewIdsOfThePosition.add(viewId);
-			}
-			viewIds.addAll(viewIdsOfThePosition);
-			String positionId = entry.getKey();
-			viewIdsByPosition.put(positionId, viewIdsOfThePosition);
-		}
-		CcpEntity inactiveViews = VisEntityViewedResume.ENTITY.getTwinEntity();
-		CcpEntityMetaData inactiveViewsDetails = inactiveViews.getEntityMetaData();
-		CcpJsonRepresentation inactiveViewsById = inactiveViewsDetails.getMultipleByRecordIds(viewIds);
-		// the read by ids answers every id asked, empty when the record does not exist
-		Set<String> foundViewIds = new HashSet<>();
-		for (String viewId : viewIds) {
-			CcpFieldName viewIdField = new CcpFieldName(viewId);
-			CcpJsonRepresentation inactiveView = inactiveViewsById.getInnerJson(viewIdField);
-			boolean notFound = inactiveView.isEmpty();
-			if (notFound) {
-				continue;
-			}
-			foundViewIds.add(viewId);
-		}
-		Set<String> unwantedPositions = new HashSet<>();
-		for (Map.Entry<String, List<String>> entry : viewIdsByPosition.entrySet()) {
-			List<String> viewIdsOfThePosition = entry.getValue();
-			boolean unwanted = viewIdsOfThePosition.stream().anyMatch(foundViewIds::contains);
-			if (false == unwanted) {
-				continue;
-			}
-			String positionId = entry.getKey();
-			unwantedPositions.add(positionId);
-		}
-		return unwantedPositions;
-	}
-
-	// the recruiter who owns the position (kept as the SHA-1 of the e-mail) and the e-mail that receives its resumes
-	private static List<String> getRecruiterHashes(CcpJsonRepresentation position) {
-		List<String> recruiterHashes = new ArrayList<>();
-		String recruiterHash = position.getAsString(VisEntityPosition.Fields.recruiter);
-		recruiterHashes.add(recruiterHash);
+	// the recruiter who owns the position (the hash of the e-mail and the domain are kept in it) and the e-mail that
+	// receives its resumes
+	private static List<CcpJsonRepresentation> getRecruitersOfThePosition(CcpJsonRepresentation position) {
+		List<CcpJsonRepresentation> recruiters = new ArrayList<>();
+		String ownerEmailHash = position.getAsString(VisEntityPosition.Fields.recruiter);
+		String ownerDomain = position.getOrDefault(VisEntityPosition.Fields.recruiterDomain, () -> "");
+		CcpJsonRepresentation owner = VisResumeRecruiterCompatibility.getRecruiterOfTheDomain(ownerEmailHash, ownerDomain);
+		recruiters.add(owner);
 		String resumesEmail = position.getOrDefault(VisEntityPosition.Fields.resumesEmail, () -> "");
 		boolean noRecipient = resumesEmail.isEmpty();
 		if (noRecipient) {
-			return recruiterHashes;
+			return recruiters;
 		}
-		String recipientHash = VisBusinessSendResumesToRecruiters.getEmailHash(resumesEmail);
-		recruiterHashes.add(recipientHash);
-		return recruiterHashes;
+		CcpJsonRepresentation recipient = VisResumeRecruiterCompatibility.getRecruiter(resumesEmail);
+		recruiters.add(recipient);
+		return recruiters;
 	}
 }

@@ -27,7 +27,6 @@ import com.vis.entities.VisEntityPosition;
 import com.vis.entities.VisEntityPositionInterest;
 import com.vis.entities.VisEntityPositionResumeSent;
 import com.vis.entities.VisEntityResume;
-import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.entities.VisEntityVirtualHashGrouper;
 
 /**
@@ -94,26 +93,24 @@ public class VisBusinessPositionsOfTheResume implements CcpBusiness {
 		.toBeginProcedureAnd()
 			.ifThisIdIsPresentInEntity(inactiveResume).returnStatus(CcpProcessStatusDefault.REDIRECT).and()
 			.ifThisIdIsNotPresentInEntity(VisEntityResume.ENTITY).returnStatus(CcpProcessStatusDefault.NOT_FOUND).and()
-			.loadThisIdFromEntity(VisEntityResume.ENTITY).and()
-			.loadThisIdFromEntity(VisEntityResumeRestriction.ENTITY)
+			.loadThisIdFromEntity(VisEntityResume.ENTITY)
 			.andFinally(CcpEntity.JsonFieldNames._entities)
 		.endThisProcedureRetrievingTheResultingData(this, CcpOtherConstants.DO_NOTHING, CcpOtherConstants.DO_NOTHING, JnDeleteKeysFromCache.INSTANCE)
 		;
 		CcpJsonRepresentation storedRecords = resultingData.getInnerJson(CcpEntity.JsonFieldNames._entities);
 		CcpJsonRepresentation resume = storedRecords.getInnerJson(VisEntityResume.ENTITY);
-		boolean restricted = storedRecords.containsField(VisEntityResumeRestriction.ENTITY);
-		boolean pendingIssues = restricted || VisBusinessPositionsOpenToTheResume.hasTheLinkedinConfirmedInvalid(resume);
+		CcpJsonRepresentation positionsById = getPositionsOfTheGroupsOfTheResume(resume);
+		CcpJsonRepresentation openInput = CcpOtherConstants.EMPTY_JSON
+				.put(VisBusinessPositionsOpenToTheResume.Fields.resume, resume)
+				.put(VisBusinessPositionsOpenToTheResume.Fields.positions, positionsById);
+		CcpJsonRepresentation openOutput = VisBusinessPositionsOpenToTheResume.INSTANCE.execute(openInput);
+		// the rules of the resume alone (the restriction, the LinkedIn confirmed invalid) leave no position open
+		boolean pendingIssues = openOutput.getAsBoolean(VisBusinessPositionsOpenToTheResume.Fields.blocked);
 		if(pendingIssues) {
 			return CcpOtherConstants.EMPTY_JSON
 					.put(ResponseFields.positions, List.of())
 					.put(ResponseFields.resumeWithPendingIssues, true);
 		}
-		CcpJsonRepresentation positionsById = getPositionsOfTheGroupsOfTheResume(resume);
-		CcpJsonRepresentation openInput = CcpOtherConstants.EMPTY_JSON
-				.put(VisBusinessPositionsOpenToTheResume.Fields.resume, resume)
-				.put(VisBusinessPositionsOpenToTheResume.Fields.restricted, false)
-				.put(VisBusinessPositionsOpenToTheResume.Fields.positions, positionsById);
-		CcpJsonRepresentation openOutput = VisBusinessPositionsOpenToTheResume.INSTANCE.execute(openInput);
 		CcpJsonRepresentation openPositions = openOutput.getInnerJson(VisBusinessPositionsOpenToTheResume.Fields.positions);
 		List<CcpJsonRepresentation> visiblePositions = getVisiblePositions(openPositions, email, resume);
 		CcpJsonRepresentation response = CcpOtherConstants.EMPTY_JSON

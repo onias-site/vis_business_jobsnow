@@ -18,8 +18,8 @@ import com.vis.json.fields.validation.VisPositionFrequencyTypes;
 /**
  * Sends each active position of a frequency (hourly, daily or weekly) the resumes that match it among the ones added or
  * changed in the period, in the order of the position (since 2026-11-24). The resumes of the period come from the history
- * of {@code vis_resume} (the same of the daily e-mail to every recruiter), without the invalid LinkedIn addresses and the
- * restricted resumes; each one is compared with the filters of each position in Java
+ * of {@code vis_resume} (the same of the daily e-mail to every recruiter), each one compared with the filters of each
+ * position in Java and sent only when the rules between recruiter and resume let it ({@code VisResumeRecruiterCompatibility})
  * ({@link VisBusinessResumeMatchesTheFilters}). The topics of the scheduled jobs are the subclasses, one per frequency.
  */
 public abstract class VisBusinessSendResumesOfThePositionsOfThePeriod implements CcpBusiness {
@@ -88,10 +88,9 @@ public abstract class VisBusinessSendResumesOfThePositionsOfThePeriod implements
 		VisBusinessSendResumesToRecruiters.loadViews(lastViewByPair, lastViewByRecruiter);
 		Map<String, Long> viewsByResume = VisBusinessSendResumesToRecruiters.getViewsByResume(lastViewByPair);
 		Map<String, String> aliasByPair = VisBusinessSendResumesToRecruiters.getAliases();
-		Set<String> inactivePairs = VisBusinessSendResumesToRecruiters.getInactivePairs();
 		CcpJsonRepresentation linkAddresses = VisBusinessSendResumesToRecruiters.getLinkAddresses();
 		String frontendUrl = linkAddresses.getAsString(VisRecruiterResumesFields.frontendUrl);
-		VisResumesOfThePositionSender sender = new VisResumesOfThePositionSender(resumeDates, viewsByResume, lastViewByPair, aliasByPair, inactivePairs, frontendUrl);
+		VisResumesOfThePositionSender sender = new VisResumesOfThePositionSender(resumeDates, viewsByResume, lastViewByPair, aliasByPair, frontendUrl);
 		return sender;
 	}
 

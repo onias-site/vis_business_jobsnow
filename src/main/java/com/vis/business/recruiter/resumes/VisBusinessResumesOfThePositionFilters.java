@@ -10,6 +10,7 @@ import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.vis.business.compatibility.VisResumeRecruiterCompatibility;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
@@ -34,9 +35,9 @@ import com.vis.entities.VisEntityViewedResumesOfTheMonth;
  * resumes, hashed as stored), so the filters do not run twice: the resumes are read by those keys (mget, MGIE), together
  * with their restrictions, and the views of the recruiter are read in the group of every view of theirs (both sides).
  * Since the ids come from the browser, every rule of what the recruiter may see is checked again on each resume read.
- * Left out: the resumes no longer active, the ones with a restriction to correct, the ones whose LinkedIn the support
- * confirmed as invalid and the ones that forbid the company of the recruiter (the same rules of the link that opens the
- * resume). Each row brings the last view of the recruiter, the alias they gave (or "Ver currículo") and the signed link
+ * Left out: the resumes no longer active and the ones that the rules of the screens between recruiter and resume do not
+ * let be shown ({@link VisResumeRecruiterCompatibility}: a restriction to correct, the LinkedIn confirmed invalid, the
+ * company of the recruiter forbidden; the same rules of the link that opens the resume). Each row brings the last view of the recruiter, the alias they gave (or "Ver currículo") and the signed link
  * that opens the resume and saves the view. The resumes the recruiter marked as unwanted (the view in the twin
  * {@code vis_inactive_viewed_resume}) go to a list of their own.
  */
@@ -103,13 +104,26 @@ public class VisBusinessResumesOfThePositionFilters implements CcpBusiness {
 	}
 
 	/**
-	 * The resumes of the e-mails (hashed) that can be shown to the recruiter, with their restrictions, in a single read.
+	 * The resumes of the e-mails (hashed) that can be shown to the recruiter: the active ones, read in a single union all
+	 * (MGIE), that the rules of the screens between recruiter and resume let be shown
+	 * ({@link VisResumeRecruiterCompatibility#getResumesTheRecruiterMayBeShown}).
 	 * @param emailHashes the e-mails of the resumes, hashed as stored
 	 * @param recruiterEmail the e-mail of the recruiter
 	 * @return the resumes, as stored
 	 */
-	// also the resumes of the e-mail of a job posting of the support bot (VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting)
 	static List<CcpJsonRepresentation> getResumesToShow(List<String> emailHashes, String recruiterEmail) {
+		List<CcpJsonRepresentation> activeResumes = getActiveResumes(emailHashes);
+		List<CcpJsonRepresentation> resumes = VisResumeRecruiterCompatibility.getResumesTheRecruiterMayBeShown(recruiterEmail, activeResumes);
+		return resumes;
+	}
+
+	/**
+	 * The active resumes of the e-mails (hashed), read in a single union all (MGIE).
+	 * @param emailHashes the e-mails of the resumes, hashed as stored
+	 * @return the resumes, as stored
+	 */
+	// also the resumes of the e-mail of a job posting of the support bot (VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting)
+	static List<CcpJsonRepresentation> getActiveResumes(List<String> emailHashes) {
 		List<CcpJsonRepresentation> resumes = new ArrayList<>();
 
 		if(emailHashes.isEmpty()) {
@@ -123,10 +137,8 @@ public class VisBusinessResumesOfThePositionFilters implements CcpBusiness {
 		}
 		int keysCount = resumeKeys.size();
 		CcpJsonRepresentation[] resumeKeysArray = resumeKeys.toArray(new CcpJsonRepresentation[keysCount]);
-		// the restriction keeps the e-mail hashed as the resume does: read without the fields transformer
-		CcpEntity restrictionByHashedEmail = CcpEntityFactory.getCustomEntity(VisEntityResumeRestriction.ENTITY, CcpEntityDecoratorTypes.FieldsTransformer);
 		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
-		CcpSelectUnionAll resumesById = crud.unionAll(resumeKeysArray, JnDeleteKeysFromCache.INSTANCE, VisEntityResume.ENTITY, restrictionByHashedEmail);
+		CcpSelectUnionAll resumesById = crud.unionAll(resumeKeysArray, JnDeleteKeysFromCache.INSTANCE, VisEntityResume.ENTITY);
 		for (CcpJsonRepresentation resumeKey : resumeKeys) {
 			boolean inactive = false == VisEntityResume.ENTITY.isPresentInThisUnionAll(resumesById, resumeKey);
 
@@ -134,27 +146,8 @@ public class VisBusinessResumesOfThePositionFilters implements CcpBusiness {
 				continue;
 			}
 
-			boolean restricted = restrictionByHashedEmail.isPresentInThisUnionAll(resumesById, resumeKey);
-
-			if(restricted) {
-				continue;
-			}
-
 			Supplier<CcpJsonRepresentation> resumeKeySupplier = resumeKey.getJsonSupplier();
 			CcpJsonRepresentation resume = VisEntityResume.ENTITY.getRecordFromUnionAll(resumesById, resumeKeySupplier);
-			boolean invalidLinkedinAddress = resume.getOrDefault(VisEntityResume.Fields.invalidLinkedinAddress, () -> false);
-
-			if(invalidLinkedinAddress) {
-				continue;
-			}
-
-			List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
-			boolean forbiddenCompany = VisBusinessSendResumesToRecruiters.isTheCompanyOfTheRecruiterForbidden(recruiterEmail, notAllowedCompanies);
-
-			if(forbiddenCompany) {
-				continue;
-			}
-
 			resumes.add(resume);
 		}
 		return resumes;
