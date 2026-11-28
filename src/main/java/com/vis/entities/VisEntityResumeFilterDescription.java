@@ -3,14 +3,17 @@ package com.vis.entities;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityCache;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityDisposable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsTransformer;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityFieldsValidator;
+import com.ccp.especifications.db.utils.entity.decorators.enums.CcpEntityExpurgableOptions;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
 import com.ccp.especifications.db.utils.entity.fields.annotations.CcpEntityFieldPrimaryKey;
 import com.ccp.json.validations.fields.annotations.CcpJsonCopyFieldValidationsFrom;
 import com.ccp.json.validations.fields.annotations.CcpJsonFieldValidatorRequired;
 import com.ccp.json.validations.fields.annotations.type.CcpJsonFieldTypeString;
+import com.jn.entities.decorators.engine.JnDisposableEntity;
 import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 
@@ -22,8 +25,14 @@ import com.jn.json.fields.validation.JnJsonCommonsFields;
  * with both parameters, the screen reads the filters and this text in one union all
  * ({@code VisBusinessGetTheResumeFilter}), fills the text in and shows the skills found in it. The same user sharing the
  * same filters again replaces the text.
+ * <p>
+ * Since 2026-11-28 the text is disposable by day: it lasts 24 hours after its last save, by the copy in
+ * {@code jn_disposable_record}, and is purged afterwards, so the same filters may have a text again on the next day (a
+ * job posting of {@code /salvarVaga} or of a group is refused only while the text of its filters lasts). The texts saved
+ * before were moved to the day 27/11/2026, as written at 22:00 (script 136).
  */
 @CcpEntityCache(3600)
+@CcpEntityDisposable(value = JnDisposableEntity.class, timeOption = CcpEntityExpurgableOptions.daily)
 @CcpEntityFieldsTransformer(JnJsonTransformersFieldsEntityDefault.class)
 @CcpEntityFieldsValidator(VisEntityResumeFilterDescription.Fields.class)
 public class VisEntityResumeFilterDescription implements CcpEntityConfigurator {
