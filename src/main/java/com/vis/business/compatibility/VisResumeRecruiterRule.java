@@ -17,7 +17,11 @@ import com.vis.entities.VisEntityResume;
  * database comes in the {@link VisResumeRecruiterFacts}.
  */
 public enum VisResumeRecruiterRule {
-	/** The recruiter unsubscribed from the e-mails of resumes ({@code vis_recruiter_unsubscribed}). */
+	/**
+	 * The recruiter unsubscribed from the e-mails of resumes ({@code vis_recruiter_unsubscribed}). Viewing a resume or
+	 * saving a position takes them out of there ({@code VisBusinessReactivateRecruiterWhoViewed},
+	 * {@code VisBusinessReactivateRecruiterWhoSavedAPosition}).
+	 */
 	recruiterUnsubscribed {
 		public boolean isBroken(CcpJsonRepresentation recruiter, CcpJsonRepresentation resume, VisResumeRecruiterFacts facts) {
 			String recruiterEmailHash = recruiter.getAsString(VisRecruiterResumesFields.emailHash);

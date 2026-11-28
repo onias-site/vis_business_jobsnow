@@ -14,6 +14,7 @@ import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityT
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionable;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpEntityVersionablePurge;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.CcpStoredParentIdsField;
+import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpAfterSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.annotations.operations.CcpBeforeSaveFromMainEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityFactory;
 import com.ccp.especifications.db.utils.entity.decorators.interfaces.CcpEntityConfigurator;
@@ -43,6 +44,7 @@ import com.jn.entities.fields.transformers.JnJsonTransformersFieldsEntityDefault
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.utils.JnDeleteKeysFromCache;
 import com.vis.business.position.VisBusinessPutPositionDefaultValues;
+import com.vis.business.position.VisBusinessReactivateRecruiterWhoSavedAPosition;
 import com.vis.json.fields.validation.VisJsonCommonsFields;
 import com.vis.json.fields.validation.VisJsonFieldsExpirationRange;
 import com.vis.json.fields.validation.VisJsonFieldsPositionContact;
@@ -97,6 +99,8 @@ import com.vis.json.transformers.VisSeniorityType;
 		)
 // the default values of the fields (mustSendInGroups, frequencyType) go into the record before it is saved
 @CcpBeforeSaveFromMainEntity(execute = {VisBusinessPutPositionDefaultValues.class}, operationHandlers = {})
+// the recruiter who saves a position wants resumes again: they leave the unsubscribed ones (since 2026-11-28)
+@CcpAfterSaveFromMainEntity(execute = {VisBusinessReactivateRecruiterWhoSavedAPosition.class}, operationHandlers = {})
 // one group per hash (each search of the position): the combinations and the list where the save keeps their ids come
 // from the field hash
 @CcpEntityGrouperChild(value = {VisEntityVirtualHashGrouper.class}, beforeDecoratorClass = JnGrouperChildEntityBeforeWrite.class, afterDecoratorClass = JnGrouperChildEntityAfterWrite.class)
