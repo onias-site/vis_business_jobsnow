@@ -24,7 +24,7 @@ import com.vis.messages.VisMessages;
  * The e-mail of resumes to a recruiter whose e-mail is in the text of a job posting of {@code /saveJobPosting} (since
  * 2026-11-26): the resumes found by the search of the job posting (the same ids of its link), the ones this recruiter may
  * see (active, not restricted, with a valid LinkedIn and not forbidding the company of the recruiter, as the screen of
- * the link shows them), in the e-mail of the resumes of a job posting ({@code VisNotifyRecruiterAboutResumesOfTheJobPosting},
+ * the link shows them, and, since 2026-11-27, not marked as unwanted by the recruiter), in the e-mail of the resumes of a job posting ({@code VisNotifyRecruiterAboutResumesOfTheJobPosting},
  * since 2026-11-27; until then the usual e-mail of resumes to the recruiters): the same table of the usual e-mail, opened
  * by the text of the job posting, without "see all" and with the subject of the first line of the text. As the e-mail of a single resume of a position, the dates of each resume are its
  * insertion and now, and no view is read. The list goes to {@code vis_recruiter_resumes}, so the recruiter gets no other
@@ -72,7 +72,9 @@ public class VisBusinessSendTheResumesToTheRecruiterOfTheJobPosting implements C
 		CcpJsonRepresentation recruiter = json.getInnerJson(Fields.recruiter);
 		List<String> resumeIds = json.getAsStringList(Fields.resumeIds);
 		String email = recruiter.getAsString(VisEntityRecruiter.Fields.email);
-		List<CcpJsonRepresentation> resumes = VisBusinessResumesOfThePositionFilters.getResumesToShow(resumeIds, email);
+		List<CcpJsonRepresentation> resumesToShow = VisBusinessResumesOfThePositionFilters.getResumesToShow(resumeIds, email);
+		// since 2026-11-27 also without the resumes the recruiter marked as unwanted (vis_inactive_viewed_resume)
+		List<CcpJsonRepresentation> resumes = VisBusinessSendResumesToRecruiters.getResumesTheRecruiterMayReceive(email, resumesToShow);
 		boolean noResume = resumes.isEmpty();
 
 		if(noResume) {

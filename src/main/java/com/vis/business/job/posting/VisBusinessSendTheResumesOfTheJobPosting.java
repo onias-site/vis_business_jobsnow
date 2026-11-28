@@ -18,6 +18,7 @@ import com.vis.business.recruiter.resumes.VisBusinessSendTheResumesToTheRecruite
 import com.vis.entities.VisEntityJobPosting;
 import com.vis.entities.VisEntityRecruiter;
 import com.vis.entities.VisEntityRecruiterResumes;
+import com.vis.entities.VisEntityRecruiterUnsubscribed;
 
 /**
  * Sixth and last business before the save of {@code vis_job_posting} (since 2026-11-26; the fifth one until 2026-11-27): each recruiter of the text
@@ -29,7 +30,8 @@ import com.vis.entities.VisEntityRecruiterResumes;
  * "Today" is the day of the calendar (since 2026-11-27, as the hourly process): a list of yesterday is still valid in the
  * disposable entity for 24 hours, but it does not keep away the e-mail of today; the moment of the writing is the
  * {@code trueTimestamp} of its copy in {@code jn_disposable_record}, read in the same round trip.
- * Only the active recruiters get it (an inactive one was not registered again). The recruiters and their lists of today
+ * Only the active recruiters get it (an inactive one was not registered again) and, since 2026-11-27, not the ones in
+ * {@code vis_recruiter_unsubscribed}. The recruiters and their lists of today
  * are read once (MGIE). The record goes on to the save without the fields that the businesses before it added for one
  * another (since 2026-11-27; until then it was cut to the fields of {@code vis_job_posting}, which dropped the fields of
  * {@code vis_instant_message_position_reply}, the other entity that runs these businesses before its save).
@@ -65,7 +67,7 @@ public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
 		}
 		CcpJsonRepresentation[] keysArray = keys.toArray(new CcpJsonRepresentation[0]);
 		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
-		CcpSelectUnionAll found = crud.unionAll(keysArray, JnDeleteKeysFromCache.INSTANCE, VisEntityRecruiter.ENTITY, VisEntityRecruiterResumes.ENTITY);
+		CcpSelectUnionAll found = crud.unionAll(keysArray, JnDeleteKeysFromCache.INSTANCE, VisEntityRecruiter.ENTITY, VisEntityRecruiterResumes.ENTITY, VisEntityRecruiterUnsubscribed.ENTITY);
 		CcpTimeDecorator now = new CcpTimeDecorator();
 		Long midnight = now.getMidnight();
 		String description = json.getAsString(VisEntityJobPosting.Fields.description);
@@ -73,6 +75,13 @@ public class VisBusinessSendTheResumesOfTheJobPosting implements CcpBusiness {
 			boolean inactive = false == VisEntityRecruiter.ENTITY.isPresentInThisUnionAll(found, key);
 
 			if(inactive) {
+				continue;
+			}
+
+			// since 2026-11-27: who unsubscribed receives nothing, even when active again without removing the unsubscription
+			boolean unsubscribed = VisEntityRecruiterUnsubscribed.ENTITY.isPresentInThisUnionAll(found, key);
+
+			if(unsubscribed) {
 				continue;
 			}
 

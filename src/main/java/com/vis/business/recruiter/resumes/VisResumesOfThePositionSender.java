@@ -121,13 +121,28 @@ public class VisResumesOfThePositionSender implements Consumer<CcpJsonRepresenta
 
 	public void accept(CcpJsonRepresentation json) {
 		CcpJsonRepresentation position = json.getInnerJson(Fields.position);
-		List<CcpJsonRepresentation> resumes = json.getAsJsonList(Fields.resumes);
-		boolean noResume = resumes.isEmpty();
+		List<CcpJsonRepresentation> matchingResumes = json.getAsJsonList(Fields.resumes);
+		boolean noResume = matchingResumes.isEmpty();
 		if(noResume) {
 			return;
 		}
 		String email = position.getAsString(VisEntityPosition.Fields.resumesEmail);
+		// since 2026-11-27: who unsubscribed receives nothing, and the resumes that forbid the company of the recruiter or
+		// that the recruiter marked as unwanted do not go (the rows do not check the company: the recruiter has no domain here)
+		boolean unsubscribed = VisBusinessSendResumesToRecruiters.isUnsubscribed(email);
+		if(unsubscribed) {
+			return;
+		}
+		List<CcpJsonRepresentation> resumes = VisBusinessSendResumesToRecruiters.getResumesTheRecruiterMayReceive(email, matchingResumes);
+		boolean noAllowedResume = resumes.isEmpty();
+		if(noAllowedResume) {
+			return;
+		}
 		List<CcpJsonRepresentation> rows = this.getRows(email, resumes);
+		boolean noRow = rows.isEmpty();
+		if(noRow) {
+			return;
+		}
 		CcpJsonRepresentation sortInput = CcpOtherConstants.EMPTY_JSON
 				.put(VisBusinessSortResumesOfThePosition.Fields.position, position)
 				.put(VisBusinessSortResumesOfThePosition.Fields.resumes, rows);

@@ -20,6 +20,9 @@ import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.decorators.CcpTextDecorator;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.decorators.CcpUrlDecorator;
+import com.ccp.dependency.injection.CcpDependencyInjection;
+import com.ccp.especifications.db.crud.CcpCrud;
+import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.query.CcpQueryOptions;
 import com.ccp.especifications.db.utils.entity.CcpEntity;
 import com.ccp.especifications.db.utils.entity.decorators.engine.CcpEntityMetaData;
@@ -31,6 +34,7 @@ import com.jn.entities.JnEntityDisposableRecord;
 import com.jn.entities.JnEntityEmailParametersToSend;
 import com.jn.json.fields.validation.JnJsonCommonsFields;
 import com.jn.messages.JnSendMessageToUser;
+import com.jn.utils.JnDeleteKeysFromCache;
 import com.jn.utils.JnLanguage;
 import com.jn.utils.JnVersionableHistory;
 import com.vis.entities.VisEntityRecruiter;
@@ -41,6 +45,7 @@ import com.vis.entities.VisEntityPosition;
 import com.vis.business.position.VisBusinessActivePositionsOfTheFrequency;
 import com.vis.json.fields.validation.VisPositionFrequencyTypes;
 import com.vis.entities.VisEntityRecruiterSignUpReturn;
+import com.vis.entities.VisEntityRecruiterUnsubscribed;
 import com.vis.entities.VisEntityResume;
 import com.vis.entities.VisEntityResumeRestriction;
 import com.vis.entities.VisEntityViewedResume;
@@ -233,6 +238,10 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		// the process runs every hour (since 2026-11-27): who already received the e-mail today waits for tomorrow
 		Set<String> recipientsOfToday = getRecipientsOfToday(restrictedTo, now);
 		recruitersInOrder.removeIf(recruiter -> recipientsOfToday.contains(recruiter.getAsString(VisRecruiterResumesFields.emailHash)));
+		// who unsubscribed receives no e-mail of resumes, even when something put them back among the active recruiters
+		// without removing the unsubscription (since 2026-11-27)
+		Set<String> unsubscribedRecruiters = getUnsubscribedRecruiters();
+		recruitersInOrder.removeIf(recruiter -> unsubscribedRecruiters.contains(recruiter.getAsString(VisRecruiterResumesFields.emailHash)));
 		recruitersInOrder.forEach(sendToTheRecruiter);
 		saveLastQueuePosition(generalQueue, restrictedTo, lastPositionOfTheLastRun, lastQueuePosition[0]);
 		saveLastQueuePosition(legacyQueue, restrictedTo, lastLegacyPositionOfTheLastRun, lastLegacyQueuePosition[0]);
@@ -1159,6 +1168,78 @@ public class VisBusinessSendResumesToRecruiters implements CcpBusiness {
 		String scrollTime = Constants.SCROLL_TIME.getValue();
 		everyInactiveView.selectFrom(inactiveViewedResume).consumeQueryResult(scrollTime, PAGE_SIZE, keepThePair);
 		return inactivePairs;
+	}
+
+	/**
+	 * The hashes of the e-mails of the recruiters who unsubscribed from the e-mails of resumes
+	 * ({@code vis_recruiter_unsubscribed}, which keeps the e-mail hashed as {@link #getEmailHash(String)} does).
+	 * @return the hashes
+	 */
+	static Set<String> getUnsubscribedRecruiters() {
+		Set<String> unsubscribedRecruiters = new HashSet<>();
+		CcpQueryOptions everyUnsubscription = CcpQueryOptions.INSTANCE.matchAll();
+		String scrollTime = Constants.SCROLL_TIME.getValue();
+		everyUnsubscription.selectFrom(VisEntityRecruiterUnsubscribed.ENTITY).consumeQueryResult(scrollTime, PAGE_SIZE, unsubscription -> unsubscribedRecruiters.add(unsubscription.getAsString(VisEntityRecruiterUnsubscribed.Fields.email)));
+		return unsubscribedRecruiters;
+	}
+
+	/**
+	 * Whether the recruiter unsubscribed from the e-mails of resumes ({@code vis_recruiter_unsubscribed}): who did receives
+	 * none of them, the daily one, the ones of the positions or the one of a job posting (since 2026-11-27).
+	 * @param email the e-mail of the recruiter
+	 * @return true when the recruiter unsubscribed
+	 */
+	public static boolean isUnsubscribed(String email) {
+		CcpJsonRepresentation unsubscriptionKey = CcpOtherConstants.EMPTY_JSON.put(VisEntityRecruiterUnsubscribed.Fields.email, email);
+		boolean unsubscribed = VisEntityRecruiterUnsubscribed.ENTITY.exists(unsubscriptionKey);
+		return unsubscribed;
+	}
+
+	/**
+	 * The resumes the recruiter may receive by e-mail (since 2026-11-27, for the e-mails that are not the daily one, which
+	 * reads every pair at once): without the ones whose company the resume forbids and without the ones the recruiter
+	 * marked as unwanted (their view in the twin {@code vis_inactive_viewed_resume}), the views read in a single union all
+	 * (MGIE).
+	 * @param recruiterEmail the e-mail of the recruiter
+	 * @param resumes the resumes, as stored
+	 * @return the resumes that may go to the recruiter
+	 */
+	public static List<CcpJsonRepresentation> getResumesTheRecruiterMayReceive(String recruiterEmail, List<CcpJsonRepresentation> resumes) {
+		List<CcpJsonRepresentation> allowedResumes = new ArrayList<>();
+		List<CcpJsonRepresentation> viewKeys = new ArrayList<>();
+		for (CcpJsonRepresentation resume : resumes) {
+			List<String> notAllowedCompanies = resume.getOrDefault(VisEntityResume.Fields.notAllowedCompany, () -> List.of());
+			boolean forbiddenCompany = isTheCompanyOfTheRecruiterForbidden(recruiterEmail, notAllowedCompanies);
+			if(forbiddenCompany) {
+				continue;
+			}
+			String linkedinAddress = resume.getAsString(VisEntityResume.Fields.linkedinAddress);
+			CcpJsonRepresentation viewKey = CcpOtherConstants.EMPTY_JSON
+					.put(VisEntityViewedResume.Fields.email, recruiterEmail)
+					.put(VisEntityViewedResume.Fields.linkedin, linkedinAddress);
+			allowedResumes.add(resume);
+			viewKeys.add(viewKey);
+		}
+		boolean nothingAllowed = allowedResumes.isEmpty();
+		if(nothingAllowed) {
+			return allowedResumes;
+		}
+		int keysCount = viewKeys.size();
+		CcpJsonRepresentation[] viewKeysArray = viewKeys.toArray(new CcpJsonRepresentation[keysCount]);
+		CcpEntity inactiveViewedResume = VisEntityViewedResume.ENTITY.getTwinEntity();
+		CcpCrud crud = CcpDependencyInjection.getDependency(CcpCrud.class);
+		CcpSelectUnionAll views = crud.unionAll(viewKeysArray, JnDeleteKeysFromCache.INSTANCE, inactiveViewedResume);
+		List<CcpJsonRepresentation> resumesTheRecruiterMayReceive = new ArrayList<>();
+		for (int index = 0; index < keysCount; index++) {
+			CcpJsonRepresentation viewKey = viewKeys.get(index);
+			boolean unwanted = inactiveViewedResume.isPresentInThisUnionAll(views, viewKey);
+			if(unwanted) {
+				continue;
+			}
+			CcpJsonRepresentation resume = allowedResumes.get(index);
+			resumesTheRecruiterMayReceive.add(resume);
+		}
+		return resumesTheRecruiterMayReceive;
 	}
 
 	/** The addresses of the front end and of the API of vis, kept in the sending parameters of the e-mail. */
